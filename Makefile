@@ -27,10 +27,10 @@ qemu: $(TARGET).iso
 	qemu-system-i386 -cdrom $^
 
 # Make a bootable ISO file
-$(TARGET).iso: $(TARGET)
+$(TARGET).iso: $(TARGET) kernel/grub.cfg
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
-	printf "menuentry \"stos\" {\n\tmultiboot /boot/stos\n}\n" > $(BUILD_DIR)/isodir/boot/grub/grub.cfg
+	cp kernel/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
 
 # Build all .c and .s source files and link them to the output file
