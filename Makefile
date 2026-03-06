@@ -23,11 +23,14 @@ OBJS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(OBJS:.s=.o))
 
 all: $(TARGET).iso
 
+qemu: $(TARGET).iso
+	qemu-system-i386 -cdrom $^
+
 # Make a bootable ISO file
 $(TARGET).iso: $(TARGET)
-	mkdir -p $(BUILD_DIR)/isodir
-	cp $(TARGET) $(BUILD_DIR)/isodir/stos
-	printf "menuentry \"stos\" {\n\tmultiboot /boot/stos.kernel\n}" > $(BUILD_DIR)/isodir/grub.cfg
+	mkdir -p $(BUILD_DIR)/isodir/boot/grub
+	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
+	printf "menuentry \"stos\" {\n\tmultiboot /boot/stos\n}\n" > $(BUILD_DIR)/isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
 
 # Build all .c and .s source files and link them to the output file

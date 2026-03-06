@@ -2,10 +2,16 @@
 
 ### Prerequisites
 
-1. GCC Cross-Compiler ([instructions](https://wiki.osdev.org/GCC_Cross-Compiler))
-2. Qemu
-3. Grub
+1. GCC Cross-Compiler - you can find installation instructions in the 
+  ([OsDev Wiki](https://wiki.osdev.org/GCC_Cross-Compiler))
+    - used commands for building are: `i686-elf-gcc`, `i686-elf-as`
+2. Grub - for building bootable ISO files, without having to write a bootloader
+    - used commands are: `grub-file`, `grub-mkrescue`
+3. Qemu virtual machine - for launching the OS somewhere
+    - used command is: `qemu-system-i386`
 
 ### Basic development tools
 
 Running just `make all` should build a bootable `build/stos.iso` file.
+Running `make qemu` will both create the bootable ISO file and immediately
+launch the Qemu virtual machine with that ISO plugged into a CD-ROM.
