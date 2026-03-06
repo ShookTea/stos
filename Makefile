@@ -21,7 +21,14 @@ OBJS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(OBJS:.s=.o))
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET).iso
+
+# Make a bootable ISO file
+$(TARGET).iso: $(TARGET)
+	mkdir -p $(BUILD_DIR)/isodir
+	cp $(TARGET) $(BUILD_DIR)/isodir/stos
+	printf "menuentry \"stos\" {\n\tmultiboot /boot/stos.kernel\n}" > $(BUILD_DIR)/isodir/grub.cfg
+	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
 
 # Build all .c and .s source files and link them to the output file
 $(TARGET): $(OBJS)
