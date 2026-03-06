@@ -15,3 +15,8 @@
 Running just `make all` should build a bootable `build/stos.iso` file.
 Running `make qemu` will both create the bootable ISO file and immediately
 launch the Qemu virtual machine with that ISO plugged into a CD-ROM.
+
+To improve how CLang handles the code (errors, "Go to definition" for libraries)
+you can install `bear` package and then run `bear -- make qemu`. It will create
+a `compile_commands.json` file (which is added to `.gitignore`) containing
+arguments for compiler that is respected by CLang.
