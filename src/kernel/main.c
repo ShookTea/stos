@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/tty.h>
-#include <kernel/io.h>
 
 #if !defined(__i386__)
 #error "This kernel needs to be compiled with a ix86-elf compiler"

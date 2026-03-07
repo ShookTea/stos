@@ -4,8 +4,9 @@
 #include <string.h>
 
 #include "vga.h"
+#include "io.h"
+
 #include <kernel/tty.h>
-#include <kernel/io.h>
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
