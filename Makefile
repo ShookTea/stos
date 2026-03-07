@@ -3,7 +3,7 @@ CC      := i686-elf-gcc
 AS      := i686-elf-as
 CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Isrc/libc/include -Isrc/include
 ASFLAGS := # asm flags if needed
-LDFLAGS := -T kernel/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc
+LDFLAGS := -T src/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc
 TARGET  := build/stos
 
 # Directories
@@ -27,10 +27,10 @@ qemu: $(TARGET).iso
 	qemu-system-i386 -cdrom $^
 
 # Make a bootable ISO file
-$(TARGET).iso: $(TARGET) kernel/grub.cfg
+$(TARGET).iso: $(TARGET) src/grub.cfg
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
-	cp kernel/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
+	cp src/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
 
 # Build all .c and .s source files and link them to the output file
