@@ -29,4 +29,19 @@ void tty_write(const char* data, size_t size);
  * Prints a null-terminated string - doesn't require specifying size
  */
 void tty_writestring(const char* data);
+
+/**
+ * Enables cursor with a given size, with parameters having values from 0 to 15
+ */
+void tty_enable_cursor(uint8_t cursor_start, uint8_t cursor_end);
+
+/**
+ * Disables cursor
+ */
+void tty_disable_cursor();
+
+/**
+ * Places cursor at a specific location on the screen
+ */
+void tty_update_cursor(size_t x, size_t y);
 #endif
