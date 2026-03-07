@@ -1,13 +1,13 @@
 # Compiler / tools
 CC      := i686-elf-gcc
 AS      := i686-elf-as
-CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/libc/include -Ikernel/include
+CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Isrc/libc/include -Isrc/include
 ASFLAGS := # asm flags if needed
 LDFLAGS := -T kernel/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc
 TARGET  := build/stos
 
 # Directories
-SRC_DIR := kernel
+SRC_DIR := src
 BUILD_DIR := build
 
 # Find all C and asm sources recursively
