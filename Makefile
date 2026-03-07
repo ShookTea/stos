@@ -1,7 +1,7 @@
 # Compiler / tools
 CC      := i686-elf-gcc
 AS      := i686-elf-as
-CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/libc/include
+CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/libc/include -Ikernel/include
 ASFLAGS := # asm flags if needed
 LDFLAGS := -T kernel/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc
 TARGET  := build/stos
