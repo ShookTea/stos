@@ -15,4 +15,8 @@ void kernel_main(void)
     //tty_enable_cursor(0, 15);
     //tty_update_cursor(21, 0);
     tty_disable_cursor();
+
+    // The interrupt below will call the interrupt handler
+    __asm__ volatile ("int $0x3");
+    tty_writestring("this shouldn't be printed\n");
 }
