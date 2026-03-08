@@ -37,9 +37,9 @@ static void gdt_set_entry(
 
 void init_gdt(void)
 {
-    // Load limit and base to GDT pointer
-    gdt_ptr.limit = (sizeof(gdt_entry_t) * 5) - 1;
-    gdt_ptr.base = (uint32_t)&gdt_entries;
+    // Load size and offset to GDT pointer
+    gdt_ptr.size = (sizeof(gdt_entry_t) * 5) - 1;
+    gdt_ptr.offset = (uint32_t)&gdt_entries;
 
     // Populate GDT entries:
     gdt_set_entry(0, 0, 0, 0, 0); // null segment

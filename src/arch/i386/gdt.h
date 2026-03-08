@@ -68,14 +68,14 @@ typedef struct gdt_entry_struct
 
 /**
  * Pointer to the entire GDT table:
- * - 32-bit base points to a linear address of the first entry of GDT - not the
+ * - 32-bit offset points to a linear address of the first entry of GDT - not the
  *   physical address, paging applies
- * - 16-bit limit is the size (in bytes) of all GDT entries minus 1 byte.
+ * - 16-bit size is the size (in bytes) of all GDT entries minus 1 byte.
  */
 typedef struct gdt_ptr_struct
 {
-    uint16_t limit;
-    uint32_t base;
+    uint16_t size;
+    uint32_t offset;
 } __attribute__((packed)) gdt_ptr_t;
 
 /**
