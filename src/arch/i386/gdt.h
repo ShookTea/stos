@@ -56,7 +56,7 @@
  *         stored in read-only page, it will cause a page fault, so it's better
  *         to set it to 1 in advance.
  */
-typedef struct gdt_entry_struct
+typedef struct
 {
     uint16_t limit_low;
     uint16_t base_low;
@@ -72,7 +72,7 @@ typedef struct gdt_entry_struct
  *   physical address, paging applies
  * - 16-bit size is the size (in bytes) of all GDT entries minus 1 byte.
  */
-typedef struct gdt_ptr_struct
+typedef struct
 {
     uint16_t size;
     uint32_t offset;
