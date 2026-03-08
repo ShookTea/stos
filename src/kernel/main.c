@@ -11,7 +11,8 @@
 void kernel_main(void)
 {
     tty_initialize();
-    tty_writestring("Hello, kernel World!");
-    tty_enable_cursor(0, 15);
-    tty_update_cursor(21, 0);
+    tty_writestring("Hello, kernel World!\n");
+    //tty_enable_cursor(0, 15);
+    //tty_update_cursor(21, 0);
+    tty_disable_cursor();
 }

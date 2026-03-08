@@ -66,10 +66,17 @@ void tty_delete_last_line() {
 void tty_putchar(char c)
 {
     int line;
-    tty_putentryat(c, terminal_color, terminal_column, terminal_row);
 
-    if (++terminal_column == VGA_WIDTH) {
+    if (c == '\n') {
         terminal_column = 0;
+    } else {
+        tty_putentryat(c, terminal_color, terminal_column, terminal_row);
+        if (++terminal_column == VGA_WIDTH) {
+            terminal_column = 0;
+        }
+    }
+
+    if (terminal_column == 0) {
         if (++terminal_row == VGA_HEIGHT) {
             for (line = 1; line <= VGA_HEIGHT - 1; line++) {
 				tty_scroll(line);
