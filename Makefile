@@ -1,25 +1,36 @@
 # Compiler / tools
 CC      := i686-elf-gcc
 AS      := i686-elf-as
+AR      := i686-elf-ar
 CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Isrc/libc/include -Isrc/include
 ASFLAGS := # asm flags if needed
 LDFLAGS := -T src/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc
-TARGET  := build/stos
+LIBK_CFLAGS := $(CFLAGS) -D__is_libk
+TARGET := build/stos
+LIB := build/lib/libk.a
 
 # Directories
 SRC_DIR := src
 BUILD_DIR := build
+LIB_DIR := $(BUILD_DIR)/lib
 
-# Find all C and asm sources recursively
-SRCS_C  := $(shell find $(SRC_DIR) -name '*.c')
-SRCS_S  := $(shell find $(SRC_DIR) -name '*.s')
-SRCS    := $(SRCS_C) $(SRCS_S)
+# Kernel sources (exluding libc/libk)
+KERNEL_C := $(shell find $(SRC_DIR)/kernel $(SRC_DIR)/arch -name '*.c')
+KERNEL_S := $(shell find $(SRC_DIR)/kernel $(SRC_DIR)/arch -name '*.s')
+KERNEL_SRCS := $(KERNEL_C) $(KERNEL_S)
+
+# Libk sources
+LIBK_C := $(shell find $(SRC_DIR)/libc -name '*.c')
+LIBK_S := $(shell find $(SRC_DIR)/libc -name '*.s')
+LIBK_SRCS := $(LIBK_C) $(LIBK_S)
 
 # Convert e.g. kernel/foo/bar.c -> build/foo/bar.o
-OBJS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(SRCS:.c=.o))
-OBJS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(OBJS:.s=.o))
+KERNEL_OBJS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(KERNEL_SRCS:.c=.o))
+KERNEL_OBJS := $(patsubst $(SRC_DIR)/%,$(BUILD_DIR)/%,$(KERNEL_OBJS:.s=.o))
+LIBK_OBJS := $(patsubst $(SRC_DIR)/%,$(LIB_DIR)/%,$(LIBK_SRCS:.c=.libk.o))
+LIBK_OBJS := $(patsubst $(SRC_DIR)/%,$(LIB_DIR)/%,$(LIBK_OBJS:.s=.libk.o))
 
-.PHONY: all clean
+.PHONY: all clean libk
 
 all: $(TARGET).iso
 
@@ -34,11 +45,11 @@ $(TARGET).iso: $(TARGET) src/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
 
 # Build all .c and .s source files and link them to the output file
-$(TARGET): $(OBJS)
+$(TARGET): $(KERNEL_OBJS) $(LIB)
 	$(CC) $(LDFLAGS) -o $@ $^
 	grub-file --is-x86-multiboot $@ && echo "Multiboot validated"
 
-# Pattern rule: build/whatever.o from src/whatever.c or src/whatever.s
+# Kernel .o rules
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -46,6 +57,19 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s
 	@mkdir -p $(@D)
 	$(AS) $(ASFLAGS) -c $< -o $@
+
+# Libk .libk.o rules (freestanding)
+$(LIB_DIR)/%.libk.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(LIBK_CFLAGS) -c $< -o $@
+
+$(LIB_DIR)/%.libk.o: $(SRC_DIR)/%.s
+	@mkdir -p $(@D)
+	$(AS) $(ASFLAGS) $< -o $@
+
+$(LIB): $(LIBK_OBJS)
+	@mkdir -p $(LIB_DIR)
+	$(AR) rcs $@ $^
 
 clean:
 	rm -rf $(BUILD_DIR)
