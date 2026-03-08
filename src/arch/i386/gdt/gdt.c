@@ -1,8 +1,8 @@
 #include "gdt.h"
 #include <stdint.h>
 
-gdt_entry_t gdt_entries[5];
-gdt_ptr_t gdt_ptr;
+static gdt_entry_t gdt_entries[5];
+static gdt_ptr_t gdt_ptr;
 
 /**
  * Load GDT pointer address to the registry
