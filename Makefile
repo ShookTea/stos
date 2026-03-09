@@ -46,7 +46,7 @@ $(TARGET).iso: $(TARGET) src/grub.cfg
 
 # Build all .c and .s source files and link them to the output file
 $(TARGET): $(KERNEL_OBJS) $(LIB)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(LDFLAGS)
 	grub-file --is-x86-multiboot2 $@ && echo "Multiboot validated"
 
 # Kernel .o rules
