@@ -424,7 +424,23 @@ int vprintf(const char* restrict format, va_list list)
 
         // printing a null-terminated string
         if (typeSpecifier == 's') {
-            chars += __displayString(va_arg(list, char*));
+            char* val = va_arg(list, char*);
+            size_t val_length = strlen(val);
+            size_t pad_count = 0;
+            if (val_length < width) {
+                pad_count = width - val_length;
+            }
+            if (pad_count > 0 && !leftAlign) {
+                for (size_t i = 0; i < pad_count; i++) {
+                    chars += putchar(zeroPad ? '0' : ' ');
+                }
+            }
+            chars += __displayString(val);
+            if (pad_count > 0 && leftAlign) {
+                for (size_t i = 0; i < pad_count; i++) {
+                    chars += putchar(zeroPad ? '0' : ' ');
+                }
+            }
         }
 
         // print nothing, but write number of characters successfully written so
