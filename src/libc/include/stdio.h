@@ -2,6 +2,7 @@
 #define _STDIO_H 1
 
 #include <sys/cdefs.h>
+#include <stdarg.h>
 
 #define EOF (-1)
 
@@ -24,8 +25,20 @@ int puts(const char*);
 /**
  * Prints formatted string. Returns the number of characters written, or EOF in
  * case of error.
+ *
+ * Documentation in the sdtio/vprintf.c file gives more information about format
+ * placeholders.
  */
 int printf(const char* __restrict, ...);
+
+/**
+ * Prints formatted string using va_list argument. Returns the number of
+ * characters written, or EOF in case of error.
+ *
+ * Documentation in the sdtio/vprintf.c file gives more information about format
+ * placeholders.
+ */
+int vprintf(const char* __restrict, va_list list);
 
 #ifdef __cplusplus
 }
