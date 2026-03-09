@@ -1,14 +1,31 @@
 .macro isr_err_stub num
 isr_stub_\num:
-    call exception_handler
-    iret
+    pushl $\num # push interrupt number
+    jmp common_stub
 .endm
 
 .macro isr_no_err_stub num
 isr_stub_\num:
-    call exception_handler
-    iret
+    pushl $0 # push dummy error code
+    pushl $\num # push interrupt number
+    jmp common_stub
 .endm
+
+common_stub:
+    pushal          # Save all GP registers
+    cld
+    movl $0x10, %eax  # Kernel data segment (adjust if needed)
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+    movl %esp, %eax  # Pointer to stack frame
+    pushl %eax      # Pass frame ptr to C handler
+    call exception_handler
+    addl $4, %esp   # Pop frame ptr
+    popal
+    addl $8, %esp   # Skip int_no and err_code
+    iret
 
 .extern exception_handler
 isr_no_err_stub 0  # Divide error

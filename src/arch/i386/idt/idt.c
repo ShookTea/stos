@@ -1,6 +1,6 @@
 #include "idt.h"
 #include <stdbool.h>
-#include <kernel/tty.h>
+#include <stdio.h>
 
 // An array of IDT entries
 __attribute__((aligned(0x10)))
@@ -41,8 +41,12 @@ void init_idt(void)
  * Temporarily add ignore for warning - compiler doesn't understand that this
  * ASM code will, in fact, not return.
  */
-void exception_handler(void)
+void exception_handler(registers_t* registers)
 {
-    tty_writestring("Halted"); // TODO: remove this line
+    printf(
+        "Halted with int %#02X, err code %#X\n",
+        registers->int_no,
+        registers->err_code
+    );
     __asm__ volatile ("cli; hlt");
 }

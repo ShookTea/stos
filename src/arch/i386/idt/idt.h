@@ -54,6 +54,14 @@ typedef struct
     uint32_t offset;
 } __attribute__((packed)) idt_ptr_t;
 
+typedef struct
+{
+   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
+   uint32_t int_no; // Interrupt number
+   uint32_t err_code; // Error code (if applicable)
+   uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
+} registers_t;
+
 void init_idt(void);
 
 #endif
