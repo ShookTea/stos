@@ -1,9 +1,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <kernel/tty.h>
-
-#include "multiboot2.h"
+#include <kernel/multiboot2.h>
 
 #if !defined(__i386__)
 #error "This kernel needs to be compiled with a ix86-elf compiler"
@@ -23,8 +23,11 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbi)
         return;
     }
     tty_writestring("Multiboot2 magic is correct\n");
+    multiboot2_init(mbi);
+    multiboot2_print_debug_info();
 
     // The interrupt below will call the interrupt handler
+    puts("End of main kernel function - running int 0x03 for testing");
     __asm__ volatile ("int $0x3");
     tty_writestring("this shouldn't be printed\n");
 }

@@ -6,6 +6,10 @@
 // Magic number that confirms that multiboot2 info was loaded correctly
 #define MULTIBOOT2_BOOTLOADER_MAGIC 0x36D76289
 
+#define MULTIBOOT2_TAG_TYPE_END 0
+#define MULTIBOOT2_TAG_TYPE_BOOT_COMMAND_LINE 1
+#define MULTIBOOT2_TAG_TYPE_LOAD_BASE_ADDR 21
+
 /**
  * The multiboot2 starts with a fixed part and a series of tags.
  */
@@ -18,7 +22,7 @@
 typedef struct {
     uint32_t type;
     uint32_t size;
-} multiboot_tag_t;
+} __attribute__((packed)) multiboot_tag_t;
 
 /**
  * The whole multiboot structure starts with a total_size in bytes (including
@@ -29,6 +33,29 @@ typedef struct {
     uint32_t total_size;
     uint32_t reserved;
     multiboot_tag_t tags[0];
-} multiboot_info_t;
+} __attribute__((packed)) multiboot_info_t;
+
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    uint32_t load_base_addr;
+} __attribute__((packed))  multiboot_tag_load_base_addr_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    char command_line[0];
+} multiboot_tag_boot_command_line_t;
+
+/**
+ * Store multiboot2 information
+ */
+void multiboot2_init(multiboot_info_t*);
+
+/**
+ * Print whole loaded multiboot2 information to TTY
+ */
+void multiboot2_print_debug_info(void);
 
 #endif
