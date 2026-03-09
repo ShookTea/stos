@@ -33,12 +33,69 @@ void multiboot2_print_debug_info()
                     ((multiboot_tag_boot_command_line_t*)tag)->command_line
                 );
                 break;
+            case MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME:
+                printf(format, index, tag->type, "boot_loader_name");
+                printf(
+                    " (%s)\n",
+                    ((multiboot_tag_boot_loader_name_t*)tag)->name
+                );
+                break;
             case MULTIBOOT2_TAG_TYPE_LOAD_BASE_ADDR:
                 printf(format, index, tag->type, "load_base_addr");
                 printf(
                     " (%#x)\n",
                     ((multiboot_tag_load_base_addr_t*)tag)->load_base_addr
                 );
+                break;
+            case MULTIBOOT2_TAG_TYPE_APM_TABLE:
+                printf(format, index, tag->type, "apm_table");
+                multiboot_tag_apm_table_t* apm =
+                    (multiboot_tag_apm_table_t*)tag;
+                printf(
+                    "(fl=%#04x;off=%#04x)\n",
+                    apm->flags,
+                    apm->offset
+                );
+                break;
+            case MULTIBOOT2_TAG_TYPE_MEMORY_MAP:
+                printf(format, index, tag->type, "memory_map");
+                multiboot_tag_memory_map_t* mmap =
+                    (multiboot_tag_memory_map_t*)tag;
+                uint8_t entries_count = (mmap->size - 8) / mmap->entry_size;
+                printf(" (count = %d)\n", entries_count);
+                uint8_t index;
+                for (index = 0; index < entries_count; index++) {
+                    multiboot_tag_memory_map_entry_t mmap_entry = mmap->entries[index];
+                    char* entry_type;
+                    switch (mmap_entry.type) {
+                        case 1:
+                            entry_type = "avail. RAM";
+                            break;
+                        case 2:
+                            entry_type = "reserved";
+                            break;
+                        case 3:
+                            entry_type = "ACPI-reclaimable";
+                            break;
+                        case 4:
+                            entry_type = "NVS";
+                            break;
+                        case 5:
+                            entry_type = "defective RAM";
+                            break;
+                        default:
+                            entry_type = "unrecognized";
+                    }
+                    printf(
+                        "  %2d: %-16s (%0#8x%08x:%0#8x%08x)\n",
+                        index,
+                        entry_type,
+                        mmap_entry.base_addr_high,
+                        mmap_entry.base_addr_low,
+                        mmap_entry.length_high,
+                        mmap_entry.length_low
+                    );
+                }
                 break;
             default:
                 printf(format, index, tag->type, "!unkown!");

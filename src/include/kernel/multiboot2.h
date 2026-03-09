@@ -8,6 +8,9 @@
 
 #define MULTIBOOT2_TAG_TYPE_END 0
 #define MULTIBOOT2_TAG_TYPE_BOOT_COMMAND_LINE 1
+#define MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME 2
+#define MULTIBOOT2_TAG_TYPE_MEMORY_MAP 6
+#define MULTIBOOT2_TAG_TYPE_APM_TABLE 10
 #define MULTIBOOT2_TAG_TYPE_LOAD_BASE_ADDR 21
 
 /**
@@ -44,8 +47,46 @@ typedef struct {
 typedef struct {
     uint32_t type;
     uint32_t size;
+    char name[0];
+} multiboot_tag_boot_loader_name_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    uint16_t version;
+    uint16_t cseg; // protected mode 32-bit code segment
+    uint32_t offset; // offset of the entry point
+    uint16_t cseg_16; // protected mode 16-bit code segment
+    uint16_t dseg; // protected mode 16-bit data segment
+    uint16_t flags; // APM flags
+    uint16_t cseg_len; // length of protected mode 32-bit code segment
+    uint16_t cseg_16_len; // length of protected mode 16-bit code segment
+    uint16_t dseg_len; // length of protected mode 16-bit data segment
+} multiboot_tag_apm_table_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
     uint32_t load_base_addr;
 } __attribute__((packed))  multiboot_tag_load_base_addr_t;
+
+typedef struct {
+    // TODO: is it first high, then low, or the other way around?
+    uint32_t base_addr_low;
+    uint32_t base_addr_high;
+    uint32_t length_low;
+    uint32_t length_high;
+    uint32_t type;
+    uint32_t reserved;
+}  __attribute__((packed)) multiboot_tag_memory_map_entry_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    uint32_t entry_size;
+    uint32_t entry_version;
+    multiboot_tag_memory_map_entry_t entries[0];
+} multiboot_tag_memory_map_t;
 
 /**
  * Store multiboot2 information
