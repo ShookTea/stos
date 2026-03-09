@@ -75,6 +75,12 @@ _start:
 	mov $stack_top, %esp
 
 	/*
+	Pass multiboot information to the kernel
+	*/
+	pushl %ebx
+	pushl %eax
+
+	/*
 	This is a good place to initialize crucial processor state before the
 	high-level kernel is entered. It's best to minimize the early
 	environment where crucial features are offline. Note that the
@@ -96,6 +102,7 @@ _start:
 	preserved and the call is well defined.
 	*/
 	call kernel_main
+	addl $8, %esp # clean stack
 
 	/*
 	If the system has nothing more to do, put the computer into an
