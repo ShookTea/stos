@@ -45,14 +45,6 @@ void multiboot2_print_debug_info()
                 puts("");
                 break;
         }
-        // printf("--TAG #%3d--\n", index);
-        // printf("  tag type: (%u)\n", tag->type);
-        // printf("  size: %uB\n", tag->size);
-
-        // if (tag->type == 1) {
-        //     multiboot_tag_boot_command_line_t* mapped = (multiboot_tag_boot_command_line_t*)tag;
-        //     printf("  line: %s\n", mapped->command_line);
-        // }
 
         index++;
         // Iterate to the next tag
