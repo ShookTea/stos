@@ -42,49 +42,39 @@ void tty_putentryat(char c, uint8_t color, size_t x, size_t y)
     terminal_buffer[index] = vga_entry(c, color);
 }
 
-void tty_scroll(int line)
-{
-    int loop;
-    char c;
-    int startValue = line * (VGA_WIDTH * 2) + VGA_MEMORY;
-    for (loop = startValue; loop < VGA_WIDTH * 2; loop++)
-    {
-        c = *(int*)loop;
-        *((int*)loop - (VGA_WIDTH * 2)) = c;
+void tty_scroll() {
+    // Shift lines up using uint16_t entries
+    for (size_t i = 0; i < (VGA_HEIGHT - 1) * VGA_WIDTH; i++) {
+        terminal_buffer[i] = terminal_buffer[i + VGA_WIDTH];
+    }
+
+    // Clear last line
+    uint16_t blank = vga_entry(' ', terminal_color);
+    for (size_t i = (VGA_HEIGHT - 1) * VGA_WIDTH; i < VGA_HEIGHT * VGA_WIDTH; i++) {
+        terminal_buffer[i] = blank;
     }
 }
 
-void tty_delete_last_line() {
-	int x, *ptr;
-
-	for(x = 0; x < VGA_WIDTH * 2; x++) {
-		ptr = (int*) 0xB8000 + (VGA_WIDTH * 2) * (VGA_HEIGHT - 1) + x;
-		*ptr = 0;
-	}
-}
-
-void tty_putchar(char c)
-{
-    int line;
-
+void tty_putchar(char c) {
     if (c == '\n') {
         terminal_column = 0;
-    } else {
-        tty_putentryat(c, terminal_color, terminal_column, terminal_row);
-        if (++terminal_column == VGA_WIDTH) {
-            terminal_column = 0;
+        if (++terminal_row >= VGA_HEIGHT) {
+            tty_scroll();
+            terminal_row = VGA_HEIGHT - 1;
         }
+        // tty_update_cursor(terminal_column, terminal_row);
+        return;
     }
 
-    if (terminal_column == 0) {
-        if (++terminal_row == VGA_HEIGHT) {
-            for (line = 1; line <= VGA_HEIGHT - 1; line++) {
-				tty_scroll(line);
-			}
-			tty_delete_last_line();
-			terminal_row = VGA_HEIGHT - 1;
+    tty_putentryat(c, terminal_color, terminal_column, terminal_row);
+    if (++terminal_column == VGA_WIDTH) {
+        terminal_column = 0;
+        if (++terminal_row >= VGA_HEIGHT) {
+            tty_scroll();
+            terminal_row = VGA_HEIGHT - 1;
         }
     }
+    // tty_update_cursor(terminal_column, terminal_row);
 }
 
 void tty_write(const char* data, size_t size)
