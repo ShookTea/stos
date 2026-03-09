@@ -1,22 +1,31 @@
 /* Declare constants for the multiboot header. */
-.set ALIGN,    1<<0             /* align loaded modules on page boundaries */
-.set MEMINFO,  1<<1             /* provide memory map */
-.set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
-.set MAGIC,    0x1BADB002       /* 'magic number' lets bootloader find the header */
-.set CHECKSUM, -(MAGIC + FLAGS) /* checksum of above, to prove we are multiboot */
+.set MAGIC,    0xE85250D6
 
 /*
-Declare a multiboot header that marks the program as a kernel. These are magic
+Declare a multiboot2 header that marks the program as a kernel. These are magic
 values that are documented in the multiboot standard. The bootloader will
 search for this signature in the first 8 KiB of the kernel file, aligned at a
 32-bit boundary. The signature is in its own section so the header can be
 forced to be within the first 8 KiB of the kernel file.
 */
-.section .multiboot
-.align 4
-.long MAGIC
-.long FLAGS
-.long CHECKSUM
+.section .multiboot,"a",@progbits
+.align 8
+.globl multiboot_header_start
+multiboot_header_start:
+    # magic number for grub multiboot2:
+    .long MAGIC
+    # value 0 = i385 architecture
+    .long 0
+    # header length:
+    .long multiboot_header_end - multiboot_header_start
+    # checksum:
+    .long - (MAGIC + 0 + (multiboot_header_end - multiboot_header_start))
+    # end tag (minimal)
+    .short 0  # type
+    .short 0  # flags
+    .long 8   # size
+multiboot_header_end:
+.globl multiboot_header_end
 
 /*
 The multiboot standard does not define the value of the stack pointer register

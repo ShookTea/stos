@@ -4,7 +4,7 @@ AS      := i686-elf-as
 AR      := i686-elf-ar
 CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Isrc/libc/include -Isrc/include
 ASFLAGS := # asm flags if needed
-LDFLAGS := -T src/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc
+LDFLAGS := -T src/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000
 LIBK_CFLAGS := $(CFLAGS) -D__is_libk
 TARGET := build/stos
 LIB := build/lib/libk.a
@@ -47,7 +47,7 @@ $(TARGET).iso: $(TARGET) src/grub.cfg
 # Build all .c and .s source files and link them to the output file
 $(TARGET): $(KERNEL_OBJS) $(LIB)
 	$(CC) $(LDFLAGS) -o $@ $^
-	grub-file --is-x86-multiboot $@ && echo "Multiboot validated"
+	grub-file --is-x86-multiboot2 $@ && echo "Multiboot validated"
 
 # Kernel .o rules
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
