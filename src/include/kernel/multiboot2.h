@@ -35,18 +35,17 @@ typedef struct {
     multiboot_tag_t tags[0];
 } __attribute__((packed)) multiboot_info_t;
 
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    char command_line[0];
+} multiboot_tag_boot_command_line_t;
 
 typedef struct {
     uint32_t type;
     uint32_t size;
     uint32_t load_base_addr;
 } __attribute__((packed))  multiboot_tag_load_base_addr_t;
-
-typedef struct {
-    uint32_t type;
-    uint32_t size;
-    char command_line[0];
-} multiboot_tag_boot_command_line_t;
 
 /**
  * Store multiboot2 information

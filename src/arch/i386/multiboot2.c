@@ -26,6 +26,13 @@ void multiboot2_print_debug_info()
                 printf(format, index, tag->type, "end");
                 puts("");
                 break;
+            case MULTIBOOT2_TAG_TYPE_BOOT_COMMAND_LINE:
+                printf(format, index, tag->type, "command_line");
+                printf(
+                    " (%s)\n",
+                    ((multiboot_tag_boot_command_line_t*)tag)->command_line
+                );
+                break;
             case MULTIBOOT2_TAG_TYPE_LOAD_BASE_ADDR:
                 printf(format, index, tag->type, "load_base_addr");
                 printf(
