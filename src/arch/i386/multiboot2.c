@@ -63,9 +63,10 @@ void multiboot2_print_debug_info()
                     (multiboot_tag_memory_map_t*)tag;
                 uint8_t entries_count = (mmap->size - 8) / mmap->entry_size;
                 printf(" (count = %d)\n", entries_count);
-                uint8_t index;
-                for (index = 0; index < entries_count; index++) {
-                    multiboot_tag_memory_map_entry_t mmap_entry = mmap->entries[index];
+                uint8_t mem_index;
+                for (mem_index = 0; mem_index < entries_count; mem_index++) {
+                    multiboot_tag_memory_map_entry_t mmap_entry =
+                        mmap->entries[mem_index];
                     char* entry_type;
                     switch (mmap_entry.type) {
                         case 1:
@@ -88,7 +89,7 @@ void multiboot2_print_debug_info()
                     }
                     printf(
                         "  %2d: %-16s (%0#8x%08x:%0#8x%08x)\n",
-                        index,
+                        mem_index,
                         entry_type,
                         mmap_entry.base_addr_high,
                         mmap_entry.base_addr_low,
