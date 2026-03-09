@@ -98,7 +98,7 @@ void multiboot2_print_debug_info()
                 }
                 break;
             default:
-                printf(format, index, tag->type, "!unkown!");
+                printf(format, index, tag->type, "!unknown!");
                 puts("");
                 break;
         }
