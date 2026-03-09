@@ -26,8 +26,10 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbi)
     multiboot2_init(mbi);
     multiboot2_print_debug_info();
 
+    while (1) {}
+
     // The interrupt below will call the interrupt handler
-    puts("End of main kernel function - running int 0x03 for testing");
-    __asm__ volatile ("int $0x3");
-    tty_writestring("this shouldn't be printed\n");
+    //puts("End of main kernel function - running int 0x03 for testing");
+    //__asm__ volatile ("int $0x3");
+    //tty_writestring("this shouldn't be printed\n");
 }

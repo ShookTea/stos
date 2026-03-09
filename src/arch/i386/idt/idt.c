@@ -1,6 +1,7 @@
 #include "idt.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include "pic.h"
 
 // An array of IDT entries
 __attribute__((aligned(0x10)))
@@ -21,11 +22,17 @@ static void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags)
 
 void init_idt(void)
 {
+    // Remap the IRQ table
+    pic_remap(0x20, 0x28);
+
     idt_ptr.offset = (uint32_t)&idt;
     idt_ptr.size = (uint16_t)sizeof(idt_entry_t) * IDT_MAX_DESCRIPTORS - 1;
 
-    // Load IDT vectors for basic 32 interrupts:
-    for (uint8_t vector = 0; vector < 32; vector++) {
+    // Load IDT vectors for:
+    // - basic 32 interrupts
+    // - 16 IRQ interrupts
+    uint8_t total_vectors = 32 + 16;
+    for (uint8_t vector = 0; vector < total_vectors; vector++) {
         idt_set_descriptor(vector, isr_stub_table[vector], 0x8E);
         vectors[vector] = true;
     }
@@ -43,10 +50,19 @@ void init_idt(void)
  */
 void exception_handler(registers_t* registers)
 {
-    printf(
-        "Halted with int %#02X, err code %#X\n",
-        registers->int_no,
-        registers->err_code
-    );
-    __asm__ volatile ("cli; hlt");
+    if (registers->int_no >= 0x20) {
+        printf(
+            "Received interrupt at IRQ %u\n",
+            registers->int_no - 0x20
+        );
+        pic_send_eoi(registers->int_no - 0x20);
+    }
+    else {
+        printf(
+            "Halted with exception int %#02X, err code %#X\n",
+            registers->int_no,
+            registers->err_code
+        );
+        __asm__ volatile ("cli; hlt");
+    }
 }
