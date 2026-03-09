@@ -503,13 +503,18 @@ int vprintf(const char* restrict format, va_list list)
             chars += __displayString(intStrBuffer);
             floating -= (int) floating;
 
+            if (floating < 0) {
+                floating *= -1;
+            }
+
             for (int i = 0; i < precision; i++) {
                 floating *= 10;
             }
 
-            intmax_t decPlaces = (intmax_t) (floating + 0.5);
-            if (decPlaces < 0) {
-                decPlaces *= -1;
+            intmax_t decPlaces = (intmax_t)floating;
+            uint8_t nextDigit = (uint8_t)((floating * 10) - (decPlaces * 10) + 0.01);
+            if (nextDigit >= 5) {
+                decPlaces++;
             }
             if (precision) {
                 chars += putchar('.');
