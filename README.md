@@ -21,6 +21,9 @@ you can install `bear` package and then run `bear -- make qemu`. It will create
 a `compile_commands.json` file (which is added to `.gitignore`) containing
 arguments for compiler that is respected by CLang.
 
+All text printed to VGA text mode is by default sent to COM1 port, which Qemu
+then prints to the command line.
+
 ### Source code structure
 ```
 <root directory>
