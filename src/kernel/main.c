@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <kernel/tty.h>
+#include <kernel/serial.h>
 #include <kernel/multiboot2.h>
 
 #if !defined(__i386__)
@@ -22,6 +23,13 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbi)
         tty_writestring("Multiboot2 magic is invalid\n");
         return;
     }
+
+    if (serial_init() != 0) {
+        puts("COM1 faulty");
+    } else {
+        puts("COM1 initialized correctly");
+    }
+
     tty_writestring("Multiboot2 magic is correct\n");
     multiboot2_init(mbi);
     multiboot2_print_debug_info();

@@ -7,6 +7,7 @@
 #include "io.h"
 
 #include <kernel/tty.h>
+#include <kernel/serial.h>
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
@@ -56,6 +57,7 @@ void tty_scroll() {
 }
 
 void tty_putchar(char c) {
+    serial_put_c(c);
     if (c == '\n') {
         terminal_column = 0;
         if (++terminal_row >= VGA_HEIGHT) {
