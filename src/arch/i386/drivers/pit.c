@@ -1,4 +1,5 @@
 #include <kernel/drivers/pit.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include "../idt/idt.h"
 #include "../idt/pic.h"
@@ -11,6 +12,7 @@
 
 static uint32_t tick = 0;
 static uint32_t second = 0;
+static bool initialized = false;
 
 static void pit_timer_callback()
 {
@@ -25,6 +27,11 @@ static void pit_timer_callback()
 
 void pit_init(uint32_t frequency)
 {
+    if (initialized) {
+        return;
+    }
+    initialized = true;
+
     // Register timer callback
     idt_register_irq_handler(PIC_LINE_PIT, &pit_timer_callback);
 
