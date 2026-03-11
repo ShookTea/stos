@@ -28,7 +28,7 @@ static void ps2_send_data(uint8_t command)
 static uint8_t ps2_read_data()
 {
     // Wait for anything to appear in the output buffer
-    while (inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER) {
+    while (!(inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER)) {
         io_wait();
     }
     return inb(PS2_DATA_PORT);
@@ -51,8 +51,6 @@ void ps2_init()
         inb(PS2_DATA_PORT);
     }
 
-    puts("setting config byte");
-
     // Set the controller configuration byte: read current value, and then clear
     // bits 0 (disabling port interrupt) and 6 (disabling port translation), and
     // setting bit 4 (enabling port clock)
@@ -61,6 +59,4 @@ void ps2_init()
     ccb = (ccb & ~0x41) | 0x10;
     ps2_send_com(PS2_COM_SET_CCB);
     ps2_send_data(ccb);
-
-    puts("Config byte set");
 }
