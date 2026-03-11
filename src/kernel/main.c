@@ -9,6 +9,7 @@
 #include <kernel/paging.h>
 #include <kernel/vmm.h>
 #include <kernel/drivers/pit.h>
+#include "kernel/drivers/ps2.h"
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
 
@@ -45,6 +46,7 @@ void kernel_main()
     puts("Entering idle loop...\n");
 
     pit_init(100);
+    ps2_init();
 
     while (1) {}
 }
