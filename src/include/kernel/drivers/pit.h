@@ -1,5 +1,5 @@
-#ifndef ARCH_I386_DRIVERS_PIT_H
-#define ARCH_I386_DRIVERS_PIT_H
+#ifndef KERNEL_DRIVERS_PIT_H
+#define KERNEL_DRIVERS_PIT_H
 
 #include <stdint.h>
 
