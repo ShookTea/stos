@@ -110,4 +110,26 @@ void ps2_init()
     } else {
         puts("Warning! PS/2 port 2 test failed");
     }
+
+    if (!port1_online && !port2_online) {
+        // TODO: what should we really do now?
+        puts("Warning! No PS/2 port available.");
+        return;
+    }
+
+    // Enable devices
+    ps2_send_com(PS2_COM_READ_CCB);
+    ccb = ps2_read_data();
+    if (port1_online) {
+        ps2_send_com(PS2_COM_ENABLE_PORT_1);
+        ccb |= 0b00000001;
+    }
+    if (port2_online) {
+        ps2_send_com(PS2_COM_ENABLE_PORT_2);
+        ccb |= 0b00000001;
+    }
+    ps2_send_com(PS2_COM_SET_CCB);
+    ps2_send_data(ccb);
+
+    puts("PS/2 port(s) enabled");
 }
