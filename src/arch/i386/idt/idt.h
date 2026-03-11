@@ -5,6 +5,12 @@
 
 #define IDT_MAX_DESCRIPTORS 256
 
+/*
+ * A required shift for IRQ interrupts. For example, IRQ 1 (PS/2 keyboard)
+ * is at (1 + 32) = int 33
+ */
+#define IDT_IRQ_INTERRUPT_SHIFT 32
+
 /**
  * IDT entry structure, bit by bit:
  * - [00-15] offset_low (lower 16 bits of offset)
@@ -62,6 +68,15 @@ typedef struct
    uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
 } registers_t;
 
+// int_handler_t is a function, receiving registers_t as an argument, that can
+// be used for registering interrupt handlers
+typedef void (*int_handler_t)(registers_t*);
+
 void init_idt(void);
+
+/**
+ * Register interrupt handler for a given IRQ number.
+ */
+void idt_register_irq_handler(uint8_t int_number, int_handler_t handler);
 
 #endif

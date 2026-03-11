@@ -11,6 +11,8 @@ static bool vectors[IDT_MAX_DESCRIPTORS];
 
 extern void* isr_stub_table[];
 
+static int_handler_t irq_int_handlers[16];
+
 static void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags)
 {
     idt[vector].offset_low = (uint32_t) isr & 0xFFFF;
@@ -92,12 +94,14 @@ static void handle_page_fault(registers_t* registers)
  */
 void exception_handler(registers_t* registers)
 {
-    if (registers->int_no >= 0x20) {
-        printf(
-            "Received interrupt at IRQ %u\n",
-            registers->int_no - 0x20
-        );
-        pic_send_eoi(registers->int_no - 0x20);
+    if (registers->int_no >= IDT_IRQ_INTERRUPT_SHIFT) {
+        uint8_t irq_number = registers->int_no - IDT_IRQ_INTERRUPT_SHIFT;
+        if (irq_int_handlers[irq_number] != 0) {
+            (irq_int_handlers[irq_number])(registers);
+        } else {
+            printf("Received unhandled interrupt at IRQ %u\n", irq_number);
+        }
+        pic_send_eoi(irq_number);
     }
     else if (registers->int_no == 14) {
         // Page fault exception - handle with detailed diagnostics
@@ -111,4 +115,9 @@ void exception_handler(registers_t* registers)
         );
         __asm__ volatile ("cli; hlt");
     }
+}
+
+void idt_register_irq_handler(uint8_t int_number, int_handler_t handler)
+{
+    irq_int_handlers[int_number] = handler;
 }
