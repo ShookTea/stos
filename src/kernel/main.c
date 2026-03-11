@@ -8,8 +8,8 @@
 #include <kernel/pmm.h>
 #include <kernel/paging.h>
 #include <kernel/vmm.h>
-#include "vmm_tests.h"
-#include "memory_tests.h"
+#include "test/vmm_tests.h"
+#include "test/memory_tests.h"
 
 
 #if !defined(__i386__)
