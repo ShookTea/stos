@@ -71,7 +71,7 @@ void pic_remap(uint8_t offset1, uint8_t offset2)
     io_wait();
 
     // Mask both PICs, so they're off by default
-    outb(PIC1_DATA, 0xFF);
+    outb(PIC1_DATA, 0xFB);
     outb(PIC2_DATA, 0xFF);
 }
 
@@ -81,4 +81,32 @@ void pic_send_eoi(uint8_t irq)
         outb(PIC2_COMMAND, PIC_EOI);
     }
     outb(PIC1_COMMAND, PIC_EOI);
+}
+
+void pic_enable(uint8_t line)
+{
+    uint16_t port;
+    if (line < 8) {
+        port = PIC1_DATA;
+    } else {
+        port = PIC2_DATA;
+        line -= 8;
+    }
+
+    uint8_t value = inb(port);
+    outb(port, value & ~(1 << line));
+}
+
+void pic_disable(uint8_t line)
+{
+    uint16_t port;
+    if (line < 8) {
+        port = PIC1_DATA;
+    } else {
+        port = PIC2_DATA;
+        line -= 8;
+    }
+
+    uint8_t value = inb(port);
+    outb(port, value | (1 << line));
 }
