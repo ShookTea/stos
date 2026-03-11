@@ -17,11 +17,14 @@
 #define PS2_COM_DISABLE_PORT_1 0xAD
 #define PS2_COM_ENABLE_PORT_1 0xAE
 #define PS2_COM_DISABLE_PORT_2 0xA7
-#define PS2_COM_ENABLE_PORT2 0xA8
+#define PS2_COM_ENABLE_PORT_2 0xA8
 
 // Returns Controller Configuration Byte (CCB) on data port
 #define PS2_COM_READ_CCB 0x20
 // Updates CCB with byte sent on data port
 #define PS2_COM_SET_CCB 0x60
+
+// Response any other than 0x55 = test failed
+#define PS2_COM_TEST_CONTROLLER 0xAA
 
 #endif
