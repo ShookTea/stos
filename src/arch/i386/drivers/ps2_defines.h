@@ -26,5 +26,8 @@
 
 // Response any other than 0x55 = test failed
 #define PS2_COM_TEST_CONTROLLER 0xAA
+// Results other than 0x00 for both port1 and port2 = test failed
+#define PS2_COM_TEST_PORT_1 0xAB
+#define PS2_COM_TEST_PORT_2 0xA9
 
 #endif

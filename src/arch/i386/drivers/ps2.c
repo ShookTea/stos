@@ -6,6 +6,8 @@
 
 static bool initialized = false;
 static bool dual_channel = false;
+static bool port1_online = false;
+static bool port2_online = false;
 
 static void ps2_send_com(uint8_t command)
 {
@@ -89,5 +91,23 @@ void ps2_init()
         ccb &= ~0b00100010;
         ps2_send_com(PS2_COM_SET_CCB);
         ps2_send_data(ccb);
+    }
+
+    // Run self-test of port 1
+    ps2_send_com(PS2_COM_TEST_PORT_1);
+    if (ps2_read_data() == 0x00) {
+        puts("PS/2 port 1 test completed");
+        port1_online = true;
+    } else {
+        puts("Warning! PS/2 port 1 test failed");
+    }
+
+    // If port 2 is present, run test for port 2 as well
+    ps2_send_com(PS2_COM_TEST_PORT_2);
+    if (ps2_read_data() == 0x00) {
+        puts("PS/2 port 2 test completed");
+        port2_online = true;
+    } else {
+        puts("Warning! PS/2 port 2 test failed");
     }
 }
