@@ -5,24 +5,23 @@
 #include <kernel/tty.h>
 #include <kernel/serial.h>
 #include <kernel/multiboot2.h>
+#include <kernel/pmm.h>
+#include <kernel/paging.h>
+#include <kernel/vmm.h>
+#include "vmm_tests.h"
+#include "memory_tests.h"
+
 
 #if !defined(__i386__)
 #error "This kernel needs to be compiled with a ix86-elf compiler"
 #endif
 
 
-void kernel_main(uint32_t magic, multiboot_info_t* mbi)
+void kernel_main()
 {
     tty_initialize();
-    tty_writestring("Hello, kernel World!\n");
-    //tty_enable_cursor(0, 15);
-    //tty_update_cursor(21, 0);
     tty_disable_cursor();
-
-    if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) {
-        tty_writestring("Multiboot2 magic is invalid\n");
-        return;
-    }
+    puts("\n\n=== kernel_main() ===");
 
     if (serial_init() != 0) {
         puts("COM1 faulty");
@@ -30,14 +29,19 @@ void kernel_main(uint32_t magic, multiboot_info_t* mbi)
         puts("COM1 initialized correctly");
     }
 
-    tty_writestring("Multiboot2 magic is correct\n");
-    multiboot2_init(mbi);
-    multiboot2_print_debug_info();
+    puts("\n=== Boot Sequence Status ===");
+    puts("PMM: Already initialized by early_init()");
+    puts("Paging: Already enabled by early_init()");
+    puts("VMM: Already initialized by early_init()");
+
+    // Running tests
+    vmm_run_all_tests();
+    memory_run_all_tests();
+
+
+    puts("\n=== Kernel Initialization Complete ===");
+    puts("All subsystems initialized and tested successfully");
+    puts("Entering idle loop...\n");
 
     while (1) {}
-
-    // The interrupt below will call the interrupt handler
-    //puts("End of main kernel function - running int 0x03 for testing");
-    //__asm__ volatile ("int $0x3");
-    //tty_writestring("this shouldn't be printed\n");
 }

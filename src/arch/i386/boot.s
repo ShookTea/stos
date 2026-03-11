@@ -94,12 +94,26 @@ _start:
 	call init_idt
 
 	/*
+	Call early_init to set up PMM and enable paging before kernel_main.
+	This ensures that by the time we enter kernel_main, the system is
+	already running with paging enabled.
+
+	early_init(magic, mbi) - takes same parameters as kernel_main
+	Stack already has multiboot magic (EAX) and info pointer (EBX) pushed.
+	*/
+	call early_init
+
+	/*
 	Enter the high-level kernel. The ABI requires the stack is 16-byte
 	aligned at the time of the call instruction (which afterwards pushes
 	the return pointer of size 4 bytes). The stack was originally 16-byte
 	aligned above and we've pushed a multiple of 16 bytes to the
 	stack since (pushed 0 bytes so far), so the alignment has thus been
 	preserved and the call is well defined.
+
+	Note: Paging is now enabled by early_init, so all memory accesses
+	in kernel_main will go through the page tables. The first 4MB is
+	identity-mapped, so the kernel can continue executing normally.
 	*/
 	call kernel_main
 	addl $8, %esp # clean stack

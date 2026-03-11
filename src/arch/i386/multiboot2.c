@@ -15,17 +15,17 @@ void multiboot2_print_debug_info()
     puts("== GRUB MULTIBOOT2 DEBUG INFO==");
     printf("Total multiboot2 size: %d B\n", mbi->total_size);
     uint8_t index = 0;
-    uint64_t mb2_end = mbi->total_size + (uint64_t)mbi;
+    uint64_t mb2_end = mbi->total_size + (uint32_t)mbi;
     // adding 8 bytes here to adjust for the multiboot_info_t header
     multiboot_tag_t* tag = (multiboot_tag_t*)((uint8_t*)mbi + 8);
 
     char* format = "[%2d] #%02u:%s";
-    while ((uint64_t)tag < mb2_end) {
+    while ((uint32_t)tag < mb2_end) {
         switch (tag->type) {
             case MULTIBOOT2_TAG_TYPE_END:
                 printf(format, index, tag->type, "end");
                 puts("");
-                break;
+                return;  // Exit when we hit the END tag
             case MULTIBOOT2_TAG_TYPE_BOOT_COMMAND_LINE:
                 printf(format, index, tag->type, "command_line");
                 printf(

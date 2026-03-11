@@ -10,6 +10,9 @@ SECTIONS
 	   loaded at by the bootloader. */
 	. = 1M;
 
+	/* Mark the start of the kernel */
+	_kernel_start = .;
+
 	.multiboot : ALIGN(8)
 	{
 		KEEP(*(.multiboot))
@@ -38,6 +41,9 @@ SECTIONS
 		*(COMMON)
 		*(.bss)
 	}
+
+	/* Mark the end of the kernel */
+	_kernel_end = .;
 
 	/* The compiler may produce other sections, put them in the proper place in
 	   in this file, if you'd like to include them in the final kernel. */
