@@ -75,7 +75,7 @@ static page_table_t* paging_get_page_table(uint32_t virt, bool create)
         pde->rw = 1;
         pde->user = 0;  // Kernel page table
         pde->frame = pt_phys >> 12;
-        
+
         // Flush TLB for this virtual address range
         if (paging_is_enabled()) {
             paging_flush_tlb_entry(virt);
@@ -87,7 +87,7 @@ static page_table_t* paging_get_page_table(uint32_t virt, bool create)
     // Return existing page table
     uint32_t pt_phys = pde->frame << 12;
     page_table_t* pt = (page_table_t*)phys_to_virt_internal(pt_phys);
-    
+
     return pt;
 }
 
@@ -136,13 +136,13 @@ void paging_init(void)
         pages_mapped++;
     }
 
-    printf("Identity mapped %u pages (0x0 - %#x)\n", 
+    printf("Identity mapped %u pages (0x0 - %#x)\n",
            pages_mapped, identity_map_end - 1);
 
     // Map physical memory to PHYS_MAP_BASE for kernel access
     // This allows us to access any physical address safely after paging is enabled
     printf("Mapping physical memory to %#x...\n", PHYS_MAP_BASE);
-    
+
     // We'll map up to 1GB of physical RAM (or whatever PMM tells us exists)
     uint32_t phys_mem_size = pmm_get_total_memory();
     if (phys_mem_size > PHYS_MAP_SIZE) {
@@ -151,7 +151,7 @@ void paging_init(void)
                PHYS_MAP_SIZE / (1024 * 1024));
         phys_mem_size = PHYS_MAP_SIZE;
     }
-    
+
     uint32_t phys_map_pages = 0;
     for (uint32_t phys = 0; phys < phys_mem_size; phys += PAGE_SIZE) {
         uint32_t virt = PHYS_MAP_BASE + phys;
@@ -161,7 +161,7 @@ void paging_init(void)
         }
         phys_map_pages++;
     }
-    
+
     printf("Mapped %u pages of physical memory (%u MB)\n",
            phys_map_pages, (phys_map_pages * 4096) / (1024 * 1024));
 
@@ -177,10 +177,10 @@ void paging_init(void)
     // update our pointers to use virtual addresses from the PHYS_MAP_BASE region
     kernel_page_directory = (page_directory_t*)PHYS_TO_VIRT(pd_phys);
     current_page_directory = kernel_page_directory;
-    
+
     // Mark that we're fully initialized
     paging_fully_initialized = true;
-    
+
     printf("Switched to virtual addressing (PD at %#x)\n", (uint32_t)kernel_page_directory);
 
     // Verify paging is enabled
@@ -303,7 +303,7 @@ void paging_switch_directory(page_directory_t* page_directory)
     }
 
     current_page_directory = page_directory;
-    
+
     // Convert virtual address to physical for CR3
     uint32_t pd_phys;
     if (paging_fully_initialized && IS_PHYS_MAPPED(page_directory)) {
@@ -312,7 +312,7 @@ void paging_switch_directory(page_directory_t* page_directory)
         // During initialization or if using identity mapping
         pd_phys = (uint32_t)page_directory;
     }
-    
+
     paging_load_directory((uint32_t*)pd_phys);
 }
 
@@ -358,11 +358,11 @@ page_directory_t* paging_clone_kernel_directory(void)
     // Copy kernel page directory entries:
     // 1. Identity map region (first 4MB = entry 0)
     pd->entries[0] = kernel_page_directory->entries[0];
-    
+
     // 2. Physical memory mapping region (PHYS_MAP_BASE area)
     uint32_t phys_map_start_pd = paging_get_pd_index(PHYS_MAP_BASE);
-    uint32_t phys_map_end_pd = paging_get_pd_index(PHYS_MAP_END - 1);
-    
+    uint32_t phys_map_end_pd = paging_get_pd_index(0xFFFFFFFF);
+
     for (uint32_t i = phys_map_start_pd; i <= phys_map_end_pd; i++) {
         if (kernel_page_directory->entries[i].present) {
             pd->entries[i] = kernel_page_directory->entries[i];
@@ -453,7 +453,7 @@ void paging_dump_page_table(uint32_t pd_index)
                    pte->accessed ? ", ACCESSED" : "",
                    pte->dirty ? ", DIRTY" : "");
             present_count++;
-            
+
             // Limit output to avoid spamming
             if (present_count >= 20) {
                 uint32_t remaining = 0;
@@ -480,9 +480,9 @@ void paging_dump_page_table(uint32_t pd_index)
 bool paging_validate_identity_mapping(void)
 {
     printf("=== Validating Identity Mapping ===\n");
-    
+
     bool all_valid = true;
-    
+
     // Test critical addresses
     struct {
         uint32_t addr;
@@ -494,30 +494,30 @@ bool paging_validate_identity_mapping(void)
         { 0x00200000, "Kernel middle (2MB)" },
         { 0x003FF000, "End of identity map (4MB - 1 page)" },
     };
-    
+
     for (size_t i = 0; i < sizeof(test_addresses) / sizeof(test_addresses[0]); i++) {
         uint32_t virt = test_addresses[i].addr;
         uint32_t phys = paging_get_physical_address(virt);
         bool mapped = paging_is_mapped(virt);
         bool identity = (phys == virt);
-        
+
         printf("  %#010x (%s): %s%s\n",
                virt,
                test_addresses[i].description,
                mapped ? (identity ? "MAPPED (identity)" : "MAPPED (not identity!)") : "NOT MAPPED!",
                mapped && !identity ? " ERROR!" : "");
-        
+
         if (!mapped || !identity) {
             all_valid = false;
         }
     }
-    
+
     if (all_valid) {
         printf("Result: All critical regions are identity-mapped correctly\n");
     } else {
         printf("Result: VALIDATION FAILED - some regions are not properly mapped!\n");
     }
-    
+
     printf("===================================\n");
     return all_valid;
 }
@@ -531,27 +531,27 @@ void paging_print_stats(void)
         printf("Paging is not enabled\n");
         return;
     }
-    
+
     printf("=== Paging Statistics ===\n");
     printf("Paging Status: ENABLED\n");
     printf("Current CR3 (Physical): %#x\n", paging_get_cr3());
     printf("Kernel Page Directory (Virtual): %#x\n", (uint32_t)kernel_page_directory);
     printf("Current Page Directory (Virtual): %#x\n", (uint32_t)current_page_directory);
-    printf("Physical Memory Mapping: %#x - %#x\n", PHYS_MAP_BASE, PHYS_MAP_END);
-    
+    printf("Physical Memory Mapping: %#x - %#x\n", PHYS_MAP_BASE, 0xFFFFFFFF);
+
     // Count present page directory entries
     uint32_t present_pdes = 0;
     uint32_t total_mapped_pages = 0;
-    
+
     for (uint32_t i = 0; i < PAGE_DIRECTORY_SIZE; i++) {
         page_directory_entry_t* pde = &current_page_directory->entries[i];
         if (pde->present) {
             present_pdes++;
-            
+
             // Count pages in this page table
             uint32_t pt_phys = pde->frame << 12;
             page_table_t* pt = (page_table_t*)phys_to_virt_internal(pt_phys);
-            
+
             for (uint32_t j = 0; j < PAGE_TABLE_SIZE; j++) {
                 if (pt->entries[j].present) {
                     total_mapped_pages++;
@@ -559,7 +559,7 @@ void paging_print_stats(void)
             }
         }
     }
-    
+
     printf("Present Page Directory Entries: %u / %u\n", present_pdes, PAGE_DIRECTORY_SIZE);
     printf("Total Mapped Pages: %u (%u KB, %u MB)\n",
            total_mapped_pages,

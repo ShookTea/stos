@@ -6,14 +6,14 @@
 
 /**
  * x86 Paging Implementation
- * 
+ *
  * This module implements 32-bit paging for the i386 architecture.
- * 
+ *
  * Memory Layout:
  * - Page Directory: 1024 entries, each covering 4MB of virtual memory
  * - Page Table: 1024 entries, each covering 4KB of physical memory
  * - Total addressable: 4GB (1024 * 1024 * 4KB)
- * 
+ *
  * Virtual Address Breakdown (32 bits):
  * [31:22] - Page Directory Index (10 bits, 0-1023)
  * [21:12] - Page Table Index (10 bits, 0-1023)
@@ -30,7 +30,6 @@
 // This allows us to access any physical address by adding PHYS_MAP_BASE
 #define PHYS_MAP_BASE       0xC0000000  // 3GB - Start of physical memory mapping
 #define PHYS_MAP_SIZE       0x40000000  // 1GB - Map up to 1GB of physical RAM
-#define PHYS_MAP_END        (PHYS_MAP_BASE + PHYS_MAP_SIZE)
 
 // Convert physical address to virtual address (for kernel use)
 #define PHYS_TO_VIRT(phys)  ((void*)((uint32_t)(phys) + PHYS_MAP_BASE))
@@ -39,7 +38,8 @@
 #define VIRT_TO_PHYS(virt)  ((uint32_t)(virt) - PHYS_MAP_BASE)
 
 // Check if a virtual address is in the physical mapping region
-#define IS_PHYS_MAPPED(virt) ((uint32_t)(virt) >= PHYS_MAP_BASE && (uint32_t)(virt) < PHYS_MAP_END)
+// Since the region extends to the end of the 32-bit address space, we only need to check >= PHYS_MAP_BASE
+#define IS_PHYS_MAPPED(virt) ((uint32_t)(virt) >= PHYS_MAP_BASE)
 
 // Page flags (for both PDE and PTE)
 #define PAGE_PRESENT    0x001  // Page is present in memory
@@ -58,9 +58,9 @@
 
 /**
  * Page Table Entry (PTE)
- * 
+ *
  * 32-bit entry that maps a 4KB virtual page to a physical page frame.
- * 
+ *
  * Bit Layout:
  * [31:12] - Physical page frame address (20 bits)
  * [11:9]  - Available for OS use (3 bits)
@@ -90,11 +90,11 @@ typedef struct {
 
 /**
  * Page Directory Entry (PDE)
- * 
+ *
  * 32-bit entry that either:
  * 1. Points to a page table (4KB pages)
  * 2. Directly maps a 4MB page (if PSE bit is set)
- * 
+ *
  * Bit Layout (for page table pointer):
  * [31:12] - Physical address of page table (20 bits)
  * [11:9]  - Available for OS use (3 bits)
@@ -124,7 +124,7 @@ typedef struct {
 
 /**
  * Page Table
- * 
+ *
  * Contains 1024 page table entries, each mapping a 4KB virtual page.
  * Must be 4KB-aligned.
  */
@@ -134,7 +134,7 @@ typedef struct {
 
 /**
  * Page Directory
- * 
+ *
  * Contains 1024 page directory entries, each pointing to a page table
  * or directly mapping a 4MB page.
  * Must be 4KB-aligned.
@@ -152,7 +152,7 @@ extern page_directory_t* kernel_page_directory;
 /**
  * Convert a physical address to a virtual address in the mapped region
  * This allows safe access to physical memory after paging is enabled
- * 
+ *
  * @param phys Physical address
  * @return Virtual address that maps to the physical address
  */
@@ -163,7 +163,7 @@ static inline void* paging_phys_to_virt(uint32_t phys)
 
 /**
  * Convert a virtual address back to physical (for mapped region only)
- * 
+ *
  * @param virt Virtual address in the physical mapping region
  * @return Physical address
  */
@@ -174,7 +174,7 @@ static inline uint32_t paging_virt_to_phys(void* virt)
 
 /**
  * Initialize the paging system
- * 
+ *
  * This function:
  * - Creates the kernel page directory
  * - Identity maps the first 4MB (kernel space)
@@ -185,7 +185,7 @@ void paging_init(void);
 
 /**
  * Map a virtual address to a physical address
- * 
+ *
  * @param virt Virtual address to map
  * @param phys Physical address to map to
  * @param flags Page flags (PAGE_PRESENT, PAGE_WRITE, PAGE_USER, etc.)
@@ -195,14 +195,14 @@ bool paging_map_page(uint32_t virt, uint32_t phys, uint32_t flags);
 
 /**
  * Unmap a virtual address
- * 
+ *
  * @param virt Virtual address to unmap
  */
 void paging_unmap_page(uint32_t virt);
 
 /**
  * Get the physical address for a virtual address
- * 
+ *
  * @param virt Virtual address
  * @return Physical address, or 0 if not mapped
  */
@@ -210,7 +210,7 @@ uint32_t paging_get_physical_address(uint32_t virt);
 
 /**
  * Check if a virtual address is mapped
- * 
+ *
  * @param virt Virtual address to check
  * @return true if mapped, false otherwise
  */
@@ -218,14 +218,14 @@ bool paging_is_mapped(uint32_t virt);
 
 /**
  * Switch to a different page directory
- * 
+ *
  * @param page_directory Physical address of the page directory
  */
 void paging_switch_directory(page_directory_t* page_directory);
 
 /**
  * Flush the Translation Lookaside Buffer (TLB) for a specific page
- * 
+ *
  * @param virt Virtual address of the page to flush
  */
 void paging_flush_tlb_entry(uint32_t virt);
@@ -237,7 +237,7 @@ void paging_flush_tlb(void);
 
 /**
  * Create a new page directory
- * 
+ *
  * @return Pointer to new page directory, or NULL on failure
  */
 page_directory_t* paging_create_directory(void);
@@ -245,7 +245,7 @@ page_directory_t* paging_create_directory(void);
 /**
  * Clone the kernel page directory for a new process
  * This copies kernel mappings (first 4MB) into a new page directory
- * 
+ *
  * @return Pointer to new page directory, or NULL on failure
  */
 page_directory_t* paging_clone_kernel_directory(void);
@@ -277,7 +277,7 @@ void paging_dump_page_directory(void);
 /**
  * Debug: Dump a specific page table
  * Shows all present page table entries for the given page directory index
- * 
+ *
  * @param pd_index Page directory index (0-1023)
  */
 void paging_dump_page_table(uint32_t pd_index);
@@ -285,7 +285,7 @@ void paging_dump_page_table(uint32_t pd_index);
 /**
  * Validate that critical memory regions are properly identity-mapped
  * Tests important addresses like VGA buffer, kernel space, etc.
- * 
+ *
  * @return true if all critical regions are correctly identity-mapped
  */
 bool paging_validate_identity_mapping(void);
