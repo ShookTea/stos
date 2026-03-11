@@ -36,3 +36,17 @@ then prints to the command line.
     ├── libc/include/       # implementation of libc standard library
     └── grub.cfg            # Bootloader configuration
 ```
+
+### What's implemented
+
+- Booting
+- GDT, interrupts, IRQ
+- Paging (hopefully)
+- PIT driver (so far doesn't do anything useful though)
+
+### Short-term todo list
+
+- PS/2 driver
+- PS/2 keyboard driver
+- Better physical memory allocation (buddy)
+- kmalloc/kfree
