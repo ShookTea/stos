@@ -71,7 +71,10 @@ static bool send_command(uint8_t command)
 // This is called when receiving a keyboard interrupt
 static void irq_callback()
 {
-    puts("IRQ callback");
+    uint8_t value;
+    if (ps2_read_byte_to_result(&value) == PS2_RESPONSE_OK) {
+        printf("  keycode: %#02x\n", value);
+    }
 }
 
 void keyboard_init()
@@ -128,16 +131,14 @@ void keyboard_init()
         ? PIC_LINE_PS2_PORT_2
         : PIC_LINE_PS2_PORT_1;
 
-    // Enabling IRQ
-    pic_enable(pic_line);
-    idt_register_irq_handler(pic_line, &irq_callback);
-
     // Enable scanning
     if (!send_command(COM_ENABLE_SCANNING)) {
         puts("Failed to send command to enable scanning");
-        pic_disable(pic_line);
-        idt_register_irq_handler(pic_line, NULL);
         abort();
     }
+    // Enable IRQ
+    pic_enable(pic_line);
+    idt_register_irq_handler(pic_line, &irq_callback);
+
     puts("Keyboard initialized");
 }
