@@ -11,12 +11,15 @@ static bool dual_channel = false;
 static bool port1_online = false;
 static bool port2_online = false;
 
-static bool send_com_timeout = false;
-static bool send_data_timeout = false;
-static bool read_data_timeout = false;
-static bool send_byte_port1_timeout = false;
-static bool send_byte_port2_timeout = false;
-static bool read_byte_timeout = false;
+// Those falgs need to be set to volatile,
+// otherwise compiler will assume that they can't change and optimize
+// timeout loops out.
+static volatile bool send_com_timeout = false;
+static volatile bool send_data_timeout = false;
+static volatile bool read_data_timeout = false;
+static volatile bool send_byte_port1_timeout = false;
+static volatile bool send_byte_port2_timeout = false;
+static volatile bool read_byte_timeout = false;
 
 static void ps2_handle_timeout(void *data)
 {
@@ -292,7 +295,6 @@ uint8_t ps2_read_byte_to_result(uint8_t* result)
         !(inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER)
         && !read_byte_timeout
     ) {
-        // printf("");
         io_wait();
     }
     if (read_byte_timeout) {
