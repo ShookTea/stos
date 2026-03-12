@@ -5,6 +5,7 @@
 #include "../idt/idt.h"
 #include "../io.h"
 #include "ps2_defines.h"
+#include "keyboard_defines.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -17,6 +18,9 @@
 
 static bool keyboard_on_port2 = false;
 static bool initialized = false;
+
+static uint8_t buffer[6];
+static uint8_t buffer_pos = 0;
 
 /**
  * Each command has to receive an ACK for it. It may also receive a "resend"
@@ -70,6 +74,19 @@ static bool send_command(uint8_t command)
     return false;
 }
 
+/**
+ * TODO: maybe instead of panic we should handle it more gracefully?
+ */
+static void buffer_dump_and_panic()
+{
+    puts("Unrecognized PS/2 input buffer:");
+    for (int i = 0; i < buffer_pos; i++) {
+        printf("%#02x ", buffer[i]);
+    }
+    buffer_pos = 0;
+    abort();
+}
+
 // This is called when receiving a keyboard interrupt
 static void irq_callback()
 {
@@ -79,7 +96,104 @@ static void irq_callback()
     // and read it without waiting
     if (inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER) {
         uint8_t value = inb(PS2_DATA_PORT);
-        printf("  keycode: %#02x\n", value);
+        buffer[buffer_pos] = value;
+        if (buffer_pos == 0) {
+            if (value == KEYBOARD_RELEASE_BYTE
+                || value == KEYBOARD_EXTENDED_SET_BYTE) {
+                buffer_pos++;
+            } else {
+                // It's a "simple" key press - print it!
+                printf("Pressed S %#02x\n", value);
+            }
+        } else if (buffer_pos == 1) {
+            if (buffer[0] == KEYBOARD_RELEASE_BYTE) {
+                // current value is always the "simple" key, but released
+                printf("Released S %#02x\n", value);
+                buffer_pos = 0;
+            } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && value == KEYBOARD_RELEASE_BYTE) {
+                    buffer_pos++;
+            } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && value == 0x12) {
+                // it's most probably beggining of "print screen pressed"
+                // 0xE0 >0x12< 0xE0 0x7C
+                buffer_pos++;
+            } else {
+                // Pressed "extended set" key
+                printf("Pressed E %#02x\n", value);
+                buffer_pos = 0;
+            }
+        } else if (buffer_pos == 2) {
+            // This is most probably a release of something from extended
+            if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && buffer[1] == KEYBOARD_RELEASE_BYTE
+                && value == 0x7C) {
+                // TODO:
+                // it's most probably beggining of "print screen released"
+                // 0xE0 0xF0 >0x7C< 0xE0 0xF0 0x12
+                buffer_pos++;
+            } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && buffer[1] == KEYBOARD_RELEASE_BYTE) {
+                // Released "extended set" key
+                printf("Released E %#02x\n", value);
+                buffer_pos = 0;
+            } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && buffer[1] == 0x12
+                && value == KEYBOARD_EXTENDED_SET_BYTE) {
+                // continuation of "print screen pressed"
+                // 0xE0 0x12 >0xE0< 0x7C
+                buffer_pos++;
+            }
+        } else if (buffer_pos == 3) {
+            if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && buffer[1] == KEYBOARD_RELEASE_BYTE
+                && buffer[2] == 0x7C
+                && value == 0xE0
+            ) {
+                // continuation of "print screen released"
+                // 0xE0 0xF0 0x7C >0xE0< 0xF0 0x12
+                buffer_pos++;
+            } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && buffer[1] == 0x12
+                && buffer[2] == KEYBOARD_EXTENDED_SET_BYTE
+                && value == 0x7C) {
+                // print screen pressed!
+                // 0xE0 0x12 0xE0 >0x7C<
+                printf("Pressed print screen\n");
+                buffer_pos = 0;
+            } else {
+                buffer_dump_and_panic();
+            }
+        } else if (buffer_pos == 4) {
+            if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && buffer[1] == KEYBOARD_RELEASE_BYTE
+                && buffer[2] == 0x7C
+                && buffer[3] == 0xE0
+                && value == KEYBOARD_RELEASE_BYTE
+            ) {
+                // continuation of "print screen released"
+                // 0xE0 0xF0 0x7C 0xE0 >0xF0< 0x12
+                buffer_pos++;
+            } else {
+                buffer_dump_and_panic();
+            }
+        }
+        else if (buffer_pos == 5) {
+            if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
+                && buffer[1] == KEYBOARD_RELEASE_BYTE
+                && buffer[2] == 0x7C
+                && buffer[3] == 0xE0
+                && buffer[4] == KEYBOARD_RELEASE_BYTE
+                && value == 0x12
+            ) {
+                // print screen released!
+                // 0xE0 0xF0 0x7C 0xE0 0xF0 >0x12<
+                printf("Released print screen\n");
+                buffer_pos = 0;
+            } else {
+                buffer_dump_and_panic();
+            }
+        }
     }
     // If no data is ready, this might be a spurious interrupt - just return
 }
