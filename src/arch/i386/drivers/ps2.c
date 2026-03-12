@@ -1,7 +1,9 @@
 #include <kernel/drivers/ps2.h>
+#include <kernel/drivers/pit.h>
 #include <stdbool.h>
 #include "ps2_defines.h"
 #include "../io.h"
+#include "stdlib.h"
 #include <stdio.h>
 
 static bool initialized = false;
@@ -9,32 +11,84 @@ static bool dual_channel = false;
 static bool port1_online = false;
 static bool port2_online = false;
 
+static bool send_com_timeout = false;
+static bool send_data_timeout = false;
+static bool read_data_timeout = false;
+
+static void ps2_handle_timeout(void *data)
+{
+    char* mode = data;
+    if (mode[0] == 'C') {
+        send_com_timeout = true;
+    }
+    else if (mode[0] == 'W') {
+        send_data_timeout = true;
+    }
+    else if (mode[0] == 'R') {
+        read_data_timeout = true;
+    }
+}
+
 static void ps2_send_com(uint8_t command)
 {
     // Before sending a command, wait for input buffer to be empty
-    while (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER) {
+    send_com_timeout = false;
+    int timeout_id = pit_register_timeout(500, ps2_handle_timeout, "C");
+    while (
+        (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER)
+        && !send_com_timeout) {
         io_wait();
     }
-    outb(PS2_COMMAND_PORT, command);
+    if (send_com_timeout) {
+        // TODO: some more safe handling
+        puts("!!! ps2_send_com timeout");
+        abort();
+    } else {
+        pit_cancel_timeout(timeout_id);
+        outb(PS2_COMMAND_PORT, command);
+    }
 }
 
 static void ps2_send_data(uint8_t command)
 {
     // Before sending a command, wait for input buffer to be empty
-    while (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER) {
-        printf(".");
+    send_data_timeout = false;
+    int timeout_id = pit_register_timeout(500, ps2_handle_timeout, "W");
+    while (
+        (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER)
+        && !send_data_timeout
+    ) {
         io_wait();
     }
-    outb(PS2_DATA_PORT, command);
+    if (send_data_timeout) {
+        // TODO: some more safe handling
+        puts("!!! ps2_send_data timeout");
+        abort();
+    } else {
+        pit_cancel_timeout(timeout_id);
+        outb(PS2_DATA_PORT, command);
+    }
 }
 
 static uint8_t ps2_read_data()
 {
     // Wait for anything to appear in the output buffer
-    while (!(inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER)) {
+    read_data_timeout = false;
+    int timeout_id = pit_register_timeout(500, ps2_handle_timeout, "R");
+    while (
+        !(inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER)
+        && !read_data_timeout
+    ) {
         io_wait();
     }
-    return inb(PS2_DATA_PORT);
+    if (read_data_timeout) {
+        // TODO: some more safe handling
+        puts("!!! ps2_read_data timeout");
+        abort();
+    } else {
+        pit_cancel_timeout(timeout_id);
+        return inb(PS2_DATA_PORT);
+    }
 }
 
 void ps2_init()
