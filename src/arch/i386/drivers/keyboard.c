@@ -3,6 +3,8 @@
 #include <kernel/drivers/ps2.h>
 #include "../idt/pic.h"
 #include "../idt/idt.h"
+#include "../io.h"
+#include "ps2_defines.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -71,10 +73,15 @@ static bool send_command(uint8_t command)
 // This is called when receiving a keyboard interrupt
 static void irq_callback()
 {
-    uint8_t value;
-    if (ps2_read_byte_to_result(&value) == PS2_RESPONSE_OK) {
+
+    // In interrupt context, we cannot use timeouts (PIT cannot fire while
+    // interrupts are disabled) - we must check if data is available immediately
+    // and read it without waiting
+    if (inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER) {
+        uint8_t value = inb(PS2_DATA_PORT);
         printf("  keycode: %#02x\n", value);
     }
+    // If no data is ready, this might be a spurious interrupt - just return
 }
 
 void keyboard_init()
@@ -136,9 +143,9 @@ void keyboard_init()
         puts("Failed to send command to enable scanning");
         abort();
     }
-    // Enable IRQ
-    pic_enable(pic_line);
-    idt_register_irq_handler(pic_line, &irq_callback);
 
+    // Enable IRQ
+    idt_register_irq_handler(pic_line, &irq_callback);
+    pic_enable(pic_line);
     puts("Keyboard initialized");
 }
