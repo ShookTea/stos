@@ -10,7 +10,7 @@
 // Master PIC
 // Programmable Interrupt Timer
 #define PIC_LINE_PIT 0
-#define PIC_LINE_PS2_KEYBOARD 1
+#define PIC_LINE_PS2_PORT_1 1
 // Cascade (used by slave PIC)
 #define PIC_LINE_CASCADE 2
 #define PIC_LINE_COM2 3
@@ -29,7 +29,7 @@
 #define PIC_LINE_FREE_2 10
 // Free for peripherals / SCSI / NIC
 #define PIC_LINE_FREE_3 11
-#define PIC_LINE_PS2_MOUSE 12
+#define PIC_LINE_PS2_PORT_2 12
 // FPU / Coprocessor / Inter-processor
 #define PIC_LINE_FPU 13
 #define PIC_LINE_PRIMARY_ATA 14

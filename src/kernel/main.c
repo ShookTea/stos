@@ -9,7 +9,8 @@
 #include <kernel/paging.h>
 #include <kernel/vmm.h>
 #include <kernel/drivers/pit.h>
-#include "kernel/drivers/ps2.h"
+#include <kernel/drivers/ps2.h>
+#include <kernel/drivers/keyboard.h>
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
 
@@ -42,6 +43,7 @@ void kernel_main()
 
     pit_init();
     ps2_init();
+    keyboard_init();
 
     puts("\n=== Kernel Initialization Complete ===");
     puts("All subsystems initialized and tested successfully");
