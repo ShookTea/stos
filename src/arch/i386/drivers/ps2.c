@@ -11,6 +11,9 @@ static bool dual_channel = false;
 static bool port1_online = false;
 static bool port2_online = false;
 
+static uint8_t port1_device = 0;
+static uint8_t port2_device = 0;
+
 // Those falgs need to be set to volatile,
 // otherwise compiler will assume that they can't change and optimize
 // timeout loops out.
@@ -106,6 +109,93 @@ static uint8_t ps2_read_data()
     } else {
         pit_cancel_timeout(timeout_id);
         return inb(PS2_DATA_PORT);
+    }
+}
+
+/**
+ * Run identification process for selected port
+ * TODO: should do something better than just kernel panic - maybe just
+ * mark the port as not available after all?
+ * TODO: It should probably use a queue service, like drivers for the keyboard
+ */
+static uint16_t ps2_identify_device(bool port2)
+{
+    if (!port2 && !port1_online) {
+        return PS2_DEVICE_TYPE_NOT_DETECTED;
+    }
+    if (port2 && !port2_online) {
+        return PS2_DEVICE_TYPE_NOT_DETECTED;
+    }
+    uint8_t response = 0;
+
+    printf("Identifying PS/2 device at port %d\n", port2 ? 2 : 1);
+
+    // First, disable scanning of the device
+    port2
+        ? ps2_send_byte_port2(PS2_DEVCOM_DISABLE_SCANNING)
+        : ps2_send_byte_port1(PS2_DEVCOM_DISABLE_SCANNING);
+    if (ps2_read_byte_to_result(&response) != PS2_RESPONSE_OK) {
+        puts("Disable scanning failed");
+        abort();
+    }
+    if (response != PS2_DEVCOM_RESPONSE_ACK) {
+        printf("Non-ack response: %#02x\n", response);
+        abort();
+    }
+
+    // Send "identify" commmand
+    port2
+        ? ps2_send_byte_port2(PS2_DEVCOM_IDENTIFY)
+        : ps2_send_byte_port1(PS2_DEVCOM_IDENTIFY);
+    if (ps2_read_byte_to_result(&response) != PS2_RESPONSE_OK) {
+        puts("Identification failed");
+        abort();
+    }
+    if (response != PS2_DEVCOM_RESPONSE_ACK) {
+        printf("Non-ack response: %#02x\n", response);
+        abort();
+    }
+
+    // Read up to two bytes of reply
+    uint16_t identifier = 0;
+    bool first_byte_received = false;
+    if (ps2_read_byte_to_result(&response) == PS2_RESPONSE_OK) {
+        first_byte_received = true;
+        identifier = response;
+    }
+    if (ps2_read_byte_to_result(&response) == PS2_RESPONSE_OK) {
+        identifier = (identifier << 8) | response;
+    }
+    if (!first_byte_received) {
+        return PS2_DEVICE_KEYBOARD_AT;
+    } else {
+        switch (identifier) {
+            case 0x0000:
+                return PS2_DEVICE_MOUSE_STANDARD;
+            case 0x0003:
+                return PS2_DEVICE_MOUSE_SCROLLWHEEL;
+            case 0x0004:
+                return PS2_DEVICE_MOUSE_5BUTTON;
+            case 0xAB83:
+            case 0xABC1:
+                return PS2_DEVICE_KEYBOARD_MF2;
+            case 0xAB84:
+                return PS2_DEVICE_KEYBOARD_SHORT;
+            case 0xAB85:
+                return PS2_DEVICE_KEYBOARD_NCD_N97;
+            case 0xAB86:
+                return PS2_DEVICE_KEYBOARD_122_KEY;
+            case 0xAB90:
+                return PS2_DEVICE_KEYBOARD_JAPANESE_G;
+            case 0xAB91:
+                return PS2_DEVICE_KEYBOARD_JAPANESE_P;
+            case 0xAB92:
+                return PS2_DEVICE_KEYBOARD_JAPANESE_A;
+            case 0xACA1:
+                return PS2_DEVICE_KEYBOARD_NCD_SUN;
+            default:
+                return PS2_DEVICE_TYPE_NOT_RECOGNIZED;
+        }
     }
 }
 
@@ -205,25 +295,10 @@ void ps2_init()
 
     puts("PS/2 port(s) enabled");
 
-    uint8_t result = 0;
-    ps2_send_byte_port1(0xF5);
-    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
-        puts("fail!");
-    }
-    printf("%#02x\n", result);
-    ps2_send_byte_port1(0xEE);
-    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
-        puts("fail!");
-    }
-    printf("%#02x\n", result);
-    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
-        puts("fail!");
-    }
-    printf("%#02x\n", result);
-    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
-        puts("fail!");
-    }
-    printf("%#02x\n", result);
+    port1_device = ps2_identify_device(false);
+    port2_device = ps2_identify_device(true);
+    printf("PS/2 port 1 device type: %#02x\n", port1_device);
+    printf("PS/2 port 2 device type: %#02x\n", port2_device);
 }
 
 /**
