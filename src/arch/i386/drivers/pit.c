@@ -61,6 +61,14 @@ int pit_register_timeout(
     return id;
 }
 
+void pit_cancel_timeout(int id)
+{
+    if (id < 0 || id >= PIT_TIMEOUT_CALLBACK_SIZE) {
+        return;
+    }
+    timeouts[id].active = false;
+}
+
 void pit_init()
 {
     if (initialized) {
