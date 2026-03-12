@@ -45,7 +45,7 @@ void kernel_main()
     puts("All subsystems initialized and tested successfully");
     puts("Entering idle loop...\n");
 
-    pit_init(100);
+    pit_init();
     ps2_init();
 
     while (1) {}

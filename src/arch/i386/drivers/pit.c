@@ -9,6 +9,8 @@
 #define PIT_INPUT_CLOCK_FREQUENCY 1193180
 #define PIT_COMMAND_PORT 0x43
 #define PIT_CHANNEL_0_DATA_PORT 0x40
+// 1 kHz
+#define PIT_FREQUENCY 1000
 
 static uint32_t tick = 0;
 static uint32_t second = 0;
@@ -17,7 +19,7 @@ static bool initialized = false;
 static void pit_timer_callback()
 {
     tick++;
-    if (tick == 100) {
+    if (tick == PIT_FREQUENCY) {
         tick = 0;
         second++;
         printf("Second %d\n", second);
@@ -25,7 +27,7 @@ static void pit_timer_callback()
 
 }
 
-void pit_init(uint32_t frequency)
+void pit_init()
 {
     if (initialized) {
         return;
@@ -37,7 +39,7 @@ void pit_init(uint32_t frequency)
 
     // Calculating divisor. It will be sent in two bytes separately,
     // first low, then high
-    uint32_t divisor = PIT_INPUT_CLOCK_FREQUENCY / frequency;
+    uint32_t divisor = PIT_INPUT_CLOCK_FREQUENCY / PIT_FREQUENCY;
     uint8_t low = (uint8_t)(divisor & 0xFF);
     uint8_t high = (uint8_t)((divisor >> 8) & 0xFF);
 
