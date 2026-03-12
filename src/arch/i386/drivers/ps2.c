@@ -16,6 +16,7 @@ static bool send_data_timeout = false;
 static bool read_data_timeout = false;
 static bool send_byte_port1_timeout = false;
 static bool send_byte_port2_timeout = false;
+static bool read_byte_timeout = false;
 
 static void ps2_handle_timeout(void *data)
 {
@@ -30,6 +31,11 @@ static void ps2_handle_timeout(void *data)
         send_byte_port1_timeout = true;
     } else if (mode[0] == '2') {
         send_byte_port2_timeout = true;
+    } else if (mode[0] == 'B') {
+        read_byte_timeout = true;
+    } else {
+        printf("Invalid timeout: %s\n", mode);
+        abort();
     }
 }
 
@@ -195,6 +201,26 @@ void ps2_init()
     ps2_send_data(ccb);
 
     puts("PS/2 port(s) enabled");
+
+    uint8_t result = 0;
+    ps2_send_byte_port1(0xF5);
+    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
+        puts("fail!");
+    }
+    printf("%#02x\n", result);
+    ps2_send_byte_port1(0xEE);
+    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
+        puts("fail!");
+    }
+    printf("%#02x\n", result);
+    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
+        puts("fail!");
+    }
+    printf("%#02x\n", result);
+    if (ps2_read_byte_to_result(&result) != PS2_RESPONSE_OK) {
+        puts("fail!");
+    }
+    printf("%#02x\n", result);
 }
 
 /**
@@ -205,7 +231,7 @@ void ps2_init()
 uint8_t ps2_send_byte_port1(uint8_t byte)
 {
     if (!port1_online) {
-        return PS2_SEND_BYTE_RESPONSE_UNAVAILABLE;
+        return PS2_RESPONSE_UNAVAILABLE;
     }
     send_byte_port1_timeout = false;
     int timeout_id = ps2_register_timeout("1");
@@ -216,11 +242,11 @@ uint8_t ps2_send_byte_port1(uint8_t byte)
         io_wait();
     }
     if (send_byte_port1_timeout) {
-        return PS2_SEND_BYTE_RESPONSE_TIMEOUT;
+        return PS2_RESPONSE_TIMEOUT;
     } else {
         pit_cancel_timeout(timeout_id);
         outb(PS2_DATA_PORT, byte);
-        return PS2_SEND_BYTE_RESPONSE_OK;
+        return PS2_RESPONSE_OK;
     }
 }
 
@@ -232,7 +258,7 @@ uint8_t ps2_send_byte_port1(uint8_t byte)
 uint8_t ps2_send_byte_port2(uint8_t byte)
 {
     if (!port2_online) {
-        return PS2_SEND_BYTE_RESPONSE_UNAVAILABLE;
+        return PS2_RESPONSE_UNAVAILABLE;
     }
     ps2_send_com(PS2_COM_SEND_BYTE_TO_PORT_2);
     send_byte_port2_timeout = false;
@@ -244,10 +270,36 @@ uint8_t ps2_send_byte_port2(uint8_t byte)
         io_wait();
     }
     if (send_byte_port2_timeout) {
-        return PS2_SEND_BYTE_RESPONSE_TIMEOUT;
+        return PS2_RESPONSE_TIMEOUT;
     } else {
         pit_cancel_timeout(timeout_id);
         outb(PS2_DATA_PORT, byte);
-        return PS2_SEND_BYTE_RESPONSE_OK;
+        return PS2_RESPONSE_OK;
+    }
+}
+
+/**
+ * TODO:
+ * So far it looks exactly the same as ps2_read_data, except for how it handles
+ * returns. Maybe it can be simplified?
+ */
+uint8_t ps2_read_byte_to_result(uint8_t* result)
+{
+    // Wait for anything to appear in the output buffer
+    read_byte_timeout = false;
+    int timeout_id = ps2_register_timeout("B");
+    while (
+        !(inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER)
+        && !read_byte_timeout
+    ) {
+        // printf("");
+        io_wait();
+    }
+    if (read_byte_timeout) {
+        return PS2_RESPONSE_TIMEOUT;
+    } else {
+        pit_cancel_timeout(timeout_id);
+        *result = inb(PS2_DATA_PORT);
+        return PS2_RESPONSE_OK;
     }
 }
