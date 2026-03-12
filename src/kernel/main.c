@@ -40,13 +40,12 @@ void kernel_main()
     vmm_run_all_tests();
     memory_run_all_tests();
 
+    pit_init();
+    ps2_init();
 
     puts("\n=== Kernel Initialization Complete ===");
     puts("All subsystems initialized and tested successfully");
     puts("Entering idle loop...\n");
-
-    pit_init();
-    ps2_init();
 
     while (1) {}
 }

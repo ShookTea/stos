@@ -14,26 +14,35 @@ static bool port2_online = false;
 static bool send_com_timeout = false;
 static bool send_data_timeout = false;
 static bool read_data_timeout = false;
+static bool send_byte_port1_timeout = false;
+static bool send_byte_port2_timeout = false;
 
 static void ps2_handle_timeout(void *data)
 {
     char* mode = data;
     if (mode[0] == 'C') {
         send_com_timeout = true;
-    }
-    else if (mode[0] == 'W') {
+    } else if (mode[0] == 'W') {
         send_data_timeout = true;
-    }
-    else if (mode[0] == 'R') {
+    } else if (mode[0] == 'R') {
         read_data_timeout = true;
+    } else if (mode[0] == '1') {
+        send_byte_port1_timeout = true;
+    } else if (mode[0] == '2') {
+        send_byte_port2_timeout = true;
     }
+}
+
+static int ps2_register_timeout(char* code)
+{
+    return pit_register_timeout(500, ps2_handle_timeout, code);
 }
 
 static void ps2_send_com(uint8_t command)
 {
     // Before sending a command, wait for input buffer to be empty
     send_com_timeout = false;
-    int timeout_id = pit_register_timeout(500, ps2_handle_timeout, "C");
+    int timeout_id = ps2_register_timeout("C");
     while (
         (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER)
         && !send_com_timeout) {
@@ -53,7 +62,7 @@ static void ps2_send_data(uint8_t command)
 {
     // Before sending a command, wait for input buffer to be empty
     send_data_timeout = false;
-    int timeout_id = pit_register_timeout(500, ps2_handle_timeout, "W");
+    int timeout_id = ps2_register_timeout("W");
     while (
         (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER)
         && !send_data_timeout
@@ -74,7 +83,7 @@ static uint8_t ps2_read_data()
 {
     // Wait for anything to appear in the output buffer
     read_data_timeout = false;
-    int timeout_id = pit_register_timeout(500, ps2_handle_timeout, "R");
+    int timeout_id = ps2_register_timeout("R");
     while (
         !(inb(PS2_STATUS_PORT) & PS2_STATUS_OUTPUT_BUFFER)
         && !read_data_timeout
@@ -186,4 +195,59 @@ void ps2_init()
     ps2_send_data(ccb);
 
     puts("PS/2 port(s) enabled");
+}
+
+/**
+ * TODO:
+ * So far it looks exactly the same as ps2_send_data, except it returns status
+ * code on timeout instead of aborting. Maybe it should be cleaned up?
+ */
+uint8_t ps2_send_byte_port1(uint8_t byte)
+{
+    if (!port1_online) {
+        return PS2_SEND_BYTE_RESPONSE_UNAVAILABLE;
+    }
+    send_byte_port1_timeout = false;
+    int timeout_id = ps2_register_timeout("1");
+    while (
+        (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER)
+        && !send_byte_port1_timeout
+    ) {
+        io_wait();
+    }
+    if (send_byte_port1_timeout) {
+        return PS2_SEND_BYTE_RESPONSE_TIMEOUT;
+    } else {
+        pit_cancel_timeout(timeout_id);
+        outb(PS2_DATA_PORT, byte);
+        return PS2_SEND_BYTE_RESPONSE_OK;
+    }
+}
+
+/**
+ * This one is more complex than sending to the first port: we first need
+ * to send a command to controller saying that the byte should be sent to
+ * the second port.
+ */
+uint8_t ps2_send_byte_port2(uint8_t byte)
+{
+    if (!port2_online) {
+        return PS2_SEND_BYTE_RESPONSE_UNAVAILABLE;
+    }
+    ps2_send_com(PS2_COM_SEND_BYTE_TO_PORT_2);
+    send_byte_port2_timeout = false;
+    int timeout_id = ps2_register_timeout("2");
+    while (
+        (inb(PS2_STATUS_PORT) & PS2_STATUS_INPUT_BUFFER)
+        && !send_byte_port2_timeout
+    ) {
+        io_wait();
+    }
+    if (send_byte_port2_timeout) {
+        return PS2_SEND_BYTE_RESPONSE_TIMEOUT;
+    } else {
+        pit_cancel_timeout(timeout_id);
+        outb(PS2_DATA_PORT, byte);
+        return PS2_SEND_BYTE_RESPONSE_OK;
+    }
 }

@@ -30,4 +30,8 @@
 #define PS2_COM_TEST_PORT_1 0xAB
 #define PS2_COM_TEST_PORT_2 0xA9
 
+// Tells the controller that next byte in data port should be sent to the
+// second port instead of the first one.
+#define PS2_COM_SEND_BYTE_TO_PORT_2 0xD4
+
 #endif
