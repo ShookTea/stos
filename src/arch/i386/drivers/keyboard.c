@@ -87,6 +87,21 @@ static void buffer_dump_and_panic()
     abort();
 }
 
+static void key_handler(
+    uint8_t byte,
+    bool release,
+    bool extended,
+    bool printscreen
+) {
+    printf(
+        "%10s %c%#02x%s\n",
+        release ? "released" : "pressed",
+        extended ? 'E' : 'S',
+        byte,
+        printscreen ? " (print screen)" : ""
+    );
+}
+
 // This is called when receiving a keyboard interrupt
 static void irq_callback()
 {
@@ -103,12 +118,13 @@ static void irq_callback()
                 buffer_pos++;
             } else {
                 // It's a "simple" key press - print it!
-                printf("Pressed S %#02x\n", value);
+                key_handler(value, false, false, false);
+                buffer_pos = 0;
             }
         } else if (buffer_pos == 1) {
             if (buffer[0] == KEYBOARD_RELEASE_BYTE) {
                 // current value is always the "simple" key, but released
-                printf("Released S %#02x\n", value);
+                key_handler(value, true, false, false);
                 buffer_pos = 0;
             } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
                 && value == KEYBOARD_RELEASE_BYTE) {
@@ -120,7 +136,7 @@ static void irq_callback()
                 buffer_pos++;
             } else {
                 // Pressed "extended set" key
-                printf("Pressed E %#02x\n", value);
+                key_handler(value, false, true, false);
                 buffer_pos = 0;
             }
         } else if (buffer_pos == 2) {
@@ -135,7 +151,7 @@ static void irq_callback()
             } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
                 && buffer[1] == KEYBOARD_RELEASE_BYTE) {
                 // Released "extended set" key
-                printf("Released E %#02x\n", value);
+                key_handler(value, true, true, false);
                 buffer_pos = 0;
             } else if (buffer[0] == KEYBOARD_EXTENDED_SET_BYTE
                 && buffer[1] == 0x12
@@ -159,7 +175,7 @@ static void irq_callback()
                 && value == 0x7C) {
                 // print screen pressed!
                 // 0xE0 0x12 0xE0 >0x7C<
-                printf("Pressed print screen\n");
+                key_handler(0, false, false, true);
                 buffer_pos = 0;
             } else {
                 buffer_dump_and_panic();
@@ -188,7 +204,7 @@ static void irq_callback()
             ) {
                 // print screen released!
                 // 0xE0 0xF0 0x7C 0xE0 0xF0 >0x12<
-                printf("Released print screen\n");
+                key_handler(0, true, false, true);
                 buffer_pos = 0;
             } else {
                 buffer_dump_and_panic();
