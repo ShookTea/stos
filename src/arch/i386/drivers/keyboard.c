@@ -2,6 +2,7 @@
 #include <kernel/drivers/keyboard.h>
 #include <kernel/drivers/ps2.h>
 #include "../idt/pic.h"
+#include "../idt/idt.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -67,6 +68,12 @@ static bool send_command(uint8_t command)
     return false;
 }
 
+// This is called when receiving a keyboard interrupt
+static void irq_callback()
+{
+    puts("IRQ callback");
+}
+
 void keyboard_init()
 {
     if (initialized) {
@@ -117,14 +124,19 @@ void keyboard_init()
     }
     puts("Scan code set = 2");
 
+    uint8_t pic_line = keyboard_on_port2
+        ? PIC_LINE_PS2_PORT_2
+        : PIC_LINE_PS2_PORT_1;
+
     // Enabling IRQ
-    pic_enable(keyboard_on_port2 ? PIC_LINE_PS2_PORT_2 : PIC_LINE_PS2_PORT_1);
+    pic_enable(pic_line);
+    idt_register_irq_handler(pic_line, &irq_callback);
+
     // Enable scanning
     if (!send_command(COM_ENABLE_SCANNING)) {
         puts("Failed to send command to enable scanning");
-        pic_disable(
-            keyboard_on_port2 ? PIC_LINE_PS2_PORT_2 : PIC_LINE_PS2_PORT_1
-        );
+        pic_disable(pic_line);
+        idt_register_irq_handler(pic_line, NULL);
         abort();
     }
     puts("Keyboard initialized");
