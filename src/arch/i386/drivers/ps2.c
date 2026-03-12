@@ -14,6 +14,16 @@ static bool port2_online = false;
 static uint8_t port1_device = 0;
 static uint8_t port2_device = 0;
 
+uint8_t ps2_get_port1_device_type()
+{
+    return port1_device;
+}
+
+uint8_t ps2_get_port2_device_type()
+{
+    return port2_device;
+}
+
 // Those falgs need to be set to volatile,
 // otherwise compiler will assume that they can't change and optimize
 // timeout loops out.
