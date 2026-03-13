@@ -16,8 +16,8 @@ typedef struct {
     bool r_ctrl_pressed;
     bool l_alt_pressed;
     bool r_alt_pressed;
-    bool l_gui_pressed;
-    bool r_gui_pressed;
+    bool l_system_pressed;
+    bool r_system_pressed;
     bool caps_lock_on;
     bool num_lock_on;
     bool scroll_lock_on;

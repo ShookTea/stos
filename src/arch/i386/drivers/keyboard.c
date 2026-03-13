@@ -19,6 +19,18 @@
 static bool keyboard_on_port2 = false;
 static bool initialized = false;
 
+static bool caps_lock_on = false;
+static bool num_lock_on = false;
+static bool scroll_lock_on = false;
+static bool l_shift_pressed = false;
+static bool r_shift_pressed = false;
+static bool l_ctrl_pressed = false;
+static bool r_ctrl_pressed = false;
+static bool l_alt_pressed = false;
+static bool r_alt_pressed = false;
+static bool l_system_pressed = false;
+static bool r_system_pressed = false;
+
 static uint8_t buffer[6];
 static uint8_t buffer_pos = 0;
 
@@ -222,6 +234,27 @@ static uint8_t get_key_code(
     }
 }
 
+static keyboard_event_t build_keyboard_event(uint8_t keycode, bool release)
+{
+    keyboard_event_t event = {
+        .key_code = keycode,
+        .ascii = 0,
+        .pressed = !release,
+        .l_shift_pressed = l_shift_pressed,
+        .r_shift_pressed = r_shift_pressed,
+        .l_ctrl_pressed = l_ctrl_pressed,
+        .r_ctrl_pressed = r_ctrl_pressed,
+        .l_alt_pressed = l_alt_pressed,
+        .r_alt_pressed = r_alt_pressed,
+        .l_system_pressed = l_system_pressed,
+        .r_system_pressed = r_system_pressed,
+        .caps_lock_on = caps_lock_on,
+        .num_lock_on = num_lock_on,
+        .scroll_lock_on = scroll_lock_on,
+    };
+    return event;
+}
+
 static void key_handler(
     uint8_t byte,
     bool release,
@@ -229,13 +262,43 @@ static void key_handler(
     bool printscreen
 ) {
     uint8_t keycode = get_key_code(byte, extended, printscreen);
+    if (!release && keycode == KCODE_CAPS_LOCK) {
+        caps_lock_on = !caps_lock_on;
+    } else if (!release && keycode == KCODE_NUM_LOCK) {
+        num_lock_on = !num_lock_on;
+    } else if (!release && keycode == KCODE_SCROLL_LOCK) {
+        scroll_lock_on = !scroll_lock_on;
+    } else if (keycode == KCODE_LEFT_SHIFT) {
+        l_shift_pressed = !release;
+    } else if (keycode == KCODE_RIGHT_SHIFT) {
+        r_shift_pressed = !release;
+    } else if (keycode == KCODE_LEFT_ALT) {
+        l_alt_pressed = !release;
+    } else if (keycode == KCODE_RIGHT_ALT) {
+        r_alt_pressed = !release;
+    } else if (keycode == KCODE_LEFT_CTRL) {
+        l_ctrl_pressed = !release;
+    } else if (keycode == KCODE_RIGHT_CTRL) {
+        r_ctrl_pressed = !release;
+    } else if (keycode == KCODE_LEFT_SYSTEM) {
+        l_system_pressed = !release;
+    } else if (keycode == KCODE_RIGHT_SYSTEM) {
+        r_system_pressed = !release;
+    }
+    keyboard_event_t evt = build_keyboard_event(keycode, release);
     printf(
-        "%10s %#02x - %c%#02x%s\n",
+        "%10s %#02x ls=%d rs=%d lc=%d rc=%d la=%d ra=%d CAPS=%d NUM=%d SCR=%d\n",
         release ? "released" : "pressed",
-        keycode,
-        extended ? 'E' : 'S',
-        byte,
-        printscreen ? " (print screen)" : ""
+        evt.key_code,
+        evt.l_shift_pressed,
+        evt.r_shift_pressed,
+        evt.l_ctrl_pressed,
+        evt.r_ctrl_pressed,
+        evt.l_alt_pressed,
+        evt.r_alt_pressed,
+        evt.caps_lock_on,
+        evt.num_lock_on,
+        evt.scroll_lock_on
     );
 }
 
