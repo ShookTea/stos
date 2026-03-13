@@ -3,6 +3,7 @@
 #include <kernel/drivers/keyboard.h>
 #include <stdio.h>
 #include <kernel/tty.h>
+#include <string.h>
 
 #define MAX_COMMAND_LENGTH 64
 
@@ -15,6 +16,7 @@ static void print_prompt_and_enable()
     printf("# ");
     tty_enable_cursor(0, 15);
     command_length = 0;
+    memset(command_buffer, 0, MAX_COMMAND_LENGTH);
     accept_commands = true;
 }
 
@@ -26,8 +28,7 @@ static void handle_command_sent()
 
     // TODO: actually run command
     puts("");
-    printf("Running command ");
-    tty_write(command_buffer, command_length);
+    printf("Running command %s\n", command_buffer);
     puts("");
 
     // Re-enable prompt
@@ -51,7 +52,7 @@ static void handle_key_event(keyboard_event_t evt)
     } else if (evt.key_code == KCODE_ENTER
         || evt.key_code == KCODE_NUMPAD_ENTER) {
             handle_command_sent();
-    } else if (command_length < MAX_COMMAND_LENGTH) {
+    } else if (command_length < (MAX_COMMAND_LENGTH - 1)) {
         putchar(evt.ascii);
         command_buffer[command_length] = evt.ascii;
         command_length++;
