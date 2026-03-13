@@ -234,11 +234,95 @@ static uint8_t get_key_code(
     }
 }
 
+static char get_ascii_code(uint8_t keycode)
+{
+    bool shift = l_shift_pressed || r_shift_pressed;
+    bool upper_case = caps_lock_on ^ shift;
+
+    switch (keycode) {
+        case KCODE_1: return shift ? '!' : '1';
+        case KCODE_2: return shift ? '@' : '2';
+        case KCODE_3: return shift ? '#' : '3';
+        case KCODE_4: return shift ? '$' : '4';
+        case KCODE_5: return shift ? '%' : '5';
+        case KCODE_6: return shift ? '^' : '6';
+        case KCODE_7: return shift ? '&' : '7';
+        case KCODE_8: return shift ? '*' : '8';
+        case KCODE_9: return shift ? '(' : '9';
+        case KCODE_0: return shift ? ')' : '0';
+
+        case KCODE_GRAVE_ACCENT: return shift ? '~' : '`';
+        case KCODE_MINUS: return shift ? '_' : '-';
+        case KCODE_EQUALS: return shift ? '+' : '=';
+        case KCODE_BACKSLASH: return shift ? '|' : '\\';
+        case KCODE_LEFT_BRACKET: return shift ? '{' : '[';
+        case KCODE_RIGHT_BRACKET: return shift ? '}' : ']';
+        case KCODE_SEMICOLON: return shift ? ':' : ';';
+        case KCODE_APOSTROPHE: return shift ? '"' : '\'';
+        case KCODE_COMMA: return shift ? '<' : ',';
+        case KCODE_FULL_STOP: return shift ? '>' : '.';
+        case KCODE_SLASH: return shift ? '?' : '/';
+
+        case KCODE_Q: return upper_case ? 'Q' : 'q';
+        case KCODE_W: return upper_case ? 'W' : 'w';
+        case KCODE_E: return upper_case ? 'E' : 'e';
+        case KCODE_R: return upper_case ? 'R' : 'r';
+        case KCODE_T: return upper_case ? 'T' : 't';
+        case KCODE_Y: return upper_case ? 'Y' : 'y';
+        case KCODE_U: return upper_case ? 'U' : 'u';
+        case KCODE_I: return upper_case ? 'I' : 'i';
+        case KCODE_O: return upper_case ? 'O' : 'o';
+        case KCODE_P: return upper_case ? 'P' : 'p';
+        case KCODE_A: return upper_case ? 'A' : 'a';
+        case KCODE_S: return upper_case ? 'S' : 's';
+        case KCODE_D: return upper_case ? 'D' : 'd';
+        case KCODE_F: return upper_case ? 'F' : 'f';
+        case KCODE_G: return upper_case ? 'G' : 'g';
+        case KCODE_H: return upper_case ? 'H' : 'h';
+        case KCODE_J: return upper_case ? 'J' : 'j';
+        case KCODE_K: return upper_case ? 'K' : 'k';
+        case KCODE_L: return upper_case ? 'L' : 'l';
+        case KCODE_Z: return upper_case ? 'Z' : 'z';
+        case KCODE_X: return upper_case ? 'X' : 'x';
+        case KCODE_C: return upper_case ? 'C' : 'c';
+        case KCODE_V: return upper_case ? 'V' : 'v';
+        case KCODE_B: return upper_case ? 'B' : 'b';
+        case KCODE_N: return upper_case ? 'N' : 'n';
+        case KCODE_M: return upper_case ? 'M' : 'm';
+
+        case KCODE_NUMPAD_STAR: return '*';
+        case KCODE_NUMPAD_MINUS: return '-';
+        case KCODE_NUMPAD_PLUS: return '+';
+        case KCODE_NUMPAD_SLASH: return '/';
+        // TODO: instead of checking it here, we should probably return
+        // different KCODE_ when num lock is off
+        case KCODE_NUMPAD_0: return num_lock_on ? '0' : 0;
+        case KCODE_NUMPAD_1: return num_lock_on ? '1' : 0;
+        case KCODE_NUMPAD_2: return num_lock_on ? '2' : 0;
+        case KCODE_NUMPAD_3: return num_lock_on ? '3' : 0;
+        case KCODE_NUMPAD_4: return num_lock_on ? '4' : 0;
+        case KCODE_NUMPAD_5: return num_lock_on ? '5' : 0;
+        case KCODE_NUMPAD_6: return num_lock_on ? '6' : 0;
+        case KCODE_NUMPAD_7: return num_lock_on ? '7' : 0;
+        case KCODE_NUMPAD_8: return num_lock_on ? '8' : 0;
+        case KCODE_NUMPAD_9: return num_lock_on ? '9' : 0;
+        case KCODE_NUMPAD_DEL: return num_lock_on ? ',' : 0x7F;
+
+        case KCODE_BACKSPACE: return '\b';
+        case KCODE_TAB: return '\t';
+        case KCODE_DELETE: return 0x7F;
+        case KCODE_ENTER: return '\n';
+        case KCODE_NUMPAD_ENTER: return '\n';
+        case KCODE_SPACE: return ' ';
+    }
+    return 0;
+}
+
 static keyboard_event_t build_keyboard_event(uint8_t keycode, bool release)
 {
     keyboard_event_t event = {
         .key_code = keycode,
-        .ascii = 0,
+        .ascii = get_ascii_code(keycode),
         .pressed = !release,
         .l_shift_pressed = l_shift_pressed,
         .r_shift_pressed = r_shift_pressed,
@@ -286,20 +370,9 @@ static void key_handler(
         r_system_pressed = !release;
     }
     keyboard_event_t evt = build_keyboard_event(keycode, release);
-    printf(
-        "%10s %#02x ls=%d rs=%d lc=%d rc=%d la=%d ra=%d CAPS=%d NUM=%d SCR=%d\n",
-        release ? "released" : "pressed",
-        evt.key_code,
-        evt.l_shift_pressed,
-        evt.r_shift_pressed,
-        evt.l_ctrl_pressed,
-        evt.r_ctrl_pressed,
-        evt.l_alt_pressed,
-        evt.r_alt_pressed,
-        evt.caps_lock_on,
-        evt.num_lock_on,
-        evt.scroll_lock_on
-    );
+    if (evt.ascii != 0 && evt.pressed) {
+        putchar(evt.ascii);
+    }
 }
 
 // This is called when receiving a keyboard interrupt
