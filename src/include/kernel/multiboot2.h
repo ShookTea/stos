@@ -74,10 +74,38 @@ typedef struct {
     multiboot_tag_memory_map_entry_t entries[0];
 } multiboot_tag_memory_map_t;
 
+// Memory map entry structure (saved internally)
+typedef struct {
+    uint32_t base_low;
+    uint32_t base_high;
+    uint32_t length_low;
+    uint32_t length_high;
+    uint32_t type;
+} saved_mmap_entry_t;
+
 /**
  * Store multiboot2 information
  */
 void multiboot2_init(multiboot_info_t*);
+
+/**
+ * Get the maximum usable memory address (calculated from memory map)
+ * @return Maximum physical memory address
+ */
+uint32_t multiboot2_get_max_memory(void);
+
+/**
+ * Get the number of memory map entries
+ * @return Number of memory map entries
+ */
+uint32_t multiboot2_get_mmap_count(void);
+
+/**
+ * Get a specific memory map entry
+ * @param index Index of the memory map entry
+ * @return Pointer to the memory map entry, or NULL if index is out of bounds
+ */
+const saved_mmap_entry_t* multiboot2_get_mmap_entry(uint32_t index);
 
 void multiboot2_print_stats();
 

@@ -25,14 +25,11 @@
  * Initialize the physical memory manager using multiboot2 memory map
  *
  * This function:
- * - Parses the multiboot2 memory map
  * - Identifies available RAM regions
  * - Sets up the bitmap to track page frames
  * - Marks kernel and reserved regions as used
- *
- * @param mbi Pointer to multiboot2 info structure
  */
-void pmm_init(multiboot_info_t* mbi);
+void pmm_init();
 
 /**
  * Allocate a single physical page frame (4KB)

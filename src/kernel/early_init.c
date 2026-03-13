@@ -49,7 +49,7 @@ void early_init(uint32_t magic, multiboot_info_t* mbi)
     // Initialize Physical Memory Manager
     // This must happen before paging because paging_init() needs
     // to allocate page tables from PMM
-    pmm_init(mbi);
+    pmm_init();
 
     // Initialize and enable paging
     // This will:

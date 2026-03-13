@@ -13,20 +13,6 @@ static uint32_t* pmm_bitmap = NULL;
 static uint32_t pmm_bitmap_size = 0;  // Size in uint32_t elements
 static uint32_t pmm_total_pages = 0;
 static uint32_t pmm_used_pages = 0;
-static uint32_t pmm_max_memory = 0;    // Maximum usable memory address
-
-// Saved memory map entries (to avoid corruption after bitmap initialization)
-#define MAX_MMAP_ENTRIES 16
-typedef struct {
-    uint32_t base_low;
-    uint32_t base_high;
-    uint32_t length_low;
-    uint32_t length_high;
-    uint32_t type;
-} saved_mmap_entry_t;
-
-static saved_mmap_entry_t saved_mmap[MAX_MMAP_ENTRIES];
-static uint32_t saved_mmap_count = 0;
 
 // Helper functions for bitmap operations
 
@@ -122,76 +108,18 @@ static uint32_t bitmap_find_free_pages(size_t count)
     return (uint32_t)-1;
 }
 
-void pmm_init(multiboot_info_t* mbi)
+void pmm_init()
 {
     printf("Initializing Physical Memory Manager...\n");
 
-    // Find the multiboot memory map tag
-    multiboot_tag_memory_map_t* mmap_tag = NULL;
-    uint64_t mb2_end = mbi->total_size + (uint32_t)mbi;
-    multiboot_tag_t* tag = (multiboot_tag_t*)((uint8_t*)mbi + 8);
+    // Get memory information from multiboot2 module
+    uint32_t pmm_max_memory = multiboot2_get_max_memory();
+    uint32_t mmap_count = multiboot2_get_mmap_count();
 
-    while ((uint32_t)tag < mb2_end) {
-        if (tag->type == MULTIBOOT2_TAG_TYPE_MEMORY_MAP) {
-            mmap_tag = (multiboot_tag_memory_map_t*)tag;
-            break;
-        }
-        // Move to next tag (8-byte aligned)
-        uintptr_t next = ((uintptr_t)tag + tag->size + 7) & ~7ULL;
-        tag = (multiboot_tag_t*)next;
-    }
-
-    if (mmap_tag == NULL) {
-        printf("ERROR: No memory map found in multiboot info\n");
+    if (pmm_max_memory == 0) {
+        printf("ERROR: No usable memory found\n");
         return;
     }
-
-    // Save memory map entries before we potentially overwrite them
-    uint32_t entries_count = (mmap_tag->size - 16) / mmap_tag->entry_size;
-    printf("Memory map entries: %u\n", entries_count);
-
-    if (entries_count > MAX_MMAP_ENTRIES) {
-        printf("WARNING: Too many memory map entries, truncating to %d\n", MAX_MMAP_ENTRIES);
-        entries_count = MAX_MMAP_ENTRIES;
-    }
-
-    saved_mmap_count = entries_count;
-    for (uint32_t i = 0; i < entries_count; i++) {
-        multiboot_tag_memory_map_entry_t* entry = &mmap_tag->entries[i];
-        saved_mmap[i].base_low = entry->base_addr_low;
-        saved_mmap[i].base_high = entry->base_addr_high;
-        saved_mmap[i].length_low = entry->length_low;
-        saved_mmap[i].length_high = entry->length_high;
-        saved_mmap[i].type = entry->type;
-    }
-
-    // Find the maximum usable memory address
-    pmm_max_memory = 0;
-    for (uint32_t i = 0; i < entries_count; i++) {
-        saved_mmap_entry_t* entry = &saved_mmap[i];
-
-        // Only consider available RAM (type 1)
-        if (entry->type == 1) {
-            // Calculate end address (base + length)
-            uint64_t base = ((uint64_t)entry->base_high << 32) |
-                           entry->base_low;
-            uint64_t length = ((uint64_t)entry->length_high << 32) |
-                             entry->length_low;
-            uint64_t end = base + length;
-
-            // We only support 32-bit addressing for now
-            if (end > 0xFFFFFFFF) {
-                end = 0xFFFFFFFF;
-            }
-
-            if ((uint32_t)end > pmm_max_memory) {
-                pmm_max_memory = (uint32_t)end;
-            }
-        }
-    }
-
-    printf("Maximum memory address: %#x (%u MB)\n",
-           pmm_max_memory, pmm_max_memory / (1024 * 1024));
 
     // Calculate number of pages
     pmm_total_pages = pmm_max_memory / PMM_PAGE_SIZE;
@@ -215,9 +143,12 @@ void pmm_init(multiboot_info_t* mbi)
     memset(pmm_bitmap, 0xFF, bitmap_bytes);
     pmm_used_pages = pmm_total_pages;
 
-    // Now mark available regions as free using saved memory map
-    for (uint32_t i = 0; i < saved_mmap_count; i++) {
-        saved_mmap_entry_t* entry = &saved_mmap[i];
+    // Now mark available regions as free using memory map from multiboot2
+    for (uint32_t i = 0; i < mmap_count; i++) {
+        const saved_mmap_entry_t* entry = multiboot2_get_mmap_entry(i);
+        if (entry == NULL) {
+            break;
+        }
 
         if (entry->type == 1) {  // Available RAM
             uint64_t base = ((uint64_t)entry->base_high << 32) |
