@@ -125,12 +125,12 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
     multiboot2_process_memory_map();
 }
 
-uint32_t multiboot2_get_max_memory(void)
+uint32_t multiboot2_get_max_memory()
 {
     return pmm_max_memory;
 }
 
-uint32_t multiboot2_get_mmap_count(void)
+uint32_t multiboot2_get_mmap_count()
 {
     return saved_mmap_count;
 }
@@ -148,4 +148,40 @@ void multiboot2_print_stats()
     printf("Bootloader name: %s\n", boot_loader_name);
     printf("Boot command: %s\n", boot_command_line);
     printf("Load base address: %#x\n", load_base_addr);
+    puts("Memory map:");
+    for (uint32_t i = 0; i < multiboot2_get_mmap_count(); i++) {
+        const saved_mmap_entry_t* entry = multiboot2_get_mmap_entry(i);
+        char* type = "????";
+        switch (entry->type) {
+            case 1:
+                type = "avlb"; // Available
+                break;
+            case 2:
+                type = "rsvd"; // Reserved
+                break;
+            case 3:
+                type = "acpi"; // ACPI reclaimable
+                break;
+            case 4:
+                type = " nvs"; // NVS
+                break;
+            case 5:
+                type = "bram"; // bad RAM
+                break;
+        }
+
+        uint64_t base = ((uint64_t)entry->base_high << 32) |
+                       entry->base_low;
+        uint64_t length = ((uint64_t)entry->length_high << 32) |
+                         entry->length_low;
+        uint64_t end = base + length;
+        printf(
+            "  [%03d] %s %#016llx : %#016llx (%d KiB)\n",
+            i,
+            type,
+            base,
+            end,
+            length / 1024
+        );
+    }
 }
