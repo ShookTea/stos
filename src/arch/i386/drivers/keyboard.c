@@ -20,7 +20,7 @@ static bool keyboard_on_port2 = false;
 static bool initialized = false;
 
 static bool caps_lock_on = false;
-static bool num_lock_on = false;
+static bool num_lock_on = true;
 static bool scroll_lock_on = false;
 static bool l_shift_pressed = false;
 static bool r_shift_pressed = false;
