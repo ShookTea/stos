@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <kernel/tty.h>
 #include <string.h>
+#include <kernel/pmm.h>
+#include <kernel/paging.h>
+#include <kernel/vmm.h>
 
 #define MAX_COMMAND_LENGTH 64
 
@@ -28,8 +31,25 @@ static void handle_command_sent()
 
     puts("");
     if (strncmp(command_buffer, "help", 4) == 0) {
-        puts("Help function");
-    } else {
+        puts("Available commands:");
+        puts("  pmm_stats      - Prints physical memory statistics");
+        puts("  pag_stats      - Prints paging stats");
+        puts("  vmm_stats      - Prints virtual memory statistics");
+        puts("  vmm_memory_map - Prints detailed memory map");
+    }
+    else if (strncmp(command_buffer, "pmm_stats", 9) == 0) {
+        pmm_print_stats();
+    }
+    else if (strncmp(command_buffer, "pag_stats", 9) == 0) {
+        paging_print_stats();
+    }
+    else if (strncmp(command_buffer, "vmm_stats", 9) == 0) {
+        vmm_print_stats();
+    }
+    else if (strncmp(command_buffer, "vmm_memory_map", 14) == 0) {
+        vmm_print_memory_map();
+    }
+    else {
         printf("Unrecognized command: %s\n", command_buffer);
     }
 
