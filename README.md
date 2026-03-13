@@ -43,10 +43,11 @@ then prints to the command line.
 - GDT, interrupts, IRQ
 - Paging (hopefully)
 - PIT driver (so far doesn't do anything useful though)
+- PS/2 driver
+- PS/2 keyboard driver
 
 ### Short-term todo list
 
-- PS/2 driver
-- PS/2 keyboard driver
+- Debugging command
 - Better physical memory allocation (buddy)
 - kmalloc/kfree
