@@ -63,19 +63,29 @@ void tty_putchar(char c) {
             tty_scroll();
             terminal_row = VGA_HEIGHT - 1;
         }
-        // tty_update_cursor(terminal_column, terminal_row);
+        tty_update_cursor(terminal_column, terminal_row);
         return;
     }
 
-    tty_putentryat(c, terminal_color, terminal_column, terminal_row);
-    if (++terminal_column == VGA_WIDTH) {
-        terminal_column = 0;
-        if (++terminal_row >= VGA_HEIGHT) {
-            tty_scroll();
-            terminal_row = VGA_HEIGHT - 1;
+    // Backspace received
+    if (c == '\b') {
+        if (terminal_column == 0) {
+            terminal_column = VGA_WIDTH - 1;
+            terminal_row--;
+        } else {
+            terminal_column--;
+        }
+    } else {
+        tty_putentryat(c, terminal_color, terminal_column, terminal_row);
+        if (++terminal_column == VGA_WIDTH) {
+            terminal_column = 0;
+            if (++terminal_row >= VGA_HEIGHT) {
+                tty_scroll();
+                terminal_row = VGA_HEIGHT - 1;
+            }
         }
     }
-    // tty_update_cursor(terminal_column, terminal_row);
+    tty_update_cursor(terminal_column, terminal_row);
 }
 
 void tty_write(const char* data, size_t size)
