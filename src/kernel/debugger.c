@@ -2,6 +2,7 @@
 
 #include <kernel/drivers/keyboard.h>
 #include <stdio.h>
+#include <kernel/tty.h>
 
 static char command_buffer[64];
 static uint8_t command_length = 0;
@@ -19,4 +20,5 @@ void debugger_init()
     puts("");
     puts("kernel debugger");
     printf("# ");
+    tty_enable_cursor(0, 15);
 }
