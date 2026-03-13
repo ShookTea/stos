@@ -13,18 +13,12 @@
 #include <kernel/drivers/keyboard.h>
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
+#include "debugger.h"
 
 
 #if !defined(__i386__)
 #error "This kernel needs to be compiled with a ix86-elf compiler"
 #endif
-
-static void handle_key_event(keyboard_event_t evt)
-{
-    if (evt.pressed && evt.ascii) {
-        putchar(evt.ascii);
-    }
-}
 
 void kernel_main()
 {
@@ -55,7 +49,9 @@ void kernel_main()
     puts("All subsystems initialized and tested successfully");
     puts("Entering idle loop...\n");
 
-    keyboard_register_listener(handle_key_event);
+    // TODO: normally it should only be called when running with an argument
+    // from GRUB multiboot
+    debugger_init();
 
     while (1) {}
 }
