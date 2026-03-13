@@ -26,10 +26,12 @@ static void handle_command_sent()
     accept_commands = false;
     tty_disable_cursor();
 
-    // TODO: actually run command
     puts("");
-    printf("Running command %s\n", command_buffer);
-    puts("");
+    if (strncmp(command_buffer, "help", 4) == 0) {
+        puts("Help function");
+    } else {
+        printf("Unrecognized command: %s\n", command_buffer);
+    }
 
     // Re-enable prompt
     print_prompt_and_enable();
