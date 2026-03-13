@@ -19,6 +19,12 @@
 #error "This kernel needs to be compiled with a ix86-elf compiler"
 #endif
 
+static void handle_key_event(keyboard_event_t evt)
+{
+    if (evt.pressed && evt.ascii) {
+        putchar(evt.ascii);
+    }
+}
 
 void kernel_main()
 {
@@ -48,6 +54,8 @@ void kernel_main()
     puts("\n=== Kernel Initialization Complete ===");
     puts("All subsystems initialized and tested successfully");
     puts("Entering idle loop...\n");
+
+    keyboard_register_listener(handle_key_event);
 
     while (1) {}
 }

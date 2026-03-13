@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-void keyboard_init();
-
 typedef struct {
     uint8_t key_code;
     char ascii; // can be null if not applicable
@@ -22,6 +20,21 @@ typedef struct {
     bool num_lock_on;
     bool scroll_lock_on;
 } keyboard_event_t;
+
+// Keyboard event handler
+typedef void (*keyboard_callback_t)(keyboard_event_t event);
+
+void keyboard_init();
+/**
+ * Registers a new listener and returns it's ID, or -1 if registering was not
+ * possible.
+ */
+int keyboard_register_listener(keyboard_callback_t);
+
+/**
+ * Removes regsitered listener by ID.
+ */
+void keyboard_remove_listener(int);
 
 // 0b 000 00000
 // First three bits: row on a keyboard

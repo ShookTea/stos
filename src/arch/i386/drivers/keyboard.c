@@ -16,8 +16,15 @@
 #define RESPONSE_ACK 0xFA
 #define RESPONSE_RESEND 0xFE
 
+#define KEYBOARD_LISTENERS_COUNT 32
+
 static bool keyboard_on_port2 = false;
 static bool initialized = false;
+
+static struct keyboard_listeners {
+    keyboard_callback_t callback;
+    bool active;
+} listeners[KEYBOARD_LISTENERS_COUNT];
 
 static bool caps_lock_on = false;
 static bool num_lock_on = true;
@@ -33,6 +40,31 @@ static bool r_system_pressed = false;
 
 static uint8_t buffer[6];
 static uint8_t buffer_pos = 0;
+
+int keyboard_register_listener(keyboard_callback_t callback)
+{
+    int id = -1;
+    for (int i = 0; i < KEYBOARD_LISTENERS_COUNT; i++) {
+        if (!listeners[i].active) {
+            id = i;
+            break;
+        }
+    }
+    if (id == -1) {
+        return id;
+    }
+    listeners[id].callback = callback;
+    listeners[id].active = true;
+    return id;
+}
+
+void keyboard_remove_listener(int id)
+{
+    if (id < 0 || id >= KEYBOARD_LISTENERS_COUNT) {
+        return;
+    }
+    listeners[id].active = false;
+}
 
 /**
  * Each command has to receive an ACK for it. It may also receive a "resend"
@@ -370,8 +402,11 @@ static void key_handler(
         r_system_pressed = !release;
     }
     keyboard_event_t evt = build_keyboard_event(keycode, release);
-    if (evt.ascii != 0 && evt.pressed) {
-        putchar(evt.ascii);
+
+    for (int i = 0; i < KEYBOARD_LISTENERS_COUNT; i++) {
+        if (listeners[i].active) {
+            (listeners[i].callback)(evt);
+        }
     }
 }
 
