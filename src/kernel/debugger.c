@@ -14,7 +14,24 @@ static void print_prompt_and_enable()
 {
     printf("# ");
     tty_enable_cursor(0, 15);
+    command_length = 0;
     accept_commands = true;
+}
+
+static void handle_command_sent()
+{
+    // First, disable input
+    accept_commands = false;
+    tty_disable_cursor();
+
+    // TODO: actually run command
+    puts("");
+    printf("Running command ");
+    tty_write(command_buffer, command_length);
+    puts("");
+
+    // Re-enable prompt
+    print_prompt_and_enable();
 }
 
 static void handle_key_event(keyboard_event_t evt)
@@ -31,6 +48,9 @@ static void handle_key_event(keyboard_event_t evt)
             tty_writestring("\b \b");
             command_length--;
         }
+    } else if (evt.key_code == KCODE_ENTER
+        || evt.key_code == KCODE_NUMPAD_ENTER) {
+            handle_command_sent();
     } else if (command_length < MAX_COMMAND_LENGTH) {
         putchar(evt.ascii);
         command_buffer[command_length] = evt.ascii;
