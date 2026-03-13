@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include "../idt/idt.h"
 #include "../idt/pic.h"
-#include <stdio.h>
 #include "../io.h"
 
 #define PIT_INPUT_CLOCK_FREQUENCY 1193180
@@ -14,7 +13,6 @@
 #define PIT_TIMEOUT_CALLBACK_SIZE 32
 
 static uint32_t tick = 0;
-static uint32_t second = 0;
 static bool initialized = false;
 
 static struct timeout_entries {
@@ -32,10 +30,6 @@ static void pit_timer_callback()
             timeouts[i].active = false;
             timeouts[i].callback(timeouts[i].data);
         }
-    }
-    if (tick % PIT_FREQUENCY == 0) {
-        second++;
-        printf("Second %d\n", second);
     }
 }
 
