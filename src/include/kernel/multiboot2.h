@@ -53,20 +53,6 @@ typedef struct {
 typedef struct {
     uint32_t type;
     uint32_t size;
-    uint16_t version;
-    uint16_t cseg; // protected mode 32-bit code segment
-    uint32_t offset; // offset of the entry point
-    uint16_t cseg_16; // protected mode 16-bit code segment
-    uint16_t dseg; // protected mode 16-bit data segment
-    uint16_t flags; // APM flags
-    uint16_t cseg_len; // length of protected mode 32-bit code segment
-    uint16_t cseg_16_len; // length of protected mode 16-bit code segment
-    uint16_t dseg_len; // length of protected mode 16-bit data segment
-} multiboot_tag_apm_table_t;
-
-typedef struct {
-    uint32_t type;
-    uint32_t size;
     uint32_t load_base_addr;
 } __attribute__((packed))  multiboot_tag_load_base_addr_t;
 
@@ -93,9 +79,6 @@ typedef struct {
  */
 void multiboot2_init(multiboot_info_t*);
 
-/**
- * Print whole loaded multiboot2 information to TTY
- */
-void multiboot2_print_debug_info(void);
+void multiboot2_print_stats();
 
 #endif

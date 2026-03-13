@@ -7,6 +7,7 @@
 #include <kernel/pmm.h>
 #include <kernel/paging.h>
 #include <kernel/vmm.h>
+#include <kernel/multiboot2.h>
 
 #define MAX_COMMAND_LENGTH 64
 
@@ -32,22 +33,26 @@ static void handle_command_sent()
     puts("");
     if (strncmp(command_buffer, "help", 4) == 0) {
         puts("Available commands:");
-        puts("  pmm_stats      - Prints physical memory statistics");
+        puts("  mb2_stats      - Prints GRUB multiboot2 stats");
         puts("  pag_stats      - Prints paging stats");
-        puts("  vmm_stats      - Prints virtual memory statistics");
+        puts("  pmm_stats      - Prints physical memory statistics");
         puts("  vmm_memory_map - Prints detailed memory map");
+        puts("  vmm_stats      - Prints virtual memory statistics");
     }
-    else if (strncmp(command_buffer, "pmm_stats", 9) == 0) {
-        pmm_print_stats();
+    else if (strncmp(command_buffer, "mb2_stats", 9) == 0) {
+        multiboot2_print_stats();
     }
     else if (strncmp(command_buffer, "pag_stats", 9) == 0) {
         paging_print_stats();
     }
-    else if (strncmp(command_buffer, "vmm_stats", 9) == 0) {
-        vmm_print_stats();
+    else if (strncmp(command_buffer, "pmm_stats", 9) == 0) {
+        pmm_print_stats();
     }
     else if (strncmp(command_buffer, "vmm_memory_map", 14) == 0) {
         vmm_print_memory_map();
+    }
+    else if (strncmp(command_buffer, "vmm_stats", 9) == 0) {
+        vmm_print_stats();
     }
     else {
         printf("Unrecognized command: %s\n", command_buffer);

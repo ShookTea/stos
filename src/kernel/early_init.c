@@ -44,6 +44,7 @@ void early_init(uint32_t magic, multiboot_info_t* mbi)
     else {
         puts("GRUB MB2 is valid");
     }
+    multiboot2_init(mbi);
 
     // Initialize Physical Memory Manager
     // This must happen before paging because paging_init() needs
