@@ -8,13 +8,18 @@
 
 static char command_buffer[MAX_COMMAND_LENGTH];
 static uint8_t command_length = 0;
+static bool accept_commands = false;
+
+static void print_prompt_and_enable()
+{
+    printf("# ");
+    tty_enable_cursor(0, 15);
+    accept_commands = true;
+}
 
 static void handle_key_event(keyboard_event_t evt)
 {
-    if (!evt.pressed) {
-        return;
-    }
-    if (!evt.ascii) {
+    if (!accept_commands || !evt.pressed || !evt.ascii) {
         // TODO: handle cursor moving left and right
         return;
     }
@@ -39,6 +44,5 @@ void debugger_init()
     puts("");
     puts("");
     puts("Kernel debugger. Write \"help\" to get list of available commands.");
-    printf("# ");
-    tty_enable_cursor(0, 15);
+    print_prompt_and_enable();
 }
