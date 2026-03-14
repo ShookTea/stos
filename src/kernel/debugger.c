@@ -46,6 +46,8 @@ static void handle_command_sent()
     }
     if (strcmp(command, "help") == 0) {
         puts("Available commands:");
+        puts("  kmalloc_a [N]  - allocates [N] bytes with kmalloc");
+        puts("  kmalloc_f [AD] - frees address [AD] with kfree");
         puts("  kmalloc_stats  - Prints kmalloc statistics");
         puts("  kmalloc_test   - Prints kmalloc statistics");
         puts("  mb2_data       - Prints GRUB multiboot2 data");
@@ -57,6 +59,16 @@ static void handle_command_sent()
         puts("  vmm_memory_map - Prints detailed memory map");
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
+    }
+    else if (strcmp(command, "kmalloc_a") == 0) {
+        if (argcount != 1) {
+            puts("kmalloc_a requires 1 argument");
+        }
+    }
+    else if (strcmp(command, "kmalloc_f") == 0) {
+        if (argcount != 1) {
+            puts("kmalloc_f requires 1 argument");
+        }
     }
     else if (strcmp(command, "kmalloc_stats") == 0) {
         kmalloc_print_stats();
