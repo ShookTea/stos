@@ -46,6 +46,21 @@ int strcmp(const char* s1, const char* s2);
  */
 size_t strspn(const char* s, const char* accept);
 
+/**
+ * Locates the first occurrence of c (converted to a char) in the string
+ * pointed to by s. The terminating null byte is considered part of the string.
+ * Returns a pointer to the located character, or NULL if not found.
+ */
+char* strchr(const char* s, int c);
+
+/**
+ * Breaks a string into a sequence of zero or more nonempty tokens. On the first
+ * call, the string to be parsed should be specified in str. In each subsequent
+ * call that should parse the same string, str must be NULL. Returns a pointer
+ * to the next token, or NULL if there are no more tokens.
+ */
+char* strtok(char* str, const char* delim);
+
 #ifdef __cplusplus
 }
 #endif
