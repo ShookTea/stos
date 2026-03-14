@@ -16,15 +16,11 @@
  * Test strlen: basic functionality
  */
 static inline bool string_test_strlen_basic(void) {
-    printf("\n[STRING TEST 1] strlen - Basic\n");
-
     ASSERT_EQ(strlen(""), 0, "empty string");
     ASSERT_EQ(strlen("a"), 1, "single character");
     ASSERT_EQ(strlen("hello"), 5, "normal string");
     ASSERT_EQ(strlen("hello world"), 11, "string with space");
     ASSERT_EQ(strlen("The quick brown fox jumps over the lazy dog"), 44, "long string");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -32,14 +28,10 @@ static inline bool string_test_strlen_basic(void) {
  * Test strlen: special characters
  */
 static inline bool string_test_strlen_special(void) {
-    printf("\n[STRING TEST 2] strlen - Special Characters\n");
-
     ASSERT_EQ(strlen("\n"), 1, "newline");
     ASSERT_EQ(strlen("\t"), 1, "tab");
     ASSERT_EQ(strlen("hello\nworld"), 11, "string with newline");
     ASSERT_EQ(strlen("\x01\x02\x03"), 3, "binary characters");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -47,14 +39,10 @@ static inline bool string_test_strlen_special(void) {
  * Test strcmp: equality
  */
 static inline bool string_test_strcmp_equal(void) {
-    printf("\n[STRING TEST 3] strcmp - Equality\n");
-
     ASSERT_EQ(strcmp("", ""), 0, "empty strings equal");
     ASSERT_EQ(strcmp("a", "a"), 0, "single char equal");
     ASSERT_EQ(strcmp("hello", "hello"), 0, "identical strings");
     ASSERT_EQ(strcmp("test123", "test123"), 0, "alphanumeric equal");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -62,8 +50,6 @@ static inline bool string_test_strcmp_equal(void) {
  * Test strcmp: ordering
  */
 static inline bool string_test_strcmp_ordering(void) {
-    printf("\n[STRING TEST 4] strcmp - Ordering\n");
-
     ASSERT_TRUE(strcmp("a", "b") < 0, "a < b");
     ASSERT_TRUE(strcmp("b", "a") > 0, "b > a");
     ASSERT_TRUE(strcmp("abc", "abd") < 0, "abc < abd");
@@ -71,8 +57,6 @@ static inline bool string_test_strcmp_ordering(void) {
     ASSERT_TRUE(strcmp("abc", "abcd") < 0, "abc < abcd (shorter)");
     ASSERT_TRUE(strcmp("abcd", "abc") > 0, "abcd > abc (longer)");
     ASSERT_TRUE(strcmp("ABC", "abc") < 0, "uppercase < lowercase in ASCII");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -80,16 +64,12 @@ static inline bool string_test_strcmp_ordering(void) {
  * Test strncmp: basic functionality
  */
 static inline bool string_test_strncmp_basic(void) {
-    printf("\n[STRING TEST 5] strncmp - Basic\n");
-
     ASSERT_EQ(strncmp("hello", "hello", 5), 0, "equal strings, full length");
     ASSERT_EQ(strncmp("hello", "help", 3), 0, "equal first 3 chars");
     ASSERT_TRUE(strncmp("hello", "help", 4) != 0, "different at 4th char");
     ASSERT_EQ(strncmp("test", "testing", 4), 0, "prefix match");
     ASSERT_EQ(strncmp("", "", 0), 0, "zero length comparison");
     ASSERT_EQ(strncmp("abc", "xyz", 0), 0, "zero length always equal");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -97,14 +77,10 @@ static inline bool string_test_strncmp_basic(void) {
  * Test strncmp: boundary conditions
  */
 static inline bool string_test_strncmp_boundary(void) {
-    printf("\n[STRING TEST 6] strncmp - Boundary Conditions\n");
-
     ASSERT_EQ(strncmp("hello", "hello", 10), 0, "n > string length");
     ASSERT_EQ(strncmp("abc", "abc", 100), 0, "n much larger than length");
     ASSERT_TRUE(strncmp("abc", "abd", 3) < 0, "difference at last char");
     ASSERT_TRUE(strncmp("abd", "abc", 3) > 0, "difference at last char (reverse)");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -112,8 +88,6 @@ static inline bool string_test_strncmp_boundary(void) {
  * Test memcmp: basic functionality
  */
 static inline bool string_test_memcmp_basic(void) {
-    printf("\n[STRING TEST 7] memcmp - Basic\n");
-
     char buf1[] = "hello";
     char buf2[] = "hello";
     char buf3[] = "help!";
@@ -122,8 +96,6 @@ static inline bool string_test_memcmp_basic(void) {
     ASSERT_TRUE(memcmp(buf1, buf3, 5) != 0, "different buffers");
     ASSERT_EQ(memcmp(buf1, buf3, 3), 0, "equal first 3 bytes");
     ASSERT_TRUE(memcmp(buf1, buf3, 4) < 0, "buf1 < buf3 at 4th byte");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -131,8 +103,6 @@ static inline bool string_test_memcmp_basic(void) {
  * Test memcmp: with null bytes
  */
 static inline bool string_test_memcmp_nulls(void) {
-    printf("\n[STRING TEST 8] memcmp - Null Bytes\n");
-
     char buf1[] = {'a', '\0', 'b', 'c'};
     char buf2[] = {'a', '\0', 'b', 'c'};
     char buf3[] = {'a', '\0', 'x', 'c'};
@@ -141,8 +111,6 @@ static inline bool string_test_memcmp_nulls(void) {
     ASSERT_TRUE(memcmp(buf1, buf3, 4) != 0, "buffers with null different");
     ASSERT_EQ(memcmp(buf1, buf3, 2), 0, "equal including null");
     ASSERT_TRUE(memcmp(buf1, buf3, 3) < 0, "difference after null");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -150,8 +118,6 @@ static inline bool string_test_memcmp_nulls(void) {
  * Test memcpy: basic functionality
  */
 static inline bool string_test_memcpy_basic(void) {
-    printf("\n[STRING TEST 9] memcpy - Basic\n");
-
     char src[] = "hello world";
     char dst[20];
 
@@ -161,7 +127,7 @@ static inline bool string_test_memcpy_basic(void) {
     char src2[] = {1, 2, 3, 4, 5};
     char dst2[5];
     memcpy(dst2, src2, 5);
-
+    
     bool binary_match = true;
     for (int i = 0; i < 5; i++) {
         if (dst2[i] != src2[i]) {
@@ -170,8 +136,6 @@ static inline bool string_test_memcpy_basic(void) {
         }
     }
     ASSERT_TRUE(binary_match, "binary data copy");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -179,8 +143,6 @@ static inline bool string_test_memcpy_basic(void) {
  * Test memcpy: various sizes
  */
 static inline bool string_test_memcpy_sizes(void) {
-    printf("\n[STRING TEST 10] memcpy - Various Sizes\n");
-
     // Test different sizes
     char src[256];
     char dst[256];
@@ -215,8 +177,6 @@ static inline bool string_test_memcpy_sizes(void) {
         }
     }
     ASSERT_TRUE(match_256, "size 256 copy");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -224,8 +184,6 @@ static inline bool string_test_memcpy_sizes(void) {
  * Test memset: basic functionality
  */
 static inline bool string_test_memset_basic(void) {
-    printf("\n[STRING TEST 11] memset - Basic\n");
-
     char buf[20];
 
     memset(buf, 0, 20);
@@ -247,8 +205,6 @@ static inline bool string_test_memset_basic(void) {
         }
     }
     ASSERT_TRUE(first_ten_a, "set first 10 to 'A'");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -256,8 +212,6 @@ static inline bool string_test_memset_basic(void) {
  * Test memset: various patterns
  */
 static inline bool string_test_memset_patterns(void) {
-    printf("\n[STRING TEST 12] memset - Various Patterns\n");
-
     char buf[16];
 
     // Test with 0xFF
@@ -281,8 +235,6 @@ static inline bool string_test_memset_patterns(void) {
         }
     }
     ASSERT_TRUE(all_55, "set to 0x55");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -290,15 +242,11 @@ static inline bool string_test_memset_patterns(void) {
  * Test memmove: non-overlapping
  */
 static inline bool string_test_memmove_nonoverlap(void) {
-    printf("\n[STRING TEST 13] memmove - Non-overlapping\n");
-
     char buf[20] = "hello world";
     char dst[20];
 
     memmove(dst, buf, 12);
     ASSERT_STR_EQ(dst, "hello world", "non-overlapping move");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -306,8 +254,6 @@ static inline bool string_test_memmove_nonoverlap(void) {
  * Test memmove: overlapping regions
  */
 static inline bool string_test_memmove_overlap(void) {
-    printf("\n[STRING TEST 14] memmove - Overlapping\n");
-
     char buf1[20] = "hello world";
     // Move forward: src overlaps with dst (dst > src)
     memmove(buf1 + 2, buf1, 11);
@@ -318,8 +264,6 @@ static inline bool string_test_memmove_overlap(void) {
     memmove(buf2, buf2 + 6, 5);
     buf2[5] = '\0';  // null terminate
     ASSERT_STR_EQ(buf2, "world", "backward overlap");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -327,8 +271,6 @@ static inline bool string_test_memmove_overlap(void) {
  * Test strcpy: basic functionality
  */
 static inline bool string_test_strcpy_basic(void) {
-    printf("\n[STRING TEST 15] strcpy - Basic\n");
-
     char dst[20];
 
     strcpy(dst, "hello");
@@ -339,8 +281,6 @@ static inline bool string_test_strcpy_basic(void) {
 
     strcpy(dst, "a");
     ASSERT_STR_EQ(dst, "a", "single character");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -348,10 +288,8 @@ static inline bool string_test_strcpy_basic(void) {
  * Test strcat: basic functionality
  */
 static inline bool string_test_strcat_basic(void) {
-    printf("\n[STRING TEST 16] strcat - Basic\n");
-
     char dst[50] = "hello";
-
+    
     strcat(dst, " world");
     ASSERT_STR_EQ(dst, "hello world", "basic concatenation");
 
@@ -361,8 +299,6 @@ static inline bool string_test_strcat_basic(void) {
     char dst2[50] = "";
     strcat(dst2, "test");
     ASSERT_STR_EQ(dst2, "test", "concatenate to empty");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -370,16 +306,12 @@ static inline bool string_test_strcat_basic(void) {
  * Test strcat: multiple concatenations
  */
 static inline bool string_test_strcat_multiple(void) {
-    printf("\n[STRING TEST 17] strcat - Multiple\n");
-
     char dst[100] = "The";
     strcat(dst, " quick");
     strcat(dst, " brown");
     strcat(dst, " fox");
-
+    
     ASSERT_STR_EQ(dst, "The quick brown fox", "multiple concatenations");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -387,10 +319,8 @@ static inline bool string_test_strcat_multiple(void) {
  * Test strchr: basic functionality
  */
 static inline bool string_test_strchr_basic(void) {
-    printf("\n[STRING TEST 18] strchr - Basic\n");
-
     const char* str = "hello world";
-
+    
     char* result = strchr(str, 'h');
     ASSERT_PTR_EQ(result, str, "find first character");
 
@@ -405,8 +335,6 @@ static inline bool string_test_strchr_basic(void) {
 
     result = strchr(str, 'x');
     ASSERT_PTR_EQ(result, NULL, "character not found");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -414,8 +342,6 @@ static inline bool string_test_strchr_basic(void) {
  * Test strchr: edge cases
  */
 static inline bool string_test_strchr_edge(void) {
-    printf("\n[STRING TEST 19] strchr - Edge Cases\n");
-
     const char* empty = "";
     char* result = strchr(empty, 'a');
     ASSERT_PTR_EQ(result, NULL, "search in empty string");
@@ -426,8 +352,6 @@ static inline bool string_test_strchr_edge(void) {
     const char* single = "a";
     result = strchr(single, 'a');
     ASSERT_PTR_EQ(result, single, "find in single char string");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -435,16 +359,12 @@ static inline bool string_test_strchr_edge(void) {
  * Test strspn: basic functionality
  */
 static inline bool string_test_strspn_basic(void) {
-    printf("\n[STRING TEST 20] strspn - Basic\n");
-
     ASSERT_EQ(strspn("hello", "helo"), 5, "all chars match");
     ASSERT_EQ(strspn("hello", "xyz"), 0, "no chars match");
     ASSERT_EQ(strspn("hello world", "helo "), 8, "partial match");
     ASSERT_EQ(strspn("123abc", "0123456789"), 3, "match digits");
     ASSERT_EQ(strspn("", "abc"), 0, "empty string");
     ASSERT_EQ(strspn("abc", ""), 0, "empty accept");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -452,13 +372,9 @@ static inline bool string_test_strspn_basic(void) {
  * Test strspn: whitespace
  */
 static inline bool string_test_strspn_whitespace(void) {
-    printf("\n[STRING TEST 21] strspn - Whitespace\n");
-
     ASSERT_EQ(strspn("   hello", " \t\n"), 3, "leading spaces");
     ASSERT_EQ(strspn("\t\t\ttest", " \t\n"), 3, "leading tabs");
     ASSERT_EQ(strspn(" \t\n\r  abc", " \t\n\r"), 6, "mixed whitespace");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -466,8 +382,6 @@ static inline bool string_test_strspn_whitespace(void) {
  * Test strtok: basic functionality
  */
 static inline bool string_test_strtok_basic(void) {
-    printf("\n[STRING TEST 22] strtok - Basic\n");
-
     char str[] = "hello,world,test";
     char* token;
 
@@ -482,8 +396,6 @@ static inline bool string_test_strtok_basic(void) {
 
     token = strtok(NULL, ",");
     ASSERT_PTR_EQ(token, NULL, "no more tokens");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -491,8 +403,6 @@ static inline bool string_test_strtok_basic(void) {
  * Test strtok: multiple delimiters
  */
 static inline bool string_test_strtok_multidelim(void) {
-    printf("\n[STRING TEST 23] strtok - Multiple Delimiters\n");
-
     char str[] = "one:two;three:four";
     char* token;
 
@@ -510,8 +420,6 @@ static inline bool string_test_strtok_multidelim(void) {
 
     token = strtok(NULL, ":;");
     ASSERT_PTR_EQ(token, NULL, "no more tokens");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -519,8 +427,6 @@ static inline bool string_test_strtok_multidelim(void) {
  * Test strtok: consecutive delimiters
  */
 static inline bool string_test_strtok_consecutive(void) {
-    printf("\n[STRING TEST 24] strtok - Consecutive Delimiters\n");
-
     char str[] = "one,,three";
     char* token;
 
@@ -532,8 +438,6 @@ static inline bool string_test_strtok_consecutive(void) {
 
     token = strtok(NULL, ",");
     ASSERT_PTR_EQ(token, NULL, "no more tokens");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -541,8 +445,6 @@ static inline bool string_test_strtok_consecutive(void) {
  * Test strtok: leading and trailing delimiters
  */
 static inline bool string_test_strtok_edges(void) {
-    printf("\n[STRING TEST 25] strtok - Leading/Trailing Delimiters\n");
-
     char str[] = ",,,hello,world,,,";
     char* token;
 
@@ -554,8 +456,6 @@ static inline bool string_test_strtok_edges(void) {
 
     token = strtok(NULL, ",");
     ASSERT_PTR_EQ(token, NULL, "no more tokens (skip trailing)");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -563,10 +463,7 @@ static inline bool string_test_strtok_edges(void) {
  * Run all string tests
  */
 static inline void string_run_all_tests(void) {
-    printf("\n========================================\n");
-    printf("     String Library Test Suite\n");
-    printf("========================================\n");
-
+    printf("\n=== String Library Tests ===\n");
     int passed = 0;
     int total = 25;
 
@@ -620,14 +517,10 @@ static inline void string_run_all_tests(void) {
     if (string_test_strtok_edges()) passed++;
 
     // Print results
-    printf("\n========================================\n");
-    printf("  Results: %d/%d tests passed\n", passed, total);
-    printf("========================================\n");
-
     if (passed == total) {
-        printf("\n[OK] All string tests PASSED!\n\n");
+        printf("String: %d/%d PASSED\n", passed, total);
     } else {
-        printf("\n[FAIL] Some string tests FAILED\n\n");
+        printf("String: %d/%d FAILED\n", passed, total);
     }
 }
 

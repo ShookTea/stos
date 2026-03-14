@@ -15,10 +15,7 @@
  * Run all libc tests
  */
 static inline void libc_run_all_tests(void) {
-    printf("\n");
-    printf("================================================================================\n");
-    printf("                            LIBC TEST SUITE                                    \n");
-    printf("================================================================================\n");
+    printf("\n========== LIBC TEST SUITE ==========\n");
 
     // Run string tests
     string_run_all_tests();
@@ -29,11 +26,7 @@ static inline void libc_run_all_tests(void) {
     // Run ctype tests
     ctype_run_all_tests();
 
-    printf("\n");
-    printf("================================================================================\n");
-    printf("                      LIBC TEST SUITE COMPLETE                                 \n");
-    printf("================================================================================\n");
-    printf("\n");
+    printf("=====================================\n");
 }
 
 #endif // KERNEL_LIBC_TESTS_H
