@@ -15,8 +15,6 @@
  * Test isdigit: digit characters
  */
 static inline bool ctype_test_isdigit(void) {
-    printf("\n[CTYPE TEST 1] isdigit\n");
-
     // Valid digits
     for (char c = '0'; c <= '9'; c++) {
         ASSERT_TRUE(isdigit(c), "digit character");
@@ -32,8 +30,6 @@ static inline bool ctype_test_isdigit(void) {
     ASSERT_FALSE(isdigit(':'), "colon (after '9')");
     ASSERT_FALSE(isdigit('\t'), "tab");
     ASSERT_FALSE(isdigit('\n'), "newline");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -41,8 +37,6 @@ static inline bool ctype_test_isdigit(void) {
  * Test isalpha: alphabetic characters
  */
 static inline bool ctype_test_isalpha(void) {
-    printf("\n[CTYPE TEST 2] isalpha\n");
-
     // Valid - lowercase
     for (char c = 'a'; c <= 'z'; c++) {
         ASSERT_TRUE(isalpha(c), "lowercase letter");
@@ -63,8 +57,6 @@ static inline bool ctype_test_isalpha(void) {
     ASSERT_FALSE(isalpha('['), "bracket (after 'Z')");
     ASSERT_FALSE(isalpha('`'), "backtick (before 'a')");
     ASSERT_FALSE(isalpha('{'), "brace (after 'z')");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -72,8 +64,6 @@ static inline bool ctype_test_isalpha(void) {
  * Test isupper: uppercase letters
  */
 static inline bool ctype_test_isupper(void) {
-    printf("\n[CTYPE TEST 3] isupper\n");
-
     // Valid uppercase
     for (char c = 'A'; c <= 'Z'; c++) {
         ASSERT_TRUE(isupper(c), "uppercase letter");
@@ -88,8 +78,6 @@ static inline bool ctype_test_isupper(void) {
     ASSERT_FALSE(isupper('0'), "digit");
     ASSERT_FALSE(isupper(' '), "space");
     ASSERT_FALSE(isupper('@'), "at sign");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -97,8 +85,6 @@ static inline bool ctype_test_isupper(void) {
  * Test islower: lowercase letters
  */
 static inline bool ctype_test_islower(void) {
-    printf("\n[CTYPE TEST 4] islower\n");
-
     // Valid lowercase
     for (char c = 'a'; c <= 'z'; c++) {
         ASSERT_TRUE(islower(c), "lowercase letter");
@@ -113,8 +99,6 @@ static inline bool ctype_test_islower(void) {
     ASSERT_FALSE(islower('0'), "digit");
     ASSERT_FALSE(islower(' '), "space");
     ASSERT_FALSE(islower('`'), "backtick");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -122,8 +106,6 @@ static inline bool ctype_test_islower(void) {
  * Test isalnum: alphanumeric characters
  */
 static inline bool ctype_test_isalnum(void) {
-    printf("\n[CTYPE TEST 5] isalnum\n");
-
     // Valid - digits
     for (char c = '0'; c <= '9'; c++) {
         ASSERT_TRUE(isalnum(c), "digit");
@@ -145,8 +127,6 @@ static inline bool ctype_test_isalnum(void) {
     ASSERT_FALSE(isalnum('@'), "at sign");
     ASSERT_FALSE(isalnum('['), "bracket");
     ASSERT_FALSE(isalnum('_'), "underscore");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -154,8 +134,6 @@ static inline bool ctype_test_isalnum(void) {
  * Test isxdigit: hexadecimal digits
  */
 static inline bool ctype_test_isxdigit(void) {
-    printf("\n[CTYPE TEST 6] isxdigit\n");
-
     // Valid - decimal digits
     for (char c = '0'; c <= '9'; c++) {
         ASSERT_TRUE(isxdigit(c), "decimal digit");
@@ -180,8 +158,6 @@ static inline bool ctype_test_isxdigit(void) {
     // Invalid - special characters
     ASSERT_FALSE(isxdigit(' '), "space");
     ASSERT_FALSE(isxdigit('@'), "at sign");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -189,8 +165,6 @@ static inline bool ctype_test_isxdigit(void) {
  * Test isspace: whitespace characters
  */
 static inline bool ctype_test_isspace(void) {
-    printf("\n[CTYPE TEST 7] isspace\n");
-
     // Valid whitespace
     ASSERT_TRUE(isspace(' '), "space");
     ASSERT_TRUE(isspace('\t'), "tab");
@@ -204,8 +178,6 @@ static inline bool ctype_test_isspace(void) {
     ASSERT_FALSE(isspace('0'), "digit");
     ASSERT_FALSE(isspace('_'), "underscore");
     ASSERT_FALSE(isspace('\0'), "null terminator");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -213,8 +185,6 @@ static inline bool ctype_test_isspace(void) {
  * Test isblank: blank characters (space and tab)
  */
 static inline bool ctype_test_isblank(void) {
-    printf("\n[CTYPE TEST 8] isblank\n");
-
     // Valid blanks
     ASSERT_TRUE(isblank(' '), "space");
     ASSERT_TRUE(isblank('\t'), "tab");
@@ -228,8 +198,6 @@ static inline bool ctype_test_isblank(void) {
     // Invalid - other characters
     ASSERT_FALSE(isblank('a'), "letter");
     ASSERT_FALSE(isblank('0'), "digit");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -237,8 +205,6 @@ static inline bool ctype_test_isblank(void) {
  * Test ispunct: punctuation characters
  */
 static inline bool ctype_test_ispunct(void) {
-    printf("\n[CTYPE TEST 9] ispunct\n");
-
     // Valid punctuation
     ASSERT_TRUE(ispunct('!'), "exclamation");
     ASSERT_TRUE(ispunct('"'), "quote");
@@ -279,8 +245,6 @@ static inline bool ctype_test_ispunct(void) {
     ASSERT_FALSE(ispunct('0'), "digit");
     ASSERT_FALSE(ispunct('9'), "digit");
     ASSERT_FALSE(ispunct(' '), "space");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -288,8 +252,6 @@ static inline bool ctype_test_ispunct(void) {
  * Test isgraph: graphical characters
  */
 static inline bool ctype_test_isgraph(void) {
-    printf("\n[CTYPE TEST 10] isgraph\n");
-
     // Valid - all printable non-space characters
     for (char c = '!'; c <= '~'; c++) {
         ASSERT_TRUE(isgraph(c), "graphical character");
@@ -301,8 +263,6 @@ static inline bool ctype_test_isgraph(void) {
     ASSERT_FALSE(isgraph('\n'), "newline");
     ASSERT_FALSE(isgraph('\0'), "null");
     ASSERT_FALSE(isgraph('\x01'), "control character");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -310,8 +270,6 @@ static inline bool ctype_test_isgraph(void) {
  * Test isprint: printable characters
  */
 static inline bool ctype_test_isprint(void) {
-    printf("\n[CTYPE TEST 11] isprint\n");
-
     // Valid - space through tilde
     for (char c = ' '; c <= '~'; c++) {
         ASSERT_TRUE(isprint(c), "printable character");
@@ -325,8 +283,6 @@ static inline bool ctype_test_isprint(void) {
     ASSERT_FALSE(isprint('\x01'), "SOH");
     ASSERT_FALSE(isprint('\x1F'), "US (unit separator)");
     ASSERT_FALSE(isprint('\x7F'), "DEL");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -334,8 +290,6 @@ static inline bool ctype_test_isprint(void) {
  * Test iscntrl: control characters
  */
 static inline bool ctype_test_iscntrl(void) {
-    printf("\n[CTYPE TEST 12] iscntrl\n");
-
     // Valid - control characters 0x00-0x1F
     for (int c = 0; c < 0x20; c++) {
         ASSERT_TRUE(iscntrl(c), "control character");
@@ -349,8 +303,6 @@ static inline bool ctype_test_iscntrl(void) {
     ASSERT_FALSE(iscntrl('a'), "letter");
     ASSERT_FALSE(iscntrl('0'), "digit");
     ASSERT_FALSE(iscntrl('!'), "punctuation");
-
-    printf("  PASSED\n");
     return true;
 }
 
@@ -358,8 +310,6 @@ static inline bool ctype_test_iscntrl(void) {
  * Test boundary conditions and edge cases
  */
 static inline bool ctype_test_boundaries(void) {
-    printf("\n[CTYPE TEST 13] Boundary Conditions\n");
-
     // Test ASCII boundaries
     ASSERT_TRUE(iscntrl(0x00), "0x00 is control");
     ASSERT_TRUE(iscntrl(0x1F), "0x1F is control");
@@ -384,8 +334,6 @@ static inline bool ctype_test_boundaries(void) {
     ASSERT_TRUE(islower('a'), "'a' (0x61)");
     ASSERT_TRUE(islower('z'), "'z' (0x7A)");
     ASSERT_FALSE(islower('{'), "{ (0x7B, after 'z')");
-
-    printf("  PASSED\n");
     return true;
 }
 
