@@ -2,6 +2,7 @@
 #define MULTIBOOT_HEADER
 
 #include <stdint.h>
+#include <kernel/acpi.h>
 
 // Magic number that confirms that multiboot2 info was loaded correctly
 #define MULTIBOOT2_BOOTLOADER_MAGIC 0x36D76289
@@ -10,6 +11,8 @@
 #define MULTIBOOT2_TAG_TYPE_BOOT_COMMAND_LINE 1
 #define MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME 2
 #define MULTIBOOT2_TAG_TYPE_MEMORY_MAP 6
+#define MULTIBOOT2_TAG_TYPE_ACPI_OLD 14
+#define MULTIBOOT2_TAG_TYPE_ACPI_NEW 15
 #define MULTIBOOT2_TAG_TYPE_APM_TABLE 10
 #define MULTIBOOT2_TAG_TYPE_LOAD_BASE_ADDR 21
 
@@ -49,6 +52,18 @@ typedef struct {
     uint32_t size;
     char name[0];
 } multiboot_tag_boot_loader_name_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    rsdp_old_t rsdp;
+} multiboot_tag_boot_acpi_old_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    rsdp_new_t rsdp;
+} multiboot_tag_boot_acpi_new_t;
 
 typedef struct {
     uint32_t type;

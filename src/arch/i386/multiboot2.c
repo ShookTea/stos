@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <kernel/multiboot2.h>
+#include <kernel/acpi.h>
 
 static multiboot_info_t* mbi;
 static char boot_command_line[64];
@@ -109,6 +110,18 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                     saved_mmap[i].length_high = entry->length_high;
                     saved_mmap[i].type = entry->type;
                 }
+                break;
+            }
+            case MULTIBOOT2_TAG_TYPE_ACPI_OLD: {
+                multiboot_tag_boot_acpi_old_t* acpi =
+                    (multiboot_tag_boot_acpi_old_t*)tag;
+                acpi_init_old(acpi->rsdp);
+                break;
+            }
+            case MULTIBOOT2_TAG_TYPE_ACPI_NEW: {
+                multiboot_tag_boot_acpi_new_t* acpi =
+                    (multiboot_tag_boot_acpi_new_t*)tag;
+                acpi_init_new(acpi->rsdp);
                 break;
             }
             default:
