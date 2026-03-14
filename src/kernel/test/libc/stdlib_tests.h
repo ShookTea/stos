@@ -220,8 +220,8 @@ static inline bool stdlib_test_strtol_invalid(void) {
     ASSERT_PTR_EQ(endptr, str, "endptr at start on no conversion");
 
     str = "0x";
-    strtol(str, &endptr, 16);
-    ASSERT_PTR_EQ(endptr, str, "0x without digits");
+    ASSERT_EQ(strtol(str, &endptr, 16), 0, "0x parses 0");
+    ASSERT_PTR_EQ(endptr, str + 1, "endptr after 0, at x");
 
     str = "123g";
     ASSERT_EQ(strtol(str, &endptr, 16), 0x123, "stops at invalid hex digit");

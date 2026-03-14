@@ -20,7 +20,7 @@ static inline bool string_test_strlen_basic(void) {
     ASSERT_EQ(strlen("a"), 1, "single character");
     ASSERT_EQ(strlen("hello"), 5, "normal string");
     ASSERT_EQ(strlen("hello world"), 11, "string with space");
-    ASSERT_EQ(strlen("The quick brown fox jumps over the lazy dog"), 44, "long string");
+    ASSERT_EQ(strlen("The quick brown fox jumps over the lazy dog"), 43, "long string");
     return true;
 }
 
@@ -361,7 +361,7 @@ static inline bool string_test_strchr_edge(void) {
 static inline bool string_test_strspn_basic(void) {
     ASSERT_EQ(strspn("hello", "helo"), 5, "all chars match");
     ASSERT_EQ(strspn("hello", "xyz"), 0, "no chars match");
-    ASSERT_EQ(strspn("hello world", "helo "), 8, "partial match");
+    ASSERT_EQ(strspn("hello world", "helo "), 6, "partial match");
     ASSERT_EQ(strspn("123abc", "0123456789"), 3, "match digits");
     ASSERT_EQ(strspn("", "abc"), 0, "empty string");
     ASSERT_EQ(strspn("abc", ""), 0, "empty accept");
