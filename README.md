@@ -45,9 +45,10 @@ then prints to the command line.
 - PIT driver (so far doesn't do anything useful though)
 - PS/2 driver
 - PS/2 keyboard driver
+- Debugging command
 
 ### Short-term todo list
 
-- Debugging command
 - Better physical memory allocation (buddy)
+- Better ACPI handling
 - kmalloc/kfree
