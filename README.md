@@ -47,8 +47,11 @@ then prints to the command line.
 - PS/2 driver
 - PS/2 keyboard driver
 - Debugging command
+- kmalloc/kfree
 
 ### Short-term todo list
 
+- Unit tests for libc
+- memory leak test - check memory stats, then run all mem tests 5 times, then
+  check memory stats again and compare if there are any changes 
 - Better ACPI handling
-- kmalloc/kfree
