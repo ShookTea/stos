@@ -36,7 +36,15 @@ static void handle_command_sent()
     tty_disable_cursor();
 
     puts("");
-    if (strcmp(command_buffer, "help") == 0) {
+    char* args[3];
+    char* arg = strtok(command_buffer, " ");
+    char* command = arg;
+    uint8_t argcount = 0;
+    while ((arg = strtok(NULL, " ")) != NULL && argcount < 3) {
+        args[argcount] = arg;
+        argcount++;
+    }
+    if (strcmp(command, "help") == 0) {
         puts("Available commands:");
         puts("  kmalloc_stats  - Prints kmalloc statistics");
         puts("  kmalloc_test   - Prints kmalloc statistics");
@@ -50,41 +58,41 @@ static void handle_command_sent()
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
     }
-    else if (strcmp(command_buffer, "kmalloc_stats") == 0) {
+    else if (strcmp(command, "kmalloc_stats") == 0) {
         kmalloc_print_stats();
     }
-    else if (strcmp(command_buffer, "kmalloc_test") == 0) {
+    else if (strcmp(command, "kmalloc_test") == 0) {
         kmalloc_run_all_tests();
     }
-    else if (strcmp(command_buffer, "mb2_data") == 0) {
+    else if (strcmp(command, "mb2_data") == 0) {
         multiboot2_print_data();
     }
-    else if (strcmp(command_buffer, "pag_stats") == 0) {
+    else if (strcmp(command, "pag_stats") == 0) {
         paging_print_stats();
     }
-    else if (strcmp(command_buffer, "pmm_stats") == 0) {
+    else if (strcmp(command, "pmm_stats") == 0) {
         pmm_print_stats();
     }
-    else if (strcmp(command_buffer, "pmm_test") == 0) {
+    else if (strcmp(command, "pmm_test") == 0) {
         memory_run_pmm_tests();
     }
-    else if (strcmp(command_buffer, "slab_cache") == 0) {
+    else if (strcmp(command, "slab_cache") == 0) {
         slab_print_caches();
     }
-    else if (strcmp(command_buffer, "slab_stats") == 0) {
+    else if (strcmp(command, "slab_stats") == 0) {
         slab_print_stats();
     }
-    else if (strcmp(command_buffer, "vmm_memory_map") == 0) {
+    else if (strcmp(command, "vmm_memory_map") == 0) {
         vmm_print_memory_map();
     }
-    else if (strcmp(command_buffer, "vmm_stats") == 0) {
+    else if (strcmp(command, "vmm_stats") == 0) {
         vmm_print_stats();
     }
-    else if (strcmp(command_buffer, "vmm_test") == 0) {
+    else if (strcmp(command, "vmm_test") == 0) {
         vmm_run_all_tests();
     }
     else {
-        printf("Unrecognized command: %s\n", command_buffer);
+        printf("Unrecognized command: %s\n", command);
     }
 
     // Re-enable prompt
