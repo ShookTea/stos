@@ -5,6 +5,14 @@
 #include <stdio.h>
 #include <string.h>
 
+// Maybe instead of implementing ACPI on our own (which is absurdly complex),
+// we should use something like uACPI instead?
+// https://github.com/uACPI/uACPI
+static void load_fadt(acpi_fadt_t* fadt)
+{
+    // TOOD: calculate checksum
+}
+
 static void load_rsdt_pointer(uint32_t pointer)
 {
     acpi_sdt_header_t* header = (acpi_sdt_header_t*)pointer;
@@ -18,13 +26,12 @@ static void load_rsdt_pointer(uint32_t pointer)
     for (uint8_t i = 0; i < entries; i++) {
         uint32_t sdt_pointer = rsdt->pointers_to_ther_sdt[i];
         acpi_sdt_header_t* sdt_header = (acpi_sdt_header_t*)sdt_pointer;
-        putchar(sdt_header->signature[0]);
-        putchar(sdt_header->signature[1]);
-        putchar(sdt_header->signature[2]);
-        putchar(sdt_header->signature[3]);
-        puts("");
+        if (strncmp(sdt_header->signature, "FACP", 4) == 0) {
+            load_fadt((acpi_fadt_t*)sdt_header);
+        } else {
+            // TODO: adding support for more decription tables, if necessary
+        }
     }
-    abort();
 }
 
 void acpi_init_old(rsdp_old_t rsdp)
