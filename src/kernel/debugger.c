@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <kernel/tty.h>
 #include <string.h>
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
-#include <kernel/vmm.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/multiboot2.h>
 
 #define MAX_COMMAND_LENGTH 64

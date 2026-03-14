@@ -2,9 +2,9 @@
 #include <stdbool.h>
 #include <kernel/tty.h>
 #include <kernel/multiboot2.h>
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
-#include <kernel/vmm.h>
+#include <kernel/memory/vmm.h>
 #include <stdio.h>
 #include <stdlib.h>
 

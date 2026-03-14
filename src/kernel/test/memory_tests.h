@@ -1,9 +1,9 @@
 #ifndef KERNEL_MEMORY_TESTS_H
 #define KERNEL_MEMORY_TESTS_H
 
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
-#include <kernel/vmm.h>
+#include <kernel/memory/vmm.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include "stdlib.h"

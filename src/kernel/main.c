@@ -5,9 +5,9 @@
 #include <kernel/tty.h>
 #include <kernel/serial.h>
 #include <kernel/multiboot2.h>
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
-#include <kernel/vmm.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/drivers/pit.h>
 #include <kernel/drivers/ps2.h>
 #include <kernel/drivers/keyboard.h>

@@ -1,4 +1,4 @@
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
 #include <kernel/multiboot2.h>
 #include <stdio.h>
 #include <string.h>

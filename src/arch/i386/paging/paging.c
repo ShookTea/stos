@@ -1,5 +1,5 @@
 #include <kernel/paging.h>
-#include <kernel/pmm.h>
+#include <kernel/memory/pmm.h>
 #include "paging.h"
 #include <stdio.h>
 #include <string.h>

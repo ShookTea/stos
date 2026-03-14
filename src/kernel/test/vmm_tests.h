@@ -1,7 +1,7 @@
 #ifndef KERNEL_VMM_TESTS_H
 #define KERNEL_VMM_TESTS_H
 
-#include <kernel/vmm.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/tty.h>
 #include <stdio.h>
 #include <stdbool.h>
