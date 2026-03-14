@@ -13,6 +13,18 @@ static vmm_region_t* region_list = NULL;
 static uint32_t kernel_heap_current = VMM_KERNEL_HEAP;
 static uint32_t kernel_heap_end = VMM_USER_START; // Heap grows until user space
 
+// Free list for kernel heap allocations (static pool to avoid allocation)
+#define KERNEL_HEAP_MAX_FREE_BLOCKS 64
+
+typedef struct kernel_heap_free_block {
+    uint32_t addr;
+    size_t size;
+    bool in_use;
+} kernel_heap_free_block_t;
+
+static kernel_heap_free_block_t kernel_heap_free_blocks[KERNEL_HEAP_MAX_FREE_BLOCKS];
+static bool kernel_heap_free_list_initialized = false;
+
 // Forward declarations for internal functions
 static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t flags, bool is_free);
 static void vmm_insert_region(vmm_region_t* region);
@@ -73,9 +85,15 @@ void vmm_init(void) {
     vmm_insert_region(user_region);
 
     printf("[VMM] Initialization complete\n");
-    printf("[VMM] Kernel region: %#x - %#x\n", VMM_KERNEL_START, VMM_KERNEL_HEAP);
-    printf("[VMM] Heap region:   %#x - %#x\n", VMM_KERNEL_HEAP, VMM_USER_START);
-    printf("[VMM] User region:   %#x - %#x\n", VMM_USER_START, VMM_USER_END);
+    printf("[VMM] Kernel region: 0x%x - 0x%x\n", VMM_KERNEL_START, VMM_KERNEL_HEAP);
+    printf("[VMM] Heap region:   0x%x - 0x%x\n", VMM_KERNEL_HEAP, VMM_USER_START);
+    printf("[VMM] User region:   0x%x - 0x%x\n", VMM_USER_START, VMM_USER_END);
+    
+    // Initialize kernel heap free list
+    for (int i = 0; i < KERNEL_HEAP_MAX_FREE_BLOCKS; i++) {
+        kernel_heap_free_blocks[i].in_use = false;
+    }
+    kernel_heap_free_list_initialized = true;
 }
 
 /**
@@ -179,6 +197,9 @@ bool vmm_free(void* virt, size_t pages) {
     if (region->end - region->start != size) {
         return false;  // Size mismatch
     }
+
+    // Unmap pages and free physical memory
+    vmm_unmap_region(virt, pages);
 
     // Mark region as free
     region->is_free = true;
@@ -377,12 +398,37 @@ void* vmm_kernel_alloc(size_t size) {
     size = PAGE_ALIGN_UP(size);
     size_t pages = size / PAGE_SIZE;
 
-    // Check if we have enough space in the heap
-    if (kernel_heap_current + size > kernel_heap_end) {
-        return NULL;  // Heap exhausted
+    uint32_t alloc_addr = 0;
+
+    // First, try to find a suitable block in the free list
+    if (kernel_heap_free_list_initialized) {
+        for (int i = 0; i < KERNEL_HEAP_MAX_FREE_BLOCKS; i++) {
+            if (kernel_heap_free_blocks[i].in_use && kernel_heap_free_blocks[i].size >= size) {
+                // Found a suitable block
+                alloc_addr = kernel_heap_free_blocks[i].addr;
+                
+                // If the block is larger than needed, split it
+                if (kernel_heap_free_blocks[i].size > size) {
+                    kernel_heap_free_blocks[i].addr += size;
+                    kernel_heap_free_blocks[i].size -= size;
+                } else {
+                    // Exact fit, mark as not in use
+                    kernel_heap_free_blocks[i].in_use = false;
+                }
+                break;
+            }
+        }
     }
 
-    uint32_t alloc_addr = kernel_heap_current;
+    // If no suitable free block found, allocate from the bump pointer
+    if (alloc_addr == 0) {
+        // Check if we have enough space in the heap
+        if (kernel_heap_current + size > kernel_heap_end) {
+            return NULL;  // Heap exhausted
+        }
+        alloc_addr = kernel_heap_current;
+        kernel_heap_current += size;
+    }
 
     // Allocate and map physical pages
     for (size_t i = 0; i < pages; i++) {
@@ -416,9 +462,6 @@ void* vmm_kernel_alloc(size_t size) {
         }
     }
 
-    // Update heap pointer
-    kernel_heap_current += size;
-
     return (void*)alloc_addr;
 }
 
@@ -435,8 +478,8 @@ void vmm_kernel_free(void* ptr, size_t size) {
     // Align size to page boundary
     size = PAGE_ALIGN_UP(size);
     size_t pages = size / PAGE_SIZE;
-
-    // Unmap and free physical pages
+    
+    // Free all physical pages and unmap them
     for (size_t i = 0; i < pages; i++) {
         uint32_t virt = addr + (i * PAGE_SIZE);
         uint32_t phys = paging_get_physical_address(virt);
@@ -448,8 +491,19 @@ void vmm_kernel_free(void* ptr, size_t size) {
         paging_unmap_page(virt);
     }
 
-    // Note: We don't move kernel_heap_current back because that would
-    // require more complex heap management. This is a simple implementation.
+    // Add this block to the free list for reuse
+    if (kernel_heap_free_list_initialized) {
+        for (int i = 0; i < KERNEL_HEAP_MAX_FREE_BLOCKS; i++) {
+            if (!kernel_heap_free_blocks[i].in_use) {
+                kernel_heap_free_blocks[i].addr = addr;
+                kernel_heap_free_blocks[i].size = size;
+                kernel_heap_free_blocks[i].in_use = true;
+                break;
+            }
+        }
+        // If all free block slots are full, the virtual address space is lost
+        // but physical memory is still freed
+    }
 }
 
 /* Internal helper functions */

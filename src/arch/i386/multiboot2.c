@@ -156,7 +156,7 @@ const saved_mmap_entry_t* multiboot2_get_mmap_entry(uint32_t index)
     return &saved_mmap[index];
 }
 
-void multiboot2_print_stats()
+void multiboot2_print_data()
 {
     printf("Bootloader name: %s\n", boot_loader_name);
     printf("Boot command: %s\n", boot_command_line);
@@ -197,4 +197,9 @@ void multiboot2_print_stats()
             length / 1024
         );
     }
+}
+
+char* multiboot2_get_boot_command_line()
+{
+    return boot_command_line;
 }

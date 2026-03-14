@@ -11,8 +11,10 @@
 #include <kernel/drivers/pit.h>
 #include <kernel/drivers/ps2.h>
 #include <kernel/drivers/keyboard.h>
+#include <string.h>
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
+#include "test/kmalloc_tests.h"
 #include "debugger.h"
 
 
@@ -36,10 +38,18 @@ void kernel_main()
     puts("PMM: Already initialized by early_init()");
     puts("Paging: Already enabled by early_init()");
     puts("VMM: Already initialized by early_init()");
+    puts("Slab allocator: Already initialized by early_init()");
+    puts("kmalloc/kfree: Already initialized by early_init()");
 
-    // Running tests
-    vmm_run_all_tests();
-    memory_run_all_tests();
+    bool in_debug_mode =
+        strcmp(multiboot2_get_boot_command_line(), "debug") == 0;
+
+    if (in_debug_mode) {
+        // Running tests
+        vmm_run_all_tests();
+        memory_run_all_tests();
+        kmalloc_run_all_tests();
+    }
 
     pit_init();
     ps2_init();
@@ -49,9 +59,9 @@ void kernel_main()
     puts("All subsystems initialized and tested successfully");
     puts("Entering idle loop...\n");
 
-    // TODO: normally it should only be called when running with an argument
-    // from GRUB multiboot
-    debugger_init();
+    if (in_debug_mode) {
+        debugger_init();
+    }
 
     while (1) {}
 }

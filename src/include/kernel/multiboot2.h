@@ -122,6 +122,7 @@ uint32_t multiboot2_get_mmap_count(void);
  */
 const saved_mmap_entry_t* multiboot2_get_mmap_entry(uint32_t index);
 
-void multiboot2_print_stats();
+void multiboot2_print_data();
+char* multiboot2_get_boot_command_line();
 
 #endif

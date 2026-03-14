@@ -34,6 +34,12 @@ char* strcpy(char*, const char*);
  */
 int strncmp(const char* s1, const char* s2, size_t size);
 
+/**
+ * Compares two null-terminated strings. Returns 0 if they are equal; greater
+ * than 0 if s1 is larger, and lesser than 0 if s2 is larger.
+ */
+int strcmp(const char* s1, const char* s2);
+
 #ifdef __cplusplus
 }
 #endif

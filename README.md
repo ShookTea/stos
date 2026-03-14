@@ -41,14 +41,14 @@ then prints to the command line.
 
 - Booting
 - GDT, interrupts, IRQ
-- Paging (hopefully)
-- PIT driver (so far doesn't do anything useful though)
+- Paging
+- Physical memory allocation (buddy allocator)
+- PIT driver
 - PS/2 driver
 - PS/2 keyboard driver
 - Debugging command
 
 ### Short-term todo list
 
-- Better physical memory allocation (buddy)
 - Better ACPI handling
 - kmalloc/kfree
