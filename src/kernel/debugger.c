@@ -14,6 +14,7 @@
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
 #include "test/kmalloc_tests.h"
+#include "test/libc_tests.h"
 
 #define MAX_COMMAND_LENGTH 64
 
@@ -51,6 +52,7 @@ static void handle_command_sent()
         puts("  kmalloc_f [AD] - frees address [AD] with kfree");
         puts("  kmalloc_stats  - Prints kmalloc statistics");
         puts("  kmalloc_test   - Prints kmalloc statistics");
+        puts("  libc_test      - Runs libc test suite");
         puts("  mb2_data       - Prints GRUB multiboot2 data");
         puts("  pag_stats      - Prints paging stats");
         puts("  pmm_stats      - Prints physical memory statistics");
@@ -85,6 +87,9 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "kmalloc_test") == 0) {
         kmalloc_run_all_tests();
+    }
+    else if (strcmp(command, "libc_test") == 0) {
+        libc_run_all_tests();
     }
     else if (strcmp(command, "mb2_data") == 0) {
         multiboot2_print_data();
