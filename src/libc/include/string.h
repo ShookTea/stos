@@ -40,6 +40,12 @@ int strncmp(const char* s1, const char* s2, size_t size);
  */
 int strcmp(const char* s1, const char* s2);
 
+/**
+ * Calculates the length of the initial segment of s which consists entirely
+ * of bytes in accept. Returns the number of bytes in the initial segment.
+ */
+size_t strspn(const char* s, const char* accept);
+
 #ifdef __cplusplus
 }
 #endif
