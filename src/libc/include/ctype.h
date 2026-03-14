@@ -31,7 +31,7 @@
  * isgraph  | 0b10000000 | > 0
  * isprint  | 0b00000001 | = 0
  */
-uint8_t _ASCII_FLAGS[128] = {
+static uint8_t _ASCII_FLAGS[128] = {
     0b00000001, // 0x00 NUL
     0b00000001, // 0x01 SOH
     0b00000001, // 0x02 STX

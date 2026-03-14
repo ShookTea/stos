@@ -3,6 +3,7 @@
 #include <kernel/drivers/keyboard.h>
 #include <stdio.h>
 #include <kernel/tty.h>
+#include <stdlib.h>
 #include <string.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/memory/vmm.h>
@@ -63,11 +64,20 @@ static void handle_command_sent()
     else if (strcmp(command, "kmalloc_a") == 0) {
         if (argcount != 1) {
             puts("kmalloc_a requires 1 argument");
+        } else {
+            int memsize = atoi(args[0]);
+            uint32_t addr = (uint32_t) kmalloc(memsize);
+            printf("Allocated %d B at address %d\n", memsize, addr);
         }
     }
     else if (strcmp(command, "kmalloc_f") == 0) {
         if (argcount != 1) {
             puts("kmalloc_f requires 1 argument");
+        } else {
+            void* addr = (void*)atoi(args[0]);
+            size_t size = kmalloc_size(addr);
+            kfree(addr);
+            printf("Freed %d bytes from address %d\n", size, addr);
         }
     }
     else if (strcmp(command, "kmalloc_stats") == 0) {
