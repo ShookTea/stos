@@ -46,13 +46,13 @@ then prints to the command line.
 - PIT driver
 - PS/2 driver
 - PS/2 keyboard driver
-- Debugging command
+- Debugging CLI - running tests, displaying stats, shutdown, reboot
 - kmalloc/kfree
 - Unit tests for libc
 - memory leak test - check memory stats, then run all mem tests multiple times,
-  then check memory stats again and compare if there are any changes 
+  then check memory stats again and compare if there are any changes
+- Basic ACPI parsing - shutdown & reboot support
 
 ### Short-term todo list
 
-- Better ACPI handling
 - Thread safety for memory allocation code
