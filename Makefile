@@ -35,7 +35,7 @@ LIBK_OBJS := $(patsubst $(SRC_DIR)/%,$(LIB_DIR)/%,$(LIBK_OBJS:.s=.libk.o))
 all: $(TARGET).iso
 
 qemu: $(TARGET).iso
-	qemu-system-i386 -cdrom $^ -m 512M -serial stdio -no-reboot
+	qemu-system-i386 -cdrom $^ -m 512M -serial stdio
 
 # Make a bootable ISO file
 $(TARGET).iso: $(TARGET) src/grub.cfg
