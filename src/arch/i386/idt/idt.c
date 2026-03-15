@@ -1,6 +1,8 @@
 #include "idt.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <kernel/paging.h>
+#include <kernel/page_fault.h>
 #include "pic.h"
 
 // An array of IDT entries
@@ -54,37 +56,49 @@ static void handle_page_fault(registers_t* registers)
     uint32_t faulting_address;
     __asm__ volatile("mov %%cr2, %0" : "=r"(faulting_address));
 
-    printf("\n=== PAGE FAULT ===\n");
-    printf("Page Fault at address: %#x\n", faulting_address);
-    printf("Error code: %#x\n", registers->err_code);
+    // Analyze the page fault
+    page_fault_info_t pf_info;
+    page_fault_analyze(
+        faulting_address,
+        registers->err_code,
+        registers->eip,
+        registers->esp,
+        registers->ebp,
+        &pf_info
+    );
 
-    // Decode error code bits
-    printf("  %s\n", (registers->err_code & 0x1) ?
-           "Page protection violation" : "Page not present");
-    printf("  %s operation\n", (registers->err_code & 0x2) ?
-           "Write" : "Read");
-    printf("  %s mode\n", (registers->err_code & 0x4) ?
-           "User" : "Supervisor");
+    // Print detailed information
+    page_fault_print_info(&pf_info);
 
-    if (registers->err_code & 0x8) {
-        printf("  Reserved bit set in page table entry\n");
-    }
-
-    if (registers->err_code & 0x10) {
-        printf("  Instruction fetch\n");
-    }
-
-    printf("\nRegisters at fault:\n");
-    printf("  EIP: %#x  ESP: %#x  EBP: %#x\n",
-           registers->eip, registers->esp, registers->ebp);
-    printf("  EAX: %#x  EBX: %#x  ECX: %#x  EDX: %#x\n",
+    // Print full register dump
+    printf("\nComplete Register Dump:\n");
+    printf("  EAX=%#010x  EBX=%#010x  ECX=%#010x  EDX=%#010x\n",
            registers->eax, registers->ebx, registers->ecx, registers->edx);
-    printf("  ESI: %#x  EDI: %#x\n",
-           registers->esi, registers->edi);
-    printf("  CS: %#x  EFLAGS: %#x\n",
-           registers->cs, registers->eflags);
+    printf("  ESI=%#010x  EDI=%#010x  EBP=%#010x  ESP=%#010x\n",
+           registers->esi, registers->edi, registers->ebp, registers->esp);
+    printf("  EIP=%#010x  EFLAGS=%#010x  CS=%#06x\n",
+           registers->eip, registers->eflags, registers->cs);
+    printf("  INT#=%#04x  ERR=%#010x\n",
+           registers->int_no, registers->err_code);
 
-    printf("\nSystem halted.\n");
+    // Print stack trace
+    page_fault_print_stack_trace(registers->ebp, 10);
+
+    // Try to recover (currently always fails, but framework is in place)
+    printf("\nAttempting recovery...\n");
+    if (page_fault_try_recover(&pf_info)) {
+        printf("Recovery successful! Continuing execution.\n");
+        return;  // Return to faulting code - recovery succeeded
+    }
+
+    printf("\n========================================\n");
+    printf("Cannot recover from page fault.\n");
+    printf("System halted.\n");
+    printf("========================================\n");
+    
+    // Print statistics before halting
+    page_fault_print_stats();
+    
     __asm__ volatile ("cli; hlt");
 }
 
