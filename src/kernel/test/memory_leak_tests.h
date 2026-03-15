@@ -48,6 +48,13 @@ static inline void print_memory_stats(
     );
 }
 
+static inline void run_all_tests()
+{
+    memory_run_all_tests();
+    vmm_run_all_tests();
+    kmalloc_run_all_tests();
+}
+
 /**
  * Tests for memory leak:
  * 1. Load memory statistics
@@ -57,7 +64,6 @@ static inline void print_memory_stats(
 static inline void memory_leak_run_test()
 {
     puts("=== memory leak test run ===");
-    puts("---  stats before test   ---");
 
     uint32_t pmm_used_memory_start = pmm_get_used_memory();
     vmm_stats_t vmm_stats_start;
@@ -66,12 +72,43 @@ static inline void memory_leak_run_test()
     vmm_get_stats(&vmm_stats_start);
     kmalloc_get_stats(&kmalloc_stats_start);
     slab_get_stats(&slab_stats_start);
+
+    puts("");
+    puts("run 1");
+    run_all_tests();
+    puts("run 2");
+    run_all_tests();
+    puts("run 3");
+    run_all_tests();
+    puts("run 4");
+    run_all_tests();
+    puts("run 5");
+    run_all_tests();
+
+    uint32_t pmm_used_memory_end = pmm_get_used_memory();
+    vmm_stats_t vmm_stats_end;
+    kmalloc_stats_t kmalloc_stats_end;
+    slab_stats_t slab_stats_end;
+    vmm_get_stats(&vmm_stats_end);
+    kmalloc_get_stats(&kmalloc_stats_end);
+    slab_get_stats(&slab_stats_end);
+
+    puts("---  stats before test   ---");
     print_memory_stats(
         pmm_used_memory_start,
         vmm_stats_start,
         kmalloc_stats_start,
         slab_stats_start
     );
+
+    puts("---   stats after test   ---");
+    print_memory_stats(
+        pmm_used_memory_end,
+        vmm_stats_end,
+        kmalloc_stats_end,
+        slab_stats_end
+    );
+
 }
 
 #endif
