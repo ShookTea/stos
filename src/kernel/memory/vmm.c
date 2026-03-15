@@ -9,10 +9,30 @@
 // Head of the virtual memory region list
 static vmm_region_t* region_list = NULL;
 
+// Bootstrap region pool (used during initialization)
+#define VMM_BOOTSTRAP_POOL_SIZE 32
+static vmm_region_t bootstrap_pool[VMM_BOOTSTRAP_POOL_SIZE];
+static size_t bootstrap_pool_index = 0;
+static bool use_dynamic_allocation = false;
+
+// Dedicated physical page for dynamic VMM regions (to avoid circular dependency)
+// We allocate one physical page and carve out vmm_region_t structures from it
+static uint32_t vmm_region_page_phys = 0;
+static vmm_region_t* vmm_region_page_virt = NULL;
+static size_t vmm_region_page_index = 0;
+#define VMM_REGIONS_PER_PAGE (PAGE_SIZE / sizeof(vmm_region_t))
+
+// Statistics tracking
+static size_t total_regions_created = 0;
+static size_t total_regions_destroyed = 0;
+static size_t bootstrap_regions_created = 0;
+static size_t dynamic_regions_created = 0;
+
 
 
 // Forward declarations for internal functions
 static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t flags, bool is_free);
+static void vmm_destroy_region(vmm_region_t* region);
 static void vmm_insert_region(vmm_region_t* region);
 static void vmm_remove_region(vmm_region_t* region);
 static vmm_region_t* vmm_find_region(uint32_t virt);
@@ -20,10 +40,44 @@ static void vmm_merge_free_regions(void);
 static vmm_region_t* vmm_split_region(vmm_region_t* region, uint32_t split_point);
 
 /**
+ * Enable dynamic allocation for VMM regions
+ * Must be called after paging is enabled (so we can access physical memory)
+ */
+void vmm_enable_dynamic_allocation(void) {
+    if (use_dynamic_allocation) {
+        return;  // Already enabled
+    }
+    
+    printf("[VMM] Enabling dynamic region allocation using dedicated physical page\n");
+    printf("[VMM] Bootstrap pool usage: %zu/%d regions\n", 
+           bootstrap_pool_index, VMM_BOOTSTRAP_POOL_SIZE);
+    printf("[VMM] Total regions created so far: %zu (%zu bootstrap)\n",
+           total_regions_created, bootstrap_regions_created);
+    
+    // Allocate a dedicated physical page for VMM regions
+    // This avoids circular dependency: vmm -> kmalloc -> slab -> vmm
+    vmm_region_page_phys = pmm_alloc_page();
+    if (vmm_region_page_phys == 0) {
+        printf("[VMM] ERROR: Failed to allocate physical page for regions!\n");
+        return;
+    }
+    
+    // Map it to virtual address (should already be mapped via PHYS_MAP_BASE)
+    vmm_region_page_virt = (vmm_region_t*)PHYS_TO_VIRT(vmm_region_page_phys);
+    vmm_region_page_index = 0;
+    
+    printf("[VMM] Allocated dedicated page at phys=%#x virt=%#x\n",
+           vmm_region_page_phys, (uint32_t)vmm_region_page_virt);
+    printf("[VMM] Can fit %zu regions per page\n", VMM_REGIONS_PER_PAGE);
+    
+    use_dynamic_allocation = true;
+}
+
+/**
  * Initialize the Virtual Memory Manager
  */
 void vmm_init(void) {
-    printf("[VMM] Initializing Virtual Memory Manager...\n");
+    printf("[VMM] Initializing Virtual Memory Manager (using bootstrap pool)...\n");
 
     // Create initial region for kernel (1MB - 4MB, already mapped)
     vmm_region_t* kernel_region = vmm_create_region(
@@ -336,8 +390,15 @@ void vmm_print_stats(void) {
     printf("Total Regions:       %u\n", stats.num_regions);
     printf("Used Regions:        %u\n", stats.num_used_regions);
     printf("Free Regions:        %u\n", stats.num_free_regions);
-    printf("Kernel Heap Start:   %#x\n", stats.kernel_heap_start);
-    printf("Kernel Heap Current: %#x\n", stats.kernel_heap_current);
+    printf("  Kernel Heap Start:   %#x\n", stats.kernel_heap_start);
+    printf("  Kernel Heap Current: %#x\n", stats.kernel_heap_current);
+    printf("\nRegion Allocation Stats:\n");
+    printf("  Total created:       %zu\n", total_regions_created);
+    printf("  Total destroyed:     %zu\n", total_regions_destroyed);
+    printf("  Currently active:    %zu\n", total_regions_created - total_regions_destroyed);
+    printf("  Bootstrap created:   %zu\n", bootstrap_regions_created);
+    printf("  Dynamic created:     %zu\n", dynamic_regions_created);
+    printf("  Using dynamic alloc: %s\n", use_dynamic_allocation ? "Yes" : "No");
     printf("======================\n\n");
 }
 
@@ -404,16 +465,35 @@ void vmm_kernel_free(void* ptr, size_t size) {
  * Create a new virtual memory region
  */
 static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t flags, bool is_free) {
-    // For now, we'll allocate region structures from a simple pool
-    // In a more complete implementation, this would use the kernel heap
-    static vmm_region_t region_pool[256];
-    static size_t pool_index = 0;
-
-    if (pool_index >= 256) {
-        return NULL;  // Pool exhausted
+    vmm_region_t* region;
+    
+    if (use_dynamic_allocation) {
+        // Use dedicated physical page for VMM regions (bypasses kmalloc/slab to avoid circular dependency)
+        if (vmm_region_page_index >= VMM_REGIONS_PER_PAGE) {
+            printf("[VMM] ERROR: Dedicated region page exhausted (%zu/%zu used)!\n",
+                   vmm_region_page_index, VMM_REGIONS_PER_PAGE);
+            printf("[VMM] TODO: Implement multi-page support for region allocation\n");
+            printf("[VMM] Stats: %zu total regions (%zu dynamic, %zu destroyed)\n",
+                   total_regions_created, dynamic_regions_created, total_regions_destroyed);
+            return NULL;
+        }
+        
+        region = &vmm_region_page_virt[vmm_region_page_index++];
+        dynamic_regions_created++;
+    } else {
+        // Use bootstrap pool during initialization
+        if (bootstrap_pool_index >= VMM_BOOTSTRAP_POOL_SIZE) {
+            printf("[VMM] ERROR: Bootstrap pool exhausted (%d regions)!\n", 
+                   VMM_BOOTSTRAP_POOL_SIZE);
+            printf("[VMM] Hint: Call vmm_enable_dynamic_allocation() after paging_init()\n");
+            return NULL;
+        }
+        region = &bootstrap_pool[bootstrap_pool_index++];
+        bootstrap_regions_created++;
     }
-
-    vmm_region_t* region = &region_pool[pool_index++];
+    
+    total_regions_created++;
+    
     region->start = start;
     region->end = end;
     region->flags = flags;
@@ -422,6 +502,34 @@ static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t fl
     region->prev = NULL;
 
     return region;
+}
+
+/**
+ * Destroy a virtual memory region
+ */
+static void vmm_destroy_region(vmm_region_t* region) {
+    if (!region) {
+        return;
+    }
+    
+    // Check if this region is from the bootstrap pool
+    bool is_bootstrap = (region >= bootstrap_pool && 
+                        region < bootstrap_pool + VMM_BOOTSTRAP_POOL_SIZE);
+    
+    // Check if this region is from the dedicated page
+    bool is_from_dedicated_page = (use_dynamic_allocation && 
+                                   region >= vmm_region_page_virt &&
+                                   region < vmm_region_page_virt + VMM_REGIONS_PER_PAGE);
+    
+    if (is_bootstrap || is_from_dedicated_page) {
+        // These regions are never actually freed, just counted for statistics
+        // We use a simple bump allocator for the dedicated page
+        total_regions_destroyed++;
+        return;
+    }
+    
+    // If we get here, something is wrong
+    printf("[VMM] WARNING: Attempted to free region from unknown source\n");
 }
 
 /**
@@ -464,7 +572,7 @@ static void vmm_insert_region(vmm_region_t* region) {
 }
 
 /**
- * Remove a region from the list
+ * Remove a region from the list and destroy it
  */
 static void vmm_remove_region(vmm_region_t* region) {
     if (!region) {
@@ -480,6 +588,9 @@ static void vmm_remove_region(vmm_region_t* region) {
     if (region->next != NULL) {
         region->next->prev = region->prev;
     }
+    
+    // Destroy the region structure
+    vmm_destroy_region(region);
 }
 
 /**

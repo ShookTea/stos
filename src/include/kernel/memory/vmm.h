@@ -53,6 +53,12 @@ typedef struct {
 void vmm_init(void);
 
 /**
+ * Enable dynamic allocation for VMM regions
+ * Must be called after kmalloc_init() to switch from bootstrap pool to kmalloc
+ */
+void vmm_enable_dynamic_allocation(void);
+
+/**
  * Allocate virtual memory pages
  *
  * @param pages Number of pages to allocate

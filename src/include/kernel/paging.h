@@ -14,6 +14,25 @@
 // Page size - typically 4KB on most architectures
 #define PAGE_SIZE 4096
 
+// Physical memory mapping (architecture-specific values, but interface is common)
+// These should be defined by the architecture-specific paging implementation
+#ifndef PHYS_MAP_BASE
+#define PHYS_MAP_BASE       0xC0000000  // 3GB - Default for i386
+#endif
+
+#ifndef PHYS_MAP_SIZE
+#define PHYS_MAP_SIZE       0x40000000  // 1GB - Default mapping size
+#endif
+
+// Convert physical address to virtual address (for kernel use)
+#define PHYS_TO_VIRT(phys)  ((void*)((uint32_t)(phys) + PHYS_MAP_BASE))
+
+// Convert virtual address back to physical (only for mapped region)
+#define VIRT_TO_PHYS(virt)  ((uint32_t)(virt) - PHYS_MAP_BASE)
+
+// Check if a virtual address is in the physical mapping region
+#define IS_PHYS_MAPPED(virt) ((uint32_t)(virt) >= PHYS_MAP_BASE)
+
 // Page flags (architecture-independent)
 #define PAGE_PRESENT    0x001  // Page is present in memory
 #define PAGE_WRITE      0x002  // Page is writable

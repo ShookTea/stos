@@ -69,6 +69,11 @@ void early_init(uint32_t magic, multiboot_info_t* mbi)
     // with the virtual address space
     vmm_init();
 
+    // Enable dynamic allocation for VMM regions
+    // This must happen after paging (so we can access physical memory via PHYS_MAP_BASE)
+    // but BEFORE slab/kmalloc to avoid circular dependency
+    vmm_enable_dynamic_allocation();
+
     // Initialize Slab Allocator
     // This must happen after VMM is initialized because it uses
     // vmm_kernel_alloc() to allocate memory for slabs
@@ -84,6 +89,7 @@ void early_init(uint32_t magic, multiboot_info_t* mbi)
     // - VMM is initialized and tracking virtual address space
     // - Slab allocator is ready for sub-page allocations
     // - kmalloc/kfree are ready for use
+    // - VMM is using dynamic allocation (not limited to bootstrap pool)
     // - All kernel code, data, stack are accessible
     // - System is ready for kernel_main()
 }
