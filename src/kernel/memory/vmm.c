@@ -9,21 +9,7 @@
 // Head of the virtual memory region list
 static vmm_region_t* region_list = NULL;
 
-// Kernel heap tracking
-static uint32_t kernel_heap_current = VMM_KERNEL_HEAP;
-static uint32_t kernel_heap_end = VMM_USER_START; // Heap grows until user space
 
-// Free list for kernel heap allocations (static pool to avoid allocation)
-#define KERNEL_HEAP_MAX_FREE_BLOCKS 64
-
-typedef struct kernel_heap_free_block {
-    uint32_t addr;
-    size_t size;
-    bool in_use;
-} kernel_heap_free_block_t;
-
-static kernel_heap_free_block_t kernel_heap_free_blocks[KERNEL_HEAP_MAX_FREE_BLOCKS];
-static bool kernel_heap_free_list_initialized = false;
 
 // Forward declarations for internal functions
 static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t flags, bool is_free);
@@ -88,12 +74,6 @@ void vmm_init(void) {
     printf("[VMM] Kernel region: 0x%x - 0x%x\n", VMM_KERNEL_START, VMM_KERNEL_HEAP);
     printf("[VMM] Heap region:   0x%x - 0x%x\n", VMM_KERNEL_HEAP, VMM_USER_START);
     printf("[VMM] User region:   0x%x - 0x%x\n", VMM_USER_START, VMM_USER_END);
-    
-    // Initialize kernel heap free list
-    for (int i = 0; i < KERNEL_HEAP_MAX_FREE_BLOCKS; i++) {
-        kernel_heap_free_blocks[i].in_use = false;
-    }
-    kernel_heap_free_list_initialized = true;
 }
 
 /**
@@ -322,7 +302,7 @@ void vmm_get_stats(vmm_stats_t* stats) {
     stats->num_free_regions = 0;
     stats->num_used_regions = 0;
     stats->kernel_heap_start = VMM_KERNEL_HEAP;
-    stats->kernel_heap_current = kernel_heap_current;
+    stats->kernel_heap_current = 0;  // No longer using bump pointer
 
     vmm_region_t* region = region_list;
     while (region != NULL) {
@@ -394,75 +374,12 @@ void* vmm_kernel_alloc(size_t size) {
         return NULL;
     }
 
-    // Align size to page boundary
-    size = PAGE_ALIGN_UP(size);
-    size_t pages = size / PAGE_SIZE;
+    // Align size to page boundary and convert to pages
+    size_t aligned_size = PAGE_ALIGN_UP(size);
+    size_t pages = aligned_size / PAGE_SIZE;
 
-    uint32_t alloc_addr = 0;
-
-    // First, try to find a suitable block in the free list
-    if (kernel_heap_free_list_initialized) {
-        for (int i = 0; i < KERNEL_HEAP_MAX_FREE_BLOCKS; i++) {
-            if (kernel_heap_free_blocks[i].in_use && kernel_heap_free_blocks[i].size >= size) {
-                // Found a suitable block
-                alloc_addr = kernel_heap_free_blocks[i].addr;
-                
-                // If the block is larger than needed, split it
-                if (kernel_heap_free_blocks[i].size > size) {
-                    kernel_heap_free_blocks[i].addr += size;
-                    kernel_heap_free_blocks[i].size -= size;
-                } else {
-                    // Exact fit, mark as not in use
-                    kernel_heap_free_blocks[i].in_use = false;
-                }
-                break;
-            }
-        }
-    }
-
-    // If no suitable free block found, allocate from the bump pointer
-    if (alloc_addr == 0) {
-        // Check if we have enough space in the heap
-        if (kernel_heap_current + size > kernel_heap_end) {
-            return NULL;  // Heap exhausted
-        }
-        alloc_addr = kernel_heap_current;
-        kernel_heap_current += size;
-    }
-
-    // Allocate and map physical pages
-    for (size_t i = 0; i < pages; i++) {
-        uint32_t phys = pmm_alloc_page();
-        if (phys == 0) {
-            // Failed, clean up
-            for (size_t j = 0; j < i; j++) {
-                uint32_t addr = alloc_addr + (j * PAGE_SIZE);
-                uint32_t p = paging_get_physical_address(addr);
-                if (p != 0) {
-                    pmm_free_page(p);
-                }
-                paging_unmap_page(addr);
-            }
-            return NULL;
-        }
-
-        uint32_t virt = alloc_addr + (i * PAGE_SIZE);
-        if (!paging_map_page(virt, phys, PAGE_PRESENT | PAGE_WRITE)) {
-            // Failed to map, clean up
-            pmm_free_page(phys);
-            for (size_t j = 0; j < i; j++) {
-                uint32_t addr = alloc_addr + (j * PAGE_SIZE);
-                uint32_t p = paging_get_physical_address(addr);
-                if (p != 0) {
-                    pmm_free_page(p);
-                }
-                paging_unmap_page(addr);
-            }
-            return NULL;
-        }
-    }
-
-    return (void*)alloc_addr;
+    // Delegate to vmm_alloc with kernel flags
+    return vmm_alloc(pages, VMM_KERNEL | VMM_WRITE);
 }
 
 /**
@@ -473,37 +390,12 @@ void vmm_kernel_free(void* ptr, size_t size) {
         return;
     }
 
-    uint32_t addr = (uint32_t)ptr;
+    // Align size to page boundary and convert to pages
+    size_t aligned_size = PAGE_ALIGN_UP(size);
+    size_t pages = aligned_size / PAGE_SIZE;
 
-    // Align size to page boundary
-    size = PAGE_ALIGN_UP(size);
-    size_t pages = size / PAGE_SIZE;
-    
-    // Free all physical pages and unmap them
-    for (size_t i = 0; i < pages; i++) {
-        uint32_t virt = addr + (i * PAGE_SIZE);
-        uint32_t phys = paging_get_physical_address(virt);
-
-        if (phys != 0) {
-            pmm_free_page(phys);
-        }
-
-        paging_unmap_page(virt);
-    }
-
-    // Add this block to the free list for reuse
-    if (kernel_heap_free_list_initialized) {
-        for (int i = 0; i < KERNEL_HEAP_MAX_FREE_BLOCKS; i++) {
-            if (!kernel_heap_free_blocks[i].in_use) {
-                kernel_heap_free_blocks[i].addr = addr;
-                kernel_heap_free_blocks[i].size = size;
-                kernel_heap_free_blocks[i].in_use = true;
-                break;
-            }
-        }
-        // If all free block slots are full, the virtual address space is lost
-        // but physical memory is still freed
-    }
+    // Delegate to vmm_free
+    vmm_free(ptr, pages);
 }
 
 /* Internal helper functions */
