@@ -16,6 +16,9 @@
 #define VFS_TYPE_DIRECTORY 0x02
 // TODO: types for devices, mounted directories, etc.
 
+struct vfs_node;
+struct dirent;
+
 // Handlers for opening and closing nodes
 typedef void (*open_node_t)(struct vfs_node* node);
 typedef void (*close_node_t)(struct vfs_node* node);
