@@ -50,7 +50,7 @@ static inline void print_memory_stats(
 
 static inline void run_all_tests()
 {
-    memory_run_all_tests();
+    memory_run_pmm_tests();
     vmm_run_all_tests();
     kmalloc_run_all_tests();
 }
