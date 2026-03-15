@@ -22,6 +22,9 @@ static vmm_region_t* vmm_region_page_virt = NULL;
 static size_t vmm_region_page_index = 0;
 #define VMM_REGIONS_PER_PAGE (PAGE_SIZE / sizeof(vmm_region_t))
 
+// Free list for reusing destroyed regions
+static vmm_region_t* vmm_region_free_list = NULL;
+
 // Statistics tracking
 static size_t total_regions_created = 0;
 static size_t total_regions_destroyed = 0;
@@ -468,18 +471,25 @@ static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t fl
     vmm_region_t* region;
     
     if (use_dynamic_allocation) {
-        // Use dedicated physical page for VMM regions (bypasses kmalloc/slab to avoid circular dependency)
-        if (vmm_region_page_index >= VMM_REGIONS_PER_PAGE) {
-            printf("[VMM] ERROR: Dedicated region page exhausted (%zu/%zu used)!\n",
-                   vmm_region_page_index, VMM_REGIONS_PER_PAGE);
-            printf("[VMM] TODO: Implement multi-page support for region allocation\n");
-            printf("[VMM] Stats: %zu total regions (%zu dynamic, %zu destroyed)\n",
-                   total_regions_created, dynamic_regions_created, total_regions_destroyed);
-            return NULL;
+        // First, try to reuse a region from the free list
+        if (vmm_region_free_list != NULL) {
+            region = vmm_region_free_list;
+            vmm_region_free_list = (vmm_region_t*)region->next;  // Remove from free list
+            dynamic_regions_created++;
+        } else {
+            // No free regions, allocate from the dedicated page
+            if (vmm_region_page_index >= VMM_REGIONS_PER_PAGE) {
+                printf("[VMM] ERROR: Dedicated region page exhausted (%zu/%zu used)!\n",
+                       vmm_region_page_index, VMM_REGIONS_PER_PAGE);
+                printf("[VMM] Free list is empty, all regions in use\n");
+                printf("[VMM] Stats: %zu total regions (%zu dynamic, %zu destroyed)\n",
+                       total_regions_created, dynamic_regions_created, total_regions_destroyed);
+                return NULL;
+            }
+            
+            region = &vmm_region_page_virt[vmm_region_page_index++];
+            dynamic_regions_created++;
         }
-        
-        region = &vmm_region_page_virt[vmm_region_page_index++];
-        dynamic_regions_created++;
     } else {
         // Use bootstrap pool during initialization
         if (bootstrap_pool_index >= VMM_BOOTSTRAP_POOL_SIZE) {
@@ -521,9 +531,17 @@ static void vmm_destroy_region(vmm_region_t* region) {
                                    region >= vmm_region_page_virt &&
                                    region < vmm_region_page_virt + VMM_REGIONS_PER_PAGE);
     
-    if (is_bootstrap || is_from_dedicated_page) {
-        // These regions are never actually freed, just counted for statistics
-        // We use a simple bump allocator for the dedicated page
+    if (is_bootstrap) {
+        // Bootstrap regions are never actually freed, just counted
+        total_regions_destroyed++;
+        return;
+    }
+    
+    if (is_from_dedicated_page) {
+        // Add to free list for reuse
+        region->next = (struct vmm_region*)vmm_region_free_list;
+        region->prev = NULL;
+        vmm_region_free_list = region;
         total_regions_destroyed++;
         return;
     }
