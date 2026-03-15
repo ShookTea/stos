@@ -6,6 +6,7 @@
 #include "kernel/memory/slab.h"
 #include "kernel/memory/vmm.h"
 #include "memory_tests.h"
+#include "stdlib.h"
 #include "vmm_tests.h"
 #include "kmalloc_tests.h"
 #include <stdio.h>
@@ -13,40 +14,6 @@
 
 #define KIB 1024
 #define MIB (1024 * 1024)
-
-static inline void print_memory_stats(
-    uint32_t pmm_used_memory,
-    vmm_stats_t vmm_stats,
-    kmalloc_stats_t kmalloc_stats,
-    slab_stats_t slab_stats
-) {
-    printf("  [PMM] used memory: %d KiB\n", pmm_used_memory / KIB);
-    printf(
-        "  [VMM] used virtual space: %d MiB\n",
-       vmm_stats.used_virtual_space / MIB
-    );
-    printf(
-        "  [VMM] used regions: %d\n",
-        vmm_stats.num_used_regions
-    );
-    printf(
-        "  [VMM] kernel heap current: %#x\n",
-        vmm_stats.kernel_heap_current
-    );
-    printf(
-        "  [kmalloc] current usage: %d KiB\n",
-        kmalloc_stats.current_usage / KIB
-    );
-    printf(
-        "  [kmalloc] active allocations: %zu\n",
-        (kmalloc_stats.num_small_allocations + kmalloc_stats.num_large_allocations) -
-        (kmalloc_stats.num_small_frees + kmalloc_stats.num_large_frees)
-    );
-    printf(
-        "  [slab] current usage: %d B\n",
-        slab_stats.current_usage
-    );
-}
 
 static inline void run_all_tests()
 {
@@ -93,22 +60,91 @@ static inline void memory_leak_run_test()
     kmalloc_get_stats(&kmalloc_stats_end);
     slab_get_stats(&slab_stats_end);
 
-    puts("---  stats before test   ---");
-    print_memory_stats(
-        pmm_used_memory_start,
-        vmm_stats_start,
-        kmalloc_stats_start,
-        slab_stats_start
+    bool fail = false;
+    puts("");
+    puts(" === memory stats changes ===");
+    printf(
+        "  [PMM] used memory: %d KiB -> %d KiB\n",
+        pmm_used_memory_start / KIB,
+        pmm_used_memory_end / KIB
     );
+    if (pmm_used_memory_start != pmm_used_memory_end) {
+        fail = true;
+    }
 
-    puts("---   stats after test   ---");
-    print_memory_stats(
-        pmm_used_memory_end,
-        vmm_stats_end,
-        kmalloc_stats_end,
-        slab_stats_end
+    printf(
+        "  [VMM] used virtual space: %d MiB -> %d MiB\n",
+       vmm_stats_start.used_virtual_space / MIB,
+       vmm_stats_end.used_virtual_space / MIB
     );
+    if (vmm_stats_start.used_virtual_space
+        != vmm_stats_end.used_virtual_space) {
+        fail = true;
+    }
 
+    printf(
+        "  [VMM] used regions: %d -> %d\n",
+        vmm_stats_start.num_used_regions,
+        vmm_stats_end.num_used_regions
+    );
+    if (vmm_stats_start.num_used_regions != vmm_stats_end.num_used_regions) {
+        fail = true;
+    }
+
+    printf(
+        "  [VMM] kernel heap current: %#x -> %#x\n",
+        vmm_stats_start.kernel_heap_current,
+        vmm_stats_end.kernel_heap_current
+    );
+    if (vmm_stats_start.kernel_heap_current
+        != vmm_stats_end.kernel_heap_current) {
+        fail = true;
+    }
+
+    printf(
+        "  [kmalloc] current usage: %d KiB -> %d KiB\n",
+        kmalloc_stats_start.current_usage / KIB,
+        kmalloc_stats_end.current_usage / KIB
+    );
+    if (kmalloc_stats_start.current_usage != kmalloc_stats_end.current_usage) {
+        fail = true;
+    }
+
+    size_t active_allocs_start =
+        (kmalloc_stats_start.num_small_allocations +
+            kmalloc_stats_start.num_large_allocations) -
+        (kmalloc_stats_start.num_small_frees +
+            kmalloc_stats_start.num_large_frees);
+
+    size_t active_allocs_end =
+        (kmalloc_stats_end.num_small_allocations +
+            kmalloc_stats_end.num_large_allocations) -
+        (kmalloc_stats_end.num_small_frees +
+            kmalloc_stats_end.num_large_frees);
+    printf(
+        "  [kmalloc] active allocations: %zu -> %zu\n",
+        active_allocs_start,
+        active_allocs_end
+    );
+    if (active_allocs_start != active_allocs_end) {
+        fail = true;
+    }
+
+    printf(
+        "  [slab] current usage: %d B -> %d B\n",
+        slab_stats_start.current_usage,
+        slab_stats_end.current_usage
+    );
+    if (slab_stats_start.current_usage != slab_stats_end.current_usage) {
+        fail = true;
+    }
+
+    if (fail) {
+        puts("memleak test FAILED!");
+        abort();
+    } else {
+        puts("memleak test completed successfully.");
+    }
 }
 
 #endif
