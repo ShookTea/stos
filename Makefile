@@ -77,7 +77,7 @@ $(LIB): $(LIBK_OBJS)
 # Temporary solution: just tar the grub.cfg file.
 $(INITRD): src/grub.cfg
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
-	tar cf $@ src/grub.cfg
+	tar -C src -cf $@ grub.cfg
 
 clean:
 	rm -rf $(BUILD_DIR)
