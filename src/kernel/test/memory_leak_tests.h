@@ -25,7 +25,7 @@ static inline void run_all_tests()
 /**
  * Tests for memory leak:
  * 1. Load memory statistics
- * 2. Run all memory tests 5 times in a row
+ * 2. Run all memory tests 50 times in a row
  * 3. Check memory statistics again, for any potential changes
  */
 static inline void memory_leak_run_test()
@@ -40,17 +40,9 @@ static inline void memory_leak_run_test()
     kmalloc_get_stats(&kmalloc_stats_start);
     slab_get_stats(&slab_stats_start);
 
-    puts("");
-    puts("run 1");
-    run_all_tests();
-    puts("run 2");
-    run_all_tests();
-    puts("run 3");
-    run_all_tests();
-    puts("run 4");
-    run_all_tests();
-    puts("run 5");
-    run_all_tests();
+    for (int i = 0; i < 50; i++) {
+        run_all_tests();
+    }
 
     uint32_t pmm_used_memory_end = pmm_get_used_memory();
     vmm_stats_t vmm_stats_end;

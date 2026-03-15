@@ -49,8 +49,8 @@ then prints to the command line.
 - Debugging command
 - kmalloc/kfree
 - Unit tests for libc
-- memory leak test - check memory stats, then run all mem tests 5 times, then
-  check memory stats again and compare if there are any changes 
+- memory leak test - check memory stats, then run all mem tests multiple times,
+  then check memory stats again and compare if there are any changes 
 
 ### Short-term todo list
 
