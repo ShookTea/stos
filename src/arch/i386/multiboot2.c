@@ -1,3 +1,4 @@
+#include "kernel/paging.h"
 #include <kernel/memory/pmm.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -17,6 +18,10 @@ static uint32_t load_base_addr = 0;
 static saved_mmap_entry_t saved_mmap[MAX_MMAP_ENTRIES];
 static uint32_t saved_mmap_count = 0;
 static uint32_t pmm_max_memory = 0;  // Maximum usable memory address
+
+#define MAX_BOOT_MODULE_ENTRIES 16
+static multiboot_tag_boot_module_t boot_modules[MAX_BOOT_MODULE_ENTRIES];
+static uint8_t saved_boot_modules_count = 0;
 
 static void multiboot2_process_memory_map()
 {
@@ -124,8 +129,18 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 acpi_init_new(acpi->rsdp);
                 break;
             }
+            case MULTIBOOT2_TAG_TYPE_MODULES: {
+                multiboot_tag_boot_module_t* module =
+                    (multiboot_tag_boot_module_t*)tag;
+                if (saved_boot_modules_count < MAX_BOOT_MODULE_ENTRIES) {
+                    boot_modules[saved_boot_modules_count] = *module;
+                    saved_boot_modules_count++;
+                }
+
+                break;
+            }
             default:
-                // Unknown multiboot2 mode
+                printf("  unsupported mb2 tag type: %d\n", tag->type);
                 break;
         }
 
@@ -196,6 +211,27 @@ void multiboot2_print_data()
             end,
             length / 1024
         );
+    }
+    puts("Boot modules data:");
+    for (uint32_t i = 0; i < saved_boot_modules_count; i++) {
+        printf(
+            "  [%02d] %s %#x : %#x %#02x\n",
+            i,
+            boot_modules[i].module_name,
+            boot_modules[i].module_phys_addr_start,
+            boot_modules[i].module_phys_addr_end
+        );
+    }
+    char* start_addr = PHYS_TO_VIRT(boot_modules[0].module_phys_addr_start);
+    char* end_addr = PHYS_TO_VIRT(boot_modules[0].module_phys_addr_end);
+    uint64_t i = 0;
+    while (start_addr < end_addr) {
+        printf("%c", *start_addr);
+        start_addr++;
+        i++;
+        if (i % 60 == 0) {
+            puts("");
+        }
     }
 }
 

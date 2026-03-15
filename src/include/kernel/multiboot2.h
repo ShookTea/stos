@@ -10,6 +10,7 @@
 #define MULTIBOOT2_TAG_TYPE_END 0
 #define MULTIBOOT2_TAG_TYPE_BOOT_COMMAND_LINE 1
 #define MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME 2
+#define MULTIBOOT2_TAG_TYPE_MODULES 3
 #define MULTIBOOT2_TAG_TYPE_MEMORY_MAP 6
 #define MULTIBOOT2_TAG_TYPE_ACPI_OLD 14
 #define MULTIBOOT2_TAG_TYPE_ACPI_NEW 15
@@ -64,6 +65,14 @@ typedef struct {
     uint32_t size;
     rsdp_new_t rsdp;
 } multiboot_tag_boot_acpi_new_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    uint32_t module_phys_addr_start;
+    uint32_t module_phys_addr_end;
+    char module_name[];
+} multiboot_tag_boot_module_t;
 
 typedef struct {
     uint32_t type;
