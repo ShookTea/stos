@@ -35,7 +35,8 @@ LIBK_OBJS := $(patsubst $(SRC_DIR)/%,$(LIB_DIR)/%,$(LIBK_OBJS:.s=.libk.o))
 all: $(TARGET).iso
 
 qemu: $(TARGET).iso
-	qemu-system-i386 -cdrom $^ -m 512M -serial stdio
+	# Boot order "dc": boot first from cdrom (d), then from hard disk (c)
+	qemu-system-i386 -cdrom $^ -m 512M -serial stdio -boot order=dc
 
 # Make a bootable ISO file
 $(TARGET).iso: $(TARGET) src/grub.cfg
