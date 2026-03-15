@@ -55,3 +55,4 @@ then prints to the command line.
 ### Short-term todo list
 
 - Better ACPI handling
+- Thread safety for memory allocation code
