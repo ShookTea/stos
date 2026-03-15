@@ -1,5 +1,6 @@
 #include "stdlib.h"
 #include <kernel/acpi.h>
+#include <kernel/paging.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -33,7 +34,8 @@ static bool parse_s5_from_dsdt(void)
         return false;
     }
 
-    acpi_sdt_header_t* dsdt = (acpi_sdt_header_t*)g_fadt->dsdt;
+    // Convert physical DSDT address to virtual address
+    acpi_sdt_header_t* dsdt = (acpi_sdt_header_t*)PHYS_TO_VIRT(g_fadt->dsdt);
     
     // Verify DSDT signature
     if (strncmp(dsdt->signature, "DSDT", 4) != 0) {
@@ -194,7 +196,7 @@ static void load_fadt(acpi_fadt_t* fadt)
     printf("ACPI: FADT loaded (revision=%u, length=%u)\n", 
            fadt->header.revision, fadt->header.length);
     
-    // Store FADT pointer
+    // Store FADT pointer (already in virtual address space from RSDT)
     g_fadt = fadt;
     acpi_available = true;
     
@@ -218,7 +220,8 @@ static void load_fadt(acpi_fadt_t* fadt)
 
 static void load_rsdt_pointer(uint32_t pointer)
 {
-    acpi_sdt_header_t* header = (acpi_sdt_header_t*)pointer;
+    // Convert physical address to virtual address
+    acpi_sdt_header_t* header = (acpi_sdt_header_t*)PHYS_TO_VIRT(pointer);
     if (strncmp(header->signature, "RSDT", 4) != 0) {
         puts("ACPI: Invalid RSDT signature");
         return;
@@ -239,7 +242,8 @@ static void load_rsdt_pointer(uint32_t pointer)
     
     for (uint32_t i = 0; i < entries; i++) {
         uint32_t sdt_pointer = rsdt->pointers_to_ther_sdt[i];
-        acpi_sdt_header_t* sdt_header = (acpi_sdt_header_t*)sdt_pointer;
+        // Convert physical address to virtual address
+        acpi_sdt_header_t* sdt_header = (acpi_sdt_header_t*)PHYS_TO_VIRT(sdt_pointer);
         
         printf("ACPI: Found table '%.4s' at 0x%x\n", sdt_header->signature, sdt_pointer);
         
