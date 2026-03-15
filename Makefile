@@ -8,6 +8,7 @@ LDFLAGS := -T src/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-
 LIBK_CFLAGS := $(CFLAGS) -D__is_libk
 TARGET := build/stos
 LIB := build/lib/libk.a
+INITRD := build/isodir/boot/stos.initrd
 
 # Directories
 SRC_DIR := src
@@ -39,7 +40,7 @@ qemu: $(TARGET).iso
 	qemu-system-i386 -cdrom $^ -m 512M -serial stdio -boot order=dc
 
 # Make a bootable ISO file
-$(TARGET).iso: $(TARGET) src/grub.cfg
+$(TARGET).iso: $(TARGET) src/grub.cfg $(INITRD)
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
 	cp src/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
@@ -71,6 +72,12 @@ $(LIB_DIR)/%.libk.o: $(SRC_DIR)/%.s
 $(LIB): $(LIBK_OBJS)
 	@mkdir -p $(LIB_DIR)
 	$(AR) rcs $@ $^
+
+# Building initrd memory by creating a tar file with all required files.
+# Temporary solution: just tar the grub.cfg file.
+$(INITRD): src/grub.cfg
+	mkdir -p $(BUILD_DIR)/isodir/boot/grub
+	tar cf $@ src/grub.cfg
 
 clean:
 	rm -rf $(BUILD_DIR)
