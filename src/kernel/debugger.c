@@ -11,6 +11,7 @@
 #include <kernel/memory/kmalloc.h>
 #include <kernel/paging.h>
 #include <kernel/multiboot2.h>
+#include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
 #include "test/kmalloc_tests.h"
@@ -54,6 +55,7 @@ static void handle_command_sent()
         puts("  kmalloc_test   - Prints kmalloc statistics");
         puts("  libc_test      - Runs libc test suite");
         puts("  mb2_data       - Prints GRUB multiboot2 data");
+        puts("  memleak_test   - Runs memleak test");
         puts("  pag_stats      - Prints paging stats");
         puts("  pmm_stats      - Prints physical memory statistics");
         puts("  pmm_test       - Runs physical memory test suite");
@@ -93,6 +95,9 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "mb2_data") == 0) {
         multiboot2_print_data();
+    }
+    else if (strcmp(command, "memleak_test") == 0) {
+        memory_leak_run_test();
     }
     else if (strcmp(command, "pag_stats") == 0) {
         paging_print_stats();
