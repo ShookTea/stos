@@ -11,6 +11,7 @@
 #include <kernel/memory/kmalloc.h>
 #include <kernel/paging.h>
 #include <kernel/multiboot2.h>
+#include <kernel/acpi.h>
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -59,6 +60,8 @@ static void handle_command_sent()
         puts("  pag_stats      - Prints paging stats");
         puts("  pmm_stats      - Prints physical memory statistics");
         puts("  pmm_test       - Runs physical memory test suite");
+        puts("  reboot         - Reboot the system via ACPI");
+        puts("  shutdown       - Shutdown the system via ACPI");
         puts("  slab_cache     - Prints slab allocator cache info");
         puts("  slab_stats     - Prints slab allocator statistics");
         puts("  vmm_memory_map - Prints detailed memory map");
@@ -122,6 +125,16 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "vmm_test") == 0) {
         vmm_run_all_tests();
+    }
+    else if (strcmp(command, "shutdown") == 0) {
+        puts("Initiating ACPI shutdown...");
+        acpi_shutdown();
+        // Never returns if successful
+    }
+    else if (strcmp(command, "reboot") == 0) {
+        puts("Initiating ACPI reboot...");
+        acpi_reboot();
+        // Never returns if successful
     }
     else {
         printf("Unrecognized command: %s\n", command);

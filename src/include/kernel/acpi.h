@@ -2,6 +2,7 @@
 #define KERNEL_ACPI_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
  char signature[8];
@@ -26,6 +27,11 @@ typedef struct {
 
 void acpi_init_old(rsdp_old_t);
 void acpi_init_new(rsdp_new_t);
+
+// Power management functions
+void acpi_shutdown(void);
+void acpi_reboot(void);
+bool acpi_is_available(void);
 
 typedef struct {
     char signature[4];
