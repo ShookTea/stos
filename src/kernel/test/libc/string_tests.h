@@ -127,7 +127,7 @@ static inline bool string_test_memcpy_basic(void) {
     char src2[] = {1, 2, 3, 4, 5};
     char dst2[5];
     memcpy(dst2, src2, 5);
-    
+
     bool binary_match = true;
     for (int i = 0; i < 5; i++) {
         if (dst2[i] != src2[i]) {
@@ -289,7 +289,7 @@ static inline bool string_test_strcpy_basic(void) {
  */
 static inline bool string_test_strcat_basic(void) {
     char dst[50] = "hello";
-    
+
     strcat(dst, " world");
     ASSERT_STR_EQ(dst, "hello world", "basic concatenation");
 
@@ -310,7 +310,7 @@ static inline bool string_test_strcat_multiple(void) {
     strcat(dst, " quick");
     strcat(dst, " brown");
     strcat(dst, " fox");
-    
+
     ASSERT_STR_EQ(dst, "The quick brown fox", "multiple concatenations");
     return true;
 }
@@ -320,7 +320,7 @@ static inline bool string_test_strcat_multiple(void) {
  */
 static inline bool string_test_strchr_basic(void) {
     const char* str = "hello world";
-    
+
     char* result = strchr(str, 'h');
     ASSERT_PTR_EQ(result, str, "find first character");
 
@@ -462,7 +462,7 @@ static inline bool string_test_strtok_edges(void) {
 /**
  * Run all string tests
  */
-static inline void string_run_all_tests(void) {
+static inline bool string_run_all_tests(void) {
     printf("\n=== String Library Tests ===\n");
     int passed = 0;
     int total = 25;
@@ -519,8 +519,10 @@ static inline void string_run_all_tests(void) {
     // Print results
     if (passed == total) {
         printf("String: %d/%d PASSED\n", passed, total);
+        return true;
     } else {
         printf("String: %d/%d FAILED\n", passed, total);
+        return false;
     }
 }
 

@@ -12,6 +12,7 @@
 #include <kernel/drivers/ps2.h>
 #include <kernel/drivers/keyboard.h>
 #include <string.h>
+#include "test/libc_tests.h"
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
 #include "test/kmalloc_tests.h"
@@ -46,6 +47,7 @@ void kernel_main()
 
     if (in_debug_mode) {
         // Running tests
+        libc_run_all_tests();
         vmm_run_all_tests();
         memory_run_all_tests();
         kmalloc_run_all_tests();

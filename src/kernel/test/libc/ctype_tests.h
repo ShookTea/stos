@@ -340,7 +340,7 @@ static inline bool ctype_test_boundaries(void) {
 /**
  * Run all ctype tests
  */
-static inline void ctype_run_all_tests(void) {
+static inline bool ctype_run_all_tests(void) {
     printf("\n=== Ctype Library Tests ===\n");
     int passed = 0;
     int total = 13;
@@ -362,8 +362,10 @@ static inline void ctype_run_all_tests(void) {
     // Print results
     if (passed == total) {
         printf("Ctype: %d/%d PASSED\n", passed, total);
+        return true;
     } else {
         printf("Ctype: %d/%d FAILED\n", passed, total);
+        return false;
     }
 }
 

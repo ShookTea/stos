@@ -4,6 +4,7 @@
 #include "libc/string_tests.h"
 #include "libc/stdlib_tests.h"
 #include "libc/ctype_tests.h"
+#include "stdlib.h"
 
 /**
  * Main libc Test Suite Runner
@@ -16,17 +17,23 @@
  */
 static inline void libc_run_all_tests(void) {
     printf("\n========== LIBC TEST SUITE ==========\n");
+    bool success = true;
 
-    // Run string tests
-    string_run_all_tests();
-
-    // Run stdlib tests
-    stdlib_run_all_tests();
-
-    // Run ctype tests
-    ctype_run_all_tests();
+    if (!string_run_all_tests()) {
+        success = false;
+    }
+    if (!stdlib_run_all_tests()) {
+        success = false;
+    }
+    if (!ctype_run_all_tests()) {
+        success = false;
+    }
 
     printf("=====================================\n");
+
+    if (!success) {
+        abort();
+    }
 }
 
-#endif // KERNEL_LIBC_TESTS_H
+#endif
