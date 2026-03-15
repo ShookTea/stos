@@ -20,7 +20,7 @@ struct vfs_node;
 struct dirent;
 
 // Handlers for opening and closing nodes
-typedef void (*open_node_t)(struct vfs_node* node);
+typedef void (*open_node_t)(struct vfs_node* node, bool read, bool write);
 typedef void (*close_node_t)(struct vfs_node* node);
 // Handler for reading `size` bytes from node `node`, starting from `offset`,
 // and storing them to address at `ptr`. Returns number of read bytes.
@@ -60,7 +60,7 @@ typedef struct vfs_node {
     close_node_t close_node;
     read_node_t read_node;
     write_node_t write_node;
-    read_node_t readdir_node;
+    readdir_node_t readdir_node;
     finddir_node_t finddir_node;
 } vfs_node_t;
 
