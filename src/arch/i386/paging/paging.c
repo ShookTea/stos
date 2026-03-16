@@ -1,5 +1,6 @@
 #include <kernel/paging.h>
 #include <kernel/memory/pmm.h>
+#include <kernel/multiboot2.h>
 #include "paging.h"
 #include <stdio.h>
 #include <string.h>
@@ -145,6 +146,38 @@ void paging_init(void)
 
     // We'll map up to 1GB of physical RAM (or whatever PMM tells us exists)
     uint32_t phys_mem_size = pmm_get_total_memory();
+    
+    // Check if boot modules extend beyond reported memory size
+    uint32_t max_module_addr = 0;
+    uint32_t module_count = multiboot2_get_modules_count();
+    
+    if (module_count > 0) {
+        printf("Checking %u boot module(s) for memory mapping:\n", module_count);
+        for (uint32_t i = 0; i < module_count; i++) {
+            multiboot_tag_boot_module_t* module = multiboot2_get_boot_module_entry(i);
+            if (module) {
+                printf("  Module %u: %#x - %#x\n", i, 
+                       module->module_phys_addr_start,
+                       module->module_phys_addr_end);
+                if (module->module_phys_addr_end > max_module_addr) {
+                    max_module_addr = module->module_phys_addr_end;
+                }
+            }
+        }
+        printf("Max module address: %#x\n", max_module_addr);
+    }
+    
+    // Ensure we map at least up to the last boot module
+    if (max_module_addr > phys_mem_size) {
+        // Align max_module_addr up to page boundary
+        max_module_addr = paging_align_up(max_module_addr);
+        printf("Boot modules extend beyond reported memory (%#x > %#x)\n",
+               max_module_addr, phys_mem_size);
+        printf("Adjusting mapping size from %#x to %#x\n", 
+               phys_mem_size, max_module_addr);
+        phys_mem_size = max_module_addr;
+    }
+    
     if (phys_mem_size > PHYS_MAP_SIZE) {
         printf("WARNING: Physical memory (%u MB) exceeds mapping size (%u MB)\n",
                phys_mem_size / (1024 * 1024),
