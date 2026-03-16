@@ -74,10 +74,10 @@ $(LIB): $(LIBK_OBJS)
 	$(AR) rcs $@ $^
 
 # Building initrd memory by creating a tar file with all required files.
-# Temporary solution: just tar the grub.cfg file.
-$(INITRD): src/grub.cfg
+# Temporary solution: just tar the grub.cfg file and few other files
+$(INITRD): src/grub.cfg src/libc/include/ctype.h src/libc/include/stdio.h
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
-	tar -C src -cf $@ grub.cfg
+	tar -C src -cf $@ grub.cfg libc/include/ctype.h libc/include/stdio.h
 
 clean:
 	rm -rf $(BUILD_DIR)
