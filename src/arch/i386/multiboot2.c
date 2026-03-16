@@ -214,24 +214,15 @@ void multiboot2_print_data()
     }
     puts("Boot modules data:");
     for (uint32_t i = 0; i < saved_boot_modules_count; i++) {
+        uint32_t start = boot_modules[i].module_phys_addr_start;
+        uint32_t end = boot_modules[i].module_phys_addr_end;
         printf(
-            "  [%02d] %s %#x : %#x %#02x\n",
+            "  [%02d] %#x : %#x (len: %u KiB)\n",
             i,
-            boot_modules[i].module_name,
-            boot_modules[i].module_phys_addr_start,
-            boot_modules[i].module_phys_addr_end
+            PHYS_TO_VIRT(start),
+            PHYS_TO_VIRT(end),
+            (end - start) / 1024
         );
-    }
-    char* start_addr = PHYS_TO_VIRT(boot_modules[0].module_phys_addr_start);
-    char* end_addr = PHYS_TO_VIRT(boot_modules[0].module_phys_addr_end);
-    uint64_t i = 0;
-    while (start_addr < end_addr) {
-        printf("%c", *start_addr);
-        start_addr++;
-        i++;
-        if (i % 60 == 0) {
-            puts("");
-        }
     }
 }
 
@@ -246,7 +237,7 @@ uint32_t multiboot2_get_modules_count()
 }
 
 multiboot_tag_boot_module_t* multiboot2_get_boot_module_entry(uint32_t i) {
-    if (i < 0 || i >= saved_boot_modules_count) {
+    if (i >= saved_boot_modules_count) {
         return NULL;
     }
     return &boot_modules[i];
