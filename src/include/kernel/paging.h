@@ -6,7 +6,7 @@
 
 /**
  * Architecture-independent paging interface
- * 
+ *
  * This header defines the interface for virtual memory management.
  * Architecture-specific implementations are in src/arch/<arch>/paging/
  */
@@ -17,11 +17,11 @@
 // Physical memory mapping (architecture-specific values, but interface is common)
 // These should be defined by the architecture-specific paging implementation
 #ifndef PHYS_MAP_BASE
-#define PHYS_MAP_BASE       0xC0000000  // 3GB - Default for i386
+#define PHYS_MAP_BASE 0xC0000000  // 3GB - Default for i386
 #endif
 
 #ifndef PHYS_MAP_SIZE
-#define PHYS_MAP_SIZE       0x40000000  // 1GB - Default mapping size
+#define PHYS_MAP_SIZE 0x40000000  // 1GB - Default mapping size
 #endif
 
 // Convert physical address to virtual address (for kernel use)
@@ -47,19 +47,19 @@
 
 /**
  * Initialize the paging system
- * 
+ *
  * This function:
  * - Creates the kernel page directory/tables
  * - Identity maps kernel space
  * - Enables paging
- * 
+ *
  * Must be called after PMM initialization.
  */
 void paging_init(void);
 
 /**
  * Map a virtual address to a physical address
- * 
+ *
  * @param virt Virtual address to map (will be page-aligned)
  * @param phys Physical address to map to (will be page-aligned)
  * @param flags Page flags (PAGE_PRESENT, PAGE_WRITE, PAGE_USER, etc.)
@@ -69,14 +69,14 @@ bool paging_map_page(uint32_t virt, uint32_t phys, uint32_t flags);
 
 /**
  * Unmap a virtual address
- * 
+ *
  * @param virt Virtual address to unmap
  */
 void paging_unmap_page(uint32_t virt);
 
 /**
  * Get the physical address for a virtual address
- * 
+ *
  * @param virt Virtual address
  * @return Physical address, or 0 if not mapped
  */
@@ -84,7 +84,7 @@ uint32_t paging_get_physical_address(uint32_t virt);
 
 /**
  * Check if a virtual address is mapped
- * 
+ *
  * @param virt Virtual address to check
  * @return true if mapped, false otherwise
  */
@@ -147,7 +147,7 @@ void paging_dump_page_directory(void);
 /**
  * Debug: Dump a specific page table
  * Shows all present page table entries for the given page directory index
- * 
+ *
  * @param pd_index Page directory index (0-1023)
  */
 void paging_dump_page_table(uint32_t pd_index);
@@ -155,7 +155,7 @@ void paging_dump_page_table(uint32_t pd_index);
 /**
  * Validate that critical memory regions are properly identity-mapped
  * Tests important addresses like VGA buffer, kernel space, etc.
- * 
+ *
  * @return true if all critical regions are correctly identity-mapped
  */
 bool paging_validate_identity_mapping(void);
