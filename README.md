@@ -56,4 +56,8 @@ then prints to the command line.
 ### Short-term todo list
 
 - Virtual File System
+- Support for more than 1 GiB of RAM
+  - that's currently not working because we're trying to map all physical
+    RAM in paging, which doesn't make sense above 1 GiB. We should implement
+    demand paging instead.
 - Thread safety for memory allocation code
