@@ -252,3 +252,10 @@ multiboot_tag_boot_module_t* multiboot2_get_boot_module_entry(uint32_t i) {
     }
     return &boot_modules[i];
 }
+
+char* multiboot2_get_boot_module_name(uint32_t i) {
+    if (i >= saved_boot_modules_count) {
+        return NULL;
+    }
+    return boot_module_names[i];
+}

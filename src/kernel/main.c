@@ -11,6 +11,7 @@
 #include <kernel/drivers/pit.h>
 #include <kernel/drivers/ps2.h>
 #include <kernel/drivers/keyboard.h>
+#include <kernel/vfs/initrd.h>
 #include <string.h>
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"
@@ -52,6 +53,11 @@ void kernel_main()
         memory_run_all_tests();
         kmalloc_run_all_tests();
     }
+
+    /**
+     * Mount initrd.
+     */
+    initrd_mount();
 
     pit_init();
     ps2_init();
