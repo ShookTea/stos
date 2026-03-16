@@ -1,4 +1,5 @@
 #include "kernel/multiboot2.h"
+#include "kernel/paging.h"
 #include <kernel/vfs/initrd.h>
 
 #include <stdio.h>
@@ -28,6 +29,13 @@ vfs_node_t* initrd_mount()
         puts("There is no initrd module present.");
         return NULL;
     }
+
+    tar_header_t* tar_header = PHYS_TO_VIRT(
+        initrd_module->module_phys_addr_start
+    );
+
+    tar_header->filename[99] = '\0';
+    puts(tar_header->filename);
 
     return initrd;
 }

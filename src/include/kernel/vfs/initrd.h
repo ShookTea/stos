@@ -9,4 +9,15 @@
  * initrd is present, but invalid.
  */
 vfs_node_t* initrd_mount();
+
+typedef struct {
+    char filename[100];
+    char mode[8];
+    char uid[8];
+    char gid[8];
+    char size[12]; // It's in octal, because why not
+    char last_mod_time[12]; // unix timestamp, but again in octal
+    char checksum[8];
+    char typeflag[1];
+} tar_header_t;
 #endif
