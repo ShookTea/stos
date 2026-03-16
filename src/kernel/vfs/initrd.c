@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 static vfs_node_t* initrd = NULL;
@@ -35,7 +36,9 @@ vfs_node_t* initrd_mount()
     );
 
     tar_header->filename[99] = '\0';
+    uint32_t size_bytes = strtol(tar_header->size, NULL, 8);
     puts(tar_header->filename);
+    printf("Size: %d B\n", size_bytes);
 
     return initrd;
 }
