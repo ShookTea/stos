@@ -1,4 +1,4 @@
-#include <kernel/vfs.h>
+#include <kernel/vfs/vfs.h>
 
 #include <stddef.h>
 #include <stdint.h>
