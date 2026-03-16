@@ -28,6 +28,13 @@ char* strcat(char*, const char*);
 char* strcpy(char*, const char*);
 
 /**
+ * Copies exactly `n` non-null characters from a null-terminated `source` to
+ * `dest`; if `source` doesn't have enough non-null characters, the remainder
+ * of `dest` will be padded with zeroes.
+ */
+char* strncpy(char* dest, const char* source, size_t n);
+
+/**
  * Compares two strings, byte by byte, not more than [size] bytes. Bytes that
  * follow a null byte are not compared. Returns 0 if they are equal; greater
  * than 0 if s1 is larger, and lesser than 0 if s2 is larger.
