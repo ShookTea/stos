@@ -546,9 +546,16 @@ void pmm_init()
     uint32_t status_map_bytes = (pmm_total_pages + 7) / 8;  // Round up
     uint32_t status_map_size = (status_map_bytes + 3) / 4;  // Convert to uint32_t count
 
-    // Place metadata after kernel
+    // Place metadata after kernel and all MB2 modules
     uint32_t kernel_end = (uint32_t)&_kernel_end;
-    uint32_t metadata_start = pmm_align_up(kernel_end);
+    uint32_t safe_metadata_start = kernel_end;
+    for (uint32_t i = 0; i < multiboot2_get_modules_count(); i++) {
+        multiboot_tag_boot_module_t* tag = multiboot2_get_boot_module_entry(i);
+        if (tag->module_phys_addr_end > safe_metadata_start) {
+            safe_metadata_start = tag->module_phys_addr_end;
+        }
+    }
+    uint32_t metadata_start = pmm_align_up(safe_metadata_start);
 
     buddy_order_map = (uint32_t*)metadata_start;
     buddy_status_map = (uint32_t*)(metadata_start + order_map_size * 4);
