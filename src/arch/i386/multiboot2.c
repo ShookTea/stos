@@ -21,6 +21,8 @@ static uint32_t pmm_max_memory = 0;  // Maximum usable memory address
 
 #define MAX_BOOT_MODULE_ENTRIES 16
 static multiboot_tag_boot_module_t boot_modules[MAX_BOOT_MODULE_ENTRIES];
+// Set max boot module name to 64 characters - should be more than enough
+static char boot_module_names[MAX_BOOT_MODULE_ENTRIES][64];
 static uint8_t saved_boot_modules_count = 0;
 
 static void multiboot2_process_memory_map()
@@ -134,6 +136,13 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                     (multiboot_tag_boot_module_t*)tag;
                 if (saved_boot_modules_count < MAX_BOOT_MODULE_ENTRIES) {
                     boot_modules[saved_boot_modules_count] = *module;
+                    strncpy(
+                        boot_module_names[saved_boot_modules_count],
+                        module->module_name,
+                        64
+                    );
+                    // Clear last byte
+                    boot_module_names[saved_boot_modules_count][63] = '\0';
                     saved_boot_modules_count++;
                 }
 
@@ -217,8 +226,9 @@ void multiboot2_print_data()
         uint32_t start = boot_modules[i].module_phys_addr_start;
         uint32_t end = boot_modules[i].module_phys_addr_end;
         printf(
-            "  [%02d] %#x : %#x (len: %u KiB)\n",
+            "  [%02d] >%s< %#x : %#x (len: %u KiB)\n",
             i,
+            boot_module_names[i],
             PHYS_TO_VIRT(start),
             PHYS_TO_VIRT(end),
             (end - start) / 1024
