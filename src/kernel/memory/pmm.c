@@ -583,6 +583,22 @@ void pmm_init()
     printf("  2. Kernel and metadata: %#x - %#x\n", kernel_start, metadata_end);
     buddy_reserve_region(kernel_start, metadata_end);
 
+    // 3. Reserve MB2 modules data
+    puts("  3. MB2 modules:");
+    for (uint32_t i = 0; i < multiboot2_get_modules_count(); i++) {
+        multiboot_tag_boot_module_t* tag = multiboot2_get_boot_module_entry(i);
+        printf(
+            "  - [%d] %#x - %#x\n",
+            i,
+            tag->module_phys_addr_start,
+            tag->module_phys_addr_end
+        );
+        buddy_reserve_region(
+            tag->module_phys_addr_start,
+            tag->module_phys_addr_end
+        );
+    }
+
     // Now process multiboot2 memory map and add available regions
     // The buddy_add_region function will skip pages already marked as allocated
     uint32_t mmap_count = multiboot2_get_mmap_count();

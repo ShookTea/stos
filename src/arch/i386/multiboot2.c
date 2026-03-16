@@ -239,3 +239,15 @@ char* multiboot2_get_boot_command_line()
 {
     return boot_command_line;
 }
+
+uint32_t multiboot2_get_modules_count()
+{
+    return saved_boot_modules_count;
+}
+
+multiboot_tag_boot_module_t* multiboot2_get_boot_module_entry(uint32_t i) {
+    if (i < 0 || i >= saved_boot_modules_count) {
+        return NULL;
+    }
+    return &boot_modules[i];
+}
