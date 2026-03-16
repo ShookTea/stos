@@ -285,6 +285,169 @@ static inline bool string_test_strcpy_basic(void) {
 }
 
 /**
+ * Test strncpy: basic functionality
+ */
+static inline bool string_test_strncpy_basic(void) {
+    char dst[20];
+
+    memset(dst, 'X', 20);  // Fill with known pattern
+    strncpy(dst, "hello", 10);
+    ASSERT_STR_EQ(dst, "hello", "basic copy with padding");
+    // Verify padding with zeros
+    bool padded = true;
+    for (int i = 6; i < 10; i++) {
+        if (dst[i] != '\0') {
+            padded = false;
+            break;
+        }
+    }
+    ASSERT_TRUE(padded, "remaining bytes padded with null");
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "hi", 5);
+    ASSERT_STR_EQ(dst, "hi", "short string with padding");
+    return true;
+}
+
+/**
+ * Test strncpy: exact length match
+ */
+static inline bool string_test_strncpy_exact(void) {
+    char dst[20];
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "hello", 5);
+    // No null terminator when n equals source length
+    ASSERT_TRUE(dst[0] == 'h' && dst[1] == 'e' && dst[2] == 'l' && 
+                dst[3] == 'l' && dst[4] == 'o', "exact length copy");
+    ASSERT_TRUE(dst[5] == 'X', "no null terminator added");
+
+    // Add null terminator manually
+    dst[5] = '\0';
+    ASSERT_STR_EQ(dst, "hello", "string valid after manual termination");
+    return true;
+}
+
+/**
+ * Test strncpy: n less than source length
+ */
+static inline bool string_test_strncpy_truncate(void) {
+    char dst[20];
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "hello world", 5);
+    // Should copy only first 5 characters, no null terminator
+    ASSERT_TRUE(dst[0] == 'h' && dst[1] == 'e' && dst[2] == 'l' && 
+                dst[3] == 'l' && dst[4] == 'o', "truncated copy");
+    ASSERT_TRUE(dst[5] == 'X', "destination unchanged after n");
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "hello", 3);
+    ASSERT_TRUE(dst[0] == 'h' && dst[1] == 'e' && dst[2] == 'l', "partial copy");
+    ASSERT_TRUE(dst[3] == 'X', "rest unchanged");
+    return true;
+}
+
+/**
+ * Test strncpy: n greater than source length
+ */
+static inline bool string_test_strncpy_padding(void) {
+    char dst[20];
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "hi", 10);
+    ASSERT_STR_EQ(dst, "hi", "copy with extensive padding");
+    
+    // Verify all padding bytes are null
+    bool all_null = true;
+    for (int i = 3; i < 10; i++) {
+        if (dst[i] != '\0') {
+            all_null = false;
+            break;
+        }
+    }
+    ASSERT_TRUE(all_null, "all extra bytes padded with null");
+    ASSERT_TRUE(dst[10] == 'X', "bytes after n unchanged");
+    return true;
+}
+
+/**
+ * Test strncpy: empty string
+ */
+static inline bool string_test_strncpy_empty(void) {
+    char dst[20];
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "", 5);
+    ASSERT_TRUE(dst[0] == '\0', "null terminator copied");
+    
+    // Verify padding
+    bool padded = true;
+    for (int i = 1; i < 5; i++) {
+        if (dst[i] != '\0') {
+            padded = false;
+            break;
+        }
+    }
+    ASSERT_TRUE(padded, "empty string padded to n");
+    ASSERT_TRUE(dst[5] == 'X', "bytes after n unchanged");
+    return true;
+}
+
+/**
+ * Test strncpy: zero length
+ */
+static inline bool string_test_strncpy_zero(void) {
+    char dst[20];
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "hello", 0);
+    ASSERT_TRUE(dst[0] == 'X', "nothing copied when n=0");
+    ASSERT_TRUE(dst[1] == 'X', "destination unchanged");
+    return true;
+}
+
+/**
+ * Test strncpy: single character
+ */
+static inline bool string_test_strncpy_single(void) {
+    char dst[20];
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "a", 1);
+    ASSERT_TRUE(dst[0] == 'a', "single char copied");
+    ASSERT_TRUE(dst[1] == 'X', "no null terminator when n=1");
+
+    memset(dst, 'X', 20);
+    strncpy(dst, "a", 5);
+    ASSERT_TRUE(dst[0] == 'a' && dst[1] == '\0', "single char with padding");
+    
+    bool padded = true;
+    for (int i = 2; i < 5; i++) {
+        if (dst[i] != '\0') {
+            padded = false;
+            break;
+        }
+    }
+    ASSERT_TRUE(padded, "padding after single char");
+    return true;
+}
+
+/**
+ * Test strncpy: overlapping destination safety
+ */
+static inline bool string_test_strncpy_overlap(void) {
+    char dst[20] = "hello world";
+    
+    // Copy within same buffer (undefined behavior in standard, but test actual behavior)
+    strncpy(dst, dst + 6, 5);
+    // Should have copied "world" (first 5 chars)
+    ASSERT_TRUE(dst[0] == 'w' && dst[1] == 'o' && dst[2] == 'r' && 
+                dst[3] == 'l' && dst[4] == 'd', "overlapping copy");
+    return true;
+}
+
+/**
  * Test strcat: basic functionality
  */
 static inline bool string_test_strcat_basic(void) {
@@ -465,7 +628,7 @@ static inline bool string_test_strtok_edges(void) {
 static inline bool string_run_all_tests(void) {
     printf("\n=== String Library Tests ===\n");
     int passed = 0;
-    int total = 25;
+    int total = 33;
 
     // strlen tests
     if (string_test_strlen_basic()) passed++;
@@ -497,6 +660,16 @@ static inline bool string_run_all_tests(void) {
 
     // strcpy tests
     if (string_test_strcpy_basic()) passed++;
+
+    // strncpy tests
+    if (string_test_strncpy_basic()) passed++;
+    if (string_test_strncpy_exact()) passed++;
+    if (string_test_strncpy_truncate()) passed++;
+    if (string_test_strncpy_padding()) passed++;
+    if (string_test_strncpy_empty()) passed++;
+    if (string_test_strncpy_zero()) passed++;
+    if (string_test_strncpy_single()) passed++;
+    if (string_test_strncpy_overlap()) passed++;
 
     // strcat tests
     if (string_test_strcat_basic()) passed++;
