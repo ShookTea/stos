@@ -1,3 +1,4 @@
+#include "kernel/memory/kmalloc.h"
 #include "kernel/memory/pmm.h"
 #include "kernel/multiboot2.h"
 #include "kernel/paging.h"
@@ -9,8 +10,10 @@
 #include <string.h>
 
 static vfs_node_t* initrd = NULL;
+static vfs_node_t* all_initrd_files = NULL;
 static bool mounted = false;
 static char empty_name[100];
+static uint8_t files_count = 0;
 
 /**
  * Iterates over file in TAR. Loads next TAR header to `next`.
@@ -28,16 +31,17 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
     puts(tar_header->filename);
     printf("Size: %d B\n", size_bytes);
 
-    char entry[16];
-    strncpy(entry, ((char*)tar_header) + 512, 16);
-    entry[15] = 0;
-    puts(entry);
-
     uint32_t size_aligned = size_bytes;
     if (size_aligned % 512 != 0) {
         size_aligned += 512 - (size_aligned % 512);
     }
     *next = (tar_header_t*)(((char*)tar_header) + 512 + size_aligned);
+
+    all_initrd_files = krealloc(
+        all_initrd_files,
+        sizeof(vfs_node_t) * (files_count + 1)
+    );
+    strcpy(all_initrd_files[files_count].filename, tar_header->filename);
 }
 
 vfs_node_t* initrd_mount()
