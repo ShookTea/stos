@@ -16,6 +16,25 @@ static char empty_name[100];
 static uint8_t files_count = 0;
 
 /**
+ * Splits filename by slash. Stores the total number of elements in `count`.
+ *
+ * !IMPORTANT returned value should be kfree'd after use.
+ */
+static char** split_path(char* filename, uint8_t* count)
+{
+    char** parts_buffer = NULL;
+    *count = 0;
+    char* part = strtok(filename, "/");
+    do {
+        krealloc(parts_buffer, kmalloc_size(parts_buffer) + strlen(part));
+        parts_buffer[*count] = part;
+        *count = *count + 1;
+    } while ((part = strtok(NULL, "/")) != NULL);
+
+    return parts_buffer;
+}
+
+/**
  * Iterates over file in TAR. Loads next TAR header to `next`.
  */
 static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
@@ -31,6 +50,16 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
     puts(tar_header->filename);
     printf("Size: %d B\n", size_bytes);
 
+    // Parsing filename
+    char* filename_buffer = kmalloc(sizeof(char) * 100);
+    strcpy(filename_buffer, tar_header->filename);
+    uint8_t parts_count = 0;
+    char** parts = split_path(filename_buffer, &parts_count);
+
+    for (uint8_t i = 0; i < parts_count; i++) {
+        printf("- [%d] %s\n", i, parts[i]);
+    }
+
     uint32_t size_aligned = size_bytes;
     if (size_aligned % 512 != 0) {
         size_aligned += 512 - (size_aligned % 512);
@@ -42,6 +71,8 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
         sizeof(vfs_node_t) * (files_count + 1)
     );
     strcpy(all_initrd_files[files_count].filename, tar_header->filename);
+    kfree(parts);
+    kfree(filename_buffer);
 }
 
 vfs_node_t* initrd_mount()
