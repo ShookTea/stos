@@ -62,6 +62,7 @@ typedef struct vfs_node {
     write_node_t write_node;
     readdir_node_t readdir_node;
     finddir_node_t finddir_node;
+    struct vfs_node* parent_node;
 } vfs_node_t;
 
 // One of these is returned by the readdir call, according to POSIX.

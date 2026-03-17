@@ -1,7 +1,7 @@
 #include "kernel/memory/kmalloc.h"
-#include "kernel/memory/pmm.h"
 #include "kernel/multiboot2.h"
 #include "kernel/paging.h"
+#include "kernel/vfs/vfs.h"
 #include <kernel/vfs/initrd.h>
 
 #include <stdio.h>
@@ -13,7 +13,31 @@ static vfs_node_t* initrd = NULL;
 static vfs_node_t* all_initrd_files = NULL;
 static bool mounted = false;
 static char empty_name[100];
-static uint8_t files_count = 0;
+static size_t files_count = 0;
+
+static vfs_node_t* create_new_file(
+    char* filename,
+    uint8_t type,
+    vfs_node_t* parent
+) {
+    all_initrd_files = krealloc(
+        all_initrd_files,
+        sizeof(vfs_node_t) * (files_count + 1)
+    );
+    strcpy(all_initrd_files[files_count].filename, filename);
+    all_initrd_files[files_count].type = type;
+    all_initrd_files[files_count].parent_node = parent;
+    all_initrd_files[files_count].length = 0;
+    all_initrd_files[files_count].open_node = NULL;
+    all_initrd_files[files_count].close_node = NULL;
+    all_initrd_files[files_count].read_node = NULL;
+    all_initrd_files[files_count].write_node = NULL;
+    all_initrd_files[files_count].readdir_node = NULL;
+    all_initrd_files[files_count].finddir_node = NULL;
+    files_count++;
+
+    return &(all_initrd_files[files_count - 1]);
+}
 
 /**
  * Splits filename by slash. Stores the total number of elements in `count`.
@@ -35,6 +59,27 @@ static char** split_path(char* filename, uint8_t* count)
 }
 
 /**
+ * Tries to find among already loaded files a directory that is a child of
+ * `parent` and has given name. If no such directory is found, creates a new
+ * directory instead.
+ */
+static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
+{
+    for (size_t i = 0; i < files_count; i++) {
+        vfs_node_t entry = all_initrd_files[i];
+        if (entry.parent_node != parent || entry.type != VFS_TYPE_DIRECTORY) {
+            continue;
+        }
+        if (strcmp(entry.filename, name) != 0) {
+            continue;
+        }
+        return &(all_initrd_files[i]);
+    }
+
+    return create_new_file(name, VFS_TYPE_DIRECTORY, parent);
+}
+
+/**
  * Iterates over file in TAR. Loads next TAR header to `next`.
  */
 static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
@@ -47,8 +92,6 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
 
     tar_header->filename[99] = '\0';
     uint32_t size_bytes = strtol(tar_header->size, NULL, 8);
-    puts(tar_header->filename);
-    printf("Size: %d B\n", size_bytes);
 
     // Parsing filename
     char* filename_buffer = kmalloc(sizeof(char) * 100);
@@ -56,8 +99,11 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
     uint8_t parts_count = 0;
     char** parts = split_path(filename_buffer, &parts_count);
 
-    for (uint8_t i = 0; i < parts_count; i++) {
-        printf("- [%d] %s\n", i, parts[i]);
+    vfs_node_t* parent = initrd;
+
+    // Looking for parent
+    for (uint8_t i = 0; i < parts_count - 1; i++) {
+        parent = get_directory(parent, parts[i]);
     }
 
     uint32_t size_aligned = size_bytes;
@@ -66,11 +112,13 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
     }
     *next = (tar_header_t*)(((char*)tar_header) + 512 + size_aligned);
 
-    all_initrd_files = krealloc(
-        all_initrd_files,
-        sizeof(vfs_node_t) * (files_count + 1)
+    vfs_node_t* new_file = create_new_file(
+        parts[parts_count - 1],
+        VFS_TYPE_FILE,
+        parent
     );
-    strcpy(all_initrd_files[files_count].filename, tar_header->filename);
+    new_file->length = size_bytes;
+
     kfree(parts);
     kfree(filename_buffer);
 }
@@ -96,6 +144,16 @@ vfs_node_t* initrd_mount()
         puts("There is no initrd module present.");
         return NULL;
     }
+
+    initrd = kmalloc(sizeof(vfs_node_t));
+    strcpy(initrd->filename, "initrd");
+    initrd->type = VFS_TYPE_DIRECTORY;
+    initrd->open_node = NULL;
+    initrd->close_node = NULL;
+    initrd->read_node = NULL;
+    initrd->write_node = NULL;
+    initrd->readdir_node = NULL;
+    initrd->finddir_node = NULL;
 
     tar_header_t* tar_header = PHYS_TO_VIRT(
         initrd_module->module_phys_addr_start
