@@ -76,3 +76,11 @@ vfs_node_t* initrd_mount()
 
     return initrd;
 }
+
+void initrd_unmount()
+{
+    if (mounted && initrd) {
+        kfree(all_initrd_files);
+        kfree(initrd);
+    }
+}

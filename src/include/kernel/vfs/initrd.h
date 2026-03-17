@@ -10,6 +10,11 @@
  */
 vfs_node_t* initrd_mount();
 
+/**
+ * Removes initrd from VFS and frees memory allocated for vfs_node_t
+ */
+void initrd_unmount();
+
 typedef struct {
     char filename[100];
     char mode[8];
