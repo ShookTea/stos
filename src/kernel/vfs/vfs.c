@@ -146,17 +146,10 @@ vfs_node_t* vfs_resolve(char* abs_path)
     vfs_node_t* current_node = vfs_root;
 
     for (size_t i = 0; i < part_count; i++) {
-        struct dirent* child = NULL;
-        bool found = false;
-        size_t j = 0;
-        do {
-            child = vfs_readdir(current_node, j);
-            j++;
-            // printf("Comparing %s with %s\n", child->name, parts[i]);
-            if (child != NULL && strcmp(child->name, parts[i]) == 0) {
-                found = true;
-            }
-        } while (!found && child != NULL);
+        current_node = vfs_finddir(current_node, parts[i]);
+        if (current_node == NULL) {
+            return NULL;
+        }
     }
 
     // Clean up
