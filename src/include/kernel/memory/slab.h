@@ -103,11 +103,12 @@ void slab_init(void);
 void* slab_alloc(size_t size);
 
 /**
- * Free memory allocated by slab allocator
+ * Free slab-allocated memory
  * 
  * @param ptr Pointer to memory to free (must be slab-allocated)
+ * @return true if freed successfully, false if double-free detected
  */
-void slab_free(void* ptr);
+bool slab_free(void* ptr);
 
 /**
  * Get the slab that contains a given pointer
@@ -182,8 +183,9 @@ void* slab_alloc_from_slab(slab_t* slab);
  * 
  * @param slab Slab to free to
  * @param ptr Pointer to object to free
+ * @return true if freed successfully, false if double-free detected
  */
-void slab_free_to_slab(slab_t* slab, void* ptr);
+bool slab_free_to_slab(slab_t* slab, void* ptr);
 
 /**
  * Move a slab between lists (partial/full/empty)

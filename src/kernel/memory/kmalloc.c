@@ -127,14 +127,15 @@ void kfree(void* ptr) {
         // This is a slab allocation
         size_t size = slab->cache->object_size;
         
-        slab_free(ptr);
-        
-        kmalloc_stats.num_small_frees++;
-        kmalloc_stats.total_freed += size;
-        if (kmalloc_stats.current_usage >= size) {
-            kmalloc_stats.current_usage -= size;
-        } else {
-            kmalloc_stats.current_usage = 0;
+        // Only update stats if free was successful (no double-free)
+        if (slab_free(ptr)) {
+            kmalloc_stats.num_small_frees++;
+            kmalloc_stats.total_freed += size;
+            if (kmalloc_stats.current_usage >= size) {
+                kmalloc_stats.current_usage -= size;
+            } else {
+                kmalloc_stats.current_usage = 0;
+            }
         }
     } else {
         // This should be a large allocation

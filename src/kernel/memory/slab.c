@@ -259,9 +259,20 @@ void* slab_alloc_from_slab(slab_t* slab) {
     return (void*)obj;
 }
 
-void slab_free_to_slab(slab_t* slab, void* ptr) {
+bool slab_free_to_slab(slab_t* slab, void* ptr) {
     if (!slab || slab->magic != SLAB_MAGIC || !ptr) {
-        return;
+        return false;
+    }
+    
+    // Check for double-free by traversing free list
+    slab_free_object_t* current = slab->free_list;
+    while (current) {
+        if (current == ptr) {
+            printf("ERROR: Double-free detected at %p (slab: %p, cache: %zu bytes)\n", 
+                   ptr, slab, slab->object_size);
+            return false;  // Already in free list!
+        }
+        current = current->next;
     }
     
     // Add object back to free list
@@ -269,6 +280,7 @@ void slab_free_to_slab(slab_t* slab, void* ptr) {
     obj->next = slab->free_list;
     slab->free_list = obj;
     slab->num_free++;
+    return true;
 }
 
 void* slab_alloc(size_t size) {
@@ -319,7 +331,7 @@ void* slab_alloc(size_t size) {
         if (global_stats.current_usage > global_stats.peak_usage) {
             global_stats.peak_usage = global_stats.current_usage;
         }
-        
+    
         // Update slab lists
         slab_update_lists(slab);
     }
@@ -354,9 +366,9 @@ slab_t* slab_get_slab(void* ptr) {
     return slab;
 }
 
-void slab_free(void* ptr) {
+bool slab_free(void* ptr) {
     if (!ptr || !slab_initialized) {
-        return;
+        return false;
     }
     
     // Find the slab this pointer belongs to
@@ -364,13 +376,16 @@ void slab_free(void* ptr) {
     
     if (!slab) {
         printf("ERROR: slab_free called with invalid pointer: %#x\n", (uint32_t)ptr);
-        return;
+        return false;
     }
     
     slab_cache_t* cache = slab->cache;
     
     // Free object back to slab
-    slab_free_to_slab(slab, ptr);
+    if (!slab_free_to_slab(slab, ptr)) {
+        // Double-free detected, don't update statistics
+        return false;
+    }
     
     // Update statistics
     cache->num_frees++;
@@ -392,6 +407,8 @@ void slab_free(void* ptr) {
             slab_destroy_slab(slab);
         }
     }
+    
+    return true;
 }
 
 void slab_get_stats(slab_stats_t* stats) {
