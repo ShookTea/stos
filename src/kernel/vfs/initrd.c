@@ -74,7 +74,10 @@ static char** split_path(char* filename, uint8_t* count)
     *count = 0;
     char* part = strtok(filename, "/");
     do {
-        krealloc(parts_buffer, kmalloc_size(parts_buffer) + strlen(part));
+        parts_buffer = krealloc(
+            parts_buffer,
+            kmalloc_size(parts_buffer) + strlen(part)
+        );
         parts_buffer[*count] = part;
         *count = *count + 1;
     } while ((part = strtok(NULL, "/")) != NULL);
