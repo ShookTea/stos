@@ -9,6 +9,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct {
+    vfs_node_t* parent;
+    void* address;
+} initrd_file_data_t;
+
+typedef struct {
+    vfs_node_t* parent;
+    vfs_node_t** children;
+    size_t children_count;
+} initrd_directory_data_t;
+
 static vfs_node_t* initrd = NULL;
 static vfs_node_t* all_initrd_files = NULL;
 static bool mounted = false;
@@ -26,7 +37,6 @@ static vfs_node_t* create_new_file(
     );
     strcpy(all_initrd_files[files_count].filename, filename);
     all_initrd_files[files_count].type = type;
-    all_initrd_files[files_count].parent_node = parent;
     all_initrd_files[files_count].length = 0;
     all_initrd_files[files_count].open_node = NULL;
     all_initrd_files[files_count].close_node = NULL;
@@ -34,8 +44,22 @@ static vfs_node_t* create_new_file(
     all_initrd_files[files_count].write_node = NULL;
     all_initrd_files[files_count].readdir_node = NULL;
     all_initrd_files[files_count].finddir_node = NULL;
-    files_count++;
 
+    if (type == VFS_TYPE_FILE) {
+        initrd_file_data_t* data = kmalloc(sizeof(initrd_file_data_t));
+        all_initrd_files[files_count].metadata = data;
+        data->parent = parent;
+        data->address = NULL;
+    } else if (type == VFS_TYPE_DIRECTORY) {
+        initrd_directory_data_t* data =
+            kmalloc(sizeof(initrd_directory_data_t));
+        all_initrd_files[files_count].metadata = data;
+        data->parent = parent;
+        data->children = NULL;
+        data->children_count = 0;
+    }
+
+    files_count++;
     return &(all_initrd_files[files_count - 1]);
 }
 
@@ -67,7 +91,11 @@ static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
 {
     for (size_t i = 0; i < files_count; i++) {
         vfs_node_t entry = all_initrd_files[i];
-        if (entry.parent_node != parent || entry.type != VFS_TYPE_DIRECTORY) {
+        if (entry.type != VFS_TYPE_DIRECTORY) {
+            continue;
+        }
+        initrd_directory_data_t* dir_data = entry.metadata;
+        if (dir_data->parent != parent) {
             continue;
         }
         if (strcmp(entry.filename, name) != 0) {
@@ -76,7 +104,8 @@ static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
         return &(all_initrd_files[i]);
     }
 
-    return create_new_file(name, VFS_TYPE_DIRECTORY, parent);
+    vfs_node_t* directory = create_new_file(name, VFS_TYPE_DIRECTORY, parent);
+    return directory;
 }
 
 /**
@@ -154,6 +183,11 @@ vfs_node_t* initrd_mount()
     initrd->write_node = NULL;
     initrd->readdir_node = NULL;
     initrd->finddir_node = NULL;
+    initrd_directory_data_t* data = kmalloc(sizeof(initrd_directory_data_t));
+    initrd->metadata = data;
+    data->parent = vfs_root;
+    data->children = NULL;
+    data->children_count = 0;
 
     tar_header_t* tar_header = PHYS_TO_VIRT(
         initrd_module->module_phys_addr_start
@@ -169,7 +203,12 @@ vfs_node_t* initrd_mount()
 void initrd_unmount()
 {
     if (mounted && initrd) {
+        for (size_t i = 0; i < files_count; i++) {
+            kfree(all_initrd_files[i].metadata);
+        }
+
         kfree(all_initrd_files);
+        kfree(initrd->metadata);
         kfree(initrd);
     }
 }
