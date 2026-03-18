@@ -12,6 +12,7 @@
 #include <kernel/paging.h>
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
+#include <kernel/vfs/vfs.h>
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -64,6 +65,7 @@ static void handle_command_sent()
         puts("  shutdown       - Shutdown the system via ACPI");
         puts("  slab_cache     - Prints slab allocator cache info");
         puts("  slab_stats     - Prints slab allocator statistics");
+        puts("  vfs_debug [F]  - Prints info about file at abs. path [F]");
         puts("  vmm_memory_map - Prints detailed memory map");
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
@@ -116,6 +118,35 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "slab_stats") == 0) {
         slab_print_stats();
+    }
+    else if (strcmp(command, "vfs_debug") == 0) {
+        if (argcount != 1) {
+            puts("vfs_debug requires 1 argument");
+        } else {
+            vfs_node_t* node = vfs_resolve(args[0]);
+            if (node == NULL) {
+                puts("File or directory not found.");
+            } else if (node->type & VFS_TYPE_DIRECTORY) {
+                puts("Directory found. Children:");
+                size_t i = 0;
+                struct dirent* dir = vfs_readdir(node, i);
+                while (dir != NULL) {
+                    vfs_node_t* child = vfs_finddir(node, dir->name);
+                    i++;
+                    dir = vfs_readdir(node, i);
+
+                    printf(
+                        " - %s (%s)\n",
+                        child->filename,
+                        child->type & VFS_TYPE_DIRECTORY ? "D" : " "
+                    );
+                }
+            } else if (node->type & VFS_TYPE_FILE) {
+                puts("File found");
+            } else {
+                puts("Unknown vfs node found");
+            }
+        }
     }
     else if (strcmp(command, "vmm_memory_map") == 0) {
         vmm_print_memory_map();
