@@ -108,6 +108,13 @@ static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
     }
 
     vfs_node_t* directory = create_new_file(name, VFS_TYPE_DIRECTORY, parent);
+    initrd_directory_data_t* parent_metadata = parent->metadata;
+    parent_metadata->children_count++;
+    parent_metadata->children = krealloc(
+        parent_metadata->children,
+        sizeof(vfs_node_t*) * parent_metadata->children_count
+    );
+    parent_metadata->children[parent_metadata->children_count - 1] = directory;
     return directory;
 }
 
@@ -207,10 +214,18 @@ void initrd_unmount()
 {
     if (mounted && initrd) {
         for (size_t i = 0; i < files_count; i++) {
-            kfree(all_initrd_files[i].metadata);
+            vfs_node_t entry = all_initrd_files[i];
+            if (entry.type == VFS_TYPE_DIRECTORY) {
+                initrd_directory_data_t* metadata = entry.metadata;
+                kfree(metadata->children);
+            }
+            kfree(entry.metadata);
         }
 
         kfree(all_initrd_files);
+
+        initrd_directory_data_t* root_metadata = initrd->metadata;
+        kfree(root_metadata->children);
         kfree(initrd->metadata);
         kfree(initrd);
     }
