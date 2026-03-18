@@ -1,7 +1,7 @@
-#include "kernel/memory/kmalloc.h"
-#include "kernel/multiboot2.h"
-#include "kernel/paging.h"
-#include "kernel/vfs/vfs.h"
+#include <kernel/memory/kmalloc.h>
+#include <kernel/multiboot2.h>
+#include <kernel/paging.h>
+#include <kernel/vfs/vfs.h>
 #include <kernel/vfs/initrd.h>
 
 #include <stdio.h>
