@@ -14,7 +14,9 @@
 #define VFS_TYPE_FILE 0x01
 // A normal directory
 #define VFS_TYPE_DIRECTORY 0x02
-// TODO: types for devices, mounted directories, etc.
+// Mounted file.
+#define VFS_TYPE_MOUNTPOINT 0x10
+// TODO: types for devices etc.
 
 struct vfs_node;
 struct dirent;

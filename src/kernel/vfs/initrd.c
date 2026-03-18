@@ -45,12 +45,12 @@ static vfs_node_t* create_new_file(
     all_initrd_files[files_count].readdir_node = NULL;
     all_initrd_files[files_count].finddir_node = NULL;
 
-    if (type == VFS_TYPE_FILE) {
+    if (type & VFS_TYPE_FILE) {
         initrd_file_data_t* data = kmalloc(sizeof(initrd_file_data_t));
         all_initrd_files[files_count].metadata = data;
         data->parent = parent;
         data->address = NULL;
-    } else if (type == VFS_TYPE_DIRECTORY) {
+    } else if (type & VFS_TYPE_DIRECTORY) {
         initrd_directory_data_t* data =
             kmalloc(sizeof(initrd_directory_data_t));
         all_initrd_files[files_count].metadata = data;
@@ -94,7 +94,7 @@ static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
 {
     for (size_t i = 0; i < files_count; i++) {
         vfs_node_t entry = all_initrd_files[i];
-        if (entry.type != VFS_TYPE_DIRECTORY) {
+        if (!(entry.type & VFS_TYPE_DIRECTORY)) {
             continue;
         }
         initrd_directory_data_t* dir_data = entry.metadata;
@@ -186,7 +186,7 @@ vfs_node_t* initrd_mount()
 
     initrd = kmalloc(sizeof(vfs_node_t));
     strcpy(initrd->filename, "initrd");
-    initrd->type = VFS_TYPE_DIRECTORY;
+    initrd->type = VFS_TYPE_DIRECTORY | VFS_TYPE_MOUNTPOINT;
     initrd->open_node = NULL;
     initrd->close_node = NULL;
     initrd->read_node = NULL;
@@ -215,7 +215,7 @@ void initrd_unmount()
     if (mounted && initrd) {
         for (size_t i = 0; i < files_count; i++) {
             vfs_node_t entry = all_initrd_files[i];
-            if (entry.type == VFS_TYPE_DIRECTORY) {
+            if (entry.type & VFS_TYPE_DIRECTORY) {
                 initrd_directory_data_t* metadata = entry.metadata;
                 kfree(metadata->children);
             }
