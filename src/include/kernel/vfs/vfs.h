@@ -82,4 +82,6 @@ void vfs_close(vfs_node_t* node);
 struct dirent* vfs_readdir(vfs_node_t* node, size_t index);
 vfs_node_t* vfs_finddir(vfs_node_t* node, char* name);
 
+void vfs_init();
+
 #endif

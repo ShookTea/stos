@@ -13,6 +13,7 @@
 #include <kernel/drivers/keyboard.h>
 #include <kernel/vfs/initrd.h>
 #include <string.h>
+#include "kernel/vfs/vfs.h"
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
@@ -54,10 +55,10 @@ void kernel_main()
         kmalloc_run_all_tests();
     }
 
-    /**
-     * Mount initrd.
-     */
+    // Initialize filesystem and mount initrd.
+    vfs_init();
     initrd_mount();
+    initrd_unmount();
 
     pit_init();
     ps2_init();
