@@ -86,4 +86,9 @@ vfs_node_t* vfs_finddir(vfs_node_t* node, char* name);
 
 void vfs_init();
 
+/**
+ * Adds node to the mounted list. TODO: possibility of unmounting
+ */
+void vfs_mount_node(vfs_node_t* node);
+
 #endif

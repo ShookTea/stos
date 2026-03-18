@@ -207,6 +207,10 @@ vfs_node_t* initrd_mount()
         initrd_load_tar(tar_header, &tar_header);
     } while (tar_header != NULL);
 
+    if (initrd) {
+        vfs_mount_node(initrd);
+    }
+
     return initrd;
 }
 

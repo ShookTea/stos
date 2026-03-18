@@ -58,7 +58,6 @@ void kernel_main()
     // Initialize filesystem and mount initrd.
     vfs_init();
     initrd_mount();
-    initrd_unmount();
 
     pit_init();
     ps2_init();

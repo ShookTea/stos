@@ -6,7 +6,11 @@
 #include <kernel/memory/kmalloc.h>
 #include <string.h>
 
+#define VFS_MAX_MOUNTED_NODES 32
+
 vfs_node_t* vfs_root = 0;
+vfs_node_t** mounted_nodes = NULL;
+uint32_t mounted_notes_count = 0;
 
 void vfs_init()
 {
@@ -21,6 +25,8 @@ void vfs_init()
     vfs_root->write_node = NULL;
     vfs_root->readdir_node = NULL;
     vfs_root->finddir_node = NULL;
+
+    mounted_nodes = kmalloc(sizeof(vfs_node_t*) * VFS_MAX_MOUNTED_NODES);
 }
 
 size_t vfs_read(vfs_node_t* node, uint32_t offset, uint32_t size, void* ptr)
@@ -67,4 +73,14 @@ vfs_node_t* vfs_finddir(vfs_node_t* node, char* name)
         return node->finddir_node(node, name);
     }
     return NULL;
+}
+
+void vfs_mount_node(vfs_node_t* node)
+{
+    if (mounted_notes_count >= VFS_MAX_MOUNTED_NODES) {
+        return;
+    }
+
+    mounted_nodes[mounted_notes_count] = node;
+    mounted_notes_count++;
 }
