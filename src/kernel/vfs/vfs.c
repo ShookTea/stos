@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/memory/kmalloc.h>
+#include <stdio.h>
 #include <string.h>
 
 #define VFS_MAX_MOUNTED_NODES 32
@@ -16,7 +17,7 @@ static struct dirent* vfs_root_readdir(
     __attribute__((unused))struct vfs_node* node,
     size_t index
 ) {
-    if (index > mounted_notes_count) {
+    if (index >= mounted_notes_count) {
         return NULL;
     }
     static struct dirent ent;
@@ -107,4 +108,60 @@ void vfs_mount_node(vfs_node_t* node)
 
     mounted_nodes[mounted_notes_count] = node;
     mounted_notes_count++;
+}
+
+vfs_node_t* vfs_resolve(char* abs_path)
+{
+    // Make copy of the path (include space for null terminator)
+    size_t path_len = strlen(abs_path);
+    char* path_copy = kmalloc(sizeof(char) * (path_len + 1));
+    strcpy(path_copy, abs_path);
+
+    // Count the number of path parts (separated by '/')
+    size_t part_count = 0;
+    for (size_t i = 0; i < path_len; i++) {
+        if (path_copy[i] == '/' && i + 1 < path_len && path_copy[i + 1] != '/') {
+            part_count++;
+        }
+    }
+
+    // Allocate array to hold pointers to each part
+    char** parts = kmalloc(sizeof(char*) * part_count);
+
+    // Split the path by replacing '/' with '\0' and storing pointers
+    size_t part_index = 0;
+    bool in_part = false;
+
+    for (size_t i = 0; i < path_len; i++) {
+        if (path_copy[i] == '/') {
+            path_copy[i] = '\0';
+            in_part = false;
+        } else if (!in_part) {
+            // Start of a new part
+            parts[part_index++] = &path_copy[i];
+            in_part = true;
+        }
+    }
+
+    vfs_node_t* current_node = vfs_root;
+
+    for (size_t i = 0; i < part_count; i++) {
+        struct dirent* child = NULL;
+        bool found = false;
+        size_t j = 0;
+        do {
+            child = vfs_readdir(current_node, j);
+            j++;
+            // printf("Comparing %s with %s\n", child->name, parts[i]);
+            if (child != NULL && strcmp(child->name, parts[i]) == 0) {
+                found = true;
+            }
+        } while (!found && child != NULL);
+    }
+
+    // Clean up
+    kfree(parts);
+    kfree(path_copy);
+
+    return current_node;
 }

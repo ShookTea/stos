@@ -91,4 +91,9 @@ void vfs_init();
  */
 void vfs_mount_node(vfs_node_t* node);
 
+/**
+ * Resolves an absolute path and returns a valid node, or NULL if not found.
+ */
+vfs_node_t* vfs_resolve(char* abs_path);
+
 #endif
