@@ -126,21 +126,6 @@ static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
         return directory;
     }
 
-    for (size_t i = 0; i < files_count; i++) {
-        vfs_node_t entry = all_initrd_files[i];
-        if (!(entry.type & VFS_TYPE_DIRECTORY)) {
-            continue;
-        }
-        initrd_directory_data_t* dir_data = entry.metadata;
-        if (dir_data->parent != parent) {
-            continue;
-        }
-        if (strcmp(entry.filename, name) != 0) {
-            continue;
-        }
-        return &(all_initrd_files[i]);
-    }
-
     directory = create_new_file(name, VFS_TYPE_DIRECTORY, parent);
 
     initrd_directory_data_t* parent_metadata = parent->metadata;
