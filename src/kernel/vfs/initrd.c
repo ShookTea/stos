@@ -26,6 +26,33 @@ static bool mounted = false;
 static char empty_name[100];
 static size_t files_count = 0;
 
+static struct dirent* initrd_readdir(
+    vfs_node_t* directory,
+    size_t index
+) {
+    initrd_directory_data_t* dir_data = directory->metadata;
+    if (index >= dir_data->children_count) {
+        return NULL;
+    }
+    static struct dirent ent;
+    strcpy(ent.name, dir_data->children[index]->filename);
+    ent.ino = dir_data->children[index]->inode;
+    return &ent;
+}
+
+static vfs_node_t* initrd_finddir(
+    vfs_node_t* directory,
+    char* name
+) {
+    initrd_directory_data_t* dir_data = directory->metadata;
+    for (size_t i = 0; i < dir_data->children_count; i++) {
+        if (strcmp(dir_data->children[i]->filename, name) == 0) {
+            return dir_data->children[i];
+        }
+    }
+    return NULL;
+}
+
 static vfs_node_t* create_new_file(
     char* filename,
     uint8_t type,
@@ -57,6 +84,8 @@ static vfs_node_t* create_new_file(
         data->parent = parent;
         data->children = NULL;
         data->children_count = 0;
+        all_initrd_files[files_count].readdir_node = initrd_readdir;
+        all_initrd_files[files_count].finddir_node = initrd_finddir;
     }
 
     files_count++;
@@ -191,8 +220,8 @@ vfs_node_t* initrd_mount()
     initrd->close_node = NULL;
     initrd->read_node = NULL;
     initrd->write_node = NULL;
-    initrd->readdir_node = NULL;
-    initrd->finddir_node = NULL;
+    initrd->readdir_node = initrd_readdir;
+    initrd->finddir_node = initrd_finddir;
     initrd_directory_data_t* data = kmalloc(sizeof(initrd_directory_data_t));
     initrd->metadata = data;
     data->parent = vfs_root;
