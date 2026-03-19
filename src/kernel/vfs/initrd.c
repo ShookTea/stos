@@ -192,6 +192,10 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
         parent
     );
     new_file->length = size_bytes;
+    initrd_file_data_t* metadata = kmalloc(sizeof(initrd_file_data_t));
+    metadata->parent = parent;
+    metadata->address = ((char*)tar_header) + 512;
+    new_file->metadata = metadata;
 
     kfree(parts);
     kfree(filename_buffer);
