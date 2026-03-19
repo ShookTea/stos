@@ -175,6 +175,15 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
     metadata->address = ((char*)tar_header) + 512;
     new_file->metadata = metadata;
 
+    initrd_directory_data_t* parent_meta = parent->metadata;
+    parent_meta->children = krealloc(
+        parent_meta->children,
+        sizeof(vfs_node_t*) * (parent_meta->children_count + 1)
+    );
+    parent_meta->children[parent_meta->children_count] = new_file;
+    parent_meta->children_count++;
+
+
     kfree(parts);
     kfree(filename_buffer);
 }
