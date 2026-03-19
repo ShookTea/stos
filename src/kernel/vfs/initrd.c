@@ -19,10 +19,8 @@ typedef struct {
 } initrd_directory_data_t;
 
 static vfs_node_t* initrd = NULL;
-static vfs_node_t* all_initrd_files = NULL;
 static bool mounted = false;
 static char empty_name[100];
-static size_t files_count = 0;
 
 static struct dirent* initrd_readdir(
     vfs_node_t* directory,
@@ -55,36 +53,32 @@ static vfs_node_t* create_new_file(
     char* filename,
     uint8_t type
 ) {
-    all_initrd_files = krealloc(
-        all_initrd_files,
-        sizeof(vfs_node_t) * (files_count + 1)
-    );
-    strcpy(all_initrd_files[files_count].filename, filename);
-    all_initrd_files[files_count].type = type;
-    all_initrd_files[files_count].length = 0;
-    all_initrd_files[files_count].open_node = NULL;
-    all_initrd_files[files_count].close_node = NULL;
-    all_initrd_files[files_count].read_node = NULL;
-    all_initrd_files[files_count].write_node = NULL;
-    all_initrd_files[files_count].readdir_node = NULL;
-    all_initrd_files[files_count].finddir_node = NULL;
+    vfs_node_t* new_node = kmalloc(sizeof(vfs_node_t));
+    strcpy(new_node->filename, filename);
+    new_node->type = type;
+    new_node->length = 0;
+    new_node->open_node = NULL;
+    new_node->close_node = NULL;
+    new_node->read_node = NULL;
+    new_node->write_node = NULL;
+    new_node->readdir_node = NULL;
+    new_node->finddir_node = NULL;
 
     if (type & VFS_TYPE_FILE) {
         initrd_file_data_t* data = kmalloc(sizeof(initrd_file_data_t));
-        all_initrd_files[files_count].metadata = data;
+        new_node->metadata = data;
         data->address = NULL;
     } else if (type & VFS_TYPE_DIRECTORY) {
         initrd_directory_data_t* data =
             kmalloc(sizeof(initrd_directory_data_t));
-        all_initrd_files[files_count].metadata = data;
+        new_node->metadata = data;
         data->children = NULL;
         data->children_count = 0;
-        all_initrd_files[files_count].readdir_node = initrd_readdir;
-        all_initrd_files[files_count].finddir_node = initrd_finddir;
+        new_node->readdir_node = initrd_readdir;
+        new_node->finddir_node = initrd_finddir;
     }
 
-    files_count++;
-    return &(all_initrd_files[files_count - 1]);
+    return new_node;
 }
 
 /**
@@ -100,7 +94,7 @@ static char** split_path(char* filename, uint8_t* count)
     do {
         parts_buffer = krealloc(
             parts_buffer,
-            kmalloc_size(parts_buffer) + strlen(part)
+            sizeof(char*) * (*count + 1)
         );
         parts_buffer[*count] = part;
         *count = *count + 1;
@@ -239,23 +233,24 @@ vfs_node_t* initrd_mount()
     return initrd;
 }
 
+static void free_node_recursive(vfs_node_t* node)
+{
+    if (node->type & VFS_TYPE_DIRECTORY) {
+        initrd_directory_data_t* metadata = node->metadata;
+        for (size_t i = 0; i < metadata->children_count; i++) {
+            free_node_recursive(metadata->children[i]);
+        }
+        kfree(metadata->children);
+    }
+    kfree(node->metadata);
+    kfree(node);
+}
+
 void initrd_unmount()
 {
     if (mounted && initrd) {
-        for (size_t i = 0; i < files_count; i++) {
-            vfs_node_t entry = all_initrd_files[i];
-            if (entry.type & VFS_TYPE_DIRECTORY) {
-                initrd_directory_data_t* metadata = entry.metadata;
-                kfree(metadata->children);
-            }
-            kfree(entry.metadata);
-        }
-
-        kfree(all_initrd_files);
-
-        initrd_directory_data_t* root_metadata = initrd->metadata;
-        kfree(root_metadata->children);
-        kfree(initrd->metadata);
-        kfree(initrd);
+        free_node_recursive(initrd);
+        initrd = NULL;
+        mounted = false;
     }
 }
