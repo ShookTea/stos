@@ -10,12 +10,10 @@
 #include <string.h>
 
 typedef struct {
-    vfs_node_t* parent;
     void* address;
 } initrd_file_data_t;
 
 typedef struct {
-    vfs_node_t* parent;
     vfs_node_t** children;
     size_t children_count;
 } initrd_directory_data_t;
@@ -55,8 +53,7 @@ static vfs_node_t* initrd_finddir(
 
 static vfs_node_t* create_new_file(
     char* filename,
-    uint8_t type,
-    vfs_node_t* parent
+    uint8_t type
 ) {
     all_initrd_files = krealloc(
         all_initrd_files,
@@ -75,13 +72,11 @@ static vfs_node_t* create_new_file(
     if (type & VFS_TYPE_FILE) {
         initrd_file_data_t* data = kmalloc(sizeof(initrd_file_data_t));
         all_initrd_files[files_count].metadata = data;
-        data->parent = parent;
         data->address = NULL;
     } else if (type & VFS_TYPE_DIRECTORY) {
         initrd_directory_data_t* data =
             kmalloc(sizeof(initrd_directory_data_t));
         all_initrd_files[files_count].metadata = data;
-        data->parent = parent;
         data->children = NULL;
         data->children_count = 0;
         all_initrd_files[files_count].readdir_node = initrd_readdir;
@@ -126,7 +121,7 @@ static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
         return directory;
     }
 
-    directory = create_new_file(name, VFS_TYPE_DIRECTORY, parent);
+    directory = create_new_file(name, VFS_TYPE_DIRECTORY);
 
     initrd_directory_data_t* parent_metadata = parent->metadata;
     parent_metadata->children_count++;
@@ -173,12 +168,10 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
 
     vfs_node_t* new_file = create_new_file(
         parts[parts_count - 1],
-        VFS_TYPE_FILE,
-        parent
+        VFS_TYPE_FILE
     );
     new_file->length = size_bytes;
     initrd_file_data_t* metadata = kmalloc(sizeof(initrd_file_data_t));
-    metadata->parent = parent;
     metadata->address = ((char*)tar_header) + 512;
     new_file->metadata = metadata;
 
@@ -219,7 +212,6 @@ vfs_node_t* initrd_mount()
     initrd->finddir_node = initrd_finddir;
     initrd_directory_data_t* data = kmalloc(sizeof(initrd_directory_data_t));
     initrd->metadata = data;
-    data->parent = vfs_root;
     data->children = NULL;
     data->children_count = 0;
 
