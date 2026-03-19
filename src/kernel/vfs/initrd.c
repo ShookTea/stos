@@ -121,6 +121,11 @@ static char** split_path(char* filename, uint8_t* count)
  */
 static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
 {
+    vfs_node_t* directory = initrd_finddir(parent, name);
+    if (directory != NULL) {
+        return directory;
+    }
+
     for (size_t i = 0; i < files_count; i++) {
         vfs_node_t entry = all_initrd_files[i];
         if (!(entry.type & VFS_TYPE_DIRECTORY)) {
@@ -136,7 +141,8 @@ static vfs_node_t* get_directory(vfs_node_t* parent, char* name)
         return &(all_initrd_files[i]);
     }
 
-    vfs_node_t* directory = create_new_file(name, VFS_TYPE_DIRECTORY, parent);
+    directory = create_new_file(name, VFS_TYPE_DIRECTORY, parent);
+
     initrd_directory_data_t* parent_metadata = parent->metadata;
     parent_metadata->children_count++;
     parent_metadata->children = krealloc(
