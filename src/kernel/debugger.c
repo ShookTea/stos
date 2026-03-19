@@ -135,11 +135,15 @@ static void handle_command_sent()
                     i++;
                     dir = vfs_readdir(node, i);
 
-                    printf(
-                        " - %s (%s)\n",
-                        child->filename,
-                        child->type & VFS_TYPE_DIRECTORY ? "D" : " "
-                    );
+                    if (child->type & VFS_TYPE_DIRECTORY) {
+                        printf(" - %s (dir)\n", child->filename);
+                    } else {
+                        printf(
+                            " - %s (%d B)\n",
+                            child->filename,
+                            child->length
+                        );
+                    }
                 }
             } else if (node->type & VFS_TYPE_FILE) {
                 puts("File found");
