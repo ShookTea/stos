@@ -22,6 +22,7 @@ static struct dirent* vfs_root_readdir(
     }
     static struct dirent ent;
     strcpy(ent.name, mounted_nodes[index]->filename);
+    ent.ino = mounted_nodes[index]->inode;
     return &ent;
 }
 
@@ -86,7 +87,7 @@ void vfs_close(vfs_node_t *node)
 
 struct dirent* vfs_readdir(vfs_node_t* node, size_t index)
 {
-    if (node->type == VFS_TYPE_DIRECTORY && node->readdir_node != 0) {
+    if ((node->type & VFS_TYPE_DIRECTORY) != 0 && node->readdir_node != 0) {
         return node->readdir_node(node, index);
     }
     return NULL;
@@ -94,7 +95,7 @@ struct dirent* vfs_readdir(vfs_node_t* node, size_t index)
 
 vfs_node_t* vfs_finddir(vfs_node_t* node, char* name)
 {
-    if (node->type == VFS_TYPE_DIRECTORY && node->finddir_node != 0) {
+    if ((node->type & VFS_TYPE_DIRECTORY) != 0 && node->finddir_node != 0) {
         return node->finddir_node(node, name);
     }
     return NULL;
