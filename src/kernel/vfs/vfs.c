@@ -14,7 +14,7 @@ vfs_node_t** mounted_nodes = NULL;
 uint32_t mounted_notes_count = 0;
 
 static struct dirent* vfs_root_readdir(
-    __attribute__((unused))struct vfs_node* node,
+    __attribute__((unused))vfs_node_t* node,
     size_t index
 ) {
     if (index >= mounted_notes_count) {
@@ -26,7 +26,7 @@ static struct dirent* vfs_root_readdir(
 }
 
 static vfs_node_t* vfs_root_finddir(
-    __attribute__((unused))struct vfs_node* node,
+    __attribute__((unused))vfs_node_t* node,
     char* name
 ) {
     for (size_t i = 0; i < mounted_notes_count; i++) {
