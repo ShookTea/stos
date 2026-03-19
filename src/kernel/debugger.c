@@ -66,6 +66,7 @@ static void handle_command_sent()
         puts("  slab_cache     - Prints slab allocator cache info");
         puts("  slab_stats     - Prints slab allocator statistics");
         puts("  vfs_debug [F]  - Prints info about file at abs. path [F]");
+        puts("  vfs_print [F]  - Prints content of a file at abs. path");
         puts("  vmm_memory_map - Prints detailed memory map");
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
@@ -149,6 +150,21 @@ static void handle_command_sent()
                 puts("File found");
             } else {
                 puts("Unknown vfs node found");
+            }
+        }
+    }
+    else if (strcmp(command, "vfs_print") == 0) {
+        if (argcount != 1) {
+            puts("vfs_print requires 1 argument");
+        } else {
+            vfs_node_t* node = vfs_resolve(args[0]);
+            if (node == NULL) {
+                puts("File or directory not found.");
+            } else if ((node->type & VFS_TYPE_FILE) == 0) {
+                puts("Found node, but it's not a file.");
+            } else {
+                puts("Content:");
+                // TODO: implement printing content
             }
         }
     }
