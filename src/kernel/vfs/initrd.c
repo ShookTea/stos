@@ -65,9 +65,7 @@ static vfs_node_t* create_new_file(
     new_node->finddir_node = NULL;
 
     if (type & VFS_TYPE_FILE) {
-        initrd_file_data_t* data = kmalloc(sizeof(initrd_file_data_t));
-        new_node->metadata = data;
-        data->address = NULL;
+        new_node->metadata = NULL;
     } else if (type & VFS_TYPE_DIRECTORY) {
         initrd_directory_data_t* data =
             kmalloc(sizeof(initrd_directory_data_t));
@@ -165,9 +163,9 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
         VFS_TYPE_FILE
     );
     new_file->length = size_bytes;
-    initrd_file_data_t* metadata = kmalloc(sizeof(initrd_file_data_t));
-    metadata->address = ((char*)tar_header) + 512;
-    new_file->metadata = metadata;
+    initrd_file_data_t* file_metadata = kmalloc(sizeof(initrd_file_data_t));
+    file_metadata->address = ((char*)tar_header) + 512;
+    new_file->metadata = file_metadata;
 
     initrd_directory_data_t* parent_meta = parent->metadata;
     parent_meta->children = krealloc(
@@ -241,8 +239,12 @@ static void free_node_recursive(vfs_node_t* node)
             free_node_recursive(metadata->children[i]);
         }
         kfree(metadata->children);
+        kfree(metadata);
+    } else if (node->type & VFS_TYPE_FILE) {
+        if (node->metadata != NULL) {
+            kfree(node->metadata);
+        }
     }
-    kfree(node->metadata);
     kfree(node);
 }
 
