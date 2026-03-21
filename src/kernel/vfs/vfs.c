@@ -27,9 +27,16 @@ static uint32_t file_handles_open_count = 0;
 /**
  * Allocate a new entry for file handle.
  */
-static vfs_file_t* allocate_file_handle()
-{
+static vfs_file_t* allocate_file_handle(
+    vfs_node_t* node,
+    uint8_t mode
+) {
     vfs_file_t* handle = kmalloc_flags(sizeof(vfs_file_t), KMALLOC_ZERO);
+    handle->node = node;
+    handle->readable = mode & (VFS_MODE_READONLY | VFS_MODE_READWRITE);
+    handle->writeable = mode & (VFS_MODE_WRITEONLY | VFS_MODE_READWRITE);
+    handle->offset = (mode & VFS_MODE_APPEND) ? node->length : 0;
+    // TODO: handle VFS_MODE_TRUNCATE and VFS_MODE_CREATE
 
     if (file_handles_open_count == file_handles_size) {
         // The file_handles is full - we should increase the size of it
@@ -143,24 +150,27 @@ size_t vfs_write(vfs_file_t* file, uint32_t size, void* ptr)
 
 vfs_file_t* vfs_open(vfs_node_t* node, uint8_t mode)
 {
-    // TODO: implementation
-    // if ((node->type & VFS_TYPE_DIRECTORY)) {
-    //     // TODO: report error?
-    //     return NULL;
-    // }
-    // if (node->open_node != 0) {
-    //     return node->open_node(node, read, write);
-    // }
-    return NULL;
+    if ((node->type & VFS_TYPE_DIRECTORY)) {
+        // TODO: report error?
+        return NULL;
+    }
+    node->open_count++;
+    // TODO: this is the place where we could introduce some kind of a lock
+    // mechanism for multiple write prevention (if necessary)
+
+    vfs_file_t* handle = allocate_file_handle(node, mode);
+    // Allow specific file system to populate metadata
+    node->open_node(node, handle, mode);
+
+    return handle;
 }
 
-vfs_file_t* vfs_close(vfs_node_t *node)
+void vfs_close(vfs_file_t* file)
 {
-    // TODO: implementation
-    // if (node->close_node != 0) {
-    //     return node->close_node(node);
-    // }
-    return NULL;
+    // Allow specific file system to clear metadata
+    file->node->close_node(file->node, file);
+    file->node->open_count--;
+    deallocate_file_handle(file);
 }
 
 struct dirent* vfs_readdir(vfs_node_t* node, size_t index)

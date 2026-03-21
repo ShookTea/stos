@@ -125,7 +125,7 @@ extern vfs_node_t* vfs_root;
 size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr);
 size_t vfs_write(vfs_file_t* file, uint32_t size, void* ptr);
 vfs_file_t* vfs_open(vfs_node_t* node, uint8_t open_mode);
-vfs_file_t* vfs_close(vfs_node_t* node);
+void vfs_close(vfs_file_t* file);
 struct dirent* vfs_readdir(vfs_node_t* node, size_t index);
 vfs_node_t* vfs_finddir(vfs_node_t* node, char* name);
 
