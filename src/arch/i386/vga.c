@@ -61,7 +61,13 @@ void vga_set_cursor_position(size_t row, size_t column)
 	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
-void vga_scroll_up() {
+void vga_set_color(uint8_t color)
+{
+    terminal_color = color;
+}
+
+void vga_scroll_up()
+{
     // Shift lines up using uint16_t entries
     for (size_t i = 0; i < (VGA_HEIGHT - 1) * VGA_WIDTH; i++) {
         terminal_buffer[i] = terminal_buffer[i + VGA_WIDTH];
@@ -70,6 +76,20 @@ void vga_scroll_up() {
     // Clear last line
     uint16_t blank = vga_entry(' ', terminal_color);
     for (size_t i = (VGA_HEIGHT - 1) * VGA_WIDTH; i < VGA_HEIGHT * VGA_WIDTH; i++) {
+        terminal_buffer[i] = blank;
+    }
+}
+
+void vga_scroll_down()
+{
+    // Shift lines down using uint16_t entries
+    for (size_t i = (VGA_HEIGHT - 1) * VGA_WIDTH - 1; i >= VGA_WIDTH; i--) {
+        terminal_buffer[i] = terminal_buffer[i - VGA_WIDTH];
+    }
+
+    // Clear first line
+    uint16_t blank = vga_entry(' ', terminal_color);
+    for (size_t i = 0; i < VGA_WIDTH; i++) {
         terminal_buffer[i] = blank;
     }
 }

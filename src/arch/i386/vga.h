@@ -70,8 +70,18 @@ void vga_disable_cursor();
 void vga_set_cursor_position(size_t row, size_t column);
 
 /**
+ * Set default color to be used
+ */
+void vga_set_color(uint8_t color);
+
+/**
  * Scroll one line up, adding new line at the bottom
  */
 void vga_scroll_up();
+
+/**
+ * Scroll one line down, adding new line at the top
+ */
+void vga_scroll_down();
 
 #endif
