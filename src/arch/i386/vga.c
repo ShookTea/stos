@@ -6,10 +6,11 @@
 #define VGA_MEMORY 0xB8000
 
 static uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
+static uint8_t terminal_color;
 
 void vga_init()
 {
-    uint8_t terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
@@ -58,4 +59,17 @@ void vga_set_cursor_position(size_t row, size_t column)
 	outb(0x3D5, (uint8_t) (pos & 0xFF));
 	outb(0x3D4, 0x0E);
 	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+void vga_scroll_up() {
+    // Shift lines up using uint16_t entries
+    for (size_t i = 0; i < (VGA_HEIGHT - 1) * VGA_WIDTH; i++) {
+        terminal_buffer[i] = terminal_buffer[i + VGA_WIDTH];
+    }
+
+    // Clear last line
+    uint16_t blank = vga_entry(' ', terminal_color);
+    for (size_t i = (VGA_HEIGHT - 1) * VGA_WIDTH; i < VGA_HEIGHT * VGA_WIDTH; i++) {
+        terminal_buffer[i] = blank;
+    }
 }

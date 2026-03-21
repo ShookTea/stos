@@ -69,4 +69,9 @@ void vga_disable_cursor();
  */
 void vga_set_cursor_position(size_t row, size_t column);
 
+/**
+ * Scroll one line up, adding new line at the bottom
+ */
+void vga_scroll_up();
+
 #endif
