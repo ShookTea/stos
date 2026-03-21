@@ -83,7 +83,7 @@ static void terminal_scroll_down()
 
 static void terminal_handle_csi_sequence()
 {
-    printf("!ESC>>%s<<", escape_mode_buffer);
+    // TODO: handle CSI sequence
 }
 
 static void terminal_reset_escape_mode_state()
@@ -133,32 +133,25 @@ void terminal_write_char(char c)
         else if (escape_mode_csi && c >= 0x20 && c <= 0x3F) {
             // Values between 0x20 and 0x3F are valid "middle" values in CSI.
             // Append them to buffer.
-            escape_mode_buffer_length++;
-            if (escape_mode_buffer_length == 1) {
-                escape_mode_buffer_length++;
-            }
             escape_mode_buffer = krealloc(
                 escape_mode_buffer,
-                sizeof(char) * escape_mode_buffer_length
+                sizeof(char) * (escape_mode_buffer_length + 2)
             );
-            escape_mode_buffer[escape_mode_buffer_length - 2] = c;
-            escape_mode_buffer[escape_mode_buffer_length - 1] = '\0';
+            escape_mode_buffer[escape_mode_buffer_length] = c;
+            escape_mode_buffer[escape_mode_buffer_length + 1] = '\0';
+            escape_mode_buffer_length++;
         }
         else if (escape_mode_csi && c >= 0x40 && c <= 0x7E) {
             // A value between 0x40 and 0x7E is a valid end byte in CSI.
             // Append them to buffer, then handle CSI escape sequence.
-            escape_mode_buffer_length++;
-            if (escape_mode_buffer_length == 1) {
-                escape_mode_buffer_length++;
-            }
             escape_mode_buffer = krealloc(
                 escape_mode_buffer,
-                sizeof(char) * escape_mode_buffer_length
+                sizeof(char) * (escape_mode_buffer_length + 2)
             );
-            escape_mode_buffer[escape_mode_buffer_length - 2] = c;
-            escape_mode_buffer[escape_mode_buffer_length - 1] = '\0';
-            terminal_reset_escape_mode_state();
+            escape_mode_buffer[escape_mode_buffer_length] = c;
+            escape_mode_buffer[escape_mode_buffer_length + 1] = '\0';
             terminal_handle_csi_sequence();
+            terminal_reset_escape_mode_state();
         }
         else {
             // Unrecognized situation - reset escape mode state
