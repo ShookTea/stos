@@ -225,8 +225,8 @@ static void handle_key_event(keyboard_event_t evt)
         command_buffer[command_length] = evt.ascii;
         command_length++;
     }
-
 }
+
 void debugger_init()
 {
     keyboard_register_listener(handle_key_event);
