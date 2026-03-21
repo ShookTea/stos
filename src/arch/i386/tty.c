@@ -68,6 +68,7 @@ void tty_putchar(char c) {
     }
 
     if (c == '\t') {
+        // TODO: fill with spaces (to overwite already printed characters)
         // First increment is to guarantee that the \t will add at least one
         // space.
         terminal_column = ((terminal_column + VGA_TAB_WIDTH) / VGA_TAB_WIDTH)
