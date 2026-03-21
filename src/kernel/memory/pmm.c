@@ -523,19 +523,16 @@ static void buddy_reserve_region(uint32_t start_addr, uint32_t end_addr)
 
 void pmm_init()
 {
-    printf("Initializing Physical Memory Manager (Buddy Allocator)...\n");
-
     // Get memory information from multiboot2
     uint32_t pmm_max_memory = multiboot2_get_max_memory();
 
     if (pmm_max_memory == 0) {
-        printf("ERROR: No usable memory found\n");
+        // No usable memory found
         return;
     }
 
     // Calculate total pages
     pmm_total_pages = pmm_max_memory / PMM_PAGE_SIZE;
-    printf("Total pages: %u\n", pmm_total_pages);
 
     // Calculate metadata size
     // Order map: 4 bits per page = 0.5 bytes per page
@@ -562,10 +559,6 @@ void pmm_init()
 
     uint32_t metadata_end = metadata_start + order_map_size * 4 + status_map_size * 4;
 
-    printf("Metadata location: %#x - %#x (%u bytes)\n",
-           metadata_start, metadata_end,
-           order_map_size * 4 + status_map_size * 4);
-
     // Initialize metadata - mark all as FREE initially
     // We'll mark reserved regions as allocated afterwards
     memset(buddy_order_map, 0, order_map_size * 4);
@@ -581,25 +574,15 @@ void pmm_init()
 
     // First, mark reserved regions as allocated BEFORE adding free regions
     // 1. Reserve first 1MB (BIOS, VGA, etc.)
-    printf("Reserving regions:\n");
-    printf("  1. First 1MB (BIOS/VGA): 0x0 - %#x\n", PMM_RESERVED_AREA);
     buddy_reserve_region(0, PMM_RESERVED_AREA);
 
     // 2. Reserve kernel and metadata
     uint32_t kernel_start = (uint32_t)&_kernel_start;
-    printf("  2. Kernel and metadata: %#x - %#x\n", kernel_start, metadata_end);
     buddy_reserve_region(kernel_start, metadata_end);
 
     // 3. Reserve MB2 modules data
-    puts("  3. MB2 modules:");
     for (uint32_t i = 0; i < multiboot2_get_modules_count(); i++) {
         multiboot_tag_boot_module_t* tag = multiboot2_get_boot_module_entry(i);
-        printf(
-            "  - [%d] %#x - %#x\n",
-            i,
-            tag->module_phys_addr_start,
-            tag->module_phys_addr_end
-        );
         buddy_reserve_region(
             tag->module_phys_addr_start,
             tag->module_phys_addr_end
@@ -609,7 +592,6 @@ void pmm_init()
     // Now process multiboot2 memory map and add available regions
     // The buddy_add_region function will skip pages already marked as allocated
     uint32_t mmap_count = multiboot2_get_mmap_count();
-    printf("Processing %u memory map entries...\n", mmap_count);
 
     for (uint32_t i = 0; i < mmap_count; i++) {
         const saved_mmap_entry_t* entry = multiboot2_get_mmap_entry(i);
@@ -636,20 +618,9 @@ void pmm_init()
             end = 0xFFFFFFFF;
         }
 
-        printf("  Region %u: %#x - %#x (%u MB) - ",
-               i, start, end, (end - start) / (1024 * 1024));
-
-        uint32_t free_before = pmm_total_pages - pmm_used_pages;
-
         // Add this region to buddy allocator (will skip reserved pages)
         buddy_add_region(start, end);
-
-        uint32_t free_after = pmm_total_pages - pmm_used_pages;
-        printf("added %u pages\n", free_after - free_before);
     }
-
-    printf("PMM initialized successfully!\n");
-    pmm_print_stats();
 }
 
 void pmm_set_paging_enabled(bool enabled)

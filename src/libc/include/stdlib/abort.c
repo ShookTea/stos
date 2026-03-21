@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 #if defined(__is_libk)
-#include <kernel/tty.h>
+    #include <kernel/terminal.h>
 #endif
 
 __attribute__((__noreturn__))
@@ -13,16 +13,19 @@ void abort(void)
         asm volatile("cli");
 
         // Set red background with white text for panic message
-        tty_setcolor(vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_RED));
+        terminal_set_bg_color(VGA_COLOR_RED);
+        terminal_set_fg_color(VGA_COLOR_WHITE);
+
 
         // Display panic message
-        tty_writestring("\n\n");
-        tty_writestring("================================================================================\n");
-        tty_writestring("                            KERNEL PANIC: abort()                               \n");
-        tty_writestring("================================================================================\n");
-        tty_writestring("\n");
-        tty_writestring("The kernel has encountered a fatal error and cannot continue.\n");
-        tty_writestring("System halted.\n");
+        puts("");
+        puts("");
+        puts("=============================================================");
+        puts("                    KERNEL PANIC: abort()                    ");
+        puts("=============================================================");
+        puts("");
+        puts("The kernel has encountered a fatal error and cannot continue.");
+        puts("System halted.");
 
         // Halt the CPU in an infinite loop
         while(1) {

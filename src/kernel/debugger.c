@@ -2,7 +2,7 @@
 
 #include <kernel/drivers/keyboard.h>
 #include <stdio.h>
-#include <kernel/tty.h>
+#include <kernel/terminal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <kernel/memory/pmm.h>
@@ -29,7 +29,7 @@ static void print_prompt_and_enable()
 {
     puts("");
     printf("# ");
-    tty_enable_cursor(0, 15);
+    terminal_enable_cursor();
     command_length = 0;
     memset(command_buffer, 0, MAX_COMMAND_LENGTH);
     accept_commands = true;
@@ -39,7 +39,7 @@ static void handle_command_sent()
 {
     // First, disable input
     accept_commands = false;
-    tty_disable_cursor();
+    terminal_disable_cursor();
 
     puts("");
     char* args[3];
@@ -215,7 +215,7 @@ static void handle_key_event(keyboard_event_t evt)
             // Backspace moves cursor one step to the left, so sending space
             // and another backspace effectively removes the character to the
             // left.
-            tty_writestring("\b \b");
+            terminal_write_string("\b \b");
             command_length--;
             command_buffer[command_length] = 0;
         }

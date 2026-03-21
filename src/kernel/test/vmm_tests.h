@@ -2,7 +2,6 @@
 #define KERNEL_VMM_TESTS_H
 
 #include <kernel/memory/vmm.h>
-#include <kernel/tty.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>

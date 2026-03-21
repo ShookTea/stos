@@ -1,7 +1,6 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
-#include <kernel/tty.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -50,13 +49,13 @@ void vmm_enable_dynamic_allocation(void) {
     if (use_dynamic_allocation) {
         return;  // Already enabled
     }
-    
+
     printf("[VMM] Enabling dynamic region allocation using dedicated physical page\n");
-    printf("[VMM] Bootstrap pool usage: %zu/%d regions\n", 
+    printf("[VMM] Bootstrap pool usage: %zu/%d regions\n",
            bootstrap_pool_index, VMM_BOOTSTRAP_POOL_SIZE);
     printf("[VMM] Total regions created so far: %zu (%zu bootstrap)\n",
            total_regions_created, bootstrap_regions_created);
-    
+
     // Allocate a dedicated physical page for VMM regions
     // This avoids circular dependency: vmm -> kmalloc -> slab -> vmm
     vmm_region_page_phys = pmm_alloc_page();
@@ -64,15 +63,15 @@ void vmm_enable_dynamic_allocation(void) {
         printf("[VMM] ERROR: Failed to allocate physical page for regions!\n");
         return;
     }
-    
+
     // Map it to virtual address (should already be mapped via PHYS_MAP_BASE)
     vmm_region_page_virt = (vmm_region_t*)PHYS_TO_VIRT(vmm_region_page_phys);
     vmm_region_page_index = 0;
-    
+
     printf("[VMM] Allocated dedicated page at phys=%#x virt=%#x\n",
            vmm_region_page_phys, (uint32_t)vmm_region_page_virt);
     printf("[VMM] Can fit %zu regions per page\n", VMM_REGIONS_PER_PAGE);
-    
+
     use_dynamic_allocation = true;
 }
 
@@ -469,7 +468,7 @@ void vmm_kernel_free(void* ptr, size_t size) {
  */
 static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t flags, bool is_free) {
     vmm_region_t* region;
-    
+
     if (use_dynamic_allocation) {
         // First, try to reuse a region from the free list
         if (vmm_region_free_list != NULL) {
@@ -486,14 +485,14 @@ static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t fl
                        total_regions_created, dynamic_regions_created, total_regions_destroyed);
                 return NULL;
             }
-            
+
             region = &vmm_region_page_virt[vmm_region_page_index++];
             dynamic_regions_created++;
         }
     } else {
         // Use bootstrap pool during initialization
         if (bootstrap_pool_index >= VMM_BOOTSTRAP_POOL_SIZE) {
-            printf("[VMM] ERROR: Bootstrap pool exhausted (%d regions)!\n", 
+            printf("[VMM] ERROR: Bootstrap pool exhausted (%d regions)!\n",
                    VMM_BOOTSTRAP_POOL_SIZE);
             printf("[VMM] Hint: Call vmm_enable_dynamic_allocation() after paging_init()\n");
             return NULL;
@@ -501,9 +500,9 @@ static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t fl
         region = &bootstrap_pool[bootstrap_pool_index++];
         bootstrap_regions_created++;
     }
-    
+
     total_regions_created++;
-    
+
     region->start = start;
     region->end = end;
     region->flags = flags;
@@ -521,22 +520,22 @@ static void vmm_destroy_region(vmm_region_t* region) {
     if (!region) {
         return;
     }
-    
+
     // Check if this region is from the bootstrap pool
-    bool is_bootstrap = (region >= bootstrap_pool && 
+    bool is_bootstrap = (region >= bootstrap_pool &&
                         region < bootstrap_pool + VMM_BOOTSTRAP_POOL_SIZE);
-    
+
     // Check if this region is from the dedicated page
-    bool is_from_dedicated_page = (use_dynamic_allocation && 
+    bool is_from_dedicated_page = (use_dynamic_allocation &&
                                    region >= vmm_region_page_virt &&
                                    region < vmm_region_page_virt + VMM_REGIONS_PER_PAGE);
-    
+
     if (is_bootstrap) {
         // Bootstrap regions are never actually freed, just counted
         total_regions_destroyed++;
         return;
     }
-    
+
     if (is_from_dedicated_page) {
         // Add to free list for reuse
         region->next = (struct vmm_region*)vmm_region_free_list;
@@ -545,7 +544,7 @@ static void vmm_destroy_region(vmm_region_t* region) {
         total_regions_destroyed++;
         return;
     }
-    
+
     // If we get here, something is wrong
     printf("[VMM] WARNING: Attempted to free region from unknown source\n");
 }
@@ -606,7 +605,7 @@ static void vmm_remove_region(vmm_region_t* region) {
     if (region->next != NULL) {
         region->next->prev = region->prev;
     }
-    
+
     // Destroy the region structure
     vmm_destroy_region(region);
 }

@@ -2,7 +2,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <kernel/tty.h>
 #include <kernel/serial.h>
 #include <kernel/multiboot2.h>
 #include <kernel/memory/pmm.h>
@@ -19,6 +18,7 @@
 #include "test/memory_tests.h"
 #include "test/kmalloc_tests.h"
 #include "debugger.h"
+#include <kernel/terminal.h>
 
 
 #if !defined(__i386__)
@@ -27,8 +27,8 @@
 
 void kernel_main()
 {
-    tty_initialize();
-    tty_disable_cursor();
+    terminal_init();
+    terminal_disable_cursor();
     puts("\n\n=== kernel_main() ===");
 
     if (serial_init() != 0) {

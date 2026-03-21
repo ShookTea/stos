@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include <kernel/tty.h>
 #include <kernel/multiboot2.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/paging.h>

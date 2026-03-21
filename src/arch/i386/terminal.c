@@ -1,4 +1,5 @@
 #include <kernel/terminal.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <kernel/serial.h>
 #include <kernel/memory/kmalloc.h>
@@ -9,8 +10,8 @@
  */
 typedef struct {
     char codepoint; // displayed character
-    uint8_t bg_color;
-    uint8_t fg_color;
+    enum vga_color bg_color;
+    enum vga_color fg_color;
     uint8_t flags;
 } cell_t;
 
@@ -22,10 +23,12 @@ static size_t cursor_row;
 static size_t cursor_column;
 
 // Currently selected color values
-static uint8_t bg_color;
-static uint8_t fg_color;
+static enum vga_color bg_color;
+static enum vga_color fg_color;
 
 static cell_t* cell_buffer;
+
+static bool initialized = false;
 
 /**
  * Scroll one line up, adding new line at the bottom
@@ -68,6 +71,7 @@ static void terminal_scroll_down()
 
 void terminal_init()
 {
+    initialized = true;
     bg_color = VGA_COLOR_BLACK;
     fg_color = VGA_COLOR_LIGHT_GREY;
     vga_init(vga_entry_color(fg_color, bg_color));
@@ -84,6 +88,9 @@ void terminal_init()
 void terminal_write_char(char c)
 {
     serial_put_c(c);
+    if (!initialized) {
+        return;
+    }
 
     // TODO: handle special characters and escape codes
     size_t index = cursor_row * vga_width + cursor_column;
@@ -108,4 +115,24 @@ void terminal_write_char(char c)
     }
 
     vga_set_cursor_position(cursor_row, cursor_column);
+}
+
+void terminal_enable_cursor()
+{
+    vga_enable_cursor();
+}
+
+void terminal_disable_cursor()
+{
+    vga_disable_cursor();
+}
+
+void terminal_set_bg_color(enum vga_color color)
+{
+    bg_color = color;
+}
+
+void terminal_set_fg_color(enum vga_color color)
+{
+    fg_color = color;
 }
