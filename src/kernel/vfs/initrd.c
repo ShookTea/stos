@@ -53,7 +53,7 @@ static vfs_node_t* initrd_finddir(
  * Read content of given file, bytes from [offset] to [offset+size], and
  * store them in [ptr]. Return the number of read bytes.
  */
-size_t inirtd_read(
+static size_t initrd_read(
     vfs_file_t* file,
     size_t offset,
     size_t size,
@@ -97,6 +97,8 @@ static vfs_node_t* create_new_file(
         data->children_count = 0;
         new_node->readdir_node = initrd_readdir;
         new_node->finddir_node = initrd_finddir;
+    } else if (type & VFS_TYPE_FILE) {
+        new_node->read_node = initrd_read;
     }
 
     return new_node;
