@@ -5,6 +5,10 @@
 #include <kernel/memory/kmalloc.h>
 #include "vga.h"
 
+#define TERMINAL_TAB_ALIGN 8
+// Space character created for tab alignment
+#define CHARFLAG_TABSPACE 0x01
+
 /**
  * Structure describing a single character on screen
  */
@@ -136,6 +140,39 @@ void terminal_write_char(char c)
         if (++cursor_row >= vga_height) {
             cursor_row = vga_height - 1;
             terminal_scroll_up();
+        }
+    }
+    else if (c == '\t') {
+        size_t new_column = cursor_column
+            + (TERMINAL_TAB_ALIGN - cursor_column % TERMINAL_TAB_ALIGN);
+        if (new_column >= vga_width) {
+            new_column = vga_width;
+        }
+        size_t index_offset = 0;
+        for (size_t i = cursor_column; i < new_column; i++) {
+            vga_putentryat(
+                ' ',
+                vga_entry_color(fg_color, bg_color),
+                cursor_row,
+                cursor_column
+            );
+            if (index_offset > 0) {
+                cell_buffer[index + index_offset].codepoint = ' ';
+                cell_buffer[index + index_offset].bg_color = bg_color;
+                cell_buffer[index + index_offset].fg_color = fg_color;
+                cell_buffer[index + index_offset].flags = CHARFLAG_TABSPACE;
+            }
+            index_offset++;
+        }
+
+        cursor_column = new_column;
+
+        if (cursor_column == vga_width) {
+            cursor_column = 0;
+            if (++cursor_row >= vga_height) {
+                cursor_row = vga_height - 1;
+                terminal_scroll_up();
+            }
         }
     }
     else {
