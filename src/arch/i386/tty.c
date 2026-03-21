@@ -11,7 +11,6 @@
 #define VGA_WIDTH     80
 #define VGA_HEIGHT    25
 #define VGA_MEMORY    0xB8000
-#define VGA_TAB_WIDTH 4
 
 size_t terminal_row;
 size_t terminal_column;

@@ -52,10 +52,10 @@ then prints to the command line.
 - memory leak test - check memory stats, then run all mem tests multiple times,
   then check memory stats again and compare if there are any changes
 - Basic ACPI parsing - shutdown & reboot support
+- Virtual File System (with initrd)
 
 ### Short-term todo list
 
-- Virtual File System
 - Support for more than 1 GiB of RAM
   - that's currently not working because we're trying to map all physical
     RAM in paging, which doesn't make sense above 1 GiB. We should implement
