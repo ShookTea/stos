@@ -106,4 +106,6 @@ void terminal_write_char(char c)
             terminal_scroll_up();
         }
     }
+
+    vga_set_cursor_position(cursor_row, cursor_column);
 }
