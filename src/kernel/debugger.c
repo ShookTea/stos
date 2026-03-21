@@ -40,11 +40,22 @@ static void handle_command_sent()
     // First, disable input
     accept_commands = false;
     terminal_disable_cursor();
-
     puts("");
+
+    if (command_length == 0 || command_buffer[0] == '\0') {
+        print_prompt_and_enable();
+        return;
+    }
+
     char* args[3];
     char* arg = strtok(command_buffer, " ");
     char* command = arg;
+
+    if (command == NULL) {
+        print_prompt_and_enable();
+        return;
+    }
+
     uint8_t argcount = 0;
     while ((arg = strtok(NULL, " ")) != NULL && argcount < 3) {
         args[argcount] = arg;
