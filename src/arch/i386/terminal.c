@@ -5,6 +5,8 @@
 #include <kernel/memory/kmalloc.h>
 #include <stdio.h>
 #include "vga.h"
+#include <ctype.h>
+#include <stdlib.h>
 
 #define TERMINAL_TAB_ALIGN 8
 // Space character created for tab alignment
@@ -81,9 +83,60 @@ static void terminal_scroll_down()
     }
 }
 
+/**
+ * Every CSI sequence is a set of zero, one, or more numberical arguments
+ * (separated by a semicolon), followed by the mode letter.
+ */
 static void terminal_handle_csi_sequence()
 {
-    // TODO: handle CSI sequence
+    in_escape_mode = false; // TODO: only for debugging; delete that line
+
+    uint8_t* args = NULL; // array of arguments
+    size_t arg_count = 0;
+    char mode = '\0'; // Mode letter
+    char* buffer = NULL;
+    size_t buffer_length = 0;
+
+    for (size_t i = 0; i < escape_mode_buffer_length; i++) {
+        char next_char = escape_mode_buffer[i];
+        if (isdigit(next_char)) {
+            // This is a digit - add it to the buffer
+            buffer = krealloc(
+                buffer,
+                sizeof(char) * (buffer_length + 2)
+            );
+            buffer[buffer_length] = next_char;
+            buffer[buffer_length + 1] = '\0';
+            buffer_length++;
+        }
+        else {
+            // Either a semicolon (arg separator) or a mode character:
+            // Parse current buffer
+            args = krealloc(args, sizeof(uint8_t) * (arg_count + 1));
+            args[arg_count] = atoi(buffer);
+            arg_count++;
+            kfree(buffer);
+            buffer = NULL;
+            buffer_length = 0;
+
+            if (next_char != ';') {
+                mode = next_char;
+                break;
+            }
+        }
+    }
+
+    printf("ESC mode: >%#02x<; args:\n", mode);
+    for (size_t i = 0; i < arg_count; i++) {
+        printf("  - [%d]\n", args[i]);
+    }
+
+    if (buffer != NULL) {
+        kfree(buffer);
+    }
+    if (args != NULL) {
+        kfree(args);
+    }
 }
 
 static void terminal_reset_escape_mode_state()
@@ -115,7 +168,7 @@ void terminal_init()
 
 void terminal_write_char(char c)
 {
-    serial_put_c(c);
+    // serial_put_c(c);
     if (!initialized) {
         return;
     }
