@@ -97,20 +97,43 @@ void terminal_write_char(char c)
     }
 
     if (c == '\b') {
-        // Remove previous character
-        // TODO: check if tab was used and remove all spaces created this way
+        // Remove previous character(s)
         if (cursor_column == 0 && cursor_row > 0) {
-            // TODO: read previous characters to check what should be the actual
-            // position - maybe new line was in the middle of the screen?
+            // Move to end of previous line
             cursor_column = vga_width - 1;
             cursor_row--;
         }
         else if (cursor_column > 0) {
             cursor_column--;
         }
+        else {
+            // At top-left corner, nothing to delete
+            return;
+        }
 
         size_t index = cursor_row * vga_width + cursor_column;
+        
+        // Check if we're deleting a tab-created space
+        if (cell_buffer[index].flags & CHARFLAG_TABSPACE) {
+            // Remove all contiguous tab spaces backwards
+            while (cursor_column > 0 && 
+                   (cell_buffer[index].flags & CHARFLAG_TABSPACE)) {
+                cell_buffer[index].codepoint = '\0';
+                cell_buffer[index].flags = 0;
+                vga_putentryat(
+                    ' ',
+                    vga_entry_color(fg_color, bg_color),
+                    cursor_row,
+                    cursor_column
+                );
+                cursor_column--;
+                index--;
+            }
+        }
+        
+        // Clear the character at current position
         cell_buffer[index].codepoint = '\0';
+        cell_buffer[index].flags = 0;
         vga_putentryat(
             ' ',
             vga_entry_color(fg_color, bg_color),
