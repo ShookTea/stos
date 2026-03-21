@@ -130,8 +130,15 @@ static void handle_command_sent()
             } else if ((node->type & VFS_TYPE_FILE) == 0) {
                 puts("Found node, but it's not a file.");
             } else {
-                puts("Content:");
-                // TODO: implement printing content
+                char* buffer = kmalloc_flags(sizeof(char) * 16, KMALLOC_ZERO);
+                vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
+                size_t read_bytes;
+                while ((read_bytes = vfs_read(handle, 16, buffer)) != 0) {
+                    printf("%s", buffer);
+                }
+
+                vfs_close(handle);
+                kfree(buffer);
             }
         }
     }
