@@ -92,6 +92,36 @@ void terminal_write_char(char c)
         return;
     }
 
+    if (c == '\b') {
+        // Remove previous character
+        // TODO: check if tab was used and remove all spaces created this way
+        if (cursor_column == 0 && cursor_row > 0) {
+            // TODO: read previous characters to check what should be the actual
+            // position - maybe new line was in the middle of the screen?
+            cursor_column = vga_width - 1;
+            cursor_row--;
+        }
+        else if (cursor_column > 0) {
+            cursor_column--;
+        }
+
+        size_t index = cursor_row * vga_width + cursor_column;
+        cell_buffer[index].codepoint = '\0';
+        vga_putentryat(
+            ' ',
+            vga_entry_color(fg_color, bg_color),
+            cursor_row,
+            cursor_column
+        );
+
+        vga_set_cursor_position(cursor_row, cursor_column);
+        return;
+    }
+
+    // =================================
+    // Handling drawable characters
+    // =================================
+
     // TODO: handle special characters and escape codes
     size_t index = cursor_row * vga_width + cursor_column;
     cell_buffer[index].codepoint = c;
@@ -107,7 +137,8 @@ void terminal_write_char(char c)
             cursor_row = vga_height - 1;
             terminal_scroll_up();
         }
-    } else {
+    }
+    else {
         // Display normal character
         vga_putentryat(
             c,
