@@ -46,6 +46,7 @@ static vfs_file_t* allocate_file_handle()
         // file_handles_open_count is now guaranteed to point to the first
         // empty item in the array - use it for the new handle
         file_handles[file_handles_open_count] = handle;
+        handle->id = file_handles_open_count;
         file_handles_open_count++;
         return handle;
     } else {
@@ -54,6 +55,7 @@ static vfs_file_t* allocate_file_handle()
         for (size_t i = 0; i < file_handles_size; i++) {
             if (file_handles[i] == NULL) {
                 file_handles[i] = handle;
+                handle->id = i;
                 file_handles_open_count++;
                 break;
             }
@@ -61,6 +63,16 @@ static vfs_file_t* allocate_file_handle()
     }
 
     return handle;
+}
+
+/**
+ * Deallocates the file handle and removes it from the array
+ */
+static void deallocate_file_handle(vfs_file_t* handle)
+{
+    file_handles[handle->id] = NULL;
+    file_handles_open_count--;
+    kfree(handle);
 }
 
 static struct dirent* vfs_root_readdir(

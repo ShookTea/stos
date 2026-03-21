@@ -52,6 +52,7 @@ struct dirent;
  */
 typedef struct {
     struct vfs_node* node; // Node pointed by this handle
+    uint32_t id; // Handle ID (used internally by VFS)
     uint32_t offset; // Current offset in bytes from the start of file
     bool readable; // Is file readable?
     bool writeable; // Is file writeable?
