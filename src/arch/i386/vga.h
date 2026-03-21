@@ -37,7 +37,7 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 /**
  * Initializes VGA and clears the screen
  */
-void vga_init();
+void vga_init(uint8_t color);
 
 /**
  * Sets character at given row and column, with selected color.

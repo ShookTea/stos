@@ -8,9 +8,9 @@
 static uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
 static uint8_t terminal_color;
 
-void vga_init()
+void vga_init(uint8_t color)
 {
-    terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    terminal_color = color;
 
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
