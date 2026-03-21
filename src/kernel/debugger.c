@@ -221,7 +221,7 @@ static void handle_key_event(keyboard_event_t evt)
         // TODO: handle cursor moving left and right
         return;
     }
-    if (evt.key_code == KCODE_BACKSPACE && command_length > 0) {
+    if (evt.key_code == KCODE_BACKSPACE) {
         if (command_length > 0) {
             terminal_write_char('\b');
             command_length--;
