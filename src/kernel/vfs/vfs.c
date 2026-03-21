@@ -160,7 +160,9 @@ vfs_file_t* vfs_open(vfs_node_t* node, uint8_t mode)
 
     vfs_file_t* handle = allocate_file_handle(node, mode);
     // Allow specific file system to populate metadata
-    node->open_node(node, handle, mode);
+    if (node->open_node != NULL) {
+        node->open_node(node, handle, mode);
+    }
 
     return handle;
 }
@@ -168,7 +170,9 @@ vfs_file_t* vfs_open(vfs_node_t* node, uint8_t mode)
 void vfs_close(vfs_file_t* file)
 {
     // Allow specific file system to clear metadata
-    file->node->close_node(file->node, file);
+    if (file->node->close_node != NULL) {
+        file->node->close_node(file->node, file);
+    }
     file->node->open_count--;
     deallocate_file_handle(file);
 }
