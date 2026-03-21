@@ -8,9 +8,10 @@
 #include <kernel/tty.h>
 #include <kernel/serial.h>
 
-#define VGA_WIDTH   80
-#define VGA_HEIGHT  25
-#define VGA_MEMORY  0xB8000
+#define VGA_WIDTH     80
+#define VGA_HEIGHT    25
+#define VGA_MEMORY    0xB8000
+#define VGA_TAB_WIDTH 4
 
 size_t terminal_row;
 size_t terminal_column;
@@ -62,6 +63,22 @@ void tty_putchar(char c) {
         if (++terminal_row >= VGA_HEIGHT) {
             tty_scroll();
             terminal_row = VGA_HEIGHT - 1;
+        }
+        tty_update_cursor(terminal_column, terminal_row);
+        return;
+    }
+
+    if (c == '\t') {
+        // First increment is to guarantee that the \t will add at least one
+        // space.
+        terminal_column = ((terminal_column + VGA_TAB_WIDTH) / VGA_TAB_WIDTH)
+            * VGA_TAB_WIDTH;
+        if (terminal_column >= VGA_WIDTH) {
+            terminal_column = 0;
+            if (++terminal_row >= VGA_HEIGHT) {
+                tty_scroll();
+                terminal_row = VGA_HEIGHT - 1;
+            }
         }
         tty_update_cursor(terminal_column, terminal_row);
         return;
