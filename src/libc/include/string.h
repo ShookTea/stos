@@ -15,7 +15,7 @@ extern "C" {
  * address_1 is larger, and lesser than 0 if value at address_2 is larger.
  */
 int memcmp(const void* address_1, const void* address_2, size_t size);
-void* memcpy(void* __restrict, const void* __restrict, size_t);
+void* memcpy(void* __restrict dest, const void* __restrict src, size_t size);
 void* memmove(void*, const void*, size_t);
 
 /**

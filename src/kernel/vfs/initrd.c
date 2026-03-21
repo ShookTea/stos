@@ -49,6 +49,39 @@ static vfs_node_t* initrd_finddir(
     return NULL;
 }
 
+/**
+ * Read content of given file, bytes from [offset] to [offset+size], and
+ * store them in [ptr]. Return the number of read bytes.
+ */
+size_t inirtd_read(
+    vfs_file_t* file,
+    size_t offset,
+    size_t size,
+    void* ptr
+) {
+    initrd_file_data_t* metadata = file->node->metadata;
+    void* file_start = metadata->address;
+    void* file_end = metadata->address + file->node->length;
+
+    void* read_start = file_start + offset;
+    void* read_end = read_start + size;
+    if (read_start < file_start) {
+        read_start = file_start;
+    }
+    if (read_start > file_end) {
+        read_start = file_end;
+    }
+    if (read_end < read_start) {
+        read_end = read_start;
+    }
+    if (read_end > file_end) {
+        read_end = file_end;
+    }
+    size_t read_size = read_end - read_start;
+    memcpy(ptr, read_start, read_size);
+    return read_size;
+}
+
 static vfs_node_t* create_new_file(
     char* filename,
     uint8_t type
