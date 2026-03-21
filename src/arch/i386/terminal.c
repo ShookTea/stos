@@ -110,15 +110,18 @@ static void terminal_handle_csi_sequence()
             buffer_length++;
         }
         else {
-            // Either a semicolon (arg separator) or a mode character:
-            // Parse current buffer
-            args = krealloc(args, sizeof(uint8_t) * (arg_count + 1));
-            args[arg_count] = atoi(buffer);
-            arg_count++;
-            kfree(buffer);
-            buffer = NULL;
-            buffer_length = 0;
+            // Either a semicolon (arg separator) or a mode character
+            // 1. Parse current buffer, if exists
+            if (buffer_length > 0) {
+                args = krealloc(args, sizeof(uint8_t) * (arg_count + 1));
+                args[arg_count] = atoi(buffer);
+                arg_count++;
+                kfree(buffer);
+                buffer = NULL;
+                buffer_length = 0;
+            }
 
+            // 2. Load mode
             if (next_char != ';') {
                 mode = next_char;
                 break;
@@ -126,7 +129,7 @@ static void terminal_handle_csi_sequence()
         }
     }
 
-    printf("ESC mode: >%#02x<; args:\n", mode);
+    printf("ESC mode: >%c<; args:\n", mode);
     for (size_t i = 0; i < arg_count; i++) {
         printf("  - [%d]\n", args[i]);
     }
@@ -168,6 +171,7 @@ void terminal_init()
 
 void terminal_write_char(char c)
 {
+    // TODO: uncomment this
     // serial_put_c(c);
     if (!initialized) {
         return;
