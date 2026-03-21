@@ -12,8 +12,46 @@
 vfs_node_t* vfs_root = 0;
 static vfs_node_t** mounted_nodes = NULL;
 static uint32_t mounted_notes_count = 0;
-static vfs_file_t** open_file_handles = NULL;
-static uint32_t open_file_handles_count = 0;
+
+// Allocation of some memory for existing file handles
+static vfs_file_t** file_handles = NULL;
+// Size of file_handles
+static uint32_t file_handles_size = 0;
+// How many entries in file_handles are currently present?
+// - if smaller than file_handles_size - can reuse some handle
+// - if equal to file_handles_size, we need to increase size of file_handles
+static uint32_t file_handles_open_count = 0;
+
+/**
+ * Allocate a new entry for file handle.
+ */
+static vfs_file_t* allocate_file_handle()
+{
+    vfs_file_t* handle = kmalloc_flags(sizeof(vfs_file_t), KMALLOC_ZERO);
+
+    if (file_handles_open_count == file_handles_size) {
+        // The file_handles is full - we should increase the size of it
+        file_handles = krealloc(
+            file_handles,
+            sizeof(vfs_file_t*) * (file_handles_size + 10)
+        );
+        file_handles_size += 10;
+
+        // file_handles_open_count is now guaranteed to point to the first
+        // empty item in the array - use it for the new handle
+        file_handles[file_handles_open_count] = handle;
+        file_handles_open_count++;
+    } else {
+        // There is some entry in the file_handles array that is empty and
+        // ready to be allocated.
+
+        for (size_t i = 0; i < file_handles_size; i++) {
+            // if (!file_handles[i] == NULL) {
+            //     file_ha
+            // }
+        }
+    }
+}
 
 static struct dirent* vfs_root_readdir(
     __attribute__((unused))vfs_node_t* node,
