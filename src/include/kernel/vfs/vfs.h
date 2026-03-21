@@ -21,21 +21,33 @@
 struct vfs_node;
 struct dirent;
 
+/**
+ * Struct for file handle.
+ */
+typedef struct {
+    struct vfs_node* node; // Node pointed by this handle
+    uint32_t refcount; // The number of already opened handles to this node
+    uint32_t offset; // Current offset in bytes from the start of file
+    bool readable; // Is file readable?
+    bool writeable; // Is file writeable?
+    void* metadata; // Available to use by the filesystem
+} vfs_file_t;
+
 // Handlers for opening and closing nodes
-typedef void (*open_node_t)(struct vfs_node* node, bool read, bool write);
-typedef void (*close_node_t)(struct vfs_node* node);
-// Handler for reading `size` bytes from node `node`, starting from `offset`,
+typedef vfs_file_t* (*open_node_t)(struct vfs_node* node, bool read, bool write);
+typedef vfs_file_t* (*close_node_t)(struct vfs_node* node);
+// Handler for reading `size` bytes from file `file`, starting from `offset`,
 // and storing them to address at `ptr`. Returns number of read bytes.
 typedef size_t (*read_node_t)(
-    struct vfs_node* node,
+    vfs_file_t* file,
     size_t offset,
     size_t size,
     void* ptr
 );
-// Handler for writing `size` bytes from address at `ptr` to node `node`,
+// Handler for writing `size` bytes from address at `ptr` to file `file`,
 // starting at offset `offset`. Returns number of written bytes.
 typedef size_t (*write_node_t)(
-    struct vfs_node* node,
+    vfs_file_t* file,
     size_t offset,
     size_t size,
     void* ptr
@@ -77,10 +89,10 @@ struct dirent
 // The root of the filesystem
 extern vfs_node_t* vfs_root;
 
-size_t vfs_read(vfs_node_t* node, uint32_t offset, uint32_t size, void* ptr);
-size_t vfs_write(vfs_node_t* node, uint32_t offset, uint32_t size, void* ptr);
-void vfs_open(vfs_node_t* node, bool read, bool write);
-void vfs_close(vfs_node_t* node);
+size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr);
+size_t vfs_write(vfs_file_t* file, uint32_t size, void* ptr);
+vfs_file_t* vfs_open(vfs_node_t* node, bool read, bool write);
+vfs_file_t* vfs_close(vfs_node_t* node);
 struct dirent* vfs_readdir(vfs_node_t* node, size_t index);
 vfs_node_t* vfs_finddir(vfs_node_t* node, char* name);
 
