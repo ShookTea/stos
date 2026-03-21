@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define VGA_TAB_WIDTH 4
+#define VGA_TAB_WIDTH 8
 
 /* Hardware text mode color constants. */
 enum vga_color {

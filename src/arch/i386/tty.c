@@ -68,19 +68,15 @@ void tty_putchar(char c) {
     }
 
     if (c == '\t') {
-        // TODO: fill with spaces (to overwite already printed characters)
-        // First increment is to guarantee that the \t will add at least one
-        // space.
-        terminal_column = ((terminal_column + VGA_TAB_WIDTH) / VGA_TAB_WIDTH)
+        size_t new_terminal_column =
+            ((terminal_column + VGA_TAB_WIDTH) / VGA_TAB_WIDTH)
             * VGA_TAB_WIDTH;
-        if (terminal_column >= VGA_WIDTH) {
-            terminal_column = 0;
-            if (++terminal_row >= VGA_HEIGHT) {
-                tty_scroll();
-                terminal_row = VGA_HEIGHT - 1;
-            }
+        if (new_terminal_column > VGA_WIDTH) {
+            new_terminal_column = VGA_WIDTH;
         }
-        tty_update_cursor(terminal_column, terminal_row);
+        for (size_t i = terminal_column; i < new_terminal_column; i++) {
+            tty_putchar(' ');
+        }
         return;
     }
 
