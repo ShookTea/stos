@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <kernel/serial.h>
 #include <kernel/memory/kmalloc.h>
+#include <stdio.h>
 #include "vga.h"
 
 #define TERMINAL_TAB_ALIGN 8
@@ -33,6 +34,13 @@ static enum vga_color fg_color;
 static cell_t* cell_buffer;
 
 static bool initialized = false;
+
+// Received \033 escape code
+static bool in_escape_mode = false;
+// Control Sequence Introducer
+static bool escape_mode_csi = false;
+static char* escape_mode_buffer = NULL;
+static size_t escape_mode_buffer_length = 0;
 
 /**
  * Scroll one line up, adding new line at the bottom
@@ -73,6 +81,22 @@ static void terminal_scroll_down()
     }
 }
 
+static void terminal_handle_csi_sequence()
+{
+    printf("!ESC>>%s<<", escape_mode_buffer);
+}
+
+static void terminal_reset_escape_mode_state()
+{
+    in_escape_mode = false;
+    escape_mode_csi = false;
+    if (escape_mode_buffer_length > 0) {
+        kfree(escape_mode_buffer);
+        escape_mode_buffer = NULL;
+        escape_mode_buffer_length = 0;
+    }
+}
+
 void terminal_init()
 {
     initialized = true;
@@ -96,6 +120,53 @@ void terminal_write_char(char c)
         return;
     }
 
+    if (!in_escape_mode && c == '\033') {
+        // Entering escape mode
+        in_escape_mode = true;
+        return;
+    }
+
+    if (in_escape_mode) {
+        if (!escape_mode_csi && c == '[') {
+            escape_mode_csi = true;
+        }
+        else if (escape_mode_csi && c >= 0x20 && c <= 0x3F) {
+            // Values between 0x20 and 0x3F are valid "middle" values in CSI.
+            // Append them to buffer.
+            escape_mode_buffer_length++;
+            if (escape_mode_buffer_length == 1) {
+                escape_mode_buffer_length++;
+            }
+            escape_mode_buffer = krealloc(
+                escape_mode_buffer,
+                sizeof(char) * escape_mode_buffer_length
+            );
+            escape_mode_buffer[escape_mode_buffer_length - 2] = c;
+            escape_mode_buffer[escape_mode_buffer_length - 1] = '\0';
+        }
+        else if (escape_mode_csi && c >= 0x40 && c <= 0x7E) {
+            // A value between 0x40 and 0x7E is a valid end byte in CSI.
+            // Append them to buffer, then handle CSI escape sequence.
+            escape_mode_buffer_length++;
+            if (escape_mode_buffer_length == 1) {
+                escape_mode_buffer_length++;
+            }
+            escape_mode_buffer = krealloc(
+                escape_mode_buffer,
+                sizeof(char) * escape_mode_buffer_length
+            );
+            escape_mode_buffer[escape_mode_buffer_length - 2] = c;
+            escape_mode_buffer[escape_mode_buffer_length - 1] = '\0';
+            terminal_reset_escape_mode_state();
+            terminal_handle_csi_sequence();
+        }
+        else {
+            // Unrecognized situation - reset escape mode state
+            terminal_reset_escape_mode_state();
+        }
+        return;
+    }
+
     if (c == '\b') {
         // Remove previous character(s)
         if (cursor_column == 0 && cursor_row > 0) {
@@ -112,11 +183,11 @@ void terminal_write_char(char c)
         }
 
         size_t index = cursor_row * vga_width + cursor_column;
-        
+
         // Check if we're deleting a tab-created space
         if (cell_buffer[index].flags & CHARFLAG_TABSPACE) {
             // Remove all contiguous tab spaces backwards
-            while (cursor_column > 0 && 
+            while (cursor_column > 0 &&
                    (cell_buffer[index].flags & CHARFLAG_TABSPACE)) {
                 cell_buffer[index].codepoint = '\0';
                 cell_buffer[index].flags = 0;
@@ -130,7 +201,7 @@ void terminal_write_char(char c)
                 index--;
             }
         }
-        
+
         // Clear the character at current position
         cell_buffer[index].codepoint = '\0';
         cell_buffer[index].flags = 0;
