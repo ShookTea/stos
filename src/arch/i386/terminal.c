@@ -89,8 +89,6 @@ static void terminal_scroll_down()
  */
 static void terminal_handle_csi_sequence()
 {
-    in_escape_mode = false; // TODO: only for debugging; delete that line
-
     uint8_t* args = NULL; // array of arguments
     size_t arg_count = 0;
     char mode = '\0'; // Mode letter
@@ -127,11 +125,6 @@ static void terminal_handle_csi_sequence()
                 break;
             }
         }
-    }
-
-    printf("ESC mode: >%c<; args:\n", mode);
-    for (size_t i = 0; i < arg_count; i++) {
-        printf("  - [%d]\n", args[i]);
     }
 
     if (buffer != NULL) {
@@ -171,8 +164,7 @@ void terminal_init()
 
 void terminal_write_char(char c)
 {
-    // TODO: uncomment this
-    // serial_put_c(c);
+    serial_put_c(c);
     if (!initialized) {
         return;
     }
