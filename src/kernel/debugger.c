@@ -27,6 +27,7 @@ static bool accept_commands = false;
 
 static void print_prompt_and_enable()
 {
+    puts("");
     printf("# ");
     tty_enable_cursor(0, 15);
     command_length = 0;
@@ -135,6 +136,7 @@ static void handle_command_sent()
                 size_t read_bytes;
                 while ((read_bytes = vfs_read(handle, 16, buffer)) != 0) {
                     printf("%s", buffer);
+                    memset(buffer, 0, 17);
                 }
 
                 vfs_close(handle);
