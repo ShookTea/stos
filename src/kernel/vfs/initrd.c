@@ -53,20 +53,9 @@ static vfs_node_t* create_new_file(
     char* filename,
     uint8_t type
 ) {
-    vfs_node_t* new_node = kmalloc(sizeof(vfs_node_t));
-    strcpy(new_node->filename, filename);
-    new_node->type = type;
-    new_node->length = 0;
-    new_node->open_node = NULL;
-    new_node->close_node = NULL;
-    new_node->read_node = NULL;
-    new_node->write_node = NULL;
-    new_node->readdir_node = NULL;
-    new_node->finddir_node = NULL;
+    vfs_node_t* new_node = vfs_allocate_node(filename, type);
 
-    if (type & VFS_TYPE_FILE) {
-        new_node->metadata = NULL;
-    } else if (type & VFS_TYPE_DIRECTORY) {
+    if (type & VFS_TYPE_DIRECTORY) {
         initrd_directory_data_t* data =
             kmalloc(sizeof(initrd_directory_data_t));
         new_node->metadata = data;
