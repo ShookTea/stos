@@ -127,6 +127,23 @@ static void terminal_handle_csi_sequence()
         }
     }
 
+    if (mode == 'A' && arg_count == 1) { // Move cursor N cells up
+        if (args[0] >= cursor_row) {
+            cursor_row = 0;
+        } else {
+            cursor_row -= args[0];
+        }
+        vga_set_cursor_position(cursor_row, cursor_column);
+    }
+    if (mode == 'B' && arg_count == 1) { // Move cursor N cells down
+        if (args[0] + cursor_row >= vga_height) {
+            cursor_row = vga_height;
+        } else {
+            cursor_row += args[0];
+        }
+        vga_set_cursor_position(cursor_row, cursor_column);
+    }
+
     if (buffer != NULL) {
         kfree(buffer);
     }
