@@ -1,0 +1,61 @@
+#include "vga.h"
+#include "io.h"
+
+#define VGA_WIDTH 80
+#define VGA_HEIGHT 25
+#define VGA_MEMORY 0xB8000
+
+static uint16_t* terminal_buffer = (uint16_t*)VGA_MEMORY;
+
+void vga_init()
+{
+    uint8_t terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+
+    for (size_t y = 0; y < VGA_HEIGHT; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            const size_t index = y * VGA_WIDTH + x;
+            terminal_buffer[index] = vga_entry(' ', terminal_color);
+        }
+    }
+}
+
+void vga_putentryat(char c, uint8_t color, size_t row, size_t column)
+{
+    const size_t index = row * VGA_WIDTH + column;
+    terminal_buffer[index] = vga_entry(c, color);
+}
+
+size_t vga_get_columns()
+{
+    return VGA_WIDTH;
+}
+
+size_t vga_get_rows()
+{
+    return VGA_HEIGHT;
+}
+
+void vga_enable_cursor()
+{
+    outb(0x3D4, 0x0A);
+	outb(0x3D5, (inb(0x3D5) & 0xC0) | 0);
+
+	outb(0x3D4, 0x0B);
+	outb(0x3D5, (inb(0x3D5) & 0xE0) | 15);
+}
+
+void vga_disable_cursor()
+{
+    outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
+}
+
+void vga_set_cursor_position(size_t row, size_t column)
+{
+    uint16_t pos = row * VGA_WIDTH + column;
+
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
