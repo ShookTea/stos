@@ -210,12 +210,9 @@ static void handle_key_event(keyboard_event_t evt)
         // TODO: handle cursor moving left and right
         return;
     }
-    if (evt.key_code == KCODE_BACKSPACE) {
+    if (evt.key_code == KCODE_BACKSPACE && command_length > 0) {
         if (command_length > 0) {
-            // Backspace moves cursor one step to the left, so sending space
-            // and another backspace effectively removes the character to the
-            // left.
-            terminal_write_string("\b \b");
+            terminal_write_char('\b');
             command_length--;
             command_buffer[command_length] = 0;
         }
