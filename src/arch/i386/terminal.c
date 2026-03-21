@@ -99,18 +99,29 @@ void terminal_write_char(char c)
     cell_buffer[index].fg_color = fg_color;
     cell_buffer[index].flags = 0;
 
-    vga_putentryat(
-        c,
-        vga_entry_color(fg_color, bg_color),
-        cursor_row,
-        cursor_column
-    );
 
-    if (++cursor_column == vga_width) {
+    if (c == '\n') {
+        // Handle new line: move cursor one line below
         cursor_column = 0;
         if (++cursor_row >= vga_height) {
             cursor_row = vga_height - 1;
             terminal_scroll_up();
+        }
+    } else {
+        // Display normal character
+        vga_putentryat(
+            c,
+            vga_entry_color(fg_color, bg_color),
+            cursor_row,
+            cursor_column
+        );
+
+        if (++cursor_column == vga_width) {
+            cursor_column = 0;
+            if (++cursor_row >= vga_height) {
+                cursor_row = vga_height - 1;
+                terminal_scroll_up();
+            }
         }
     }
 
