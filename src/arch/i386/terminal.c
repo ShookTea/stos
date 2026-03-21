@@ -203,6 +203,7 @@ void terminal_write_char(char c)
             );
             escape_mode_buffer[escape_mode_buffer_length] = c;
             escape_mode_buffer[escape_mode_buffer_length + 1] = '\0';
+            escape_mode_buffer_length++;
             terminal_handle_csi_sequence();
             terminal_reset_escape_mode_state();
         }
