@@ -53,7 +53,8 @@ static vfs_node_t* create_new_file(
     char* filename,
     uint8_t type
 ) {
-    vfs_node_t* new_node = vfs_allocate_node(filename, type);
+    vfs_node_t* new_node = kmalloc(sizeof(vfs_node_t));
+    vfs_populate_node(new_node, filename, type);
 
     if (type & VFS_TYPE_DIRECTORY) {
         initrd_directory_data_t* data =

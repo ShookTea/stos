@@ -178,19 +178,16 @@ vfs_node_t* vfs_resolve(char* abs_path)
     return current_node;
 }
 
-vfs_node_t* vfs_allocate_node(char* filename, uint8_t type)
+void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
 {
-    vfs_node_t* new_node = kmalloc(sizeof(vfs_node_t));
-    strcpy(new_node->filename, filename);
-    new_node->type = type;
-    new_node->length = 0;
-    new_node->open_node = NULL;
-    new_node->close_node = NULL;
-    new_node->read_node = NULL;
-    new_node->write_node = NULL;
-    new_node->readdir_node = NULL;
-    new_node->finddir_node = NULL;
-    new_node->metadata = NULL;
-
-    return new_node;
+    strcpy(node->filename, filename);
+    node->type = type;
+    node->length = 0;
+    node->open_node = NULL;
+    node->close_node = NULL;
+    node->read_node = NULL;
+    node->write_node = NULL;
+    node->readdir_node = NULL;
+    node->finddir_node = NULL;
+    node->metadata = NULL;
 }

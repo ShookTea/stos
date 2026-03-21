@@ -141,9 +141,9 @@ void vfs_mount_node(vfs_node_t* node);
 vfs_node_t* vfs_resolve(char* abs_path);
 
 /**
- * Allocates a new VFS node in memory with given name and type. The rest of
- * values is set to NULL.
+ * Populates the new node with the filename and type, and sets the rest of
+ * properties to NULL.
  */
-vfs_node_t* vfs_allocate_node(char* filename, uint8_t type);
+void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type);
 
 #endif
