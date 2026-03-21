@@ -18,6 +18,32 @@
 #define VFS_TYPE_MOUNTPOINT 0x10
 // TODO: types for devices etc.
 
+// Read-only mode
+#define VFS_MODE_READONLY 0x01
+// Write-only mode
+#define VFS_MODE_WRITEONLY 0x02
+// Read+write mode
+#define VFS_MODE_READWRITE 0x04
+// Truncate mode (make the file empty if already exists)
+#define VFS_MODE_TRUNCATE 0x08
+// Create mode (create a new file if it doesn't exit)
+#define VFS_MODE_CREATE 0x10
+// Append mode (all writes will be added to the end of file)
+#define VFS_MODE_APPEND 0x20
+// Mapping of fopen() modes to modes above:
+// `r`  = VFS_MODE_READONLY
+//     (open file at the beginning, for reading)
+// `r+` = VFS_MODE_READWRITE
+//     (open file at the beginning, for reading and writing)
+// `w`  = VFS_MODE_WRITEONLY | VFS_MODE_CREATE | VFS_MODE_TRUNCATE
+//     (truncate file to zero length or create a new one, open for writing)
+// `w+` = VFS_MODE_READWRITE | VFS_MODE_CREATE | VFS_MODE_TRUNCATE
+//     (truncate file to zero length or create a new one, open for read&write)
+// `a`  = VFS_MODE_WRITEONLY | VFS_MODE_CREATE | VFS_MODE_APPEND
+//     (create if not exist, open file for appending at the end of file)
+// `a+` = VFS_MODE_READWRITE | VFS_MODE_CREATE | VFS_MODE_APPEND
+//     (create if not exist, open file for appending at the end of file + read)
+
 struct vfs_node;
 struct dirent;
 
@@ -26,7 +52,6 @@ struct dirent;
  */
 typedef struct {
     struct vfs_node* node; // Node pointed by this handle
-    uint32_t refcount; // The number of already opened handles to this node
     uint32_t offset; // Current offset in bytes from the start of file
     bool readable; // Is file readable?
     bool writeable; // Is file writeable?
@@ -34,8 +59,14 @@ typedef struct {
 } vfs_file_t;
 
 // Handlers for opening and closing nodes
-typedef vfs_file_t* (*open_node_t)(struct vfs_node* node, bool read, bool write);
-typedef vfs_file_t* (*close_node_t)(struct vfs_node* node);
+// Can be used for populating metadata by the filesystem
+typedef void (*open_node_t)(
+    struct vfs_node* node,
+    vfs_file_t* file,
+    uint8_t mode
+);
+typedef void (*close_node_t)(struct vfs_node* node, vfs_file_t* file);
+
 // Handler for reading `size` bytes from file `file`, starting from `offset`,
 // and storing them to address at `ptr`. Returns number of read bytes.
 typedef size_t (*read_node_t)(
@@ -70,6 +101,7 @@ typedef struct vfs_node {
     uint8_t type; // one of VFS_TYPE_
     uint32_t inode; // File ID, device specific, to identify files (on a disk)
     uint32_t length; // File size in bytes
+    uint32_t open_count;
     open_node_t open_node;
     close_node_t close_node;
     read_node_t read_node;
@@ -91,7 +123,7 @@ extern vfs_node_t* vfs_root;
 
 size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr);
 size_t vfs_write(vfs_file_t* file, uint32_t size, void* ptr);
-vfs_file_t* vfs_open(vfs_node_t* node, bool read, bool write);
+vfs_file_t* vfs_open(vfs_node_t* node, uint8_t open_mode);
 vfs_file_t* vfs_close(vfs_node_t* node);
 struct dirent* vfs_readdir(vfs_node_t* node, size_t index);
 vfs_node_t* vfs_finddir(vfs_node_t* node, char* name);

@@ -10,8 +10,10 @@
 #define VFS_MAX_MOUNTED_NODES 32
 
 vfs_node_t* vfs_root = 0;
-vfs_node_t** mounted_nodes = NULL;
-uint32_t mounted_notes_count = 0;
+static vfs_node_t** mounted_nodes = NULL;
+static uint32_t mounted_notes_count = 0;
+static vfs_file_t** open_file_handles = NULL;
+static uint32_t open_file_handles_count = 0;
 
 static struct dirent* vfs_root_readdir(
     __attribute__((unused))vfs_node_t* node,
@@ -79,19 +81,25 @@ size_t vfs_write(vfs_file_t* file, uint32_t size, void* ptr)
     return 0;
 }
 
-vfs_file_t* vfs_open(vfs_node_t* node, bool read, bool write)
+vfs_file_t* vfs_open(vfs_node_t* node, uint8_t mode)
 {
-    if (node->open_node != 0) {
-        return node->open_node(node, read, write);
-    }
+    // TODO: implementation
+    // if ((node->type & VFS_TYPE_DIRECTORY)) {
+    //     // TODO: report error?
+    //     return NULL;
+    // }
+    // if (node->open_node != 0) {
+    //     return node->open_node(node, read, write);
+    // }
     return NULL;
 }
 
 vfs_file_t* vfs_close(vfs_node_t *node)
 {
-    if (node->close_node != 0) {
-        return node->close_node(node);
-    }
+    // TODO: implementation
+    // if (node->close_node != 0) {
+    //     return node->close_node(node);
+    // }
     return NULL;
 }
 
