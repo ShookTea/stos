@@ -8,6 +8,8 @@
 #include <string.h>
 
 #define VFS_MAX_MOUNTED_NODES 32
+// By how many entries should we extend file_handles array if needed?
+#define VFS_FILE_HANDLE_REALLOC_SIZE 10
 
 vfs_node_t* vfs_root = 0;
 static vfs_node_t** mounted_nodes = NULL;
@@ -31,26 +33,34 @@ static vfs_file_t* allocate_file_handle()
 
     if (file_handles_open_count == file_handles_size) {
         // The file_handles is full - we should increase the size of it
+        uint32_t new_size = file_handles_size + VFS_FILE_HANDLE_REALLOC_SIZE;
         file_handles = krealloc(
             file_handles,
-            sizeof(vfs_file_t*) * (file_handles_size + 10)
+            sizeof(vfs_file_t*) * new_size
         );
-        file_handles_size += 10;
+        // Clear newly allocated memory to zero it out (which is used later
+        // for checking if handle is present or not)
+        memset(file_handles + file_handles_size, 0, VFS_FILE_HANDLE_REALLOC_SIZE);
+        file_handles_size = new_size;
 
         // file_handles_open_count is now guaranteed to point to the first
         // empty item in the array - use it for the new handle
         file_handles[file_handles_open_count] = handle;
         file_handles_open_count++;
+        return handle;
     } else {
         // There is some entry in the file_handles array that is empty and
         // ready to be allocated.
-
         for (size_t i = 0; i < file_handles_size; i++) {
-            // if (!file_handles[i] == NULL) {
-            //     file_ha
-            // }
+            if (file_handles[i] == NULL) {
+                file_handles[i] = handle;
+                file_handles_open_count++;
+                break;
+            }
         }
     }
+
+    return handle;
 }
 
 static struct dirent* vfs_root_readdir(
