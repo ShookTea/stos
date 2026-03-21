@@ -101,9 +101,9 @@ void terminal_write_char(char c)
 
     if (++cursor_column == vga_width) {
         cursor_column = 0;
-        if (++cursor_row >= vga_width) {
-            terminal_scroll_up();
+        if (++cursor_row >= vga_height) {
             cursor_row = vga_height - 1;
+            terminal_scroll_up();
         }
     }
 }
