@@ -127,8 +127,11 @@ static void terminal_handle_csi_sequence()
         }
     }
 
-    if (mode == 'A' && arg_count == 1) {
+    if (mode == 'A') {
         // Move cursor N cells up
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
         if (args[0] >= cursor_row) {
             cursor_row = 0;
         } else {
@@ -138,6 +141,9 @@ static void terminal_handle_csi_sequence()
     }
     else if (mode == 'B' && arg_count == 1) {
         // Move cursor N cells down
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
         if (args[0] + cursor_row >= vga_height) {
             cursor_row = vga_height - 1;
         } else {
@@ -147,6 +153,9 @@ static void terminal_handle_csi_sequence()
     }
     else if (mode == 'C' && arg_count == 1) {
         // Move cursor N cells forward
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
         if (args[0] + cursor_column >= vga_width) {
             cursor_column = vga_width - 1;
         } else {
@@ -156,6 +165,9 @@ static void terminal_handle_csi_sequence()
     }
     else if (mode == 'D' && arg_count == 1) {
         // Move cursor N cells back
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
         if (args[0] >= cursor_column) {
             cursor_column = 0;
         } else {
@@ -165,6 +177,9 @@ static void terminal_handle_csi_sequence()
     }
     else if (mode == 'E' && arg_count == 1) {
         // Move cursor to beginning of line, N rows down
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
         if (args[0] + cursor_row >= vga_height) {
             cursor_row = vga_height - 1;
         } else {
@@ -175,6 +190,9 @@ static void terminal_handle_csi_sequence()
     }
     else if (mode == 'F' && arg_count == 1) {
         // Move cursor to beginning of line, N rows up
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
         if (args[0] >= cursor_row) {
             cursor_row = 0;
         } else {
