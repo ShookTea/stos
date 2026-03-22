@@ -291,6 +291,27 @@ static void terminal_handle_csi_sequence()
             }
         }
     }
+    else if (mode == 'K') {
+        // Erase in line
+        if (args[0] == 0) {
+            // Clear from cursor to end of line
+            for (size_t c = cursor_column; c < vga_width; c++) {
+                erase_at_pos(cursor_row, c);
+            }
+        }
+        else if (args[0] == 1) {
+            // Clear from cursor to the start of line
+            for (size_t c = 0; c <= cursor_column; c++) {
+                erase_at_pos(cursor_row, c);
+            }
+        }
+        else if (args[0] == 2) {
+            // Clear the entire line
+            for (size_t c = 0; c < vga_width; c++) {
+                erase_at_pos(cursor_row, c);
+            }
+        }
+    }
 
     if (buffer != NULL) {
         kfree(buffer);
