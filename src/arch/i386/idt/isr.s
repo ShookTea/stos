@@ -12,7 +12,13 @@ isr_stub_\num:
 .endm
 
 common_stub:
-    pushal          # Save all GP registers
+    # Save segment registers:
+    push %gs
+    push %fs
+    push %es
+    push %ds
+
+    pushal # Save all GP registers
     cld
     movl $0x10, %eax  # Kernel data segment (adjust if needed)
     movw %ax, %ds
@@ -23,7 +29,13 @@ common_stub:
     pushl %eax      # Pass frame ptr to C handler
     call exception_handler
     addl $4, %esp   # Pop frame ptr
+
     popal
+    pop %ds
+    pop %es
+    pop %fs
+    pop %gs
+
     addl $8, %esp   # Skip int_no and err_code
     iret
 

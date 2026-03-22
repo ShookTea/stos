@@ -62,10 +62,11 @@ typedef struct
 
 typedef struct
 {
-   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
-   uint32_t int_no; // Interrupt number
-   uint32_t err_code; // Error code (if applicable)
-   uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
+    uint32_t gs, fs, es, ds; // Segment registers
+    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
+    uint32_t int_no; // Interrupt number
+    uint32_t err_code; // Error code (if applicable)
+    uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
 } registers_t;
 
 // int_handler_t is a function, receiving registers_t as an argument, that can
