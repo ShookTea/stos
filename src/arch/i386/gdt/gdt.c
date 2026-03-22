@@ -61,7 +61,7 @@ static void init_tss()
 void init_gdt(void)
 {
     // Load size and offset to GDT pointer
-    gdt_ptr.size = (sizeof(gdt_entry_t) * 5) - 1;
+    gdt_ptr.size = (sizeof(gdt_entry_t) * 6) - 1;
     gdt_ptr.offset = (uint32_t)&gdt_entries;
 
     // Populate GDT entries:
