@@ -79,6 +79,8 @@ void terminal_init();
  *       bottom of the screen
  * - T - scroll down by arg[0] (defaults to 1) lines, adding new lines at the
  *       top of the screen
+ * - s - save current cursor position
+ * - u - restore saved cursor position
  */
 void terminal_write_char(char c);
 

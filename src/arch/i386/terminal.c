@@ -44,6 +44,9 @@ static bool escape_mode_csi = false;
 static char* escape_mode_buffer = NULL;
 static size_t escape_mode_buffer_length = 0;
 
+static size_t saved_cursor_row = 0;
+static size_t saved_cursor_column = 0;
+
 static void erase_at_pos(size_t row, size_t column)
 {
     size_t index = row * vga_width + column;
@@ -329,6 +332,17 @@ static void terminal_handle_csi_sequence()
         for (size_t i = 0; i < args[0]; i++) {
             terminal_scroll_down();
         }
+    }
+    else if (mode == 's') {
+        // Save current cursor position
+        saved_cursor_row = cursor_row;
+        saved_cursor_column = cursor_column;
+    }
+    else if (mode == 'u') {
+        // Restore saved cursor position
+        cursor_row = saved_cursor_row;
+        cursor_column = saved_cursor_column;
+        vga_set_cursor_position(cursor_row, cursor_column);
     }
 
     if (buffer != NULL) {
