@@ -41,13 +41,14 @@ then prints to the command line.
 
 - Booting
 - GDT, interrupts, IRQ
-- Paging
-- Physical memory allocation (buddy allocator)
+- Memory
+  - Paging
+  - Physical memory allocation (buddy allocator)
+  - `kmalloc` and `kfree`
 - PIT driver
 - PS/2 driver
 - PS/2 keyboard driver
 - Debugging CLI - running tests, displaying stats, shutdown, reboot
-- kmalloc/kfree
 - Unit tests for libc
 - memory leak test - check memory stats, then run all mem tests multiple times,
   then check memory stats again and compare if there are any changes
@@ -56,7 +57,6 @@ then prints to the command line.
 
 ### Short-term todo list
 
-- ANSI escape codes support in `terminal.c`
 - Support for more than 1 GiB of RAM
   - that's currently not working because we're trying to map all physical
     RAM in paging, which doesn't make sense above 1 GiB. We should implement
