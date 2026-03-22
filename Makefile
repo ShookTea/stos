@@ -10,6 +10,8 @@ TARGET := build/stos
 LIB := build/lib/libk.a
 INITRD := build/isodir/boot/stos.initrd
 
+QEMU_FLAGS := -m 512M -serial stdio -boot order=dc
+
 # Directories
 SRC_DIR := src
 BUILD_DIR := build
@@ -37,7 +39,7 @@ all: $(TARGET).iso
 
 qemu: $(TARGET).iso
 	# Boot order "dc": boot first from cdrom (d), then from hard disk (c)
-	qemu-system-i386 -cdrom $^ -m 512M -serial stdio -boot order=dc
+	qemu-system-i386 -cdrom $^ $(QEMU_FLAGS)
 
 # Make a bootable ISO file
 $(TARGET).iso: $(TARGET) src/grub.cfg $(INITRD)
