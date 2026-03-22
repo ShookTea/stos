@@ -12,13 +12,13 @@ void abort(void)
         // Disable interrupts to prevent any further execution
         asm volatile("cli");
 
-        // Set red background with white text for panic message
-        terminal_set_bg_color(VGA_COLOR_RED);
-        terminal_set_fg_color(VGA_COLOR_WHITE);
+        puts("");
 
+        // Set red background with white text for panic message,
+        // then clear screen from the cursor forward
+        printf("\033[0;41;37m\033[0J");
 
         // Display panic message
-        puts("");
         puts("");
         puts("=============================================================");
         puts("                    KERNEL PANIC: abort()                    ");
