@@ -1,12 +1,47 @@
 #include "scheduler.h"
 #include "kernel/drivers/pit.h"
 #include "kernel/memory/kmalloc.h"
+#include "kernel/memory/tss.h"
 #include "stdlib.h"
 #include "task.h"
 
 static uint8_t scheduler_tick_count = 0;
 static scheduler_stats_t* scheduler_stats;
 static task_t* waiting_queue = NULL;
+
+extern void switch_to_stack(
+    uint32_t* old_esp_ptr,
+    uint32_t new_esp,
+    uint32_t new_cr3
+);
+
+/**
+ * Switch context from one task to another
+ */
+static void scheduler_switch_task_context(
+    task_t* old_task,
+    task_t* new_task
+) {
+    if (new_task == NULL) {
+        return; // Nothing to switch to
+    }
+    // Update TSS with new kernel stack - needs to be done before switching
+    tss_set_kernel_stack(
+        new_task->kernel_stack_base,
+        new_task->kernel_stack_size
+    );
+
+    // Get pointers for context switch
+    uint32_t* old_esp_ptr = (old_task != NULL) ? &old_task->context.esp : NULL;
+    uint32_t new_esp = new_task->context.esp;
+    uint32_t new_cr3 = new_task->page_dir_phys;
+
+    // Perform the actual switch
+    switch_to_stack(old_esp_ptr, new_esp, new_cr3);
+
+    // TODO: when we return here, we're running as new_task now.
+    // Should we do anything?
+}
 
 static void scheduler_tick()
 {
