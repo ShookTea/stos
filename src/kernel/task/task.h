@@ -1,0 +1,140 @@
+#ifndef KERNEL_TASK_TASK_H
+#define KERNEL_TASK_TASK_H
+
+#include <stdint.h>
+
+/**
+ * Process states enum
+ */
+typedef enum {
+    /** Waiting to be run by the scheduler */
+    TASK_WAITING = 1,
+    /** Currently running task */
+    TASK_RUNNING = 2,
+    /** Waiting for external event (I/O reads, user inputs, etc.) */
+    TASK_BLOCKED = 3,
+    /** Sleeping for some timeout */
+    TASK_SLEEPING = 4,
+    /** No longer running, but waits for parent to read the exit status */
+    TASK_ZOMBIE = 5,
+    /** Fully terminated task, ready for cleanup */
+    TASK_DEAD = 6,
+} task_state_t;
+
+/**
+ * Full CPU context of the task. Contains all registers that need to be saved
+ * during the context switch. The layout matters - it must match the order
+ * of PUSHA and what the CPU pushes during interrupts.
+ */
+typedef struct {
+    // Segment registers (pushed by software)
+    uint32_t gs;
+    uint32_t fs;
+    uint32_t es;
+    uint32_t ds;
+
+    // General purpose registers (pushed by PUSHA instruction)
+    // PUSHA pushes in this order: EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebp;
+    uint32_t esp;
+    uint32_t ebx;
+    uint32_t edx;
+    uint32_t ecx;
+    uint32_t eax;
+
+    // Automatically pushed by CPU on interrupt
+    uint32_t eip; // Instruction pointer
+    uint32_t cs; // Code segment
+    uint32_t eflags; // Flags register
+
+    // Only present when crossing privilege levels (user -> kernel)
+    uint32_t user_esp; // User stack pointer
+    uint32_t user_ss; // User stack segment
+} __attribute__((packed)) task_cpu_context_t;
+
+/**
+ * Memory region structure - represents a region of virtual memory with specific
+ * properties
+ */
+typedef struct memory_region {
+    /** Start virtual address (inclusive) */
+    uint32_t start;
+    /** End virtual address (exclusive) */
+    uint32_t end;
+    /** Page flags (defined in paging.h) */
+    uint32_t page_flags;
+    /** Next region in the linked list */
+    struct memory_region* next;
+} task_memory_region_t;
+
+/**
+ * Task Control Block (TCB) - defines all information needed to manage and
+ * swtich between tasks
+ */
+typedef struct task {
+    // Process ID and state
+    /** Process ID (unique) */
+    uint32_t pid;
+    /** Current state of the task */
+    task_state_t state;
+    /** Exit code (valid when state = TASK_ZOMBIE) */
+    int exit_code;
+
+    // CPU context and memory management
+    /** Full CPU context */
+    task_cpu_context_t context;
+    /** Physical address of task's page directory */
+    uint32_t page_dir_phys;
+    /** Virtual address of task's page directory */
+    void* page_dir_virt;
+    /** Linked list of memory regions */
+    task_memory_region_t* memory_regions;
+
+    // Stack and heap information
+    /** Base of kernel stack (high address) */
+    uint32_t kernel_stack_base;
+    /** Size of the kernel stack */
+    uint32_t kernel_stack_size;
+    /** Base of user stack (high address) */
+    uint32_t user_stack_base;
+    /** Size of the user stacvk */
+    uint32_t user_stack_size;
+    /** Start of the heap region */
+    uint32_t heap_start;
+    /** Current heap break point */
+    uint32_t heap_end;
+    /** Maximum allowed heap size */
+    uint32_t heap_max;
+
+    // Process hierarchy
+    /** Parent process */
+    struct task* parent;
+    /** First child in linked list, navigable by next_sibling */
+    struct task* first_child;
+    /** Next sibling in linked list of children */
+    struct task* next_sibling;
+
+    // Scheduling data
+    /** Remaining time slice (in PIT ticks) */
+    uint32_t time_slice;
+    /** Priority level (0 = highest) */
+    uint8_t priority;
+    /** Total CPU time used (in PIT ticks) */
+    uint64_t total_runtime;
+
+    // Linked list for scheduler queues
+    /** Previous task in queue (for double-direction linked list) */
+    struct task* prev;
+    /** Next task in the queue */
+    struct task* next;
+
+    // TODO: for future implementations:
+    // - working directory ID/path
+    // - list of open file descriptors
+    // - pending signals to be sent to the process
+    // - signal handlers
+} task_t;
+
+#endif
