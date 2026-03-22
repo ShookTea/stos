@@ -85,23 +85,36 @@ void terminal_init();
  * - l - if arg[0] = 25, hides the cursor
  * - m - Select Graphic Rendition mode - all arguments are parsed in order
  *       and applied, according to the following rules:
- *       - 0 - resets graphic rendition rules to default
- *       - 1 - uses "bold" variant of the color
- *       - 30-37 - set foreground color (see below)
- *       - 39 - set default foreground color
- *       - 40-47 - set background color (see below)
- *       - 49 - set default background color
+ *       - 0       - resets graphic rendition rules to default
+ *       - 1       - enable high intensity for foreground color
+ *       - 22      - disable high intensity for foreground color
+ *       - 30-37   - set foreground color (see below)
+ *       - 39      - set default foreground color
+ *       - 40-47   - set background color (see below)
+ *       - 49      - set default background color
+ *       - 90-97   - set foreground color (see below)
+ *       - 100-107 - set background color (see below)
  *
  * Following colors are supported, with argument values for foreground and
- * background colors:
- * - black   (FE = 30, BE = 40)
- * - red     (FE = 31, BE = 41)
- * - green   (FE = 32, BE = 42)
- * - brown   (FE = 33, BE = 43)
- * - blue    (FE = 34, BE = 44)
- * - magenta (FE = 35, BE = 45)
- * - cyan    (FE = 36, BE = 46)
- * - white   (FE = 37, BE = 47)
+ * background colors. The bright variants of foreground colors (90-97) can
+ * alterinatively be toggled on/off with arguments "1" and "22".
+ *
+ * - black          (FE = 30, BE = 40)
+ * - red            (FE = 31, BE = 41)
+ * - green          (FE = 32, BE = 42)
+ * - brown          (FE = 33, BE = 43)
+ * - blue           (FE = 34, BE = 44)
+ * - magenta        (FE = 35, BE = 45)
+ * - cyan           (FE = 36, BE = 46)
+ * - white          (FE = 37, BE = 47)
+ * - gray           (FE = 90 or 1;30, BE = 100)
+ * - bright red     (FE = 91 or 1;31, BE = 101)
+ * - bright green   (FE = 92 or 1;32, BE = 102)
+ * - bright brown   (FE = 93 or 1;33, BE = 103)
+ * - bright blue    (FE = 94 or 1;34, BE = 104)
+ * - bright magenta (FE = 95 or 1;35, BE = 105)
+ * - bright cyan    (FE = 96 or 1;36, BE = 106)
+ * - bright white   (FE = 97 or 1;37, BE = 107)
  */
 void terminal_write_char(char c);
 

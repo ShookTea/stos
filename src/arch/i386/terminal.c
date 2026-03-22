@@ -381,11 +381,13 @@ static void terminal_handle_csi_sequence()
         for (size_t i = 0; i < arg_count; i++) {
             if (args[i] == 0) {
                 // Reset rendition rules
-                bg_color = BG_COLOR_DEFAULT;
-                fg_color = FG_COLOR_DEFAULT;
+                terminal_reset_styling();
             }
             else if (args[i] == 1) {
-                // TODO: use bold variant
+                intensity_mode = INTENSITY_MODE_BOLD;
+            }
+            else if (args[i] == 22) {
+                intensity_mode = INTENSITY_MODE_NORMAL;
             }
             else if ((args[i] >= 30 && args[i] <= 37)
                 || (args[i] >= 40 && args[i] <= 47)) {
