@@ -399,6 +399,7 @@ void terminal_write_char(char c)
                    (cell_buffer[index].flags & CHARFLAG_TABSPACE)) {
                 cell_buffer[index].codepoint = '\0';
                 cell_buffer[index].flags = 0;
+                serial_put_c('\b');
                 vga_putentryat(
                     ' ',
                     vga_entry_color(fg_color, bg_color),
@@ -412,6 +413,8 @@ void terminal_write_char(char c)
 
         // Clear the character at current position
         erase_at_pos(cursor_row, cursor_column);
+        serial_put_c(' ');
+        serial_put_c('\b');
 
         vga_set_cursor_position(cursor_row, cursor_column);
         return;
