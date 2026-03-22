@@ -56,14 +56,17 @@ void terminal_init();
  * - Some commands treat 0 as 1 in order to make missing parameters useful.
  *
  * Supported CSI commands are:
- * - A - move cursor arg[0] cells up
- * - B - move cursor arg[0] cells down
- * - C - move cursor arg[0] cells forward
- * - D - move cursor arg[0] cells back
+ * - A - move cursor arg[0] cells up (defaults to 1)
+ * - B - move cursor arg[0] cells down (defaults to 1)
+ * - C - move cursor arg[0] cells forward (defaults to 1)
+ * - D - move cursor arg[0] cells back (defaults to 1)
  * - E - move cursor to the beginning of the line, arg[0] rows down
+ *       (defaults to 1)
  * - F - move cursor to the beginning of the line, arg[0] rows up
- * - G - move cursor to column arg[0] (1-based indexing)
- * - H - move cursor to row arg[0], column arg[1] (1-based indexing)
+ *       (defaults to 1)
+ * - G - move cursor to column arg[0] (1-based indexing, defaults to 1)
+ * - H - move cursor to row arg[0], column arg[1]
+ *       (1-based indexing, defaults to 1)
  * - J - erase in display (cursor position won't change)
  *     - if args[0] = 0 (default), clear from cursor to end of the screen
  *     - if args[0] = 1, clear from cursor to beginning of the screen
