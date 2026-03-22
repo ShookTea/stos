@@ -84,7 +84,7 @@ static void terminal_scroll_down()
 {
     vga_scroll_down();
     // Move characters down by line
-    for (size_t i = (vga_height - 1) * vga_width - 1; i >= vga_width; i--) {
+    for (size_t i = vga_height * vga_width - 1; i >= vga_width; i--) {
         cell_buffer[i] = cell_buffer[i - vga_width];
     }
     // Clear first line

@@ -83,7 +83,7 @@ void vga_scroll_up()
 void vga_scroll_down()
 {
     // Shift lines down using uint16_t entries
-    for (size_t i = (VGA_HEIGHT - 1) * VGA_WIDTH - 1; i >= VGA_WIDTH; i--) {
+    for (size_t i = VGA_HEIGHT * VGA_WIDTH - 1; i >= VGA_WIDTH; i--) {
         terminal_buffer[i] = terminal_buffer[i - VGA_WIDTH];
     }
 
