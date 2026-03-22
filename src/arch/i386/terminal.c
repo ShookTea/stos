@@ -418,6 +418,27 @@ static void terminal_handle_csi_sequence()
                 // Set default background color
                 bg_color = BG_COLOR_DEFAULT;
             }
+            else if ((args[i] >= 90 && args[i] <= 97)
+                || (args[i] >= 100 && args[i] <= 107)) {
+                // Set bg/fg color (intense variant)
+                bool foreground = args[i] < 100;
+                enum vga_color color;
+                switch (args[i] % 10) {
+                    case 0: color = VGA_COLOR_DARK_GREY; break;
+                    case 1: color = VGA_COLOR_LIGHT_RED; break;
+                    case 2: color = VGA_COLOR_LIGHT_GREEN; break;
+                    case 3: color = VGA_COLOR_LIGHT_BROWN; break;
+                    case 4: color = VGA_COLOR_LIGHT_BLUE; break;
+                    case 5: color = VGA_COLOR_LIGHT_MAGENTA; break;
+                    case 6: color = VGA_COLOR_LIGHT_CYAN; break;
+                    case 7: color = VGA_COLOR_WHITE; break;
+                }
+                if (foreground) {
+                    fg_color = color;
+                } else {
+                    bg_color = color;
+                }
+            }
         }
     }
 
