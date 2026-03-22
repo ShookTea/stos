@@ -15,6 +15,9 @@
 #define BG_COLOR_DEFAULT VGA_COLOR_BLACK
 #define FG_COLOR_DEFAULT VGA_COLOR_LIGHT_GREY
 
+#define INTENSITY_MODE_NORMAL 0
+#define INTENSITY_MODE_BOLD 1
+
 /**
  * Structure describing a single character on screen
  */
@@ -49,6 +52,19 @@ static size_t escape_mode_buffer_length = 0;
 
 static size_t saved_cursor_row = 0;
 static size_t saved_cursor_column = 0;
+static uint8_t intensity_mode;
+
+/**
+ * Merges bg_color and fg_color into entry acceptable by VGA.
+ * Also handles the intensity mode: if set to INTENSITY_MODE_BOLD,
+ * it will enforce the light variant of foreground color.
+ */
+static inline uint8_t get_current_color()
+{
+    return fg_color
+    | bg_color << 4
+    | (intensity_mode == INTENSITY_MODE_BOLD ? 0x08 : 0);
+}
 
 static void erase_at_pos(size_t row, size_t column)
 {
@@ -59,7 +75,7 @@ static void erase_at_pos(size_t row, size_t column)
     cell_buffer[index].fg_color = fg_color;
     vga_putentryat(
         ' ',
-        vga_entry_color(fg_color, bg_color),
+        get_current_color(),
         row,
         column
     );
@@ -92,6 +108,13 @@ static void terminal_scroll_down()
     for (size_t c = 0; c < vga_width; c++) {
         erase_at_pos(0, c);
     }
+}
+
+static void terminal_reset_styling()
+{
+    bg_color = BG_COLOR_DEFAULT;
+    fg_color = FG_COLOR_DEFAULT;
+    intensity_mode = INTENSITY_MODE_NORMAL;
 }
 
 /**
@@ -418,9 +441,8 @@ static void terminal_reset_escape_mode_state()
 void terminal_init()
 {
     initialized = true;
-    bg_color = BG_COLOR_DEFAULT;
-    fg_color = FG_COLOR_DEFAULT;
-    vga_init(vga_entry_color(fg_color, bg_color));
+    terminal_reset_styling();
+    vga_init(get_current_color());
     vga_disable_cursor();
     vga_width = vga_get_columns();
     vga_height = vga_get_rows();
@@ -506,7 +528,7 @@ void terminal_write_char(char c)
                 serial_put_c('\b');
                 vga_putentryat(
                     ' ',
-                    vga_entry_color(fg_color, bg_color),
+                    get_current_color(),
                     cursor_row,
                     cursor_column
                 );
@@ -554,7 +576,7 @@ void terminal_write_char(char c)
         for (size_t i = cursor_column; i < new_column; i++) {
             vga_putentryat(
                 ' ',
-                vga_entry_color(fg_color, bg_color),
+                get_current_color(),
                 cursor_row,
                 cursor_column
             );
@@ -581,7 +603,7 @@ void terminal_write_char(char c)
         // Display normal character
         vga_putentryat(
             c,
-            vga_entry_color(fg_color, bg_color),
+            get_current_color(),
             cursor_row,
             cursor_column
         );
