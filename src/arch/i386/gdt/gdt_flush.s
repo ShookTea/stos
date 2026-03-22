@@ -14,3 +14,9 @@ gdt_flush:
 
 .flush:
     ret
+
+.globl tss_flush
+tss_flush:
+    mov $0x28, %ax # TSS selector
+    ltr %ax # Load Task Register
+    ret

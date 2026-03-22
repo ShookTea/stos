@@ -79,16 +79,83 @@ typedef struct
 } __attribute__((packed)) gdt_ptr_t;
 
 /**
- * Initialize and load GDT. It should create 5 entries:
+ * Task State Segment (TSS) for i386
+ *
+ * TSS is used by the CPU to find the kernel stack when switching from usermode
+ * to kernel mode during interrupts, exceptions, or system calls.
+ *
+ * TODO: For now we're only supporting software task switching and keep a single
+ * TSS (and update ESP0 when switching tasks), but x86 supports hardware task
+ * switching, which uses different TSS for each task.
+ */
+typedef struct {
+    /** Link to previous TSS, for hardware switching (not used yet) */
+    uint32_t prev_tss;
+
+    // Stack pointer and segment for ring 0
+    /** Stack pointer for ring 0 */
+    uint32_t esp0;
+    /** Kernel data segment */
+    uint32_t ss0;
+
+    // Stack pointers and segments for ring 1&2 (not used by us)
+    uint32_t esp1;
+    uint32_t ss1;
+    uint32_t esp2;
+    uint32_t ss2;
+
+    /** Page directory register (CR3) */
+    uint32_t cr3;
+
+    // Registers for hardware task switching (not used yet)
+    uint32_t eip;
+    uint32_t eflags;
+    uint32_t eax;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t ebx;
+    uint32_t esp;
+    uint32_t ebp;
+    uint32_t esi;
+    uint32_t edi;
+
+    // Segment registers
+    uint32_t es;
+    uint32_t cs;
+    uint32_t ss;
+    uint32_t ds;
+    uint32_t fs;
+    uint32_t gs;
+
+    /** LDT segment selector (unused) */
+    uint32_t ldt;
+    /** Debug trap flag */
+    uint16_t trap;
+    /** I/O map base address */
+    uint16_t iomap_base;
+} __attribute__((packed)) tss_t;
+
+/**
+ * Initialize and load GDT. It should create 6 entries:
  * 1. The required null segment
  * 2. Kernel code segment
  * 3. Kernel data segment
  * 4. User mode code segment
  * 5. User mode data segment
+ * 6. TSS segment
  * This is required for x86 architecture to work, but we're going to use
  * paging later anyway, so we should just make the null segment empty and
  * the rest of segments should fill the entire 4 GiB of RAM.
  */
 void init_gdt(void);
+
+/**
+ * Set kernal stack in TSS. This needs to be called during task swtich to
+ * update ESP0.
+ */
+void tss_set_kernel_stack(
+    uint32_t kernel_stack_base,
+    uint32_t kernel_stack_size
+);
 
 #endif
