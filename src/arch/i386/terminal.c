@@ -113,6 +113,10 @@ static void terminal_handle_csi_sequence()
 
     for (size_t i = 0; i < escape_mode_buffer_length; i++) {
         char next_char = escape_mode_buffer[i];
+        if (i == 0 && next_char == '?') {
+            // Ignore question marks
+            continue;
+        }
         if (isdigit(next_char)) {
             // This is a digit - add it to the buffer
             buffer = krealloc(
@@ -344,6 +348,16 @@ static void terminal_handle_csi_sequence()
         cursor_column = saved_cursor_column;
         vga_set_cursor_position(cursor_row, cursor_column);
     }
+    else if (mode == 'h') {
+        if (args[0] == 25) {
+            vga_enable_cursor();
+        }
+    }
+    else if (mode == 'l') {
+        if (args[0] == 25) {
+            vga_disable_cursor();
+        }
+    }
 
     if (buffer != NULL) {
         kfree(buffer);
@@ -545,16 +559,6 @@ void terminal_write_char(char c)
     }
 
     vga_set_cursor_position(cursor_row, cursor_column);
-}
-
-void terminal_enable_cursor()
-{
-    vga_enable_cursor();
-}
-
-void terminal_disable_cursor()
-{
-    vga_disable_cursor();
 }
 
 void terminal_set_bg_color(enum vga_color color)

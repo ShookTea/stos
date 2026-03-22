@@ -42,7 +42,7 @@ void terminal_init();
  * === Escape sequences ===
  * Currently the only interpreted sequence is the Control Sequence Introducer
  * commands, which start with "\033[", then:
- * - it can optionally start with a question mark ('?')
+ * - it can optionally start with a question mark ('?'), which is ignored.
  * - then it is followed by a set of zero, one, or more numerical arguments
  *   separated by semicolons
  * - and ends with a mandatory single letter that determines the command.
@@ -81,6 +81,8 @@ void terminal_init();
  *       top of the screen
  * - s - save current cursor position
  * - u - restore saved cursor position
+ * - h - if arg[0] = 25, shows the cursor
+ * - l - if arg[0] = 25, hides the cursor
  */
 void terminal_write_char(char c);
 
@@ -106,9 +108,17 @@ inline void terminal_write_string(char* s)
     }
 }
 
+inline void terminal_enable_cursor()
+{
+    terminal_write("\033[25h", 5);
+}
+
+inline void terminal_disable_cursor()
+{
+    terminal_write("\033[25l", 5);
+}
+
 // TODO: remove functions below, to be replaced with correct escape codes
-void terminal_enable_cursor();
-void terminal_disable_cursor();
 void terminal_set_bg_color(enum vga_color color);
 void terminal_set_fg_color(enum vga_color color);
 
