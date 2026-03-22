@@ -201,6 +201,46 @@ static void terminal_handle_csi_sequence()
         cursor_column = 0;
         vga_set_cursor_position(cursor_row, cursor_column);
     }
+    else if (mode == 'G') {
+        // Move cursor to column N (starting from 1)
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
+        args[0]--;
+        if (args[0] >= vga_width) {
+            cursor_column = vga_width - 1;
+        } else {
+            cursor_column = args[0];
+        }
+        vga_set_cursor_position(cursor_row, cursor_column);
+    }
+    else if (mode == 'H') {
+        // Move cursor to row arg[0], column arg[1] (starting from 1)
+        uint8_t row, column;
+        if (args[0] == 0) {
+            row = 0;
+        } else {
+            row = args[0] - 1;
+        }
+        if (arg_count < 2 || args[1] == 0) {
+            column = 0;
+        } else {
+            column = args[1] - 1;
+        }
+
+        if (row >= vga_height) {
+            cursor_row = vga_height - 1;
+        } else {
+            cursor_row = row;
+        }
+
+        if (column >= vga_width) {
+            cursor_column = vga_width - 1;
+        } else {
+            cursor_column = column;
+        }
+        vga_set_cursor_position(cursor_row, cursor_column);
+    }
 
     if (buffer != NULL) {
         kfree(buffer);

@@ -62,6 +62,8 @@ void terminal_init();
  * - D - move cursor arg[0] cells back
  * - E - move cursor to the beginning of the line, arg[0] rows down
  * - F - move cursor to the beginning of the line, arg[0] rows up
+ * - G - move cursor to column arg[0] (1-based indexing)
+ * - H - move cursor to row arg[0], column arg[1] (1-based indexing)
  */
 void terminal_write_char(char c);
 
