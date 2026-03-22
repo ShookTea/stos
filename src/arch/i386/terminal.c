@@ -135,11 +135,27 @@ static void terminal_handle_csi_sequence()
         }
         vga_set_cursor_position(cursor_row, cursor_column);
     }
-    if (mode == 'B' && arg_count == 1) { // Move cursor N cells down
+    else if (mode == 'B' && arg_count == 1) { // Move cursor N cells down
         if (args[0] + cursor_row >= vga_height) {
-            cursor_row = vga_height;
+            cursor_row = vga_height - 1;
         } else {
             cursor_row += args[0];
+        }
+        vga_set_cursor_position(cursor_row, cursor_column);
+    }
+    else if (mode == 'C' && arg_count == 1) { // Move cursor N cells forward
+        if (args[0] + cursor_column >= vga_width) {
+            cursor_column = vga_width - 1;
+        } else {
+            cursor_column += args[0];
+        }
+        vga_set_cursor_position(cursor_row, cursor_column);
+    }
+    else if (mode == 'D' && arg_count == 1) { // Move cursor N cells back
+        if (args[0] >= cursor_column) {
+            cursor_column = 0;
+        } else {
+            cursor_column -= args[0];
         }
         vga_set_cursor_position(cursor_row, cursor_column);
     }
