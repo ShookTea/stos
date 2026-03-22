@@ -75,6 +75,10 @@ void terminal_init();
  *     - if args[0] = 0 (default), clear from cursor to end of the line
  *     - if args[0] = 1, clear from cursor to beginning of the line
  *     - if args[0] = 2, clear entire line
+ * - S - scroll up by arg[0] (defaults to 1) lines, adding new lines at the
+ *       bottom of the screen
+ * - T - scroll down by arg[0] (defaults to 1) lines, adding new lines at the
+ *       top of the screen
  */
 void terminal_write_char(char c);
 

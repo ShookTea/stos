@@ -312,6 +312,24 @@ static void terminal_handle_csi_sequence()
             }
         }
     }
+    else if (mode == 'S') {
+        // Scroll up
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
+        for (size_t i = 0; i < args[0]; i++) {
+            terminal_scroll_up();
+        }
+    }
+    else if (mode == 'T') {
+        // Scroll down
+        if (args[0] == 0) {
+            args[0] = 1;
+        }
+        for (size_t i = 0; i < args[0]; i++) {
+            terminal_scroll_down();
+        }
+    }
 
     if (buffer != NULL) {
         kfree(buffer);
