@@ -2,6 +2,15 @@
 #include <kernel/memory/kmalloc.h>
 #include <string.h>
 
+/** When increasing tasks list length, use this size */
+#define TASKS_LIST_REALLOC_SIZE 10
+
+static task_t** tasks = NULL;
+// Length of tasks list
+static uint32_t tasks_length = 0;
+// The number of tasks that weren't destroyed yet
+static uint32_t tasks_present = 0;
+
 /**
  * Build initial stack frame (as if the task was interrupted).
  */
@@ -71,15 +80,59 @@ static void task_setup_initial_stack(
     task->context.esp = (uint32_t)stack;
 }
 
-task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
+/**
+ * Allocate new task in the tasks array, with given name, and set PID. Grow
+ * tasks array if necessary; otherwise reuse the already existing entries.
+ */
+static task_t* task_allocate(const char name[64])
 {
+    // Allocate task data in memory
     task_t* task = kmalloc_flags(sizeof(task_t), KMALLOC_ZERO);
     strcpy(task->name, name);
+
+    if (tasks_length == tasks_present) {
+        // Need to increase the size of tasks array by some constant margin
+        uint32_t new_size = tasks_length + TASKS_LIST_REALLOC_SIZE;
+        tasks = krealloc(tasks, sizeof(task_t*) * new_size);
+
+        // Clear newly allocated memory to zero it out, which can be used later
+        // to check if entry is empty (NULL) or not
+        memset(tasks + tasks_length, 0, TASKS_LIST_REALLOC_SIZE);
+        tasks_length = new_size;
+
+        // tasks_present is now guaranteed to be equal to first empty entry
+        // and can be used as PID
+        tasks[tasks_present] = task;
+        task->pid = tasks_present;
+        tasks_present++;
+    } else {
+        // There is some entry in tasks array that is empty and can be used
+        for (size_t i = 0; i < tasks_length; i++) {
+            if (tasks[i] == NULL) {
+                tasks[i] = task;
+                task->pid = i;
+                tasks_present++;
+                break;
+            }
+        }
+    }
+
+    return task;
+}
+
+task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
+{
+    task_t* task = task_allocate(name);
     task_setup_initial_stack(task, entrypoint, is_kernel);
     return task;
 }
 
 void task_destroy(task_t* task)
 {
+    // Free task entry
+    tasks[task->pid] = NULL;
+    tasks_present--;
+
+    // Dellocate memory for task
     kfree(task);
 }
