@@ -137,8 +137,4 @@ inline void terminal_disable_cursor()
     terminal_write("\033[25l", 5);
 }
 
-// TODO: remove functions below, to be replaced with correct escape codes
-void terminal_set_bg_color(enum vga_color color);
-void terminal_set_fg_color(enum vga_color color);
-
 #endif
