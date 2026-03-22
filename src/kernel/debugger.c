@@ -28,7 +28,7 @@ static bool accept_commands = false;
 static void print_prompt_and_enable()
 {
     puts("");
-    printf("# ");
+    printf("\033[36;1m#\033[0m ");
     terminal_enable_cursor();
     command_length = 0;
     memset(command_buffer, 0, MAX_COMMAND_LENGTH);
