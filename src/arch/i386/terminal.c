@@ -12,6 +12,9 @@
 // Space character created for tab alignment
 #define CHARFLAG_TABSPACE 0x01
 
+#define BG_COLOR_DEFAULT VGA_COLOR_BLACK
+#define FG_COLOR_DEFAULT VGA_COLOR_LIGHT_GREY
+
 /**
  * Structure describing a single character on screen
  */
@@ -358,6 +361,48 @@ static void terminal_handle_csi_sequence()
             vga_disable_cursor();
         }
     }
+    else if (mode == 'm') {
+        // Graphic rendition mode - parse each arg one by one
+        for (size_t i = 0; i < arg_count; i++) {
+            if (args[i] == 0) {
+                // Reset rendition rules
+                bg_color = BG_COLOR_DEFAULT;
+                fg_color = FG_COLOR_DEFAULT;
+            }
+            else if (args[i] == 1) {
+                // TODO: use bold variant
+            }
+            else if ((args[i] >= 30 && args[i] <= 37)
+                || (args[i] >= 40 && args[i] <= 47)) {
+                // Set bg/fg color
+                bool foreground = args[i] < 40;
+                enum vga_color color;
+                switch (args[i] % 10) {
+                    case 0: color = VGA_COLOR_BLACK; break;
+                    case 1: color = VGA_COLOR_RED; break;
+                    case 2: color = VGA_COLOR_GREEN; break;
+                    case 3: color = VGA_COLOR_BROWN; break;
+                    case 4: color = VGA_COLOR_BLUE; break;
+                    case 5: color = VGA_COLOR_MAGENTA; break;
+                    case 6: color = VGA_COLOR_CYAN; break;
+                    case 7: color = VGA_COLOR_LIGHT_GREY; break;
+                }
+                if (foreground) {
+                    fg_color = color;
+                } else {
+                    bg_color = color;
+                }
+            }
+            else if (args[i] == 39) {
+                // Set default foreground color
+                fg_color = FG_COLOR_DEFAULT;
+            }
+            else if (args[i] == 49) {
+                // Set default background color
+                bg_color = BG_COLOR_DEFAULT;
+            }
+        }
+    }
 
     if (buffer != NULL) {
         kfree(buffer);
@@ -381,8 +426,8 @@ static void terminal_reset_escape_mode_state()
 void terminal_init()
 {
     initialized = true;
-    bg_color = VGA_COLOR_BLACK;
-    fg_color = VGA_COLOR_LIGHT_GREY;
+    bg_color = BG_COLOR_DEFAULT;
+    fg_color = FG_COLOR_DEFAULT;
     vga_init(vga_entry_color(fg_color, bg_color));
     vga_disable_cursor();
     vga_width = vga_get_columns();

@@ -83,6 +83,25 @@ void terminal_init();
  * - u - restore saved cursor position
  * - h - if arg[0] = 25, shows the cursor
  * - l - if arg[0] = 25, hides the cursor
+ * - m - Select Graphic Rendition mode - all arguments are parsed in order
+ *       and applied, according to the following rules:
+ *       - 0 - resets graphic rendition rules to default
+ *       - 1 - uses "bold" variant of the color
+ *       - 30-37 - set foreground color (see below)
+ *       - 39 - set default foreground color
+ *       - 40-47 - set background color (see below)
+ *       - 49 - set default background color
+ *
+ * Following colors are supported, with argument values for foreground and
+ * background colors:
+ * - black   (FE = 30, BE = 40)
+ * - red     (FE = 31, BE = 41)
+ * - green   (FE = 32, BE = 42)
+ * - brown   (FE = 33, BE = 43)
+ * - blue    (FE = 34, BE = 44)
+ * - magenta (FE = 35, BE = 45)
+ * - cyan    (FE = 36, BE = 46)
+ * - white   (FE = 37, BE = 47)
  */
 void terminal_write_char(char c);
 
