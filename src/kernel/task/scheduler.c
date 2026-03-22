@@ -49,6 +49,8 @@ static void scheduler_tick()
     scheduler_tick_count++;
     if (scheduler_stats->current_task == NULL) {
         scheduler_stats->total_idle_time++;
+    } else {
+        scheduler_stats->current_task->total_runtime++;
     }
 
     if (scheduler_tick_count == SCHEDULER_RESCHEDULE_COUNT) {
@@ -108,8 +110,24 @@ void scheduler_remove_task(task_t* task)
     }
 }
 
+/**
+ * Code for idle task - halts until next interrupt
+ */
+static void idle_task_function()
+{
+    while (1) {
+         __asm__ volatile("hlt");
+    }
+}
+
 void scheduler_init()
 {
-    pit_register_timeout(SCHEDULER_TICK_TIME, scheduler_tick, NULL);
     scheduler_stats = kmalloc_flags(sizeof(scheduler_stats_t), KMALLOC_ZERO);
+
+    // Create idle task - runs when nothing else is ready
+    // TODO: when priorities are implemented, use lowest possible here
+    task_t* idle_task = task_create("idle", idle_task_function, true);
+    scheduler_stats->current_task = idle_task;
+
+    pit_register_timeout(SCHEDULER_TICK_TIME, scheduler_tick, NULL);
 }
