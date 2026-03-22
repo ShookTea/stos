@@ -139,7 +139,7 @@ static void terminal_handle_csi_sequence()
         }
         vga_set_cursor_position(cursor_row, cursor_column);
     }
-    else if (mode == 'B' && arg_count == 1) {
+    else if (mode == 'B') {
         // Move cursor N cells down
         if (args[0] == 0) {
             args[0] = 1;
@@ -151,7 +151,7 @@ static void terminal_handle_csi_sequence()
         }
         vga_set_cursor_position(cursor_row, cursor_column);
     }
-    else if (mode == 'C' && arg_count == 1) {
+    else if (mode == 'C') {
         // Move cursor N cells forward
         if (args[0] == 0) {
             args[0] = 1;
@@ -163,7 +163,7 @@ static void terminal_handle_csi_sequence()
         }
         vga_set_cursor_position(cursor_row, cursor_column);
     }
-    else if (mode == 'D' && arg_count == 1) {
+    else if (mode == 'D') {
         // Move cursor N cells back
         if (args[0] == 0) {
             args[0] = 1;
@@ -175,7 +175,7 @@ static void terminal_handle_csi_sequence()
         }
         vga_set_cursor_position(cursor_row, cursor_column);
     }
-    else if (mode == 'E' && arg_count == 1) {
+    else if (mode == 'E') {
         // Move cursor to beginning of line, N rows down
         if (args[0] == 0) {
             args[0] = 1;
@@ -188,7 +188,7 @@ static void terminal_handle_csi_sequence()
         cursor_column = 0;
         vga_set_cursor_position(cursor_row, cursor_column);
     }
-    else if (mode == 'F' && arg_count == 1) {
+    else if (mode == 'F') {
         // Move cursor to beginning of line, N rows up
         if (args[0] == 0) {
             args[0] = 1;
