@@ -109,11 +109,11 @@ static void terminal_handle_csi_sequence()
         }
         else {
             // Either a semicolon (arg separator) or a mode character
-            // 1. Parse current buffer, if exists
+            // 1. Parse current buffer, if exists - otherwise add 0
+            args = krealloc(args, sizeof(uint8_t) * (arg_count + 1));
+            args[arg_count] = buffer_length > 0 ? atoi(buffer) : 0;
+            arg_count++;
             if (buffer_length > 0) {
-                args = krealloc(args, sizeof(uint8_t) * (arg_count + 1));
-                args[arg_count] = atoi(buffer);
-                arg_count++;
                 kfree(buffer);
                 buffer = NULL;
                 buffer_length = 0;
