@@ -55,6 +55,8 @@ static void erase_at_pos(size_t row, size_t column)
     size_t index = row * vga_width + column;
     cell_buffer[index].codepoint = '\0';
     cell_buffer[index].flags = 0;
+    cell_buffer[index].bg_color = bg_color;
+    cell_buffer[index].fg_color = fg_color;
     vga_putentryat(
         ' ',
         vga_entry_color(fg_color, bg_color),
@@ -74,15 +76,8 @@ static void terminal_scroll_up()
         cell_buffer[i] = cell_buffer[i + vga_width];
     }
     // Clear last line
-    for (
-        size_t i = (vga_height - 1) * vga_width;
-        i < vga_height * vga_width;
-        i++
-    ) {
-        cell_buffer[i].codepoint = '\0';
-        cell_buffer[i].bg_color = bg_color;
-        cell_buffer[i].fg_color = fg_color;
-        cell_buffer[i].flags = 0;
+    for (size_t c = 0; c < vga_width; c++) {
+        erase_at_pos(vga_height - 1, c);
     }
 }
 
@@ -94,11 +89,8 @@ static void terminal_scroll_down()
         cell_buffer[i] = cell_buffer[i - vga_width];
     }
     // Clear first line
-    for (size_t i = 0; i < vga_width; i++) {
-        cell_buffer[i].codepoint = '\0';
-        cell_buffer[i].bg_color = bg_color;
-        cell_buffer[i].fg_color = fg_color;
-        cell_buffer[i].flags = 0;
+    for (size_t c = 0; c < vga_width; c++) {
+        erase_at_pos(0, c);
     }
 }
 
