@@ -29,7 +29,39 @@ enum vga_color {
 void terminal_init();
 
 /**
- * Write a single character to the terminal
+ * Write a single character to the terminal and moves the cursor. Special cases:
+ * - If the character is \n, goes to the next line immediataly.
+ * - If the character is \t, prints multiple spaces to align to 8 columns
+ * - If the character is \b, removes the previous character
+ *   - it properly handles situations where the previous character was \t,
+ *     removing all spaces printed by it.
+ * - If the character is \033, it initializes the escape sequence. All following
+ *   characters won't be printed until a valid end of the sequence is received,
+ *   or if the sequence can't be understood by the terminal.
+ *
+ * === Escape sequences ===
+ * Currently the only interpreted sequence is the Control Sequence Introducer
+ * commands, which start with "\033[", then:
+ * - it can optionally start with a question mark ('?')
+ * - then it is followed by a set of zero, one, or more numerical arguments
+ *   separated by semicolons
+ * - and ends with a mandatory single letter that determines the command.
+ *
+ * Special rules about numerical arguments:
+ * - There is always at least one argument. If the sequence doesn't receive
+ *   any arguments, it is interpreted as if it received one argument with value
+ *   set to zero. For example, "\033[K" is equivalent to "\033[0K"
+ * - If entry separated by semicolon is empty, it is also interpreted as zero.
+ *   For example, arguments "1;;3" are equivalent to "1;0;3"
+ * - Some commands treat 0 as 1 in order to make missing parameters useful.
+ *
+ * Supported CSI commands are:
+ * - A - move cursor arg[0] cells up
+ * - B - move cursor arg[0] cells down
+ * - C - move cursor arg[0] cells forward
+ * - D - move cursor arg[0] cells back
+ * - E - move cursor to the beginning of the line, arg[0] rows down
+ * - F - move cursor to the beginning of the line, arg[0] rows up
  */
 void terminal_write_char(char c);
 
