@@ -195,22 +195,54 @@ static void handle_command_sent()
         // Print header with bg colors
         for (uint8_t bg_color = 39; bg_color <= 47; bg_color++) {
             if (bg_color == 39) {
-                printf("   ");
+                printf("    ");
             }
             else {
-                printf(" %d", bg_color);
+                printf(" %d ", bg_color);
             }
+        }
+        for (uint8_t bg_color = 100; bg_color <= 107; bg_color++) {
+                printf(" %d", bg_color);
         }
         puts("");
 
+        // Print rows
         for (uint8_t fg_color = 30; fg_color <= 37; fg_color++) {
-            printf(" %d", fg_color);
+            printf(" %d ", fg_color);
             for (uint8_t bg_color = 40; bg_color <= 47; bg_color++) {
                 printf(
                     "\033[%d;%dm%s",
                     fg_color,
                     bg_color,
-                    " # "
+                    " ## "
+                );
+            }
+            for (uint8_t bg_color = 100; bg_color <= 107; bg_color++) {
+                printf(
+                    "\033[%d;%dm%s",
+                    fg_color,
+                    bg_color,
+                    " ## "
+                );
+            }
+            puts("\033[m");
+        }
+        for (uint8_t fg_color = 90; fg_color <= 97; fg_color++) {
+            printf(" %d ", fg_color);
+            for (uint8_t bg_color = 40; bg_color <= 47; bg_color++) {
+                printf(
+                    "\033[%d;%dm%s",
+                    fg_color,
+                    bg_color,
+                    " ## "
+                );
+            }
+            for (uint8_t bg_color = 100; bg_color <= 107; bg_color++) {
+                printf(
+                    "\033[%d;%dm%s",
+                    fg_color,
+                    bg_color,
+                    " ## "
                 );
             }
             puts("\033[m");
