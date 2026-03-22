@@ -20,4 +20,19 @@ typedef struct {
     task_t* current_task;
 } scheduler_stats_t;
 
+/**
+ * Initialize multitasking scheduler.
+ */
+void scheduler_init();
+
+/**
+ * Adds new task to the WAITING queue
+ */
+void scheduler_add_task(task_t* task);
+
+/**
+ * Remove task from all queues
+ */
+void scheduler_remove_task(task_t* task);
+
 #endif
