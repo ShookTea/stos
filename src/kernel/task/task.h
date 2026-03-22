@@ -2,6 +2,7 @@
 #define KERNEL_TASK_TASK_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
  * Process states enum
@@ -77,6 +78,8 @@ typedef struct task {
     // Process ID and state
     /** Process ID (unique) */
     uint32_t pid;
+    /** Process name */
+    char name[64];
     /** Current state of the task */
     task_state_t state;
     /** Exit code (valid when state = TASK_ZOMBIE) */
@@ -119,8 +122,6 @@ typedef struct task {
     // Scheduling data
     /** Remaining time slice (in PIT ticks) */
     uint32_t time_slice;
-    /** Priority level (0 = highest) */
-    uint8_t priority;
     /** Total CPU time used (in PIT ticks) */
     uint64_t total_runtime;
 
@@ -131,10 +132,21 @@ typedef struct task {
     struct task* next;
 
     // TODO: for future implementations:
+    // - priority
     // - working directory ID/path
     // - list of open file descriptors
     // - pending signals to be sent to the process
     // - signal handlers
 } task_t;
+
+/**
+ * Create a new task with given name, entrypoint, and permission ring
+ */
+task_t* task_create(const char name[64], void (*entry_point)(), bool is_kernel);
+
+/**
+ * Deallocates all memory from a task, fixes linked lists if necessary
+ */
+void task_destroy(task_t* task);
 
 #endif
