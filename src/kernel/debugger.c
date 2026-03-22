@@ -79,6 +79,7 @@ static void handle_command_sent()
         puts("  slab_stats     - Prints slab allocator statistics");
         puts("  vfs_cat [F]    - Prints content of a file at abs. path");
         puts("  vfs_ls [F]     - Prints info about file at abs. path [F]");
+        puts("  vga_colors     - Prints VGA colors map");
         puts("  vmm_memory_map - Prints detailed memory map");
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
@@ -186,6 +187,33 @@ static void handle_command_sent()
             } else {
                 puts("Unknown vfs node found");
             }
+        }
+    }
+    else if (strcmp(command, "vga_colors") == 0) {
+        puts("Color matrix with styling using ^[F;Bm");
+        puts("");
+        // Print header with bg colors
+        for (uint8_t bg_color = 39; bg_color <= 47; bg_color++) {
+            if (bg_color == 39) {
+                printf("   ");
+            }
+            else {
+                printf(" %d", bg_color);
+            }
+        }
+        puts("");
+
+        for (uint8_t fg_color = 30; fg_color <= 37; fg_color++) {
+            printf(" %d", fg_color);
+            for (uint8_t bg_color = 40; bg_color <= 47; bg_color++) {
+                printf(
+                    "\033[%d;%dm%s",
+                    fg_color,
+                    bg_color,
+                    " # "
+                );
+            }
+            puts("\033[m");
         }
     }
     else if (strcmp(command, "vmm_memory_map") == 0) {
