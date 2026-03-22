@@ -5,6 +5,19 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+/**
+ * Time between scheduler tick calls, in milliseconds. This is how often the
+ * PIT controller will call scheduler_tick() function.
+ */
+#define SCHEDULER_TICK_TIME 10
+
+/**
+ * Number of scheduler ticks to happen since the last rescheduling to force
+ * schedule change. The total max length of a single run of the task (in
+ * milliseconds) is SCHEDULER_TICK_TIME * SCHEDULE_RESCHEDULE_COUNT.
+ */
+#define SCHEDULER_RESCHEDULE_COUNT 10
+
 typedef struct {
     /** Total number of tasks */
     size_t num_tasks;
@@ -14,7 +27,7 @@ typedef struct {
     size_t num_blocked;
     /** Tasks in TASK_SLEEPING state */
     size_t num_sleeping;
-    /** Time spent in idle task */
+    /** Time spent in idle task, in ticks */
     uint64_t total_idle_time;
     /** Currently running task */
     task_t* current_task;
