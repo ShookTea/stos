@@ -44,6 +44,19 @@ static bool escape_mode_csi = false;
 static char* escape_mode_buffer = NULL;
 static size_t escape_mode_buffer_length = 0;
 
+static void erase_at_pos(size_t row, size_t column)
+{
+    size_t index = row * vga_width + column;
+    cell_buffer[index].codepoint = '\0';
+    cell_buffer[index].flags = 0;
+    vga_putentryat(
+        ' ',
+        vga_entry_color(fg_color, bg_color),
+        row,
+        column
+    );
+}
+
 /**
  * Scroll one line up, adding new line at the bottom
  */
@@ -241,6 +254,43 @@ static void terminal_handle_csi_sequence()
         }
         vga_set_cursor_position(cursor_row, cursor_column);
     }
+    else if (mode == 'J') {
+        // Erase in display
+        if (args[0] == 0) {
+            // Clear from cursor to end of screen
+            // First erase to the end of current line
+            for (size_t c = cursor_column; c < vga_width; c++) {
+                erase_at_pos(cursor_row, c);
+            }
+            // Then erase the rest of rows:
+            for (size_t r = cursor_row + 1; r < vga_height; r++) {
+                for (size_t c = 0; c < vga_width; c++) {
+                    erase_at_pos(r, c);
+                }
+            }
+        }
+        else if (args[0] == 1) {
+            // Clear from cursor to the start of screen
+            // First erase to the start of current line
+            for (size_t c = 0; c <= cursor_column; c++) {
+                erase_at_pos(cursor_row, c);
+            }
+            // Then erase the rest of rows:
+            for (size_t r = 0; r < cursor_row; r++) {
+                for (size_t c = 0; c < vga_width; c++) {
+                    erase_at_pos(r, c);
+                }
+            }
+        }
+        else if (args[0] == 2) {
+            // Clear the entire display
+            for (size_t r = 0; r < vga_height; r++) {
+                for (size_t c = 0; c < vga_width; c++) {
+                    erase_at_pos(r, c);
+                }
+            }
+        }
+    }
 
     if (buffer != NULL) {
         kfree(buffer);
@@ -361,14 +411,7 @@ void terminal_write_char(char c)
         }
 
         // Clear the character at current position
-        cell_buffer[index].codepoint = '\0';
-        cell_buffer[index].flags = 0;
-        vga_putentryat(
-            ' ',
-            vga_entry_color(fg_color, bg_color),
-            cursor_row,
-            cursor_column
-        );
+        erase_at_pos(cursor_row, cursor_column);
 
         vga_set_cursor_position(cursor_row, cursor_column);
         return;

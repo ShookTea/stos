@@ -64,6 +64,10 @@ void terminal_init();
  * - F - move cursor to the beginning of the line, arg[0] rows up
  * - G - move cursor to column arg[0] (1-based indexing)
  * - H - move cursor to row arg[0], column arg[1] (1-based indexing)
+ * - J - erase in display
+ *     - if args[0] = 0 (default), clear from cursor to end of screen
+ *     - if args[0] = 1, clear from cursor to beginning of the screen
+ *     - if args[0] = 2, clear entire screen
  */
 void terminal_write_char(char c);
 
