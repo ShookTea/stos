@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include <kernel/memory/tss.h>
 #include <stdint.h>
 #include <string.h>
 
