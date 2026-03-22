@@ -23,36 +23,11 @@ typedef enum {
 } task_state_t;
 
 /**
- * Full CPU context of the task. Contains all registers that need to be saved
- * during the context switch. The layout matters - it must match the order
- * of PUSHA and what the CPU pushes during interrupts.
+ * CPU context for task switching. Because we use stack-based context switching,
+ * we only need to store ESP - stack pointer itself.
  */
 typedef struct {
-    // Segment registers (pushed by software)
-    uint32_t gs;
-    uint32_t fs;
-    uint32_t es;
-    uint32_t ds;
-
-    // General purpose registers (pushed by PUSHA instruction)
-    // PUSHA pushes in this order: EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-    uint32_t edi;
-    uint32_t esi;
-    uint32_t ebp;
     uint32_t esp;
-    uint32_t ebx;
-    uint32_t edx;
-    uint32_t ecx;
-    uint32_t eax;
-
-    // Automatically pushed by CPU on interrupt
-    uint32_t eip; // Instruction pointer
-    uint32_t cs; // Code segment
-    uint32_t eflags; // Flags register
-
-    // Only present when crossing privilege levels (user -> kernel)
-    uint32_t user_esp; // User stack pointer
-    uint32_t user_ss; // User stack segment
 } __attribute__((packed)) task_cpu_context_t;
 
 /**
