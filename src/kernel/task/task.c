@@ -49,8 +49,9 @@ static void task_setup_initial_stack(
         *stack = 0x1B; // User code segment (GDT entry 3, RPL=3)
     }
 
-    stack--;
-    *stack = (uint32_t)entrypoint; // EIP
+    stack--; *stack = (uint32_t)entrypoint; // EIP
+    stack--; *stack = 0; // err_code
+    stack--; *stack = 0; // int_no
 
     // Registers saved by PUSHA (in reverse order)
     stack--; *stack = 0; // EDI
@@ -128,14 +129,15 @@ static task_t* task_allocate(const char name[64])
 task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
 {
     task_t* task = task_allocate(name);
+
+    // Allocate kernel stack (required for usermode tasks as well)
+    task->kernel_stack_size = KERNEL_STACK_SIZE;
+    task->kernel_stack_base = (uint32_t)(vmm_kernel_alloc(KERNEL_STACK_SIZE));
     task_setup_initial_stack(task, entrypoint, is_kernel);
 
     // Set initial state
     task->state = TASK_WAITING;
 
-    // Allocate kernel stack (required for usermode tasks as well)
-    task->kernel_stack_size = KERNEL_STACK_SIZE;
-    task->kernel_stack_base = (uint32_t)(vmm_kernel_alloc(KERNEL_STACK_SIZE));
     if (task->kernel_stack_base == 0) {
         // task_destroy(task);
         // return NULL;
