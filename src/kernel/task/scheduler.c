@@ -151,6 +151,28 @@ void scheduler_move_task_to_state(task_t* task, task_state_t new_state)
 }
 
 /**
+ * Goes through the zombie queue and cleans up dead tasks
+ */
+static void cleanup_dead_tasks()
+{
+    task_t* zombie = zombie_queue;
+    while (zombie != NULL) {
+        task_t* next = zombie->next;
+        if (zombie->state == TASK_DEAD) {
+            remove_from_queue(zombie);
+            printf(
+                "Cleaning up dead task [%u] '%s'\n",
+                zombie->pid,
+                zombie->name
+            );
+            task_destroy(zombie);
+            scheduler_stats->num_tasks--;
+        }
+        zombie = next;
+    }
+}
+
+/**
  * Switch context from one task to another
  */
 static void scheduler_switch_task_context(
@@ -243,6 +265,7 @@ static task_t* scheduler_get_next_task()
  */
 static void scheduler_reschedule()
 {
+    cleanup_dead_tasks();
     task_t* old_task = scheduler_stats->current_task;
     task_t* next_task = scheduler_get_next_task();
     if (next_task == NULL) {
