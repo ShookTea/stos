@@ -25,10 +25,10 @@ static size_t tasks_present = 0;
  */
 static void task_entry_trampoline()
 {
-    // TODO: Mark task as completed, with exit code 0
-    while (1) {
-        __asm__ volatile("hlt");
-    }
+    // The entry function's return value is in EAX.
+    int exit_code;
+    __asm__ volatile("mov %%eax, %0" : "=r"(exit_code));
+    task_exit(exit_code);
 }
 
 /**
