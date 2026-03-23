@@ -302,6 +302,41 @@ void task_exit(int exit_code)
         scheduler_move_task_to_state(current->parent, TASK_WAITING);
     }
 
+    // Handle cases where current task has children
+    task_t* child = current->first_child;
+    while (child != NULL) {
+        task_t* next_child = child->next_sibling;
+        if (next_child->state == TASK_ZOMBIE) {
+            // Child is already zombie, no one will wait for it.
+            scheduler_move_task_to_state(child, TASK_DEAD);
+            printf(
+                "Orphaned zombie [%u] '%s' marked as DEAD\n",
+                child->pid,
+                child->name
+            );
+        } else {
+            // Child is still running - reparenting them to current task's
+            // original parent
+            child->parent = current->parent;
+            if (child->parent == NULL) {
+                printf(
+                    "Child [%u] '%s' orphaned\n",
+                    child->pid,
+                    child->name
+                );
+            } else {
+                printf(
+                    "Child [%u] '%s' changed parent to [%u] '%s'\n",
+                    child->pid,
+                    child->name,
+                    child->parent->pid,
+                    child->parent->name
+                );
+            }
+        }
+        child = next_child;
+    }
+
     scheduler_yield();
 }
 
