@@ -267,6 +267,7 @@ task_t* task_get_task_by_pid(uint32_t pid)
     return NULL;
 }
 
+__attribute__((noreturn))
 void task_exit(int exit_code)
 {
     task_t* current = scheduler_get_current_task();
