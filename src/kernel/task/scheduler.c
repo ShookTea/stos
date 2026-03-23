@@ -9,6 +9,9 @@
 static uint8_t scheduler_tick_count = 0;
 static scheduler_stats_t* scheduler_stats;
 static task_t* waiting_queue = NULL;
+static task_t* blocked_queue = NULL;
+static task_t* sleeping_queue = NULL;
+static task_t* zombie_queue = NULL;
 static uint32_t idle_task_pid;
 
 extern void switch_to_stack(
@@ -16,6 +19,140 @@ extern void switch_to_stack(
     uint32_t new_esp,
     uint32_t new_cr3
 );
+
+/**
+ * Remove task from whatever queue it's currently in. Does NOT change task
+ * status or statistics.
+ */
+static void remove_from_queue(task_t* task)
+{
+    if (task == NULL) {
+        return;
+    }
+
+    // Unlink from doubly-linked list
+    if (task->prev != NULL) {
+        task->prev->next = task->next;
+    }
+    if (task->next != NULL) {
+        task->next->prev = task->prev;
+    }
+
+    // If the task was the head of any queue, update that head accordingly.
+    if (waiting_queue == task) {
+        waiting_queue = task->next;
+    }
+    if (blocked_queue == task) {
+        blocked_queue = task->next;
+    }
+    if (sleeping_queue == task) {
+        sleeping_queue = task->next;
+    }
+    if (zombie_queue == task) {
+        zombie_queue = task->next;
+    }
+
+    // Clear task's list pointers
+    task->prev = NULL;
+    task->next = NULL;
+}
+
+/**
+ * Adds task to the end of the appropriate queue, based on it's current state.
+ * Doesn't update any scheduler statistics.
+ */
+static void add_to_queue(task_t* task)
+{
+    if (task == NULL) {
+        return;
+    }
+    task_t** queue_head = NULL;
+    switch (task->state) {
+        case TASK_WAITING:
+            queue_head = &waiting_queue;
+            break;
+        case TASK_BLOCKED:
+            queue_head = &blocked_queue;
+            break;
+        case TASK_SLEEPING:
+            queue_head = &sleeping_queue;
+            break;
+        case TASK_ZOMBIE:
+            queue_head = &zombie_queue;
+            break;
+        case TASK_RUNNING:
+        case TASK_DEAD:
+            // These tasks should not be in any queue
+            return;
+    }
+
+    // Add to the end of the queue
+    if (*queue_head == NULL) {
+        *queue_head = task;
+        task->prev = NULL;
+        task->next = NULL;
+    } else {
+        task_t* last = *queue_head;
+        while (last->next != NULL) {
+            last = last->next;
+        }
+        last->next = task;
+        task->prev = last;
+        task->next = NULL;
+    }
+}
+
+/**
+ * Move task to the new state, move it to/from queues if necessary, and update
+ * statistics.
+ */
+static void move_task_to_state(task_t* task, task_state_t new_state)
+{
+    if (task == NULL) {
+        return;
+    }
+
+    // Update statistics for old state
+    switch (task->state) {
+        case TASK_WAITING:
+            if (scheduler_stats->num_waiting > 0) {
+                scheduler_stats->num_waiting--;
+            }
+            break;
+        case TASK_BLOCKED:
+            if (scheduler_stats->num_blocked > 0) {
+                scheduler_stats->num_blocked--;
+            }
+            break;
+        case TASK_SLEEPING:
+            if (scheduler_stats->num_sleeping > 0) {
+                scheduler_stats->num_sleeping--;
+            }
+            break;
+        default:
+            break;
+    }
+
+    remove_from_queue(task);
+    task->state = new_state;
+
+    // Update statistics for new state
+    switch (task->state) {
+        case TASK_WAITING:
+            scheduler_stats->num_waiting++;
+            break;
+        case TASK_BLOCKED:
+            scheduler_stats->num_blocked++;
+            break;
+        case TASK_SLEEPING:
+            scheduler_stats->num_sleeping++;
+            break;
+        default:
+            break;
+    }
+
+    add_to_queue(task);
+}
 
 /**
  * Switch context from one task to another
@@ -162,18 +299,7 @@ static void scheduler_tick()
 
 void scheduler_add_task(task_t* task)
 {
-    if (waiting_queue == NULL) {
-        waiting_queue = task;
-    } else {
-        task_t* last = waiting_queue;
-        while (last->next != NULL) {
-            last = last->next;
-        }
-        last->next = task;
-        task->prev = last;
-    }
-    scheduler_stats->num_tasks++;
-    scheduler_stats->num_waiting++;
+    move_task_to_state(task, TASK_WAITING);
 }
 
 void scheduler_remove_task(task_t* task)
