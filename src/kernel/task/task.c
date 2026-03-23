@@ -155,6 +155,41 @@ task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
 
 void task_destroy(task_t* task)
 {
+    if (task == NULL){
+        return;
+    }
+
+    // Free kernel stack, which is always allocated, even for usermode tasks
+    if (task->kernel_stack_base != 0) {
+        vmm_kernel_free(
+            (void*)task->kernel_stack_base,
+            task->kernel_stack_size
+        );
+        task->kernel_stack_base = 0;
+        task->kernel_stack_size = 0;
+    }
+
+    // Free user stack (if allocated)
+    if (task->user_stack_base != 0) {
+        // TODO: implement this when we have per-process page directories
+        task->user_stack_base = 0;
+        task->user_stack_size = 0;
+    }
+
+    if (task->page_dir_virt != paging_get_kernel_directory_virt()) {
+        // TODO: free page directory here when we create per-process page dirs
+        // paging_destroy_directory(task->page_dir_virt);
+    }
+
+    // Free memory regions list
+    task_memory_region_t* memreg = task->memory_regions;
+    while (memreg != NULL) {
+        task_memory_region_t* next = memreg->next;
+        kfree(memreg);
+        memreg = next;
+    }
+    task->memory_regions = NULL;
+
     // Free task entry
     tasks[task->pid] = NULL;
     tasks_present--;
