@@ -135,21 +135,23 @@ task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
     // guard page (so that when task overflows its stack, we will hit the guard
     // page instead of corrupting other memory)
     void* allocation = vmm_kernel_alloc(KERNEL_STACK_SIZE + GUARD_PAGE_SIZE);
+    if (allocation == NULL) {
+        // task_destroy(task);
+        // return NULL;
+        abort();
+    }
+
     // Make the first (guard) page non-readable, causing page faults if trying
     // to read/write
     paging_unmap_page((uint32_t)allocation);
     task->kernel_stack_size = KERNEL_STACK_SIZE;
     task->kernel_stack_base = (uint32_t)allocation + GUARD_PAGE_SIZE;
+    task->kernel_stack_alloc_size = KERNEL_STACK_SIZE + GUARD_PAGE_SIZE;
+    task->kernel_stack_alloc_base = (uint32_t)allocation;
     task_setup_initial_stack(task, entrypoint, is_kernel);
 
     // Set initial state
     task->state = TASK_WAITING;
-
-    if (task->kernel_stack_base == 0) {
-        // task_destroy(task);
-        // return NULL;
-        abort();
-    }
 
     // For now we're uisng kernel page directory for all tasks
     // TODO: create new page directories for each task
@@ -167,13 +169,15 @@ void task_destroy(task_t* task)
     }
 
     // Free kernel stack, which is always allocated, even for usermode tasks
-    if (task->kernel_stack_base != 0) {
+    if (task->kernel_stack_alloc_base != 0) {
         vmm_kernel_free(
-            (void*)task->kernel_stack_base,
-            task->kernel_stack_size
+            (void*)task->kernel_stack_alloc_base,
+            task->kernel_stack_alloc_size
         );
         task->kernel_stack_base = 0;
         task->kernel_stack_size = 0;
+        task->kernel_stack_alloc_base = 0;
+        task->kernel_stack_alloc_size = 0;
     }
 
     // Free user stack (if allocated)

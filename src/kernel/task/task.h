@@ -75,6 +75,10 @@ typedef struct task {
     uint32_t kernel_stack_base;
     /** Size of the kernel stack */
     uint32_t kernel_stack_size;
+    /** The actual allocation address, including guard page */
+    uint32_t kernel_stack_alloc_base;
+    /** The actual allocation size, including guard page */
+    uint32_t kernel_stack_alloc_size;
     /** Base of user stack (high address) */
     uint32_t user_stack_base;
     /** Size of the user stacvk */

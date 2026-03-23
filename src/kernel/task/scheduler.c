@@ -116,6 +116,10 @@ static void scheduler_reschedule()
         return;
     }
 
+    // Update task states
+    old_task->state = TASK_WAITING;
+    next_task->state = TASK_RUNNING;
+
     // Enqueue current task
     scheduler_add_task(old_task);
     // Switch current task to the next_task
@@ -208,6 +212,7 @@ void scheduler_init()
     // Create idle task - runs when nothing else is ready
     // TODO: when priorities are implemented, use lowest possible here
     task_t* idle_task = task_create("idle", idle_task_function, true);
+    idle_task->state = TASK_RUNNING;
     idle_task_pid = idle_task->pid;
     scheduler_stats->current_task = idle_task;
 
