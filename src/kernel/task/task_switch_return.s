@@ -4,10 +4,16 @@
 
 .section .text
 .align 4
+.extern pic_send_eoi
 
 .globl task_switch_return_point
 .type task_switch_return_point, @function
 task_switch_return_point:
+    # Send EOI for PIT (IRQ 0)
+    pushl $0
+    call pic_send_eoi
+    addl $4, %esp
+
     # We're now on the new task's stack
     # The stack has: segment regs, PUSHAL regs, int_no, err_code, IRET frame
 

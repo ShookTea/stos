@@ -13,7 +13,7 @@ static void test_task_1()
 {
     while (1) {
         counter1++;
-        printf("Task 1: counter = %d\n", counter1);
+        printf("\033[91mTask 1: counter = %d\033[m\n", counter1);
         // Busy wait to let time pass
         for (volatile int i = 0; i < 10000000; i++);
     }
@@ -22,8 +22,8 @@ static void test_task_1()
 static void test_task_2()
 {
     while (1) {
-        counter1++;
-        printf("Task 2: counter = %d\n", counter1);
+        counter2++;
+        printf("\033[94mTask 2: counter = %d\033[m\n", counter2);
         // Busy wait to let time pass
         for (volatile int i = 0; i < 10000000; i++);
     }
