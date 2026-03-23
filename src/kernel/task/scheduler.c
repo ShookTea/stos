@@ -197,19 +197,6 @@ static void scheduler_switch_task_context(
  */
 static task_t* scheduler_get_next_task()
 {
-    // Clean up dead tasks (already reaped by parents) but skip over zombie
-    // tasks (parent hasn't reaped them yet)
-    while (waiting_queue != NULL && waiting_queue->state == TASK_DEAD) {
-        task_t* dead = waiting_queue;
-        waiting_queue = dead->next;
-        if (waiting_queue != NULL) {
-            waiting_queue->prev = NULL;
-        }
-        printf("Cleaning up dead task [%u] '%s'\n", dead->pid, dead->name);
-        task_destroy(dead);
-        scheduler_stats->num_waiting--;
-    }
-
     if (waiting_queue == NULL) {
         // We're currently running idle task, but there's nothing else to do,
         // so let's just keep it running.
