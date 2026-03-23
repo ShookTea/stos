@@ -13,6 +13,7 @@
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
 #include <kernel/vfs/vfs.h>
+#include "task/task.h"
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -73,6 +74,7 @@ static void handle_command_sent()
         puts("  pag_stats      - Prints paging stats");
         puts("  pmm_stats      - Prints physical memory statistics");
         puts("  pmm_test       - Runs physical memory test suite");
+        puts("  ps             - Lists all currently registered tasks");
         puts("  reboot         - Reboot the system via ACPI");
         puts("  shutdown       - Shutdown the system via ACPI");
         puts("  slab_cache     - Prints slab allocator cache info");
@@ -126,6 +128,29 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "pmm_test") == 0) {
         memory_run_pmm_tests();
+    }
+    else if (strcmp(command, "ps") == 0) {
+        size_t tasks = task_get_tasks_count();
+        printf("%d tasks found:\n", tasks);
+        for (size_t i = 0; i < tasks; i++) {
+            task_t* task = task_get_task_by_index(i);
+            char* status;
+            switch (task->state) {
+                case TASK_WAITING: status = "waiting"; break;
+                case TASK_RUNNING: status = "running"; break;
+                case TASK_BLOCKED: status = "blocked"; break;
+                case TASK_SLEEPING: status = "sleeping"; break;
+                case TASK_ZOMBIE: status = "zombie"; break;
+                case TASK_DEAD: status = "dead"; break;
+                default: status = "???"; break;
+            }
+            printf(
+                "-[%u] '%s' (status: '%s')\n",
+                task->pid,
+                task->name,
+                status
+            );
+        }
     }
     else if (strcmp(command, "slab_cache") == 0) {
         slab_print_caches();

@@ -14,11 +14,11 @@
 #include <string.h>
 #include "kernel/vfs/vfs.h"
 #include "task/scheduler.h"
+#include "task/task.h"
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
 #include "test/kmalloc_tests.h"
-#include "test/multitasking_tests.h"
 #include "debugger.h"
 #include <kernel/terminal.h>
 
@@ -68,7 +68,6 @@ void kernel_main()
 
     // Initialize multitasking scheduler
     scheduler_init();
-    // task_run_basic_test();
 
     puts("\n=== Kernel Initialization Complete ===");
     puts("All subsystems initialized and tested successfully");
