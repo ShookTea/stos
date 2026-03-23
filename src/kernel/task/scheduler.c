@@ -255,7 +255,8 @@ static void scheduler_reschedule()
     next_task->state = TASK_RUNNING;
 
     // Enqueue current task
-    scheduler_add_task(old_task);
+    add_to_queue(old_task);
+    scheduler_stats->num_waiting++;
     // Switch current task to the next_task
     scheduler_stats->current_task = next_task;
     scheduler_switch_task_context(old_task, next_task);
