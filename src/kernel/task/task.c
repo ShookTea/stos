@@ -10,9 +10,9 @@
 
 static task_t** tasks = NULL;
 // Length of tasks list
-static uint32_t tasks_length = 0;
+static size_t tasks_length = 0;
 // The number of tasks that weren't destroyed yet
-static uint32_t tasks_present = 0;
+static size_t tasks_present = 0;
 
 #define KERNEL_STACK_SIZE (16 * 1024) // 16 KiB
 #define GUARD_PAGE_SIZE (4 * 1024)
