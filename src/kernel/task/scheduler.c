@@ -217,3 +217,11 @@ void scheduler_init()
 
     pit_register_timeout(SCHEDULER_TICK_TIME, scheduler_tick, NULL);
 }
+
+task_t* scheduler_get_current_task()
+{
+    if (scheduler_stats == NULL) {
+        return NULL;
+    }
+    return scheduler_stats->current_task;
+}

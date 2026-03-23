@@ -48,4 +48,9 @@ void scheduler_add_task(task_t* task);
  */
 void scheduler_remove_task(task_t* task);
 
+/**
+ * Returns the currently running task.
+ */
+task_t* scheduler_get_current_task();
+
 #endif
