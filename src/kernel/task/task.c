@@ -15,6 +15,7 @@ static uint32_t tasks_length = 0;
 static uint32_t tasks_present = 0;
 
 #define KERNEL_STACK_SIZE (16 * 1024) // 16 KiB
+#define GUARD_PAGE_SIZE (4 * 1024)
 
 /**
  * Build initial stack frame (as if the task was interrupted).
@@ -130,9 +131,15 @@ task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
 {
     task_t* task = task_allocate(name);
 
-    // Allocate kernel stack (required for usermode tasks as well)
+    // Allocate kernel stack (required for usermode tasks as well), with
+    // guard page (so that when task overflows its stack, we will hit the guard
+    // page instead of corrupting other memory)
+    void* allocation = vmm_kernel_alloc(KERNEL_STACK_SIZE + GUARD_PAGE_SIZE);
+    // Make the first (guard) page non-readable, causing page faults if trying
+    // to read/write
+    paging_unmap_page((uint32_t)allocation);
     task->kernel_stack_size = KERNEL_STACK_SIZE;
-    task->kernel_stack_base = (uint32_t)(vmm_kernel_alloc(KERNEL_STACK_SIZE));
+    task->kernel_stack_base = (uint32_t)allocation + GUARD_PAGE_SIZE;
     task_setup_initial_stack(task, entrypoint, is_kernel);
 
     // Set initial state
