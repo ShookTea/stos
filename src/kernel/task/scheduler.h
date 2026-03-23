@@ -53,4 +53,10 @@ void scheduler_remove_task(task_t* task);
  */
 task_t* scheduler_get_current_task();
 
+/**
+ * Voluntarily yield CPU to another task, forcing an immediate reschedule.
+ */
+__attribute__((noreturn))
+void scheduler_yield();
+
 #endif

@@ -297,4 +297,6 @@ void task_exit(int exit_code)
     // - notify parent task (when implementing wait/waitpid, emit SIGCHLD)
     // - close open file descriptiors
     // - free user-space memory (but keep kernel stack)
+
+    scheduler_yield();
 }
