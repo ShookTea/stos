@@ -8,6 +8,7 @@
 static uint8_t scheduler_tick_count = 0;
 static scheduler_stats_t* scheduler_stats;
 static task_t* waiting_queue = NULL;
+static uint32_t idle_task_pid;
 
 extern void switch_to_stack(
     uint32_t* old_esp_ptr,
@@ -43,19 +44,97 @@ static void scheduler_switch_task_context(
     // Should we do anything?
 }
 
+/**
+ * This function returns next task that should be run, or NULL if we should
+ * continue running the same task. It is responsible for updating queues if
+ * neccessary.
+ *
+ * Current scheduling implemenation:
+ * - if waiting queue doesn't have any tasks, that means that we're currently
+ *   running the idle task (since idle task after running always goes back to
+ *   that queue), but we don't have any other things to do now.
+ *   We should continue running idle task now - returning NULL.
+ * - if queue is non-empty, get the first item in the queue and:
+ *   - if it's the idle task AND it's the only task, leave it there - we're
+ *     running a single non-idle task and should continue doing so (ret. NULL)
+ *   - if it's the idle task and there are other tasks in the queue, move idle
+ *     task to the end of queue and take the next task instead for point below
+ *   - if it's not the idle task, return it
+ */
+static task_t* scheduler_get_next_task()
+{
+    if (waiting_queue == NULL) {
+        // We're currently running idle task, but there's nothing else to do,
+        // so let's just keep it running.
+        return NULL;
+    }
+
+    task_t* first_task_in_queue = waiting_queue;
+    if (first_task_in_queue->pid != idle_task_pid) {
+        // Not the idle task - remove it from the queue and return it
+        waiting_queue = first_task_in_queue->next;
+        first_task_in_queue->next = NULL;
+        scheduler_stats->num_waiting--;
+        return first_task_in_queue;
+    }
+
+    if (first_task_in_queue->next == NULL) {
+        // This is the idle task, but there's nothing else - let's just keep
+        // the current task running
+        return NULL;
+    }
+
+    // The first task in the queue is the idle task, but there are some other
+    // tasks waiting. First, let's move the idle task to the end of the queue.
+    task_t* last = first_task_in_queue;
+    while (last->next != NULL) {
+        last = last->next;
+    }
+    last->next = first_task_in_queue;
+    first_task_in_queue->prev = last;
+    // Now set current queue to point to the task after the idle task
+    waiting_queue = first_task_in_queue->next;
+    first_task_in_queue->next = NULL;
+    waiting_queue->prev = NULL;
+
+    // We've rescheduled idle task to the end of the queue - now we should be
+    // able to safely run scheduler_get_next_task() and it will return the new
+    // top-priority task.
+    return scheduler_get_next_task();
+}
+
+/**
+ * Try to get next appropriate task from scheduler_get_next_task. If some task
+ * is returned, we should switch to it.
+ */
+static void scheduler_reschedule()
+{
+    task_t* next_task = scheduler_get_next_task();
+    if (next_task == NULL) {
+        // No rescheduling needed
+        return;
+    }
+
+    // Enqueue current task
+    scheduler_add_task(scheduler_stats->current_task);
+    // Switch current task to the next_task
+    scheduler_stats->current_task = next_task;
+}
+
 static void scheduler_tick()
 {
     // Increment scheduler tick count
     scheduler_tick_count++;
-    if (scheduler_stats->current_task == NULL) {
+
+    // Increment task runtimes
+    if (scheduler_stats->current_task->pid == idle_task_pid) {
         scheduler_stats->total_idle_time++;
-    } else {
-        scheduler_stats->current_task->total_runtime++;
     }
+    scheduler_stats->current_task->total_runtime++;
 
     if (scheduler_tick_count == SCHEDULER_RESCHEDULE_COUNT) {
         scheduler_tick_count = 0;
-        // TODO: run rescheduling here
+        scheduler_reschedule();
     }
 
     // Re-add scheduler tick
@@ -127,6 +206,7 @@ void scheduler_init()
     // Create idle task - runs when nothing else is ready
     // TODO: when priorities are implemented, use lowest possible here
     task_t* idle_task = task_create("idle", idle_task_function, true);
+    idle_task_pid = idle_task->pid;
     scheduler_stats->current_task = idle_task;
 
     pit_register_timeout(SCHEDULER_TICK_TIME, scheduler_tick, NULL);
