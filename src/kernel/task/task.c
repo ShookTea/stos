@@ -304,3 +304,58 @@ void task_exit(int exit_code)
 
     scheduler_yield();
 }
+
+int task_wait(int pid, int* exit_code)
+{
+    task_t* parent = scheduler_get_current_task();
+    while (1) {
+        // Look for zombie children
+        task_t* child = parent->first_child;
+
+        while (child != NULL) {
+            // If waiting for specific PID, check it
+            if (pid >= 0 && child->pid != (uint32_t)pid) {
+                child = child->next_sibling;
+                continue;
+            }
+
+            if (child->state == TASK_ZOMBIE) {
+                // Found zombie child to reap.
+                // Read exit code if requested
+                if (exit_code != NULL) {
+                    *exit_code = child->exit_code;
+                }
+
+                int child_pid = child->pid;
+
+                // Remove from parent's child list
+                if (child->prev_sibling != NULL) {
+                    child->prev_sibling->next_sibling = child->next_sibling;
+                }
+                if (child->next_sibling != NULL) {
+                    child->next_sibling->prev_sibling = child->prev_sibling;
+                }
+                if (parent->first_child == child) {
+                    parent->first_child = child->next_sibling;
+                }
+
+                // Mark child as DEAD (to be cleaned up by the scheduler)
+                child->state = TASK_DEAD;
+                return child_pid;
+            }
+            child = child->next_sibling;
+        }
+
+        // No zombie children found
+
+        if (parent->first_child == NULL) {
+            // Parent doesn't have any children
+            return -1;
+        }
+
+        // Children exist, but none are zombies yet. Block and wait for a child
+        // to exit.
+        scheduler_move_task_to_state(parent, TASK_BLOCKED);
+        scheduler_yield();
+    }
+}

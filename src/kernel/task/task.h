@@ -96,6 +96,8 @@ typedef struct task {
     struct task* parent;
     /** First child in linked list, navigable by next_sibling */
     struct task* first_child;
+    /** Previous sibling in linked list of children */
+    struct task* prev_sibling;
     /** Next sibling in linked list of children */
     struct task* next_sibling;
 
@@ -150,5 +152,13 @@ task_t* task_get_task_by_pid(uint32_t pid);
  */
 __attribute__((noreturn))
 void task_exit(int exit_code);
+
+/**
+ * Wait for a child task to exit and reap it.
+ * - "pid" is the PID of child to wait for, or -1 for any child
+ * - "exit_code" is the pointer where exit code will be stored (can be NULL)
+ * - returns PID of reaped child, or -1 on error.
+ */
+int task_wait(int pid, int* exit_code);
 
 #endif
