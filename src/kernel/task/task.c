@@ -184,6 +184,9 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
     return task;
 }
 
+// TODO:
+// - close open file descriptiors
+// - free user-space memory (but keep kernel stack)
 void task_destroy(task_t* task)
 {
     if (task == NULL){
@@ -295,8 +298,6 @@ void task_exit(int exit_code)
 
     // TODO:
     // - notify parent task (when implementing wait/waitpid, emit SIGCHLD)
-    // - close open file descriptiors
-    // - free user-space memory (but keep kernel stack)
 
     scheduler_yield();
 }
