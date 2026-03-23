@@ -244,17 +244,16 @@ task_t* task_get_task_by_index(size_t index)
     if (index >= tasks_present) {
         return NULL;
     }
-    task_t* curr = NULL;
-    size_t i = 0;
-    while (index > 0) {
-        index--;
-        while (curr == NULL) {
-            curr = tasks[i];
-            i++;
+    size_t found = 0;
+    for (size_t i = 0; i < tasks_length; i++) {
+        if (tasks[i] != NULL) {
+            if (found == index) {
+                return tasks[i];
+            }
+            found++;
         }
-        curr = tasks[i];
     }
-    return curr;
+    return NULL;
 }
 
 /**
