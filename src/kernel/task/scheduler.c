@@ -102,11 +102,7 @@ static void add_to_queue(task_t* task)
     }
 }
 
-/**
- * Move task to the new state, move it to/from queues if necessary, and update
- * statistics.
- */
-static void move_task_to_state(task_t* task, task_state_t new_state)
+void scheduler_move_task_to_state(task_t* task, task_state_t new_state)
 {
     if (task == NULL) {
         return;
@@ -299,7 +295,7 @@ static void scheduler_tick()
 
 void scheduler_add_task(task_t* task)
 {
-    move_task_to_state(task, TASK_WAITING);
+    scheduler_move_task_to_state(task, TASK_WAITING);
 }
 
 void scheduler_remove_task(task_t* task)

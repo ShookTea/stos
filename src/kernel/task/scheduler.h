@@ -59,4 +59,10 @@ task_t* scheduler_get_current_task();
 __attribute__((noreturn))
 void scheduler_yield();
 
+/**
+ * Move task to the new state, move it to/from queues if necessary, and update
+ * statistics.
+ */
+void scheduler_move_task_to_state(task_t* task, task_state_t new_state);
+
 #endif

@@ -285,10 +285,6 @@ void task_exit(int exit_code)
         abort();
     }
 
-    // Mark task as terminated and update exit code
-    current->exit_code = exit_code;
-    current->state = TASK_ZOMBIE;
-
     printf(
         "Task [%u] '%s' exited with code %d\n",
         current->pid,
@@ -296,8 +292,15 @@ void task_exit(int exit_code)
         exit_code
     );
 
-    // TODO:
-    // - notify parent task (when implementing wait/waitpid, emit SIGCHLD)
+    // Mark task as terminated and update exit code
+    current->exit_code = exit_code;
+    scheduler_move_task_to_state(current, TASK_ZOMBIE);
+
+    // Wake up parent if it's waiting
+    // TODO: emit SIGCHLD as well
+    if (current->parent != NULL && current->parent->state == TASK_BLOCKED) {
+        scheduler_move_task_to_state(current->parent, TASK_WAITING);
+    }
 
     scheduler_yield();
 }
