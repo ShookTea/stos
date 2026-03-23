@@ -304,4 +304,9 @@ void debugger_init()
     puts("");
     puts("Kernel debugger. Write \"help\" to get list of available commands.");
     print_prompt_and_enable();
+
+    // Entering idle loop - debugger should run forever
+    while (1) {
+        __asm__ volatile("hlt");
+    };
 }

@@ -68,14 +68,15 @@ void kernel_main()
 
     // Initialize multitasking scheduler
     scheduler_init();
-    task_run_basic_test();
+    // task_run_basic_test();
 
     puts("\n=== Kernel Initialization Complete ===");
     puts("All subsystems initialized and tested successfully");
     puts("Entering idle loop...\n");
 
     if (in_debug_mode) {
-        debugger_init();
+        task_t* debugger = task_create("debugger", debugger_init, true);
+        scheduler_add_task(debugger);
     }
 
     while (1) {}
