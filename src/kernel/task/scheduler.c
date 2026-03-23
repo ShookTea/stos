@@ -274,7 +274,12 @@ static void scheduler_reschedule()
     }
 
     // Update task states
-    old_task->state = TASK_WAITING;
+    if (old_task->state == TASK_RUNNING) {
+        // We're doing that state check because it's possible that old task's
+        // state is not RUNNING - for example it could just be stopped and it's
+        // status was changed to TASK_ZOMBIE.
+        old_task->state = TASK_WAITING;
+    }
     next_task->state = TASK_RUNNING;
 
     // Enqueue current task
