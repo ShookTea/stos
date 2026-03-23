@@ -166,4 +166,14 @@ bool paging_validate_identity_mapping(void);
  */
 void paging_print_stats(void);
 
+/**
+ * Get virtual address of the kernel directory
+ */
+void* paging_get_kernel_directory_virt();
+
+/**
+ * Get physical address of the kernel directroy
+ */
+uint32_t paging_get_kernel_directory_phys();
+
 #endif

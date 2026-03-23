@@ -1,5 +1,8 @@
 #include "task.h"
+#include <kernel/memory/vmm.h>
+#include <stdlib.h>
 #include <kernel/memory/kmalloc.h>
+#include <kernel/paging.h>
 #include <string.h>
 
 /** When increasing tasks list length, use this size */
@@ -10,6 +13,8 @@ static task_t** tasks = NULL;
 static uint32_t tasks_length = 0;
 // The number of tasks that weren't destroyed yet
 static uint32_t tasks_present = 0;
+
+#define KERNEL_STACK_SIZE (16 * 1024) // 16 KiB
 
 /**
  * Build initial stack frame (as if the task was interrupted).
@@ -124,6 +129,25 @@ task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
 {
     task_t* task = task_allocate(name);
     task_setup_initial_stack(task, entrypoint, is_kernel);
+
+    // Set initial state
+    task->state = TASK_WAITING;
+
+    // Allocate kernel stack (required for usermode tasks as well)
+    task->kernel_stack_size = KERNEL_STACK_SIZE;
+    task->kernel_stack_base = (uint32_t)(vmm_kernel_alloc(KERNEL_STACK_SIZE));
+    if (task->kernel_stack_base == 0) {
+        // task_destroy(task);
+        // return NULL;
+        abort();
+    }
+
+    // For now we're uisng kernel page directory for all tasks
+    // TODO: create new page directories for each task
+    task->page_dir_virt = paging_get_kernel_directory_virt();
+    task->page_dir_phys = paging_get_kernel_directory_phys();
+
+
     return task;
 }
 
