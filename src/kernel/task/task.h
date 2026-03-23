@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 /**
  * Process states enum
@@ -28,7 +29,7 @@ typedef enum {
  */
 typedef struct {
     uint32_t esp;
-} __attribute__((packed)) task_cpu_context_t;
+} task_cpu_context_t;
 
 /**
  * Memory region structure - represents a region of virtual memory with specific
@@ -121,11 +122,26 @@ typedef struct task {
 /**
  * Create a new task with given name, entrypoint, and permission ring
  */
-task_t* task_create(const char name[64], void (*entry_point)(), bool is_kernel);
+task_t* task_create(const char* name, void (*entry_point)(), bool is_kernel);
 
 /**
  * Deallocates all memory from a task, fixes linked lists if necessary
  */
 void task_destroy(task_t* task);
+
+/**
+ * Returns total number of all tasks
+ */
+size_t task_get_tasks_count();
+
+/**
+ * Returns N-th existing task on the list
+ */
+task_t* task_get_task_by_index(size_t index);
+
+/**
+ * Returns task by PID
+ */
+task_t* task_get_task_by_pid(uint32_t pid);
 
 #endif

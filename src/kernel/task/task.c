@@ -83,9 +83,6 @@ static void task_setup_initial_stack(
     stack--; *stack = (uint32_t)task_switch_return_point;
 
     // Callee-saved registers (for switch_to_stack)
-    stack--; *stack = 0; // EDI
-    stack--; *stack = 0; // ESI
-    stack--; *stack = 0; // EBX
     stack--; *stack = 0; // EBP
     stack--; *stack = 0; // EBX
     stack--; *stack = 0; // ESI
@@ -99,11 +96,12 @@ static void task_setup_initial_stack(
  * Allocate new task in the tasks array, with given name, and set PID. Grow
  * tasks array if necessary; otherwise reuse the already existing entries.
  */
-static task_t* task_allocate(const char name[64])
+static task_t* task_allocate(const char* name)
 {
     // Allocate task data in memory
     task_t* task = kmalloc_flags(sizeof(task_t), KMALLOC_ZERO);
-    strcpy(task->name, name);
+    strncpy(task->name, name, sizeof(task->name) - 1);
+    task->name[sizeof(task->name) - 1] = '\0'; // Ensure null termination
 
     if (tasks_length == tasks_present) {
         // Need to increase the size of tasks array by some constant margin
@@ -135,7 +133,7 @@ static task_t* task_allocate(const char name[64])
     return task;
 }
 
-task_t* task_create(const char name[64], void (*entrypoint)(), bool is_kernel)
+task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
 {
     task_t* task = task_allocate(name);
 
@@ -215,4 +213,40 @@ void task_destroy(task_t* task)
 
     // Dellocate memory for task
     kfree(task);
+}
+
+size_t task_get_tasks_count()
+{
+    return tasks_present;
+}
+
+task_t* task_get_task_by_index(size_t index)
+{
+    if (index >= tasks_present) {
+        return NULL;
+    }
+    task_t* curr = NULL;
+    size_t i = 0;
+    while (index > 0) {
+        index--;
+        while (curr == NULL) {
+            curr = tasks[i];
+            i++;
+        }
+        curr = tasks[i];
+    }
+    return curr;
+}
+
+/**
+ * Returns task by PID
+ */
+task_t* task_get_task_by_pid(uint32_t pid)
+{
+    for (size_t i = 0; i < tasks_length; i++) {
+        if (tasks[i] != NULL && tasks[i]->pid == pid) {
+            return tasks[i];
+        }
+    }
+    return NULL;
 }
