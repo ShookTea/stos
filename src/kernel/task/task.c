@@ -1,5 +1,7 @@
 #include "task.h"
+#include "scheduler.h"
 #include <kernel/memory/vmm.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/paging.h>
@@ -263,4 +265,35 @@ task_t* task_get_task_by_pid(uint32_t pid)
         }
     }
     return NULL;
+}
+
+void task_exit(int exit_code)
+{
+    task_t* current = scheduler_get_current_task();
+    if (current == NULL) {
+        // This should never happen. It should probably be handled gracefully,
+        // like this:
+        // while (1) {
+        //     __asm__ volatile("hlt");
+        // }
+        // but for now, for sake of debugging, let's print some info instead.
+        puts("ERROR: task_exit called but no task is running.");
+        abort();
+    }
+
+    // Mark task as terminated and update exit code
+    current->exit_code = exit_code;
+    current->state = TASK_ZOMBIE;
+
+    printf(
+        "Task [%u] '%s' exited with code %d\n",
+        current->pid,
+        current->name,
+        exit_code
+    );
+
+    // TODO:
+    // - notify parent task (when implementing wait/waitpid, emit SIGCHLD)
+    // - close open file descriptiors
+    // - free user-space memory (but keep kernel stack)
 }

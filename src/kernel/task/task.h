@@ -144,4 +144,11 @@ task_t* task_get_task_by_index(size_t index);
  */
 task_t* task_get_task_by_pid(uint32_t pid);
 
+/**
+ * Exit the currently running task with given exit code. Code = 0 is interpreted
+ * as success, any other code is interpreted as an error.
+ */
+__attribute__((noreturn))
+void task_exit(int exit_code);
+
 #endif
