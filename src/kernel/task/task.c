@@ -18,6 +18,18 @@ static size_t tasks_present = 0;
 #define GUARD_PAGE_SIZE (4 * 1024)
 
 /**
+ * This function is never called directly, but it's a return address for a task.
+ * When task's real function returns, execution will continue here.
+ */
+static void task_entry_trampoline()
+{
+    // TODO: Mark task as completed, with exit code 0
+    while (1) {
+        __asm__ volatile("hlt");
+    }
+}
+
+/**
  * Build initial stack frame (as if the task was interrupted).
  */
 static void task_setup_initial_stack(
@@ -30,6 +42,8 @@ static void task_setup_initial_stack(
     uint32_t* stack = (uint32_t*)(
         task->kernel_stack_base + task->kernel_stack_size
     );
+
+    stack--; *stack = (uint32_t)task_entry_trampoline; // Return address
 
     if (!is_kernel) {
         // User mode task - need SS:ESP for IRET
