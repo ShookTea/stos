@@ -129,6 +129,8 @@ static void scheduler_reschedule()
 
 static void scheduler_tick()
 {
+    // Re-add scheduler tick
+    pit_register_timeout(SCHEDULER_TICK_TIME, scheduler_tick, NULL);
     // Increment scheduler tick count
     scheduler_tick_count++;
 
@@ -142,9 +144,6 @@ static void scheduler_tick()
         scheduler_tick_count = 0;
         scheduler_reschedule();
     }
-
-    // Re-add scheduler tick
-    pit_register_timeout(SCHEDULER_TICK_TIME, scheduler_tick, NULL);
 }
 
 void scheduler_add_task(task_t* task)

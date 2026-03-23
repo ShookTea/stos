@@ -77,11 +77,19 @@ static void task_setup_initial_stack(
         stack--; *stack = 0x23; // GS
     }
 
+    // Fake return address for the call chain - this will make the "ret"
+    // instruction from switch_to_stack work correctly
+    extern void task_switch_return_point(void);
+    stack--; *stack = (uint32_t)task_switch_return_point;
+
     // Callee-saved registers (for switch_to_stack)
     stack--; *stack = 0; // EDI
     stack--; *stack = 0; // ESI
     stack--; *stack = 0; // EBX
     stack--; *stack = 0; // EBP
+    stack--; *stack = 0; // EBX
+    stack--; *stack = 0; // ESI
+    stack--; *stack = 0; // EDI
 
     // Save final ESP to task context
     task->context.esp = (uint32_t)stack;
