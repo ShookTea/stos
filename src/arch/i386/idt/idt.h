@@ -63,7 +63,7 @@ typedef struct
 typedef struct
 {
     uint32_t eax, ecx, edx, ebx, esp, ebp, esi, edi; // Pushed by pusha
-    uint32_t gs, fs, es, ds; // Segment registers
+    uint32_t ds, es, fs, gs; // Segment registers
     uint32_t int_no; // Interrupt number
     uint32_t err_code; // Error code (if applicable)
     uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.

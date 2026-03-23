@@ -1,8 +1,8 @@
 #include "scheduler.h"
-#include "kernel/drivers/pit.h"
-#include "kernel/memory/kmalloc.h"
-#include "kernel/memory/tss.h"
-#include "stdlib.h"
+#include <kernel/drivers/pit.h>
+#include <kernel/memory/kmalloc.h>
+#include <kernel/memory/tss.h>
+#include <stdlib.h>
 #include "task.h"
 
 static uint8_t scheduler_tick_count = 0;
@@ -109,6 +109,7 @@ static task_t* scheduler_get_next_task()
  */
 static void scheduler_reschedule()
 {
+    task_t* old_task = scheduler_stats->current_task;
     task_t* next_task = scheduler_get_next_task();
     if (next_task == NULL) {
         // No rescheduling needed
@@ -116,9 +117,10 @@ static void scheduler_reschedule()
     }
 
     // Enqueue current task
-    scheduler_add_task(scheduler_stats->current_task);
+    scheduler_add_task(old_task);
     // Switch current task to the next_task
     scheduler_stats->current_task = next_task;
+    scheduler_switch_task_context(old_task, next_task);
 }
 
 static void scheduler_tick()
