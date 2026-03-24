@@ -193,6 +193,11 @@ void* paging_get_kernel_directory();
  * Create a new page directory, copy kernel mappings and handle user space
  * based on usermode flag. Returns virtual address of the new directory.
  */
-void* paging_clone_directory(void* src, bool usermode);
+void* paging_clone_directory(
+    void* src,
+    bool usermode,
+    uint32_t user_stack_base,
+    uint32_t user_stack_size
+);
 
 #endif

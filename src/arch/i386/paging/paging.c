@@ -94,6 +94,16 @@ static page_table_t* paging_get_page_table(uint32_t virt, bool create)
     return pt;
 }
 
+static page_table_t* paging_get_page_table_from_pde(page_directory_entry_t* pde)
+{
+    if (!pde->present) {
+        return NULL;
+    }
+    uint32_t pt_phys = pde->frame << 12;
+    page_table_t* pt = (page_table_t*)phys_to_virt_internal(pt_phys);
+    return pt;
+}
+
 void paging_init(void)
 {
     printf("Initializing paging...\n");
@@ -620,7 +630,8 @@ void* paging_get_kernel_directory()
 static page_table_t* paging_clone_page_table(
     page_table_t* src_pt,
     uint32_t start_virt,
-    bool is_stack
+    uint32_t user_stack_base,
+    uint32_t user_stack_size
 ) {
   if (src_pt == NULL) {
       return NULL;
@@ -648,8 +659,8 @@ static page_table_t* paging_clone_page_table(
 
       uint32_t virt = start_virt + (i * PAGE_SIZE);
       // Determine if this is a stack page
-      // TODO: this needs to check against task->user_stack_base/size
-      bool is_stack_page = is_stack;
+      uint32_t stack_end = user_stack_base - user_stack_size;
+      bool is_stack_page = (virt >= stack_end && virt < user_stack_base);
 
       if (is_stack_page) {
           // Stack pages are always physically copied
@@ -686,8 +697,12 @@ static page_table_t* paging_clone_page_table(
   return dst_pt;
 }
 
-void* paging_clone_directory(void* _src, bool usermode)
-{
+void* paging_clone_directory(
+    void* _src,
+    bool usermode,
+    uint32_t user_stack_base,
+    uint32_t user_stack_size
+) {
     page_directory_t* src = _src;
     if (src == NULL) {
         puts("PAGING: cannot clone NULL page directory");
@@ -726,9 +741,95 @@ void* paging_clone_directory(void* _src, bool usermode)
 
     // Handle user space
     if (usermode) {
-        // TODO: implement user space cloning for fork() support
-        puts("PAGING: user space cloning not implemented yet");
-        abort();
+        // Clone user space
+        uint32_t user_start_pd = paging_get_pd_index(VMM_USER_START);
+        uint32_t user_end_pd = paging_get_pd_index(VMM_USER_END);
+        printf(
+            "PAGING: Cloning user space (PD entries %u-%u)\n",
+            user_start_pd,
+            user_end_pd - 1
+        );
+
+        uint32_t cloned_tables = 0;
+        for (uint32_t pd_idx = user_start_pd; pd_idx < user_end_pd; pd_idx++) {
+            page_directory_entry_t* src_pde = &src->entries[pd_idx];
+            if (!src_pde->present) {
+                continue; // No page table at this index
+            }
+            page_table_t* src_pt = paging_get_page_table_from_pde(src_pde);
+            if (src_pt == NULL) {
+                printf(
+                    "PAGING: Failed to access source page table at PD[%u]\n",
+                    pd_idx
+                );
+                // Cleanup already cloned tables
+                for (
+                    uint32_t cleanup_idx = user_start_pd;
+                    cleanup_idx < pd_idx;
+                    cleanup_idx++
+                ) {
+                    if (dst->entries[cleanup_idx].present) {
+                        page_table_t* cleanup_pt =
+                            paging_get_page_table_from_pde(
+                                &dst->entries[cleanup_idx]
+                            );
+                        if (cleanup_pt != NULL) {
+                            // TODO: Free physical pages referenced by this page table
+                            uint32_t cleanup_pt_phys =
+                                dst->entries[cleanup_idx].frame << 12;
+                            pmm_free_page(cleanup_pt_phys);
+                        }
+                    }
+                }
+                pmm_free_page(VIRT_TO_PHYS(dst));
+                abort(); // TODO: is abort() needed here?
+                return NULL;
+            }
+
+            page_table_t* dst_pt = paging_clone_page_table(
+                src_pt,
+                pd_idx,
+                user_stack_base,
+                user_stack_size
+            );
+            if (dst_pt == NULL) {
+                printf("PAGING: Failed to clone PT at PD[%u]\n", pd_idx);
+                // Cleanup already cloned tables
+                for (
+                    uint32_t cleanup_idx = user_start_pd;
+                    cleanup_idx < pd_idx;
+                    cleanup_idx++
+                ) {
+                    if (dst->entries[cleanup_idx].present) {
+                        page_table_t* cleanup_pt =
+                            paging_get_page_table_from_pde(
+                                &dst->entries[cleanup_idx]
+                            );
+                        if (cleanup_pt != NULL) {
+                            // TODO: Free physical pages referenced by this page table
+                            uint32_t cleanup_pt_phys =
+                                dst->entries[cleanup_idx].frame << 12;
+                            pmm_free_page(cleanup_pt_phys);
+                        }
+                    }
+                }
+                pmm_free_page(VIRT_TO_PHYS(dst));
+                abort(); // TODO: is abort needed here?
+                return NULL;
+            }
+
+            uint32_t dst_pt_phys = VIRT_TO_PHYS(dst_pt);
+            dst->entries[pd_idx] = *src_pde;
+            dst->entries[pd_idx].frame = dst_pt_phys >> 12;
+            cloned_tables++;
+        }
+
+        printf(
+            "PAGING: Cloned %u userspace page tables\n",
+            cloned_tables
+        );
+        // Flush TLB because we modified parent process's PTEs
+        paging_flush_tlb();
     }
 
     printf(

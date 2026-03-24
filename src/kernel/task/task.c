@@ -176,10 +176,16 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
     // Set initial state
     task->state = TASK_WAITING;
 
-    // For now we're uisng kernel page directory for all tasks
-    // First let's clone the kernel directory
+    // Clone page directory
+    // For kernel tasks: only kernel mappings
+    // For user tasks: kernel + user space with COW
     void* kernel_directory = paging_get_kernel_directory();
-    void* kernel_dir_clone = paging_clone_directory(kernel_directory, false);
+    void* kernel_dir_clone = paging_clone_directory(
+        kernel_directory,
+        !is_kernel,
+        task->user_stack_base,
+        task->user_stack_size
+    );
     if (kernel_dir_clone == NULL) {
         printf("TASK: Failed to clone page directory for task %s\n", name);
         vmm_kernel_free(
