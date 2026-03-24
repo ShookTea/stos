@@ -53,6 +53,15 @@ static uint32_t buddy_free_lists[BUDDY_MAX_ORDER + 1];  // Physical addresses
 static uint32_t* buddy_order_map = NULL;   // 4 bits per page
 static uint32_t* buddy_status_map = NULL;  // 1 bit per page
 
+/**
+ * Reference count map - 16 bits per page. Tracks how many processes/page
+ * tables reference each physical page. Used for COW implementation.
+ * - if 0 - page is free (should match buddy_status_map)
+ * - if 1 - page is privately owned
+ * - if 2 or more - page is shared between multiple processes
+ */
+static uint16_t* buddy_refcount_map = NULL;
+
 static uint32_t pmm_total_pages = 0;
 static uint32_t pmm_used_pages = 0;
 
@@ -534,14 +543,17 @@ void pmm_init()
     // Calculate total pages
     pmm_total_pages = pmm_max_memory / PMM_PAGE_SIZE;
 
-    // Calculate metadata size
-    // Order map: 4 bits per page = 0.5 bytes per page
-    uint32_t order_map_bytes = (pmm_total_pages * 4 + 7) / 8;  // Round up
-    uint32_t order_map_size = (order_map_bytes + 3) / 4;  // Convert to uint32_t count
+    // Calculate sizes for metadata
+    // 4 bits per page
+    size_t order_map_size = (pmm_total_pages * 4 + 7) / 8;
+    // 1 bit per page
+    size_t status_map_size = (pmm_total_pages + 7) / 8;
+    // 16 bits per page
+    size_t refcount_map_size = pmm_total_pages * sizeof(uint16_t);
 
-    // Status map: 1 bit per page
-    uint32_t status_map_bytes = (pmm_total_pages + 7) / 8;  // Round up
-    uint32_t status_map_size = (status_map_bytes + 3) / 4;  // Convert to uint32_t count
+    order_map_size = pmm_align_up(order_map_size);
+    status_map_size = pmm_align_up(status_map_size);
+    refcount_map_size = pmm_align_up(refcount_map_size);
 
     // Place metadata after kernel and all MB2 modules
     uint32_t kernel_end = (uint32_t)&_kernel_end;
@@ -555,14 +567,18 @@ void pmm_init()
     uint32_t metadata_start = pmm_align_up(safe_metadata_start);
 
     buddy_order_map = (uint32_t*)metadata_start;
-    buddy_status_map = (uint32_t*)(metadata_start + order_map_size * 4);
+    buddy_status_map = (uint32_t*)((uint8_t*)buddy_order_map + order_map_size);
+    buddy_refcount_map = (uint16_t*)(
+        (uint8_t*)buddy_status_map + status_map_size
+    );
 
-    uint32_t metadata_end = metadata_start + order_map_size * 4 + status_map_size * 4;
+    uint32_t metadata_end = (uint32_t)buddy_refcount_map + refcount_map_size;
 
     // Initialize metadata - mark all as FREE initially
     // We'll mark reserved regions as allocated afterwards
-    memset(buddy_order_map, 0, order_map_size * 4);
-    memset(buddy_status_map, 0, status_map_size * 4);  // 0 = free
+    memset(buddy_order_map, 0, order_map_size);
+    memset(buddy_status_map, 0, status_map_size);
+    memset(buddy_refcount_map, 0, refcount_map_size);
 
     // Initialize free lists
     for (int i = 0; i <= BUDDY_MAX_ORDER; i++) {
