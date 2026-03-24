@@ -30,6 +30,8 @@ static uint32_t kernel_page_directory_phys = 0;
 // Track if we've completed paging initialization
 static bool paging_fully_initialized = false;
 
+static size_t pages_saved_by_cow = 0;
+
 /**
  * Convert physical address to virtual address for page table access
  * Before paging is fully set up, we use identity mapping (phys == virt)
@@ -605,14 +607,26 @@ void paging_print_stats(void)
         }
     }
 
-    printf("Present Page Directory Entries: %u / %u\n", present_pdes, PAGE_DIRECTORY_SIZE);
-    printf("Total Mapped Pages: %u (%u KB, %u MB)\n",
-           total_mapped_pages,
-           total_mapped_pages * 4,
-           (total_mapped_pages * 4) / 1024);
-    printf("Virtual Address Space Used: %.2f%%\n",
-           (total_mapped_pages * 100.0) / (PAGE_DIRECTORY_SIZE * PAGE_TABLE_SIZE));
-    printf("=========================\n");
+    printf(
+        "Present Page Directory Entries: %u / %u\n",
+        present_pdes,
+        PAGE_DIRECTORY_SIZE
+    );
+    printf(
+        "Total Mapped Pages: %u (%u KB, %u MB)\n",
+        total_mapped_pages,
+        total_mapped_pages * 4,
+        (total_mapped_pages * 4) / 1024
+    );
+    printf(
+        "Virtual Address Space Used: %.2f%%\n",
+        (total_mapped_pages * 100.0) / (PAGE_DIRECTORY_SIZE * PAGE_TABLE_SIZE)
+    );
+    printf(
+        "Pages saved by COW: %u\n",
+        pages_saved_by_cow
+    );
+    puts("=========================");
 }
 
 void* paging_get_kernel_directory()
@@ -890,6 +904,7 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr)
     paging_flush_tlb_entry(page_addr);
 
     printf("PAGING: COW resolved - new phys page %#x\n", new_phys);
+    pages_saved_by_cow++;
     return true;
 }
 
