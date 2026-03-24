@@ -6,6 +6,7 @@
 #include <kernel/memory/vmm.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include "libc/test_base.h"
 #include "stdlib.h"
 
 /**
@@ -170,7 +171,7 @@ static inline bool memory_test_pmm_buddy_coalescing(void) {
     // Allocate two adjacent buddy blocks
     uint32_t block1 = pmm_alloc_pages(4);  // Order 2
     uint32_t block2 = pmm_alloc_pages(4);  // Order 2
-    
+
     if (!block1 || !block2) {
         printf("  FAILED: Could not allocate blocks for coalescing test\n");
         if (block1) pmm_free_pages(block1, 4);
@@ -203,11 +204,53 @@ static inline bool memory_test_pmm_buddy_coalescing(void) {
     return true;
 }
 
+static inline bool memory_test_refcount_base_allocation()
+{
+    printf("\n[MEMORY TEST 5] PMM refcount base allocation\n");
+
+    uint32_t page = pmm_alloc_page();
+    ASSERT_EQ(1, pmm_get_refcount(page), "Expected refcount=1 after alloc");
+    ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=true after alloc");
+
+    pmm_free_page(page);
+    ASSERT_EQ(0, pmm_get_refcount(page), "Expected refcount=0 after free");
+    ASSERT_FALSE(pmm_is_allocated(page), "Expected is_alloc=false after free");
+
+    return true;
+}
+
+static inline bool memory_test_refcount_shared()
+{
+    printf("\n[MEMORY TEST 6] PMM refcount sharing\n");
+
+    uint32_t page = pmm_alloc_page();
+    ASSERT_EQ(1, pmm_get_refcount(page), "Expected refcount=1 after alloc");
+    ASSERT_FALSE(pmm_is_shared(page), "Expected is_shared=false before inc");
+    ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=true after alloc");
+
+    pmm_inc_refcount(page);
+    ASSERT_EQ(2, pmm_get_refcount(page), "Expected refcount=2 after inc");
+    ASSERT_TRUE(pmm_is_shared(page), "Expected is_shared=true after inc");
+    ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=true after inc");
+
+    pmm_dec_refcount(page);
+    ASSERT_EQ(1, pmm_get_refcount(page), "Expected refcount=1 after dec");
+    ASSERT_FALSE(pmm_is_shared(page), "Expected is_shared=false after dec");
+    ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=true after dec");
+
+    pmm_dec_refcount(page);
+    ASSERT_EQ(1, pmm_get_refcount(page), "Expected refcount=1 after dec2");
+    ASSERT_FALSE(pmm_is_shared(page), "Expected is_shared=false after dec2");
+    ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=false after dec2");
+
+    return true;
+}
+
 /**
  * Test Paging: Identity mapping validation
  */
 static inline bool memory_test_paging_identity(void) {
-    printf("\n[MEMORY TEST 5] Paging Identity Mapping\n");
+    printf("\n[MEMORY TEST 7] Paging Identity Mapping\n");
 
     if (!paging_validate_identity_mapping()) {
         printf("  FAILED: Identity mapping validation failed\n");
@@ -254,7 +297,7 @@ static inline bool memory_test_paging_identity(void) {
  * Test Paging: Dynamic page mapping and unmapping
  */
 static inline bool memory_test_paging_dynamic(void) {
-    printf("\n[MEMORY TEST 6] Paging Dynamic Mapping\n");
+    printf("\n[MEMORY TEST 8] Paging Dynamic Mapping\n");
 
     // Allocate a physical page
     uint32_t phys_page = pmm_alloc_page();
@@ -314,7 +357,7 @@ static inline bool memory_test_paging_dynamic(void) {
  * Test VMM: Basic allocation and freeing
  */
 static inline bool memory_test_vmm_basic(void) {
-    printf("\n[MEMORY TEST 7] VMM Basic Allocation\n");
+    printf("\n[MEMORY TEST 9] VMM Basic Allocation\n");
 
     // Allocate single page
     void* vmem1 = vmm_alloc(1, VMM_KERNEL | VMM_WRITE);
@@ -352,7 +395,7 @@ static inline bool memory_test_vmm_basic(void) {
  * Test VMM: Multiple page allocation
  */
 static inline bool memory_test_vmm_multipage(void) {
-    printf("\n[MEMORY TEST 8] VMM Multiple Page Allocation\n");
+    printf("\n[MEMORY TEST 10] VMM Multiple Page Allocation\n");
 
     const size_t num_pages = 4;
     void* vmem = vmm_alloc(num_pages, VMM_KERNEL | VMM_WRITE);
@@ -399,7 +442,7 @@ static inline bool memory_test_vmm_multipage(void) {
  * Test VMM: Kernel heap allocator
  */
 static inline bool memory_test_vmm_kernel_heap(void) {
-    printf("\n[MEMORY TEST 9] VMM Kernel Heap Allocator\n");
+    printf("\n[MEMORY TEST 11] VMM Kernel Heap Allocator\n");
 
     // Allocate from kernel heap
     void* heap_mem = vmm_kernel_alloc(8192);  // 2 pages worth
@@ -465,13 +508,15 @@ static inline void memory_run_pmm_tests(void) {
     pmm_print_stats();
 
     int passed = 0;
-    int total = 4;
+    int total = 6;
 
     // Run PMM tests only
     if (memory_test_pmm_basic()) passed++;
     if (memory_test_pmm_buddy_orders()) passed++;
     if (memory_test_pmm_buddy_rounding()) passed++;
     if (memory_test_pmm_buddy_coalescing()) passed++;
+    if (memory_test_refcount_base_allocation()) passed++;
+    if (memory_test_refcount_shared()) passed++;
 
     // Print final statistics
     printf("\n");
@@ -501,13 +546,15 @@ static inline void memory_run_all_tests(void) {
     memory_print_all_stats("Baseline Memory Statistics");
 
     int passed = 0;
-    int total = 9;
+    int total = 11;
 
     // Run all tests
     if (memory_test_pmm_basic()) passed++;
     if (memory_test_pmm_buddy_orders()) passed++;
     if (memory_test_pmm_buddy_rounding()) passed++;
     if (memory_test_pmm_buddy_coalescing()) passed++;
+    if (memory_test_refcount_base_allocation()) passed++;
+    if (memory_test_refcount_shared()) passed++;
     if (memory_test_paging_identity()) passed++;
     if (memory_test_paging_dynamic()) passed++;
     if (memory_test_vmm_basic()) passed++;
