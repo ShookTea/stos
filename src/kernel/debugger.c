@@ -13,6 +13,7 @@
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
 #include <kernel/vfs/vfs.h>
+#include "task/scheduler.h"
 #include "task/task.h"
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
@@ -25,6 +26,27 @@
 static char command_buffer[MAX_COMMAND_LENGTH];
 static uint8_t command_length = 0;
 static bool accept_commands = false;
+static uint32_t background_task_count = 0;
+
+static void background_task()
+{
+    background_task_count++;
+    uint32_t task_id = background_task_count;
+    uint32_t counter1 = 0;
+    uint32_t counter2 = 0;
+    while (1) {
+        counter1++;
+        if (counter1 % 20 == 0) {
+            counter2++;
+            printf("Task %u - counter %u\n", task_id, counter2);
+        }
+        if (counter2 == 20) {
+            break;
+        }
+        // Busy wait to let time pass
+        for (volatile int i = 0; i < 10000000; i++);
+    }
+}
 
 static void print_prompt_and_enable()
 {
@@ -79,6 +101,7 @@ static void handle_command_sent()
         puts("  shutdown       - Shutdown the system via ACPI");
         puts("  slab_cache     - Prints slab allocator cache info");
         puts("  slab_stats     - Prints slab allocator statistics");
+        puts("  task_run       - Launches a new task in the background");
         puts("  vfs_cat [F]    - Prints content of a file at abs. path");
         puts("  vfs_ls [F]     - Prints info about file at abs. path [F]");
         puts("  vga_colors     - Prints VGA colors map");
@@ -157,6 +180,10 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "slab_stats") == 0) {
         slab_print_stats();
+    }
+    else if (strcmp(command, "task_run") == 0) {
+        task_t* task = task_create("test_task_run", background_task, true);
+        scheduler_add_task(task);
     }
     else if (strcmp(command, "vfs_cat") == 0) {
         if (argcount != 1) {
