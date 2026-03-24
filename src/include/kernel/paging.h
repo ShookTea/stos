@@ -45,6 +45,30 @@
 #define PAGE_FLAGS_KERNEL (PAGE_PRESENT | PAGE_WRITE)
 #define PAGE_FLAGS_USER   (PAGE_PRESENT | PAGE_WRITE | PAGE_USER)
 
+
+/**
+ * Convert a physical address to a virtual address in the mapped region
+ * This allows safe access to physical memory after paging is enabled
+ *
+ * @param phys Physical address
+ * @return Virtual address that maps to the physical address
+ */
+static inline void* paging_phys_to_virt(uint32_t phys)
+{
+    return PHYS_TO_VIRT(phys);
+}
+
+/**
+ * Convert a virtual address back to physical (for mapped region only)
+ *
+ * @param virt Virtual address in the physical mapping region
+ * @return Physical address
+ */
+static inline uint32_t paging_virt_to_phys(void* virt)
+{
+    return VIRT_TO_PHYS(virt);
+}
+
 /**
  * Initialize the paging system
  *
@@ -169,11 +193,6 @@ void paging_print_stats(void);
 /**
  * Get virtual address of the kernel directory
  */
-void* paging_get_kernel_directory_virt();
-
-/**
- * Get physical address of the kernel directroy
- */
-uint32_t paging_get_kernel_directory_phys();
+void* paging_get_kernel_directory();
 
 #endif

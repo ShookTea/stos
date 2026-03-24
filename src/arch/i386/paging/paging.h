@@ -25,22 +25,6 @@
 #define PAGE_DIRECTORY_SIZE 1024
 #define PAGE_TABLE_SIZE 1024
 
-// Physical memory mapping
-// We map all physical memory to a fixed virtual address offset
-// This allows us to access any physical address by adding PHYS_MAP_BASE
-#define PHYS_MAP_BASE       0xC0000000  // 3GB - Start of physical memory mapping
-#define PHYS_MAP_SIZE       0x40000000  // 1GB - Map up to 1GB of physical RAM
-
-// Convert physical address to virtual address (for kernel use)
-#define PHYS_TO_VIRT(phys)  ((void*)((uint32_t)(phys) + PHYS_MAP_BASE))
-
-// Convert virtual address back to physical (only for mapped region)
-#define VIRT_TO_PHYS(virt)  ((uint32_t)(virt) - PHYS_MAP_BASE)
-
-// Check if a virtual address is in the physical mapping region
-// Since the region extends to the end of the 32-bit address space, we only need to check >= PHYS_MAP_BASE
-#define IS_PHYS_MAPPED(virt) ((uint32_t)(virt) >= PHYS_MAP_BASE)
-
 // Page flags (for both PDE and PTE)
 #define PAGE_PRESENT    0x001  // Page is present in memory
 #define PAGE_WRITE      0x002  // Page is writable (read-only if not set)
@@ -148,29 +132,6 @@ typedef struct {
  * This will be present in all process page directories
  */
 extern page_directory_t* kernel_page_directory;
-
-/**
- * Convert a physical address to a virtual address in the mapped region
- * This allows safe access to physical memory after paging is enabled
- *
- * @param phys Physical address
- * @return Virtual address that maps to the physical address
- */
-static inline void* paging_phys_to_virt(uint32_t phys)
-{
-    return PHYS_TO_VIRT(phys);
-}
-
-/**
- * Convert a virtual address back to physical (for mapped region only)
- *
- * @param virt Virtual address in the physical mapping region
- * @return Physical address
- */
-static inline uint32_t paging_virt_to_phys(void* virt)
-{
-    return VIRT_TO_PHYS(virt);
-}
 
 /**
  * Initialize the paging system

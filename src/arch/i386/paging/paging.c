@@ -603,12 +603,7 @@ void paging_print_stats(void)
     printf("=========================\n");
 }
 
-void* paging_get_kernel_directory_virt()
+void* paging_get_kernel_directory()
 {
     return kernel_page_directory;
-}
-
-uint32_t paging_get_kernel_directory_phys()
-{
-    return paging_virt_to_phys(kernel_page_directory);
 }

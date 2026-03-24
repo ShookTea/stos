@@ -177,8 +177,9 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
 
     // For now we're uisng kernel page directory for all tasks
     // TODO: create new page directories for each task
-    task->page_dir_virt = paging_get_kernel_directory_virt();
-    task->page_dir_phys = paging_get_kernel_directory_phys();
+    void* kernel_directory = paging_get_kernel_directory();
+    task->page_dir_virt = kernel_directory;
+    task->page_dir_phys = paging_virt_to_phys(kernel_directory);
 
 
     return task;
@@ -212,7 +213,7 @@ void task_destroy(task_t* task)
         task->user_stack_size = 0;
     }
 
-    if (task->page_dir_virt != paging_get_kernel_directory_virt()) {
+    if (task->page_dir_virt != paging_get_kernel_directory()) {
         // TODO: free page directory here when we create per-process page dirs
         // paging_destroy_directory(task->page_dir_virt);
     }
