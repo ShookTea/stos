@@ -216,16 +216,6 @@ static inline uint16_t buddy_is_page_shared(uint32_t page)
 // ============================================================================
 
 /**
- * Calculate the buddy's address for a given block
- * Buddy address = addr XOR (block_size)
- */
-static inline uint32_t buddy_get_buddy_addr(uint32_t addr, uint8_t order)
-{
-    uint32_t block_size = PMM_PAGE_SIZE << order;
-    return addr ^ block_size;
-}
-
-/**
  * Calculate the buddy's page index
  */
 static inline uint32_t buddy_get_buddy_page(uint32_t page, uint8_t order)
@@ -879,6 +869,8 @@ uint16_t pmm_inc_refcount(uint32_t phys_addr)
     uint32_t page = pmm_addr_to_page(phys_addr);
     if (!buddy_is_allocated(page)) {
         printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
+        abort(); // TODO: is abort() needed here?
+        return 0;
     }
 
     return buddy_inc_refcount(page);
@@ -894,6 +886,8 @@ uint16_t pmm_dec_refcount(uint32_t phys_addr)
     uint32_t page = pmm_addr_to_page(phys_addr);
     if (!buddy_is_allocated(page)) {
         printf("ERR: dec_refcount called on free page %#x\n", phys_addr);
+        abort(); // TODO: is abort() needed here?
+        return 0;
     }
 
     return buddy_dec_refcount(page);
