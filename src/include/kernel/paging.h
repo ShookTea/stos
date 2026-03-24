@@ -15,14 +15,8 @@
 #define PAGE_SIZE 4096
 
 // Physical memory mapping (architecture-specific values, but interface is common)
-// These should be defined by the architecture-specific paging implementation
-#ifndef PHYS_MAP_BASE
 #define PHYS_MAP_BASE 0xC0000000  // 3GB - Default for i386
-#endif
-
-#ifndef PHYS_MAP_SIZE
 #define PHYS_MAP_SIZE 0x40000000  // 1GB - Default mapping size
-#endif
 
 // Convert physical address to virtual address (for kernel use)
 #define PHYS_TO_VIRT(phys)  ((void*)((uint32_t)(phys) + PHYS_MAP_BASE))
@@ -194,5 +188,11 @@ void paging_print_stats(void);
  * Get virtual address of the kernel directory
  */
 void* paging_get_kernel_directory();
+
+/**
+ * Create a new page directory, copy kernel mappings and handle user space
+ * based on usermode flag. Returns virtual address of the new directory.
+ */
+void* paging_clone_directory(void* src, bool usermode);
 
 #endif

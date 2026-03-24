@@ -1,7 +1,9 @@
 #include <kernel/paging.h>
 #include <kernel/memory/pmm.h>
+#include <kernel/memory/vmm.h>
 #include <kernel/multiboot2.h>
 #include "paging.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -606,4 +608,57 @@ void paging_print_stats(void)
 void* paging_get_kernel_directory()
 {
     return kernel_page_directory;
+}
+
+void* paging_clone_directory(void* _src, bool usermode)
+{
+    page_directory_t* src = _src;
+    if (src == NULL) {
+        puts("PAGING: cannot clone NULL page directory");
+        abort(); // TODO: is the abort() needed here?
+        return NULL;
+    }
+
+    page_directory_t* dst = paging_create_directory();
+    if (dst == NULL) {
+        puts("PAGING: failed to clone page directory");
+        abort(); // TODO: is the abort() needed here?
+        return NULL;
+    }
+
+    // Copy entry 0 (identity mapping)
+    dst->entries[0] = src->entries[0];
+
+    // Copy physical memory mapping region
+    uint32_t phys_map_start_pd = paging_get_pd_index(PHYS_MAP_BASE);
+    uint32_t phys_map_end_pd = paging_get_pd_index(0xFFFFFFFF);
+    for (uint32_t i = phys_map_start_pd; i <= phys_map_end_pd; i++) {
+        if (src->entries[i].present) {
+            dst->entries[i] = src->entries[i];
+        }
+    }
+
+    // Copy kernel heap region
+    uint32_t kernel_heap_start_pd = paging_get_pd_index(VMM_KERNEL_HEAP);
+    uint32_t kernel_heap_end_pd = paging_get_pd_index(VMM_USER_START);
+
+    for (uint32_t i = kernel_heap_start_pd; i < kernel_heap_end_pd; i++) {
+        if (src->entries[i].present) {
+            dst->entries[i] = src->entries[i];
+        }
+    }
+
+    // Handle user space
+    if (usermode) {
+        // TODO: implement user space cloning for fork() support
+        puts("PAGING: user space cloning not implemented yet");
+        abort();
+    }
+
+    printf(
+        "PAGING: cloned page directory (kernel=%s, user=%s)\n",
+        "yes",
+        usermode ? "yes" : "no"
+    );
+    return dst;
 }
