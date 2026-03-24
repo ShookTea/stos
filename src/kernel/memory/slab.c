@@ -154,6 +154,7 @@ slab_t* slab_create_slab(slab_cache_t* cache) {
     slab->num_objects = cache->objects_per_slab;
     slab->num_free = cache->objects_per_slab;
     slab->object_size = cache->object_size;
+    slab->current_list = SLAB_LIST_EMPTY;
 
     // Objects start after the slab metadata
     slab->objects_start = (void*)((uint8_t*)slab_memory + sizeof(slab_t));
@@ -214,31 +215,53 @@ void slab_update_lists(slab_t* slab) {
 
     slab_cache_t* cache = slab->cache;
 
-    // Determine current list
-    slab_t** current_list;
+    // Determine target list based on current state
+    slab_list_type_t target_list;
     if (slab->num_free == 0) {
-        current_list = &cache->full_slabs;
+        target_list = SLAB_LIST_FULL;
     } else if (slab->num_free == slab->num_objects) {
-        current_list = &cache->empty_slabs;
+        target_list = SLAB_LIST_EMPTY;
     } else {
-        current_list = &cache->partial_slabs;
+        target_list = SLAB_LIST_PARTIAL;
     }
 
-    // Determine target list based on new state
-    slab_t** target_list;
-    if (slab->num_free == 0) {
-        target_list = &cache->full_slabs;
-    } else if (slab->num_free == slab->num_objects) {
-        target_list = &cache->empty_slabs;
-    } else {
-        target_list = &cache->partial_slabs;
+    // If already in the correct list, nothing to do
+    if (slab->current_list == target_list) {
+        return;
     }
 
-    // Move if needed
-    if (current_list != target_list) {
-        remove_from_list(slab, current_list);
-        add_to_list(slab, target_list);
+    // Remove from current list
+    slab_t** current_head;
+    switch (slab->current_list) {
+        case SLAB_LIST_EMPTY:
+            current_head = &cache->empty_slabs;
+            break;
+        case SLAB_LIST_PARTIAL:
+            current_head = &cache->partial_slabs;
+            break;
+        case SLAB_LIST_FULL:
+            current_head = &cache->full_slabs;
+            break;
     }
+    remove_from_list(slab, current_head);
+
+    // Add to target list
+    slab_t** target_head;
+    switch (target_list) {
+        case SLAB_LIST_EMPTY:
+            target_head = &cache->empty_slabs;
+            break;
+        case SLAB_LIST_PARTIAL:
+            target_head = &cache->partial_slabs;
+            break;
+        case SLAB_LIST_FULL:
+            target_head = &cache->full_slabs;
+            break;
+    }
+    add_to_list(slab, target_head);
+
+    // Update tracking field
+    slab->current_list = target_list;
 }
 
 void* slab_alloc_from_slab(slab_t* slab) {
