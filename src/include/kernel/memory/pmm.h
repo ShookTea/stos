@@ -17,13 +17,13 @@
  *
  * This module manages physical memory using a buddy allocator.
  * Memory is allocated in power-of-2 sized blocks (orders 0-10).
- * 
+ *
  * Order 0 = 4KB (1 page)
  * Order 1 = 8KB (2 pages)
  * Order 2 = 16KB (4 pages)
  * ...
  * Order 10 = 4MB (1024 pages)
- * 
+ *
  * The allocator automatically coalesces free adjacent buddy blocks.
  */
 
@@ -103,7 +103,7 @@ void pmm_print_stats(void);
 /**
  * Notify PMM that paging has been enabled
  * This allows PMM to use PHYS_MAP_BASE for accessing physical memory
- * 
+ *
  * @param enabled true if paging is enabled, false otherwise
  */
 void pmm_set_paging_enabled(bool enabled);
@@ -198,5 +198,26 @@ static inline uint32_t pmm_page_to_addr(uint32_t page)
 {
     return page * PMM_PAGE_SIZE;
 }
+
+/**
+ * Returns reference count for a physical page
+ */
+uint16_t pmm_get_refcount(uint32_t phys_addr);
+
+/**
+ * Increments reference count for a physical page
+ */
+uint16_t pmm_inc_refcount(uint32_t phys_addr);
+
+/**
+ * Decrements reference count for a physical page. If returns 0, caller should
+ * call pmm_free_page().
+ */
+uint16_t pmm_dec_refcount(uint32_t phys_addr);
+
+/**
+ * Returns true if physical page is shared (refcount >= 2)
+ */
+bool pmm_is_shared(uint32_t phys_addr);
 
 #endif

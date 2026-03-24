@@ -857,3 +857,55 @@ bool pmm_is_allocated(uint32_t addr)
     }
     return buddy_is_allocated(page);
 }
+
+uint16_t pmm_get_refcount(uint32_t phys_addr)
+{
+    if (!pmm_is_aligned(phys_addr)) {
+        printf("ERR: get_refcount called with unaligned addr %#x\n", phys_addr);
+        return 0;
+    }
+
+    uint32_t page = pmm_addr_to_page(phys_addr);
+    return buddy_get_refcount(page);
+}
+
+uint16_t pmm_inc_refcount(uint32_t phys_addr)
+{
+    if (!pmm_is_aligned(phys_addr)) {
+        printf("ERR: inc_refcount called with unaligned addr %#x\n", phys_addr);
+        return 0;
+    }
+
+    uint32_t page = pmm_addr_to_page(phys_addr);
+    if (!buddy_is_allocated(page)) {
+        printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
+    }
+
+    return buddy_inc_refcount(page);
+}
+
+uint16_t pmm_dec_refcount(uint32_t phys_addr)
+{
+    if (!pmm_is_aligned(phys_addr)) {
+        printf("ERR: dec_refcount called with unaligned addr %#x\n", phys_addr);
+        return 0;
+    }
+
+    uint32_t page = pmm_addr_to_page(phys_addr);
+    if (!buddy_is_allocated(page)) {
+        printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
+    }
+
+    return buddy_dec_refcount(page);
+}
+
+bool pmm_is_shared(uint32_t phys_addr)
+{
+    if (!pmm_is_aligned(phys_addr)) {
+        printf("ERR: is_shared called with unaligned addr %#x\n", phys_addr);
+        return false;
+    }
+
+    uint32_t page = pmm_addr_to_page(phys_addr);
+    return buddy_is_page_shared(page);
+}
