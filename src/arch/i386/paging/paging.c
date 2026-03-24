@@ -983,6 +983,7 @@ void paging_free_user_pages(void* _pd)
                 uint32_t phys = pte->frame << 12;
                 uint16_t new_refcount = pmm_dec_refcount(phys);
                 if (new_refcount == 0) {
+                    pmm_free_page(phys);
                     freed_pages++;
                 }
                 // else: page is still referenced by other processes
