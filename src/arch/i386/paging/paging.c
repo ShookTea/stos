@@ -967,9 +967,13 @@ void paging_free_user_pages(void* _pd)
             bool is_cow = (pte->available & 1) != 0;
 
             if (is_cow) {
-                // TODO: Decrement reference count
-                // Only free if reference count reaches 0
-                // For now, we leak COW pages (will fix with proper ref counting)
+                // Decrement reference count
+                uint32_t phys = pte->frame << 12;
+                uint16_t new_refcount = pmm_dec_refcount(phys);
+                if (new_refcount == 0) {
+                    freed_pages++;
+                }
+                // else: page is still referenced by other processes
             } else {
                 // This is a private page (e.g., stack page that was copied)
                 // Safe to free
