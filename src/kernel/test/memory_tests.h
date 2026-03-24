@@ -239,9 +239,14 @@ static inline bool memory_test_refcount_shared()
     ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=true after dec");
 
     pmm_dec_refcount(page);
-    ASSERT_EQ(1, pmm_get_refcount(page), "Expected refcount=1 after dec2");
+    ASSERT_EQ(0, pmm_get_refcount(page), "Expected refcount=0 after dec2");
     ASSERT_FALSE(pmm_is_shared(page), "Expected is_shared=false after dec2");
-    ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=false after dec2");
+    ASSERT_TRUE(pmm_is_allocated(page), "Expected is_alloc=true after dec2");
+
+    pmm_free_page(page);
+    ASSERT_EQ(0, pmm_get_refcount(page), "Expected refcount=0 after free");
+    ASSERT_FALSE(pmm_is_shared(page), "Expected is_shared=false after free");
+    ASSERT_FALSE(pmm_is_allocated(page), "Expected is_alloc=false after free");
 
     return true;
 }
