@@ -235,7 +235,7 @@ void task_destroy(task_t* task)
 
     if (task->page_dir_virt != NULL &&
         task->page_dir_virt != paging_get_kernel_directory()) {
-        // TODO: free usermode pages as well
+        paging_free_user_pages(task->page_dir_virt);
         pmm_free_page(task->page_dir_phys);
         task->page_dir_virt = NULL;
         task->page_dir_phys = 0;

@@ -892,3 +892,64 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr)
     printf("PAGING: COW resolved - new phys page %#x\n", new_phys);
     return true;
 }
+
+void paging_free_user_pages(void* _pd)
+{
+    page_directory_t* pd = (page_directory_t*)_pd;
+    if (pd == NULL) {
+        return;
+    }
+
+    uint32_t user_start_pd = paging_get_pd_index(VMM_USER_START);
+    uint32_t user_end_pd = paging_get_pd_index(VMM_USER_END);
+    uint32_t freed_tables = 0;
+    uint32_t freed_pages = 0;
+
+    for (uint32_t pd_idx = user_start_pd; pd_idx < user_end_pd; pd_idx++) {
+        page_directory_entry_t* pde = &pd->entries[pd_idx];
+        if (!pde->present) {
+            continue;
+        }
+
+        page_table_t* pt = paging_get_page_table_from_pde(pde);
+        if (pt == NULL) {
+            continue;
+        }
+
+        // Free all pages referenced by this page table
+        for (uint32_t pt_idx = 0; pt_idx < PAGE_TABLE_SIZE; pt_idx++) {
+            page_table_entry_t* pte = &pt->entries[pt_idx];
+            if (!pte->present) {
+                continue;
+            }
+
+            // Check if this is a COW page (shared with other processes)
+            bool is_cow = (pte->available & 1) != 0;
+
+            if (is_cow) {
+                // TODO: Decrement reference count
+                // Only free if reference count reaches 0
+                // For now, we leak COW pages (will fix with proper ref counting)
+            } else {
+                // This is a private page (e.g., stack page that was copied)
+                // Safe to free
+                uint32_t phys = pte->frame << 12;
+                pmm_free_page(phys);
+                freed_pages++;
+            }
+        }
+
+        // Free the page table itself
+        uint32_t pt_phys = pde->frame << 12;
+        pmm_free_page(pt_phys);
+        freed_tables++;
+    }
+
+    if (freed_tables > 0) {
+        printf(
+            "PAGING: Freed %u user page tables and %u private pages\n",
+            freed_tables,
+            freed_pages
+        );
+    }
+}

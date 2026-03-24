@@ -213,4 +213,10 @@ void* paging_clone_directory(
  */
 bool paging_handle_page_fault_cow(uint32_t faulting_addr);
 
+/**
+ * Free all user-space pages and page tables for a page directory. Called when
+ * destroying a task.
+ */
+void paging_free_user_pages(void* pd);
+
 #endif
