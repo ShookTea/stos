@@ -242,6 +242,10 @@ void slab_update_lists(slab_t* slab) {
         case SLAB_LIST_FULL:
             current_head = &cache->full_slabs;
             break;
+        default:
+            // Should never happen, but satisfy compiler
+            printf("SLAB: ERROR - slab has invalid current_list value\n");
+            return;
     }
     remove_from_list(slab, current_head);
 
@@ -257,6 +261,10 @@ void slab_update_lists(slab_t* slab) {
         case SLAB_LIST_FULL:
             target_head = &cache->full_slabs;
             break;
+        default:
+            // Should never happen, but satisfy compiler
+            printf("SLAB: ERROR - target_list has invalid value\n");
+            return;
     }
     add_to_list(slab, target_head);
 
