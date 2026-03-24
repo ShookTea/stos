@@ -921,9 +921,21 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr)
     pte->rw = 1; // Make writable
     pte->available &= ~1; // Clear COW flag
 
-    // TODO: Decrement reference count for old physical page
+    // Decrement reference count for old physical page
     // If reference count reaches 0, free the page
-    // For now, we leak the old page (will fix with proper ref counting)
+    uint16_t old_refcount = pmm_dec_refcount(old_phys);
+    if (old_refcount == 0) {
+        printf(
+            "PAGING: old COW page %#x freed (last ref. removed)\n",
+            old_phys
+        );
+    } else {
+        printf(
+            "PAGING: old COW page %#x still has %u references\n",
+            old_phys,
+            old_refcount
+        );
+    }
 
     // Flush TLB for this page
     paging_flush_tlb_entry(page_addr);
