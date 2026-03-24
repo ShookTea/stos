@@ -32,6 +32,10 @@ static inline void memory_leak_run_test()
 {
     puts("=== memory leak test run ===");
 
+    // First do a dry run, to set up the cache properly - it can influence
+    // statistics, which would be reported as false negative.
+    run_all_tests();
+
     uint32_t pmm_used_memory_start = pmm_get_used_memory();
     vmm_stats_t vmm_stats_start;
     kmalloc_stats_t kmalloc_stats_start;
