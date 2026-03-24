@@ -200,4 +200,17 @@ void* paging_clone_directory(
     uint32_t user_stack_size
 );
 
+/**
+ * Handle copy-on-write page fault. When process tries to write to a COW page:
+ * 1. Check if the page has the COW flag set
+ * 2. Allocate a new physical page
+ * 3. Copy contents from shared page to a new page
+ * 4. Update PTE to point to a new page and mark as writeable
+ * 5. Clear COW flag
+ * 6. Flush TLB
+ *
+ * Return true if COW fault was handled.
+ */
+bool paging_handle_page_fault_cow(uint32_t faulting_addr);
+
 #endif

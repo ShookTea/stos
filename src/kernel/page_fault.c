@@ -67,7 +67,7 @@ void page_fault_analyze(
     else if (info->present) {
         // Page is present, so this is a protection violation
         pf_stats.protection_violations++;
-        
+
         if (info->write_access) {
             info->category = PF_CAT_WRITE_READONLY;
             pf_stats.write_readonly++;
@@ -87,9 +87,9 @@ void page_fault_analyze(
     else {
         // Page not present
         pf_stats.not_present++;
-        
+
         // Check if this might be a stack overflow
-        if (faulting_addr < esp && 
+        if (faulting_addr < esp &&
             faulting_addr < STACK_GUARD_REGION_END) {
             info->category = PF_CAT_STACK_OVERFLOW;
         }
@@ -151,7 +151,7 @@ void page_fault_print_info(const page_fault_info_t* info)
     printf("\n========================================\n");
     printf("         PAGE FAULT EXCEPTION\n");
     printf("========================================\n");
-    
+
     printf("\nFault Category: %s\n", page_fault_category_string(info->category));
     printf("Faulting Address: %#010x\n", info->faulting_address);
     printf("Error Code:       %#010x\n", info->error_code);
@@ -171,7 +171,7 @@ void page_fault_print_info(const page_fault_info_t* info)
     printf("  Page-aligned:     %#010x\n", page_aligned);
     printf("  Page offset:      %#x (%u bytes)\n", offset, offset);
     printf("  Page mapped:      %s\n", info->page_mapped ? "YES" : "NO");
-    
+
     if (info->page_mapped) {
         printf("  Physical address: %#010x\n", info->physical_address);
     }
@@ -208,7 +208,7 @@ void page_fault_print_info(const page_fault_info_t* info)
     } else {
         printf(" (NOT MAPPED - corrupt!)\n");
     }
-    
+
     printf("  Base Pointer:     %#010x", info->ebp);
     if (paging_is_mapped(info->ebp)) {
         printf(" (mapped)\n");
@@ -218,7 +218,7 @@ void page_fault_print_info(const page_fault_info_t* info)
 
     // Specific fault explanations
     // Memory dump around faulting address (if safe to access)
-    if (info->faulting_address >= 0x1000 && 
+    if (info->faulting_address >= 0x1000 &&
         info->faulting_address < 0xFFFF0000) {
         // Try to dump memory, but be careful
         printf("\nMemory context around faulting address:\n");
@@ -297,17 +297,17 @@ void page_fault_print_info(const page_fault_info_t* info)
 void page_fault_print_stack_trace(uint32_t ebp, int max_frames)
 {
     printf("\nStack Trace:\n");
-    
+
     if (!paging_is_mapped(ebp)) {
         printf("  Cannot trace stack - EBP (%#x) not mapped\n", ebp);
         return;
     }
 
     uint32_t* frame = (uint32_t*)ebp;
-    
+
     for (int i = 0; i < max_frames && frame; i++) {
         // Check if frame pointer is valid
-        if (!paging_is_mapped((uint32_t)frame) || 
+        if (!paging_is_mapped((uint32_t)frame) ||
             !paging_is_mapped((uint32_t)frame + 4)) {
             printf("  [%d] Frame pointer %#x not mapped (end of trace)\n", i, (uint32_t)frame);
             break;
@@ -315,7 +315,7 @@ void page_fault_print_stack_trace(uint32_t ebp, int max_frames)
 
         uint32_t ret_addr = frame[1];
         printf("  [%d] Return address: %#010x", i, ret_addr);
-        
+
         if (paging_is_mapped(ret_addr)) {
             printf(" (valid)\n");
         } else {
@@ -326,25 +326,25 @@ void page_fault_print_stack_trace(uint32_t ebp, int max_frames)
 
         // Move to previous frame
         uint32_t next_ebp = frame[0];
-        
+
         // Sanity checks
         if (next_ebp == 0) {
             printf("  [End of stack - EBP is 0]\n");
             break;
         }
-        
+
         if (next_ebp <= (uint32_t)frame) {
             printf("  [%d] Invalid frame pointer %#x (not growing up)\n", i + 1, next_ebp);
             break;
         }
-        
+
         if (next_ebp > (uint32_t)frame + 0x10000) {
             // Frame pointer jumped more than 64KB - suspicious
-            printf("  [%d] Suspicious frame pointer %#x (jumped %u bytes)\n", 
+            printf("  [%d] Suspicious frame pointer %#x (jumped %u bytes)\n",
                    i + 1, next_ebp, next_ebp - (uint32_t)frame);
             break;
         }
-        
+
         frame = (uint32_t*)next_ebp;
     }
 }
@@ -358,7 +358,16 @@ bool page_fault_try_recover(const page_fault_info_t* info)
         return false;
     }
 
-    // Try custom handler first
+    if (info->present && info->write_access && !info->user_mode) {
+        // Check for copy-on-write page fault.
+        if (paging_handle_page_fault_cow(info->faulting_address)) {
+            pf_stats.recoverable++;
+            printf("COW page fault recovered at %#x\n", info->faulting_address);
+            return true;
+        }
+    }
+
+    // Try custom handler
     if (custom_handler) {
         if (custom_handler(info)) {
             pf_stats.recoverable++;
@@ -403,7 +412,7 @@ void page_fault_get_stats(page_fault_stats_t* stats)
     if (!stats) {
         return;
     }
-    
+
     *stats = pf_stats;
 }
 
@@ -430,7 +439,7 @@ void page_fault_print_stats(void)
     printf("Not present faults:     %u\n", pf_stats.not_present);
     printf("Recoverable faults:     %u\n", pf_stats.recoverable);
     printf("Unrecoverable faults:   %u\n", pf_stats.unrecoverable);
-    
+
     if (pf_stats.total_faults > 0) {
         uint32_t recovery_rate = (pf_stats.recoverable * 100) / pf_stats.total_faults;
         printf("Recovery rate:          %u%%\n", recovery_rate);
@@ -439,21 +448,21 @@ void page_fault_print_stats(void)
 
 /**
  * Dump memory around a faulting address for debugging
- * 
+ *
  * @param addr Address to dump around
  * @param context Number of bytes before/after to dump
  */
 void page_fault_dump_memory(uint32_t addr, uint32_t context)
 {
     printf("\nMemory Dump around %#010x:\n", addr);
-    
+
     // Align to 16-byte boundary for nice formatting
     uint32_t start = (addr - context) & ~0xF;
     uint32_t end = (addr + context + 0xF) & ~0xF;
-    
+
     printf("Address   | +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F | ASCII\n");
     printf("----------+-------------------------------------------------+------------------\n");
-    
+
     for (uint32_t line_addr = start; line_addr < end; line_addr += 16) {
         // Check if this line is mapped
         bool line_mapped = true;
@@ -463,12 +472,12 @@ void page_fault_dump_memory(uint32_t addr, uint32_t context)
                 break;
             }
         }
-        
+
         printf("%08x | ", line_addr);
-        
+
         if (line_mapped) {
             uint8_t* bytes = (uint8_t*)line_addr;
-            
+
             // Print hex bytes
             for (int i = 0; i < 16; i++) {
                 // Highlight the faulting byte
@@ -478,9 +487,9 @@ void page_fault_dump_memory(uint32_t addr, uint32_t context)
                     printf("%02x ", bytes[i]);
                 }
             }
-            
+
             printf("| ");
-            
+
             // Print ASCII representation
             for (int i = 0; i < 16; i++) {
                 uint8_t c = bytes[i];
@@ -499,7 +508,7 @@ void page_fault_dump_memory(uint32_t addr, uint32_t context)
             printf("?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)\n");
         }
     }
-    
+
     printf("----------+-------------------------------------------------+------------------\n");
     printf("Legend: Faulting byte highlighted in red\n");
 }

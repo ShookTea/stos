@@ -839,3 +839,56 @@ void* paging_clone_directory(
     );
     return dst;
 }
+
+bool paging_handle_page_fault_cow(uint32_t faulting_addr)
+{
+    uint32_t page_addr = paging_align_down(faulting_addr);
+    uint32_t pd_index = page_addr >> 22;
+    uint32_t pt_index = (page_addr >> 12) & 0x3FF;
+
+    page_directory_t* current_pd = current_page_directory;
+    page_directory_entry_t* pde = &current_pd->entries[pd_index];
+    if (!pde->present) {
+        return false; // Page table doesn't exist
+    }
+    uint32_t pt_phys = pde->frame << 12;
+    page_table_t* pt = (page_table_t*)PHYS_TO_VIRT(pt_phys);
+    page_table_entry_t* pte = &pt->entries[pt_index];
+    if (!pte->present) {
+        return false; // Page not present
+    }
+    if ((pte->available & 1) == 0) {
+        return false; // Not a COW page (bit 9 in available field)
+    }
+
+    // This is a COW page - handle it
+    printf("PAGING: COW fault at %#x (phys: %#x)\n",
+           page_addr, pte->frame << 12);
+
+    // Allocate new physical page
+    uint32_t new_phys = pmm_alloc_page();
+    if (new_phys == 0) {
+        printf("PAGING: Failed to allocate page for COW at %#x\n", page_addr);
+        return false;
+    }
+
+    // Copy contents from old page to new page
+    uint32_t old_phys = pte->frame << 12;
+    void* old_page = PHYS_TO_VIRT(old_phys);
+    void* new_page = PHYS_TO_VIRT(new_phys);
+    memcpy(new_page, old_page, PAGE_SIZE);
+
+    pte->frame = new_phys >> 12; // Point to new physical page
+    pte->rw = 1; // Make writable
+    pte->available &= ~1; // Clear COW flag
+
+    // TODO: Decrement reference count for old physical page
+    // If reference count reaches 0, free the page
+    // For now, we leak the old page (will fix with proper ref counting)
+
+    // Flush TLB for this page
+    paging_flush_tlb_entry(page_addr);
+
+    printf("PAGING: COW resolved - new phys page %#x\n", new_phys);
+    return true;
+}
