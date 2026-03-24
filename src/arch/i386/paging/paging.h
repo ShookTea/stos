@@ -40,6 +40,9 @@
 #define PAGE_FLAGS_KERNEL (PAGE_PRESENT | PAGE_WRITE)
 #define PAGE_FLAGS_USER   (PAGE_PRESENT | PAGE_WRITE | PAGE_USER)
 
+// Available bits (9-11) for OS use
+#define PAGE_COW 0x200 // Bit 9: Page should trigger copy on write
+
 /**
  * Page Table Entry (PTE)
  *

@@ -610,6 +610,82 @@ void* paging_get_kernel_directory()
     return kernel_page_directory;
 }
 
+/**
+ * Clone a page table for fork().
+ * Strategy:
+ * - For stack - allocate new physical pages and copy contents
+ * - For data/heap - mark both parent and child as COW and read-only
+ * - For shared kernel - should never appear in user space page tables
+ */
+static page_table_t* paging_clone_page_table(
+    page_table_t* src_pt,
+    uint32_t start_virt,
+    bool is_stack
+) {
+  if (src_pt == NULL) {
+      return NULL;
+  }
+
+  // Allocate new page table
+  uint32_t dst_pt_phys = pmm_alloc_page();
+  if (dst_pt_phys == 0) {
+      printf("PAGING: failed to allocate page table for cloning\n");
+      abort(); // TODO: is abort() needed here?
+      return NULL;
+  }
+
+  page_table_t* dst_pt = (page_table_t*)phys_to_virt_internal(dst_pt_phys);
+  memset(dst_pt, 0, sizeof(page_table_t));
+
+  // Clone each entry
+  for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
+      page_table_entry_t* src_pte = &src_pt->entries[i];
+      page_table_entry_t* dst_pte = &dst_pt->entries[i];
+      if (!src_pte->present) {
+          // Skip non-present pages
+          continue;
+      }
+
+      uint32_t virt = start_virt + (i * PAGE_SIZE);
+      // Determine if this is a stack page
+      // TODO: this needs to check against task->user_stack_base/size
+      bool is_stack_page = is_stack;
+
+      if (is_stack_page) {
+          // Stack pages are always physically copied
+          uint32_t new_phys = pmm_alloc_page();
+          if (dst_pt_phys == 0) {
+              printf(
+                  "Failed to allocate page table for stack clone at %#x\n",
+                  virt
+              );
+              pmm_free_page(dst_pt_phys);
+              // TODO: cleanup already allocated pages
+              abort(); // TODO: is abort() needed here?
+              return NULL;
+          }
+
+          uint32_t src_phys = src_pte->frame << 12;
+          void* src_page = phys_to_virt_internal(src_phys);
+          void* dst_page = phys_to_virt_internal(new_phys);
+          memcpy(dst_page, src_page, PAGE_SIZE);
+          *dst_pte = *src_pte;
+          dst_pte->frame = new_phys >> 12;
+      } else {
+          // Data/heap pages use copy-on-write - mark as COW and read-only
+          *dst_pte = *src_pte;
+          src_pte->rw = 0;
+          src_pte->available |= (PAGE_COW >> 9);
+          dst_pte->rw = 0;
+          dst_pte->available |= (PAGE_COW >> 9);
+
+          // TODO: implement reference counting for physical pages
+      }
+  }
+
+  return dst_pt;
+}
+
 void* paging_clone_directory(void* _src, bool usermode)
 {
     page_directory_t* src = _src;
