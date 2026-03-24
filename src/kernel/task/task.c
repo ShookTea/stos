@@ -1,4 +1,5 @@
 #include "task.h"
+#include "kernel/memory/pmm.h"
 #include "scheduler.h"
 #include <kernel/memory/vmm.h>
 #include <stdio.h>
@@ -176,12 +177,25 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
     task->state = TASK_WAITING;
 
     // For now we're uisng kernel page directory for all tasks
-    // TODO: create new page directories for each task
+    // First let's clone the kernel directory
     void* kernel_directory = paging_get_kernel_directory();
-    task->page_dir_virt = kernel_directory;
-    task->page_dir_phys = paging_virt_to_phys(kernel_directory);
+    void* kernel_dir_clone = paging_clone_directory(kernel_directory, false);
+    if (kernel_dir_clone == NULL) {
+        printf("TASK: Failed to clone page directory for task %s\n", name);
+        vmm_kernel_free(
+            (void*)task->kernel_stack_alloc_base,
+            task->kernel_stack_alloc_size
+        );
+        tasks[task->pid] = NULL;
+        tasks_present--;
+        kfree(task);
+        abort(); // TODO: is abort needed here?
+        return NULL;
+    }
+    task->page_dir_virt = kernel_dir_clone;
+    task->page_dir_phys = paging_virt_to_phys(kernel_dir_clone);
 
-
+    // TODO: add support for usermode pages as well
     return task;
 }
 
@@ -213,9 +227,12 @@ void task_destroy(task_t* task)
         task->user_stack_size = 0;
     }
 
-    if (task->page_dir_virt != paging_get_kernel_directory()) {
-        // TODO: free page directory here when we create per-process page dirs
-        // paging_destroy_directory(task->page_dir_virt);
+    if (task->page_dir_virt != NULL &&
+        task->page_dir_virt != paging_get_kernel_directory()) {
+        // TODO: free usermode pages as well
+        pmm_free_page(task->page_dir_phys);
+        task->page_dir_virt = NULL;
+        task->page_dir_phys = 0;
     }
 
     // Free memory regions list
