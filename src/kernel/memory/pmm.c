@@ -1,5 +1,7 @@
+#include "stdlib.h"
 #include <kernel/memory/pmm.h>
 #include <kernel/multiboot2.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -149,6 +151,64 @@ static inline void buddy_mark_free(uint32_t page)
     uint32_t index = page / 32;
     uint32_t bit = page % 32;
     buddy_status_map[index] &= ~(1 << bit);
+}
+
+static inline uint16_t buddy_get_refcount(uint32_t page)
+{
+    if (page >= pmm_total_pages) {
+        return 0;
+    }
+    return buddy_refcount_map[page];
+}
+
+static inline void buddy_set_refcount(uint32_t page, uint16_t count)
+{
+    if (page < pmm_total_pages) {
+        buddy_refcount_map[page] = count;
+    }
+}
+
+static inline uint16_t buddy_inc_refcount(uint32_t page)
+{
+    if (page >= pmm_total_pages) {
+        return 0;
+    }
+    uint16_t current = buddy_refcount_map[page];
+    if (current == UINT16_MAX) {
+        // If at MAX, treat as permanently shared
+        return UINT16_MAX;
+    }
+    buddy_refcount_map[page] = current + 1;
+    return current + 1;
+}
+
+static inline uint16_t buddy_dec_refcount(uint32_t page)
+{
+    if (page >= pmm_total_pages) {
+        return 0;
+    }
+    uint16_t current = buddy_refcount_map[page];
+    if (current == 0) {
+        printf(
+            "ERR: attemted to decrement refcount for free page %u\n", page
+        );
+        abort(); // TODO: is abort needed here?
+        return 0;
+    }
+    if (current == UINT16_MAX) {
+        // If at MAX, treat as permanently shared
+        return UINT16_MAX;
+    }
+    buddy_refcount_map[page] = current - 1;
+    return current - 1;
+}
+
+static inline uint16_t buddy_is_page_shared(uint32_t page)
+{
+    if (page >= pmm_total_pages) {
+        return 0;
+    }
+    return buddy_refcount_map[page] >= 2;
 }
 
 // ============================================================================
