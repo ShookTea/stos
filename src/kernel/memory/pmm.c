@@ -312,8 +312,6 @@ static void buddy_remove_from_free_list(uint32_t addr, uint8_t order)
     }
 }
 
-
-
 // ============================================================================
 // Core Buddy Allocator Operations
 // ============================================================================
@@ -457,10 +455,29 @@ static void buddy_free_order(uint32_t addr, uint8_t order)
         return;
     }
 
+    uint32_t pages_in_block = 1 << order;
+
+    // Check if any page in the block still has references
+    for (uint32_t i = 0; i < pages_in_block; i++) {
+        uint16_t refcount = buddy_get_refcount(page + i);
+        if (refcount > 1) {
+            printf(
+                "ERR: cannot free block at %#x (order %u): ",
+                addr,
+                order
+            );
+            printf(
+                "page %u still has %u references\n",
+                page + i,
+                refcount
+            );
+            return;
+        }
+    }
+
     // Mark as free
     buddy_mark_free(page);
 
-    uint32_t pages_in_block = 1 << order;
     // Clear refcount for all pages in the block
     for (uint32_t i = 0; i < pages_in_block; i++) {
         buddy_set_refcount(page + i, 0);
