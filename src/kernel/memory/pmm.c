@@ -423,8 +423,12 @@ static uint32_t buddy_alloc_order(uint8_t order)
     buddy_set_order(page, order);
     buddy_mark_allocated(page);
 
-    // Update statistics
     uint32_t pages_in_block = 1 << order;
+    // Initialize ref count to 1 for all pages in the block.
+    for (uint32_t i = 0; i < pages_in_block; i++) {
+        buddy_set_refcount(page + i, 1);
+    }
+    // Update statistics
     pmm_used_pages += pages_in_block;
     buddy_alloc_count[order]++;
 
@@ -456,8 +460,12 @@ static void buddy_free_order(uint32_t addr, uint8_t order)
     // Mark as free
     buddy_mark_free(page);
 
-    // Update statistics
     uint32_t pages_in_block = 1 << order;
+    // Clear refcount for all pages in the block
+    for (uint32_t i = 0; i < pages_in_block; i++) {
+        buddy_set_refcount(page + i, 0);
+    }
+    // Update statistics
     pmm_used_pages -= pages_in_block;
 
     // Decrement allocation count (with underflow protection)
