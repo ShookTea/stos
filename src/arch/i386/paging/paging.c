@@ -647,68 +647,93 @@ static page_table_t* paging_clone_page_table(
     uint32_t user_stack_base,
     uint32_t user_stack_size
 ) {
-  if (src_pt == NULL) {
-      return NULL;
-  }
+    if (src_pt == NULL) {
+        return NULL;
+    }
 
-  // Allocate new page table
-  uint32_t dst_pt_phys = pmm_alloc_page();
-  if (dst_pt_phys == 0) {
-      printf("PAGING: failed to allocate page table for cloning\n");
-      abort(); // TODO: is abort() needed here?
-      return NULL;
-  }
+    // Allocate new page table
+    uint32_t dst_pt_phys = pmm_alloc_page();
+    if (dst_pt_phys == 0) {
+        printf("PAGING: failed to allocate page table for cloning\n");
+        abort(); // TODO: is abort() needed here?
+        return NULL;
+    }
 
-  page_table_t* dst_pt = (page_table_t*)phys_to_virt_internal(dst_pt_phys);
-  memset(dst_pt, 0, sizeof(page_table_t));
+    page_table_t* dst_pt = (page_table_t*)phys_to_virt_internal(dst_pt_phys);
+    memset(dst_pt, 0, sizeof(page_table_t));
 
-  // Clone each entry
-  for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
-      page_table_entry_t* src_pte = &src_pt->entries[i];
-      page_table_entry_t* dst_pte = &dst_pt->entries[i];
-      if (!src_pte->present) {
-          // Skip non-present pages
-          continue;
-      }
+    // Clone each entry
+    for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
+        page_table_entry_t* src_pte = &src_pt->entries[i];
+        page_table_entry_t* dst_pte = &dst_pt->entries[i];
+        if (!src_pte->present) {
+            // Skip non-present pages
+            continue;
+        }
 
-      uint32_t virt = start_virt + (i * PAGE_SIZE);
-      // Determine if this is a stack page
-      uint32_t stack_end = user_stack_base - user_stack_size;
-      bool is_stack_page = (virt >= stack_end && virt < user_stack_base);
+        uint32_t virt = start_virt + (i * PAGE_SIZE);
+        // Determine if this is a stack page
+        uint32_t stack_end = user_stack_base - user_stack_size;
+        bool is_stack_page = (virt >= stack_end && virt < user_stack_base);
 
-      if (is_stack_page) {
-          // Stack pages are always physically copied
-          uint32_t new_phys = pmm_alloc_page();
-          if (dst_pt_phys == 0) {
-              printf(
-                  "Failed to allocate page table for stack clone at %#x\n",
-                  virt
-              );
-              pmm_free_page(dst_pt_phys);
-              // TODO: cleanup already allocated pages
-              abort(); // TODO: is abort() needed here?
-              return NULL;
-          }
+        if (is_stack_page) {
+            // Stack pages are always physically copied
+            uint32_t new_phys = pmm_alloc_page();
+            if (dst_pt_phys == 0) {
+                printf(
+                    "Failed to allocate page table for stack clone at %#x\n",
+                    virt
+                );
+                pmm_free_page(dst_pt_phys);
+                // TODO: cleanup already allocated pages
+                abort(); // TODO: is abort() needed here?
+                return NULL;
+            }
 
-          uint32_t src_phys = src_pte->frame << 12;
-          void* src_page = phys_to_virt_internal(src_phys);
-          void* dst_page = phys_to_virt_internal(new_phys);
-          memcpy(dst_page, src_page, PAGE_SIZE);
-          *dst_pte = *src_pte;
-          dst_pte->frame = new_phys >> 12;
-      } else {
-          // Data/heap pages use copy-on-write - mark as COW and read-only
-          *dst_pte = *src_pte;
-          src_pte->rw = 0;
-          src_pte->available |= (PAGE_COW >> 9);
-          dst_pte->rw = 0;
-          dst_pte->available |= (PAGE_COW >> 9);
+            uint32_t src_phys = src_pte->frame << 12;
+            void* src_page = phys_to_virt_internal(src_phys);
+            void* dst_page = phys_to_virt_internal(new_phys);
+            memcpy(dst_page, src_page, PAGE_SIZE);
+            *dst_pte = *src_pte;
+            dst_pte->frame = new_phys >> 12;
+        } else {
+            // Data/heap pages use copy-on-write - mark as COW and read-only
 
-          // TODO: implement reference counting for physical pages
-      }
-  }
+            uint32_t phys = src_pte->frame << 12; // shared phys address
+            uint16_t refcount = pmm_inc_refcount(phys);
+            if (refcount == 0) {
+                printf("Failed to increment refcount for page %#x\n", phys);
+                // Cleanup and retrun NULL
+                for (uint32_t j = 0; j < i; j++) {
+                    if (dst_pt->entries[j].present) {
+                        uint32_t cleanup_phys = dst_pt->entries[j].frame << 12;
+                        bool is_cow = (dst_pt->entries[j].available & 1) != 0;
+                        if (is_cow) {
+                            pmm_dec_refcount(cleanup_phys);
+                        } else {
+                            pmm_free_page(cleanup_phys);
+                        }
+                    }
+                }
+                pmm_free_page(dst_pt_phys);
+                abort(); // TODO: is abort needed here?
+                return NULL;
+            }
 
-  return dst_pt;
+            *dst_pte = *src_pte;
+            src_pte->rw = 0;
+            src_pte->available |= (PAGE_COW >> 9);
+            dst_pte->rw = 0;
+            dst_pte->available |= (PAGE_COW >> 9);
+
+            if (refcount == 2) {
+                // For debugging. TODO: remove it.
+                printf("PAGING: Page %#x now shared\n", phys);
+            }
+        }
+    }
+
+    return dst_pt;
 }
 
 void* paging_clone_directory(
