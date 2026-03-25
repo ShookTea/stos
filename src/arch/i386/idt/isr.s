@@ -91,6 +91,8 @@ isr_no_err_stub 45 # IRQ 13 FPU / coprocessor / inter-processor
 isr_no_err_stub 46 # IRQ 14 Primary ATA hard disk
 isr_no_err_stub 47 # IRQ 15 Secondary ATA hard disk
 
+isr_no_err_stub 128 # syscall (int 0x80)
+
 .globl isr_stub_table
 isr_stub_table:
     .long isr_stub_0
@@ -141,3 +143,4 @@ isr_stub_table:
     .long isr_stub_45
     .long isr_stub_46
     .long isr_stub_47
+    .long isr_stub_128

@@ -40,6 +40,9 @@ void init_idt(void)
         idt_set_descriptor(vector, isr_stub_table[vector], 0x8E);
         vectors[vector] = true;
     }
+    // Add syscall descriptor, placed at the end of isr_stub_table
+    // TODO: switch flags from 0x8E to 0xEE for actual usermode support
+    idt_set_descriptor(0x80, isr_stub_table[total_vectors], 0x8E);
 
     // Load the new IDT
     __asm__ volatile ("lidt %0" : : "m"(idt_ptr));
@@ -95,10 +98,10 @@ static void handle_page_fault(registers_t* registers)
     printf("Cannot recover from page fault.\n");
     printf("System halted.\n");
     printf("========================================\n");
-    
+
     // Print statistics before halting
     page_fault_print_stats();
-    
+
     __asm__ volatile ("cli; hlt");
 }
 
@@ -108,7 +111,10 @@ static void handle_page_fault(registers_t* registers)
  */
 void exception_handler(registers_t* registers)
 {
-    if (registers->int_no >= IDT_IRQ_INTERRUPT_SHIFT) {
+    if (registers->int_no == 0x80) {
+        printf("Syscall received");
+    }
+    else if (registers->int_no >= IDT_IRQ_INTERRUPT_SHIFT) {
         uint8_t irq_number = registers->int_no - IDT_IRQ_INTERRUPT_SHIFT;
         if (irq_int_handlers[irq_number] != 0) {
             (irq_int_handlers[irq_number])(registers);

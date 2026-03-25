@@ -78,5 +78,20 @@ void kernel_main()
         scheduler_add_task(debugger);
     }
 
+    uint32_t result;
+    __asm__ volatile (
+        "movl $100, %%eax\n"
+        "movl $200, %%ecx\n"
+        "movl $300, %%edx\n"
+        "movl $400, %%ebx\n"
+        "int $0x80\n"
+        "movl %%eax, %0\n"
+        : "=r" (result)
+        :
+        : "eax", "ecx", "edx", "ebx"
+    );
+
+    printf("Syscall test completed, returned: %u\n", result);
+
     while (1) {}
 }
