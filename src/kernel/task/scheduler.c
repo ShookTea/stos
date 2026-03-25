@@ -319,8 +319,18 @@ void scheduler_remove_task(task_t* task)
     task_t* queue = NULL;
     switch (task->state) {
         case TASK_WAITING: queue = waiting_queue; break;
+        case TASK_BLOCKED: queue = blocked_queue; break;
+        case TASK_SLEEPING: queue = sleeping_queue; break;
+        case TASK_ZOMBIE: queue = zombie_queue; break;
+        // I think there's no need to do anything in case of dead tasks,
+        // because they're going to be cleaned up automatically anyway
+        case TASK_DEAD: return;
+        case TASK_RUNNING:
+            // TODO: what should we really do here?
+            puts("Attempted to remove running task");
+            abort();
+            break;
         default: break;
-        // TODO: handle other queues
     }
 
     if (queue == NULL) {
