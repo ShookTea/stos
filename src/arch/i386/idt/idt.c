@@ -44,6 +44,7 @@ void init_idt(void)
         vectors[vector] = true;
     }
     // Add syscall descriptor, placed at the end of isr_stub_table
+    // Using 0xEE flags to set CPL=3
     idt_set_descriptor(0x80, isr_stub_table[total_vectors], 0xEE);
 
     // Load the new IDT
