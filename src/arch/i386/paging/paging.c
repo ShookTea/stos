@@ -643,7 +643,7 @@ void* paging_get_kernel_directory()
  */
 static page_table_t* paging_clone_page_table(
     page_table_t* src_pt,
-    uint32_t start_virt,
+    uint32_t pd_index,
     uint32_t user_stack_base,
     uint32_t user_stack_size
 ) {
@@ -662,6 +662,9 @@ static page_table_t* paging_clone_page_table(
     page_table_t* dst_pt = (page_table_t*)phys_to_virt_internal(dst_pt_phys);
     memset(dst_pt, 0, sizeof(page_table_t));
 
+    // Calculate virt. addr. range for this page table
+    uint32_t pt_virt_base = pd_index * (1024 * PAGE_SIZE);
+
     // Clone each entry
     for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
         page_table_entry_t* src_pte = &src_pt->entries[i];
@@ -671,10 +674,13 @@ static page_table_t* paging_clone_page_table(
             continue;
         }
 
-        uint32_t virt = start_virt + (i * PAGE_SIZE);
+        uint32_t virt = pt_virt_base + (i * PAGE_SIZE);
         // Determine if this is a stack page
-        uint32_t stack_end = user_stack_base - user_stack_size;
-        bool is_stack_page = (virt >= stack_end && virt < user_stack_base);
+        uint32_t stack_start = user_stack_base;
+        uint32_t stack_end = user_stack_base + user_stack_size;
+        bool is_stack_page = user_stack_size > 0
+            && virt >= stack_start
+            && virt < stack_end;
 
         if (is_stack_page) {
             // Stack pages are always physically copied
@@ -690,13 +696,27 @@ static page_table_t* paging_clone_page_table(
                 return NULL;
             }
 
-            uint32_t src_phys = src_pte->frame << 12;
-            void* src_page = phys_to_virt_internal(src_phys);
-            void* dst_page = phys_to_virt_internal(new_phys);
-            memcpy(dst_page, src_page, PAGE_SIZE);
-            *dst_pte = *src_pte;
-            dst_pte->frame = new_phys >> 12;
-        } else {
+            // If source page exists, copy it, otherwise zero it
+            if (src_pte->present) {
+                uint32_t src_phys = src_pte->frame << 12;
+                void* src_page = phys_to_virt_internal(src_phys);
+                void* dst_page = phys_to_virt_internal(new_phys);
+                memcpy(dst_page, src_page, PAGE_SIZE);
+                *dst_pte = *src_pte;
+                dst_pte->frame = new_phys >> 12;
+            } else {
+                void* dst_page = phys_to_virt_internal(new_phys);
+                memset(dst_page, 0, PAGE_SIZE);
+                // Set up PTE for usermode stack
+                dst_pte->present = 1;
+                dst_pte->rw = 1;
+                dst_pte->user = 1;
+                dst_pte->frame = new_phys >> 12;
+            }
+
+            // Ensure user flag is set for stack pages
+            dst_pte->user = 1;
+        } else if (src_pte->present) {
             // Data/heap pages use copy-on-write - mark as COW and read-only
 
             uint32_t phys = src_pte->frame << 12; // shared phys address
@@ -731,6 +751,8 @@ static page_table_t* paging_clone_page_table(
                 printf("PAGING: Page %#x now shared\n", phys);
             }
         }
+        // else: paging is not present in source and not a stack page
+        // leave as zero
     }
 
     return dst_pt;
