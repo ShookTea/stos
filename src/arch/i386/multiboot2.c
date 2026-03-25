@@ -81,7 +81,9 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                     (multiboot_tag_boot_command_line_t*)tag;
                 size_t len = strlen(cl->command_line);
                 if (len > 64) len = 64;
+                memset(boot_command_line, 0, 64);
                 memcpy(boot_command_line, cl->command_line, len);
+                boot_command_line[63] = 0;
                 break;
             }
             case MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME: {
@@ -89,7 +91,9 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                     (multiboot_tag_boot_loader_name_t*)tag;
                 size_t len = strlen(bln->name);
                 if (len > 64) len = 64;
+                memset(boot_loader_name, 0, 64);
                 memcpy(boot_loader_name, bln->name, len);
+                boot_loader_name[63] = 0;
                 break;
             }
             case MULTIBOOT2_TAG_TYPE_LOAD_BASE_ADDR:
