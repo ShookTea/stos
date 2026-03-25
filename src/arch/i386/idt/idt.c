@@ -1,8 +1,10 @@
 #include "idt.h"
 #include <stdbool.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <kernel/paging.h>
 #include <kernel/page_fault.h>
+#include <kernel/task/syscall_handler.h>
 #include "pic.h"
 
 // An array of IDT entries
@@ -14,6 +16,7 @@ static bool vectors[IDT_MAX_DESCRIPTORS];
 extern void* isr_stub_table[];
 
 static int_handler_t irq_int_handlers[16];
+static syscall_int_handler_t syscall_int_handler;
 
 static void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags)
 {
@@ -112,7 +115,18 @@ static void handle_page_fault(registers_t* registers)
 void exception_handler(registers_t* registers)
 {
     if (registers->int_no == 0x80) {
-        printf("Syscall received");
+        if (syscall_int_handler != NULL) {
+            uint32_t result = syscall_int_handler(
+                registers->eax,
+                registers->ecx,
+                registers->edx,
+                registers->ebx
+            );
+            // Return value in EAX
+            registers->eax = result;
+        } else {
+            puts("Received unhandled syscall interrupt 0x80");
+        }
     }
     else if (registers->int_no >= IDT_IRQ_INTERRUPT_SHIFT) {
         uint8_t irq_number = registers->int_no - IDT_IRQ_INTERRUPT_SHIFT;
@@ -140,4 +154,9 @@ void exception_handler(registers_t* registers)
 void idt_register_irq_handler(uint8_t int_number, int_handler_t handler)
 {
     irq_int_handlers[int_number] = handler;
+}
+
+void syscall_handler_register(syscall_int_handler_t handler)
+{
+    syscall_int_handler = handler;
 }
