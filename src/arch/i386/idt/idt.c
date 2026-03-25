@@ -108,27 +108,32 @@ static void handle_page_fault(registers_t* registers)
     __asm__ volatile ("cli; hlt");
 }
 
+uint32_t syscall_handler_wrapper(
+    uint32_t arg0,
+    uint32_t arg1,
+    uint32_t arg2,
+    uint32_t arg3
+) {
+    if (syscall_int_handler != NULL) {
+        return syscall_int_handler(
+            arg0,
+            arg1,
+            arg2,
+            arg3
+        );
+    } else {
+        puts("Received unhandled syscall interrupt 0x80");
+        return 0;
+    }
+}
+
 /**
  * General exception handler
  * Handles IRQs and CPU exceptions, with special handling for page faults
  */
 void exception_handler(registers_t* registers)
 {
-    if (registers->int_no == 0x80) {
-        if (syscall_int_handler != NULL) {
-            uint32_t result = syscall_int_handler(
-                registers->eax,
-                registers->ecx,
-                registers->edx,
-                registers->ebx
-            );
-            // Return value in EAX
-            registers->eax = result;
-        } else {
-            puts("Received unhandled syscall interrupt 0x80");
-        }
-    }
-    else if (registers->int_no >= IDT_IRQ_INTERRUPT_SHIFT) {
+    if (registers->int_no >= IDT_IRQ_INTERRUPT_SHIFT) {
         uint8_t irq_number = registers->int_no - IDT_IRQ_INTERRUPT_SHIFT;
         if (irq_int_handlers[irq_number] != 0) {
             (irq_int_handlers[irq_number])(registers);
