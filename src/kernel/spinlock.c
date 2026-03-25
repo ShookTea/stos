@@ -1,4 +1,4 @@
-#include "spinlock.h"
+#include <kernel/spinlock.h>
 
 void spinlock_acquire(spinlock_t* lock) {
     // Save interrupt flags
