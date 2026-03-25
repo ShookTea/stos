@@ -44,8 +44,7 @@ void init_idt(void)
         vectors[vector] = true;
     }
     // Add syscall descriptor, placed at the end of isr_stub_table
-    // TODO: switch flags from 0x8E to 0xEE for actual usermode support
-    idt_set_descriptor(0x80, isr_stub_table[total_vectors], 0x8E);
+    idt_set_descriptor(0x80, isr_stub_table[total_vectors], 0xEE);
 
     // Load the new IDT
     __asm__ volatile ("lidt %0" : : "m"(idt_ptr));
