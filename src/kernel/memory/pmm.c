@@ -1,4 +1,4 @@
-#include "../spinlock.h"
+#include <kernel/spinlock.h>
 #include "stdlib.h"
 #include <kernel/memory/pmm.h>
 #include <kernel/multiboot2.h>
