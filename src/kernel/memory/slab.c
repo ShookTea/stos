@@ -330,6 +330,7 @@ void* slab_alloc(size_t size) {
         return NULL;
     }
 
+    spinlock_acquire(&cache->lock);
     slab_t* slab = NULL;
 
     // Try to allocate from partial slabs first
@@ -344,6 +345,7 @@ void* slab_alloc(size_t size) {
     else {
         slab = slab_create_slab(cache);
         if (!slab) {
+            spinlock_release(&cache->lock);
             return NULL;
         }
     }
@@ -367,6 +369,7 @@ void* slab_alloc(size_t size) {
         slab_update_lists(slab);
     }
 
+    spinlock_release(&cache->lock);
     return ptr;
 }
 
@@ -411,10 +414,12 @@ bool slab_free(void* ptr) {
     }
 
     slab_cache_t* cache = slab->cache;
+    spinlock_acquire(&cache->lock);
 
     // Free object back to slab
     if (!slab_free_to_slab(slab, ptr)) {
         // Double-free detected, don't update statistics
+        spinlock_release(&cache->lock);
         return false;
     }
 
@@ -439,6 +444,7 @@ bool slab_free(void* ptr) {
         }
     }
 
+    spinlock_release(&cache->lock);
     return true;
 }
 

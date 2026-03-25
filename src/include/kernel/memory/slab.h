@@ -1,6 +1,7 @@
 #ifndef KERNEL_MEMORY_SLAB_H
 #define KERNEL_MEMORY_SLAB_H
 
+#include "kernel/spinlock.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -79,6 +80,9 @@ typedef struct slab_cache {
     uint32_t num_allocations;       // Total allocations from this cache
     uint32_t num_frees;             // Total frees to this cache
     uint32_t num_active_objects;    // Currently allocated objects
+
+    // Each slab cache has its own lock for better parallelism
+    spinlock_t lock;
 } slab_cache_t;
 
 /**
