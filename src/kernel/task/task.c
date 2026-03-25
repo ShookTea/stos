@@ -1,5 +1,6 @@
 #include "task.h"
 #include "kernel/memory/pmm.h"
+#include "kernel/spinlock.h"
 #include "scheduler.h"
 #include <kernel/memory/vmm.h>
 #include <stdio.h>
@@ -16,6 +17,7 @@ static task_t** tasks = NULL;
 static size_t tasks_length = 0;
 // The number of tasks that weren't destroyed yet
 static size_t tasks_present = 0;
+static spinlock_t task_list_lock = SPINLOCK_INIT;
 
 #define KERNEL_STACK_SIZE (16 * 1024) // 16 KiB
 #define GUARD_PAGE_SIZE (4 * 1024)
@@ -115,6 +117,7 @@ static void task_setup_initial_stack(
  */
 static task_t* task_allocate(const char* name)
 {
+    spinlock_acquire(&task_list_lock);
     // Allocate task data in memory
     task_t* task = kmalloc_flags(sizeof(task_t), KMALLOC_ZERO);
     strncpy(task->name, name, sizeof(task->name) - 1);
@@ -147,6 +150,7 @@ static task_t* task_allocate(const char* name)
         }
     }
 
+    spinlock_release(&task_list_lock);
     return task;
 }
 
@@ -251,8 +255,10 @@ void task_destroy(task_t* task)
     task->memory_regions = NULL;
 
     // Free task entry
+    spinlock_acquire(&task_list_lock);
     tasks[task->pid] = NULL;
     tasks_present--;
+    spinlock_release(&task_list_lock);
 
     // Dellocate memory for task
     kfree(task);
@@ -268,15 +274,18 @@ task_t* task_get_task_by_index(size_t index)
     if (index >= tasks_present) {
         return NULL;
     }
+    spinlock_acquire(&task_list_lock);
     size_t found = 0;
     for (size_t i = 0; i < tasks_length; i++) {
         if (tasks[i] != NULL) {
             if (found == index) {
+                spinlock_release(&task_list_lock);
                 return tasks[i];
             }
             found++;
         }
     }
+    spinlock_release(&task_list_lock);
     return NULL;
 }
 
@@ -285,11 +294,14 @@ task_t* task_get_task_by_index(size_t index)
  */
 task_t* task_get_task_by_pid(uint32_t pid)
 {
+    spinlock_acquire(&task_list_lock);
     for (size_t i = 0; i < tasks_length; i++) {
         if (tasks[i] != NULL && tasks[i]->pid == pid) {
+            spinlock_release(&task_list_lock);
             return tasks[i];
         }
     }
+    spinlock_release(&task_list_lock);
     return NULL;
 }
 
