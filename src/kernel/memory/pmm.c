@@ -1,3 +1,4 @@
+#include "../spinlock.h"
 #include "stdlib.h"
 #include <kernel/memory/pmm.h>
 #include <kernel/multiboot2.h>
@@ -5,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+
+static spinlock_t pmm_lock = SPINLOCK_INIT;
 
 // External symbols from linker script
 extern uint32_t _kernel_start;
@@ -721,7 +724,10 @@ void pmm_set_paging_enabled(bool enabled)
 
 uint32_t pmm_alloc_page(void)
 {
-    return buddy_alloc_order(0);  // Order 0 = 1 page
+    spinlock_acquire(&pmm_lock);
+    uint32_t result = buddy_alloc_order(0);  // Order 0 = 1 page
+    spinlock_release(&pmm_lock);
+    return result;
 }
 
 uint32_t pmm_alloc_pages(size_t count)
@@ -730,23 +736,30 @@ uint32_t pmm_alloc_pages(size_t count)
         return 0;
     }
 
+    spinlock_acquire(&pmm_lock);
     uint8_t order = buddy_calculate_order(count);
-    return buddy_alloc_order(order);
+    uint32_t result = buddy_alloc_order(order);
+    spinlock_release(&pmm_lock);
+    return result;
 }
 
 void pmm_free_page(uint32_t addr)
 {
+    spinlock_acquire(&pmm_lock);
     uint32_t page = pmm_addr_to_page(addr);
     uint8_t order = buddy_get_order(page);
     buddy_free_order(addr, order);
+    spinlock_release(&pmm_lock);
 }
 
 void pmm_free_pages(uint32_t addr, size_t count __attribute__((unused)))
 {
+    spinlock_acquire(&pmm_lock);
     // Look up order from metadata instead of using count
     uint32_t page = pmm_addr_to_page(addr);
     uint8_t order = buddy_get_order(page);
     buddy_free_order(addr, order);
+    spinlock_release(&pmm_lock);
 }
 
 uint32_t pmm_get_total_memory(void)
@@ -850,19 +863,25 @@ bool pmm_is_allocated(uint32_t addr)
 
 uint16_t pmm_get_refcount(uint32_t phys_addr)
 {
+    spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
         printf("ERR: get_refcount called with unaligned addr %#x\n", phys_addr);
+        spinlock_release(&pmm_lock);
         return 0;
     }
 
     uint32_t page = pmm_addr_to_page(phys_addr);
-    return buddy_get_refcount(page);
+    uint16_t result = buddy_get_refcount(page);
+    spinlock_release(&pmm_lock);
+    return result;
 }
 
 uint16_t pmm_inc_refcount(uint32_t phys_addr)
 {
+    spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
         printf("ERR: inc_refcount called with unaligned addr %#x\n", phys_addr);
+        spinlock_release(&pmm_lock);
         return 0;
     }
 
@@ -870,16 +889,21 @@ uint16_t pmm_inc_refcount(uint32_t phys_addr)
     if (!buddy_is_allocated(page)) {
         printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
         abort(); // TODO: is abort() needed here?
+        spinlock_release(&pmm_lock);
         return 0;
     }
 
-    return buddy_inc_refcount(page);
+    uint16_t result = buddy_inc_refcount(page);
+    spinlock_release(&pmm_lock);
+    return result;
 }
 
 uint16_t pmm_dec_refcount(uint32_t phys_addr)
 {
+    spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
         printf("ERR: dec_refcount called with unaligned addr %#x\n", phys_addr);
+        spinlock_release(&pmm_lock);
         return 0;
     }
 
@@ -887,19 +911,26 @@ uint16_t pmm_dec_refcount(uint32_t phys_addr)
     if (!buddy_is_allocated(page)) {
         printf("ERR: dec_refcount called on free page %#x\n", phys_addr);
         abort(); // TODO: is abort() needed here?
+        spinlock_release(&pmm_lock);
         return 0;
     }
 
-    return buddy_dec_refcount(page);
+    uint16_t result = buddy_dec_refcount(page);
+    spinlock_release(&pmm_lock);
+    return result;
 }
 
 bool pmm_is_shared(uint32_t phys_addr)
 {
+    spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
         printf("ERR: is_shared called with unaligned addr %#x\n", phys_addr);
+        spinlock_release(&pmm_lock);
         return false;
     }
 
     uint32_t page = pmm_addr_to_page(phys_addr);
-    return buddy_is_page_shared(page);
+    bool result = buddy_is_page_shared(page);
+    spinlock_release(&pmm_lock);
+    return result;
 }
