@@ -241,7 +241,7 @@ vfs_node_t* vfs_resolve(char* abs_path)
     for (size_t i = 0; i < part_count; i++) {
         current_node = vfs_finddir(current_node, parts[i]);
         if (current_node == NULL) {
-            return NULL;
+            break;
         }
     }
 
