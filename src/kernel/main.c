@@ -15,6 +15,7 @@
 #include "kernel/vfs/vfs.h"
 #include "task/scheduler.h"
 #include "task/task.h"
+#include "task/syscall.h"
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"
@@ -66,8 +67,9 @@ void kernel_main()
     ps2_init();
     keyboard_init();
 
-    // Initialize multitasking scheduler
+    // Initialize multitasking scheduler & syscall handling
     scheduler_init();
+    syscall_init();
 
     puts("\n=== Kernel Initialization Complete ===");
     puts("All subsystems initialized and tested successfully");
