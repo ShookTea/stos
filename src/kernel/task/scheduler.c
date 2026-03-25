@@ -4,7 +4,10 @@
 #include <kernel/memory/tss.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "kernel/spinlock.h"
 #include "task.h"
+
+static spinlock_t scheduler_lock = SPINLOCK_INIT;
 
 static uint8_t scheduler_tick_count = 0;
 static scheduler_stats_t* scheduler_stats;
@@ -107,6 +110,7 @@ void scheduler_move_task_to_state(task_t* task, task_state_t new_state)
     if (task == NULL) {
         return;
     }
+    spinlock_acquire(&scheduler_lock);
 
     // Update statistics for old state
     switch (task->state) {
@@ -148,6 +152,7 @@ void scheduler_move_task_to_state(task_t* task, task_state_t new_state)
     }
 
     add_to_queue(task);
+    spinlock_release(&scheduler_lock);
 }
 
 /**
