@@ -21,6 +21,9 @@ static spinlock_t task_list_lock = SPINLOCK_INIT;
 
 #define KERNEL_STACK_SIZE (16 * 1024) // 16 KiB
 #define GUARD_PAGE_SIZE (4 * 1024)
+#define USER_STACK_SIZE (8 * 1024) // 8 KiB
+#define USER_STACK_TOP (VMM_USER_END - PAGE_SIZE)
+#define USER_STACK_BASE (USER_STACK_TOP - USER_STACK_SIZE)
 
 /**
  * This function is never called directly, but it's a return address for a task.
@@ -175,6 +178,17 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
     task->kernel_stack_base = (uint32_t)allocation + GUARD_PAGE_SIZE;
     task->kernel_stack_alloc_size = KERNEL_STACK_SIZE + GUARD_PAGE_SIZE;
     task->kernel_stack_alloc_base = (uint32_t)allocation;
+
+    // Allocate user stack for usermode tasks
+    if (is_kernel) {
+        task->user_stack_base = 0;
+        task->user_stack_size = 0;
+    } else {
+        task->user_stack_size = USER_STACK_SIZE;
+        task->user_stack_base = USER_STACK_BASE;
+        // Physical pages will be allocated by page directory cloning with COW
+    }
+
     task_setup_initial_stack(task, entrypoint, is_kernel);
 
     // Set initial state
