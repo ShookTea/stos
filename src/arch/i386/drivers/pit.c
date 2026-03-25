@@ -4,6 +4,7 @@
 #include "../idt/idt.h"
 #include "../idt/pic.h"
 #include "../io.h"
+#include "kernel/spinlock.h"
 
 #define PIT_INPUT_CLOCK_FREQUENCY 1193180
 #define PIT_COMMAND_PORT 0x43
@@ -22,15 +23,25 @@ static struct timeout_entries {
     bool active;
 } timeouts[PIT_TIMEOUT_CALLBACK_SIZE];
 
+static spinlock_t pit_lock = SPINLOCK_INIT;
+
 static void pit_timer_callback()
 {
+    spinlock_acquire(&pit_lock);
     tick++;
     for (int i = 0; i < PIT_TIMEOUT_CALLBACK_SIZE; i++) {
         if (timeouts[i].active && tick >= timeouts[i].expire_tick) {
             timeouts[i].active = false;
-            timeouts[i].callback(timeouts[i].data);
+            timeout_callback_t cb = timeouts[i].callback;
+            void* data = timeouts[i].data;
+
+            // Run callback outside the lock
+            spinlock_release(&pit_lock);
+            cb(data);
+            spinlock_acquire(&pit_lock);
         }
     }
+    spinlock_release(&pit_lock);
 }
 
 int pit_register_timeout(
@@ -38,6 +49,7 @@ int pit_register_timeout(
     timeout_callback_t callback,
     void* data
 ) {
+    spinlock_acquire(&pit_lock);
     int id = -1;
     for (int i = 0; i < PIT_TIMEOUT_CALLBACK_SIZE; i++) {
         if (!timeouts[i].active) {
@@ -45,22 +57,26 @@ int pit_register_timeout(
             break;
         }
     }
-    if (id == -1) {
-        return id;
+    if (id != -1) {
+        timeouts[id].expire_tick = tick + ms;
+        timeouts[id].callback = callback;
+        timeouts[id].data = data;
+        timeouts[id].active = true;
     }
-    timeouts[id].expire_tick = tick + ms;
-    timeouts[id].callback = callback;
-    timeouts[id].data = data;
-    timeouts[id].active = true;
+
+    spinlock_release(&pit_lock);
     return id;
 }
 
 void pit_cancel_timeout(int id)
 {
-    if (id < 0 || id >= PIT_TIMEOUT_CALLBACK_SIZE) {
-        return;
+    spinlock_acquire(&pit_lock);
+
+    if (id >= 0 && id < PIT_TIMEOUT_CALLBACK_SIZE) {
+        timeouts[id].active = false;
     }
-    timeouts[id].active = false;
+
+    spinlock_release(&pit_lock);
 }
 
 void pit_init()
