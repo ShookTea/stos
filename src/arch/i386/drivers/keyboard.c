@@ -1,3 +1,4 @@
+#include "kernel/spinlock.h"
 #include "stdlib.h"
 #include <kernel/drivers/keyboard.h>
 #include <kernel/drivers/ps2.h>
@@ -18,6 +19,7 @@
 
 #define KEYBOARD_LISTENERS_COUNT 32
 
+static spinlock_t keyboard_lock = SPINLOCK_INIT;
 static bool keyboard_on_port2 = false;
 static bool initialized = false;
 
@@ -43,6 +45,7 @@ static uint8_t buffer_pos = 0;
 
 int keyboard_register_listener(keyboard_callback_t callback)
 {
+    spinlock_acquire(&keyboard_lock);
     int id = -1;
     for (int i = 0; i < KEYBOARD_LISTENERS_COUNT; i++) {
         if (!listeners[i].active) {
@@ -50,20 +53,22 @@ int keyboard_register_listener(keyboard_callback_t callback)
             break;
         }
     }
-    if (id == -1) {
-        return id;
+    if (id != -1) {
+        listeners[id].callback = callback;
+        listeners[id].active = true;
     }
-    listeners[id].callback = callback;
-    listeners[id].active = true;
+
+    spinlock_release(&keyboard_lock);
     return id;
 }
 
 void keyboard_remove_listener(int id)
 {
-    if (id < 0 || id >= KEYBOARD_LISTENERS_COUNT) {
-        return;
+    spinlock_acquire(&keyboard_lock);
+    if (id >= 0 && id < KEYBOARD_LISTENERS_COUNT) {
+        listeners[id].active = false;
     }
-    listeners[id].active = false;
+    spinlock_release(&keyboard_lock);
 }
 
 /**
