@@ -1,3 +1,4 @@
+#include "kernel/spinlock.h"
 #include <kernel/vfs/vfs.h>
 
 #include <stddef.h>
@@ -24,6 +25,8 @@ static uint32_t file_handles_size = 0;
 // - if equal to file_handles_size, we need to increase size of file_handles
 static uint32_t file_handles_open_count = 0;
 
+static spinlock_t vfs_lock = SPINLOCK_INIT;
+
 /**
  * Allocate a new entry for file handle.
  */
@@ -31,6 +34,7 @@ static vfs_file_t* allocate_file_handle(
     vfs_node_t* node,
     uint8_t mode
 ) {
+    spinlock_acquire(&vfs_lock);
     vfs_file_t* handle = kmalloc_flags(sizeof(vfs_file_t), KMALLOC_ZERO);
     handle->node = node;
     handle->readable = mode & (VFS_MODE_READONLY | VFS_MODE_READWRITE);
@@ -55,6 +59,7 @@ static vfs_file_t* allocate_file_handle(
         file_handles[file_handles_open_count] = handle;
         handle->id = file_handles_open_count;
         file_handles_open_count++;
+        spinlock_release(&vfs_lock);
         return handle;
     } else {
         // There is some entry in the file_handles array that is empty and
@@ -69,6 +74,7 @@ static vfs_file_t* allocate_file_handle(
         }
     }
 
+    spinlock_release(&vfs_lock);
     return handle;
 }
 
@@ -77,8 +83,10 @@ static vfs_file_t* allocate_file_handle(
  */
 static void deallocate_file_handle(vfs_file_t* handle)
 {
+    spinlock_acquire(&vfs_lock);
     file_handles[handle->id] = NULL;
     file_handles_open_count--;
+    spinlock_release(&vfs_lock);
     kfree(handle);
 }
 
@@ -195,12 +203,16 @@ vfs_node_t* vfs_finddir(vfs_node_t* node, char* name)
 
 void vfs_mount_node(vfs_node_t* node)
 {
+    spinlock_acquire(&vfs_lock);
+
     if (mounted_notes_count >= VFS_MAX_MOUNTED_NODES) {
         return;
     }
 
     mounted_nodes[mounted_notes_count] = node;
     mounted_notes_count++;
+
+    spinlock_release(&vfs_lock);
 }
 
 vfs_node_t* vfs_resolve(char* abs_path)
