@@ -52,5 +52,34 @@ bool elf_validate(void* addr)
             return false;
     }
 
+    puts("PHT table:");
+    for (uint32_t phti = 0; phti < header->pht_num; phti++) {
+        elf_program_header_32bit_t* pht = (elf_program_header_32bit_t*)(
+            addr + header->pht_pointer + (header->pht_entry_size * phti)
+        );
+        if (pht->type == ELF_SEGMENT_TYPE_NULL) {
+            continue;
+        }
+        char* type;
+        char* flags = "   ";
+        switch (pht->type) {
+            case ELF_SEGMENT_TYPE_LOAD: type = "loadable"; break;
+            case ELF_SEGMENT_TYPE_DYNAMIC: type = "dynamic linking info"; break;
+            case ELF_SEGMENT_TYPE_INTERP: type = "interpreter info"; break;
+            case ELF_SEGMENT_TYPE_NOTE: type = "aux. info"; break;
+            default: type = "unrecognized"; return false;
+        }
+        flags[0] = pht->flags & ELF_SEGMENT_FLAGS_EXEC ? 'X' : ' ';
+        flags[1] = pht->flags & ELF_SEGMENT_FLAGS_WRITE ? 'W' : ' ';
+        flags[2] = pht->flags & ELF_SEGMENT_FLAGS_READ ? 'R' : ' ';
+        printf("[%02u] Type: [%s] %s\n", phti, flags, type);
+        printf("    offset: %#x\n", pht->offset);
+        printf("    vaddr:  %#x\n", pht->vaddr);
+        printf("    paddr:  %#x\n", pht->paddr);
+        printf("    filesz: %#x\n", pht->filesz);
+        printf("    memsz:  %#x\n", pht->memsz);
+        printf("    align:  %#x\n", pht->align);
+    }
+
     return true;
 }
