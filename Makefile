@@ -1,6 +1,6 @@
 # Directories and paths
 KERNEL_SRC_DIR := kernel
-LIBC_SRC_DIR := kernel/libc
+LIBC_SRC_DIR := libc
 BUILD_DIR := build
 LIBK_BUILD_DIR := build/lib
 
