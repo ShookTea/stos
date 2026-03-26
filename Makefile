@@ -82,7 +82,8 @@ $(LIBK_TARGET): $(LIBK_OBJS)
 # Temporary solution: just tar the grub.cfg file and few other files
 $(INITRD): $(KERNEL_SRC_DIR)/grub.cfg $(LIBC_SRC_DIR)/include/ctype.h $(LIBC_SRC_DIR)/include/stdio.h
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
-	tar -C $(KERNEL_SRC_DIR) -cf $@ grub.cfg libc/include/ctype.h libc/include/stdio.h
+	tar -C $(KERNEL_SRC_DIR) -cf $@ grub.cfg
+	tar -C $(LIBC_SRC_DIR) --append -f $@ include/ctype.h include/stdio.h
 
 clean:
 	rm -rf $(BUILD_DIR)
