@@ -27,7 +27,7 @@ then prints to the command line.
 ### Source code structure
 ```
 <root directory>
-└── src/                    # Main source directory 
+└── kernel/                 # Main source directory 
     ├── arch/               # Files specific to a specific infrastructure
     │   └── i386/
     ├── include/kernel/     # Common header files used by the kernel that are
