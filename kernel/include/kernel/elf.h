@@ -13,7 +13,7 @@
 #define ELF_OBJ_MACHINE_X86     0x0003 // x86
 
 typedef struct {
-    uint32_t magic; // 0x7F followed by "ELF" (0x45 0x4C 0x46)
+    uint8_t magic[4]; // 0x7F followed by "ELF" (0x45 0x4C 0x46)
     uint8_t class; // set to 1 for 32-bit, 2 for 64-bit format
     uint8_t endianness; // 1 for little endian, 2 for big endian
     uint8_t version; // 1 = current version of ELF
