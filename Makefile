@@ -2,9 +2,9 @@
 CC      := i686-elf-gcc
 AS      := i686-elf-as
 AR      := i686-elf-ar
-CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Isrc/libc/include -Isrc/include
+CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Ikernel/libc/include -Ikernel/include
 ASFLAGS := # asm flags if needed
-LDFLAGS := -T src/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000
+LDFLAGS := -T kernel/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000
 LIBK_CFLAGS := $(CFLAGS) -D__is_libk
 TARGET := build/stos
 LIB := build/lib/libk.a
@@ -13,7 +13,7 @@ INITRD := build/isodir/boot/stos.initrd
 QEMU_FLAGS := -m 512M -serial stdio -boot order=dc
 
 # Directories
-SRC_DIR := src
+SRC_DIR := kernel
 BUILD_DIR := build
 LIB_DIR := $(BUILD_DIR)/lib
 
@@ -42,10 +42,10 @@ qemu: $(TARGET).iso
 	qemu-system-i386 -cdrom $^ $(QEMU_FLAGS)
 
 # Make a bootable ISO file
-$(TARGET).iso: $(TARGET) src/grub.cfg $(INITRD)
+$(TARGET).iso: $(TARGET) $(SRC_DIR)/grub.cfg $(INITRD)
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
-	cp src/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
+	cp $(SRC_DIR)/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
 
 # Build all .c and .s source files and link them to the output file
@@ -77,9 +77,9 @@ $(LIB): $(LIBK_OBJS)
 
 # Building initrd memory by creating a tar file with all required files.
 # Temporary solution: just tar the grub.cfg file and few other files
-$(INITRD): src/grub.cfg src/libc/include/ctype.h src/libc/include/stdio.h
+$(INITRD): $(SRC_DIR)/grub.cfg $(SRC_DIR)/libc/include/ctype.h $(SRC_DIR)/libc/include/stdio.h
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
-	tar -C src -cf $@ grub.cfg libc/include/ctype.h libc/include/stdio.h
+	tar -C $(SRC_DIR) -cf $@ grub.cfg libc/include/ctype.h libc/include/stdio.h
 
 clean:
 	rm -rf $(BUILD_DIR)
