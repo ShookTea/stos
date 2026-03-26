@@ -38,5 +38,19 @@ bool elf_validate(void* addr)
         return false;
     }
 
+    puts("ELF header validation completed successfully.");
+
+    switch (header->obj_type) {
+        case ELF_OBJ_TYPE_EXEC:
+            puts("Type: executable file");
+            break;
+        case ELF_OBJ_TYPE_DYN:
+            puts("Type: shared object");
+            return false; // Not supported yet
+        default:
+            printf("Type: unknown (%#4x)\n", header->obj_type);
+            return false;
+    }
+
     return true;
 }
