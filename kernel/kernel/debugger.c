@@ -13,6 +13,7 @@
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
 #include <kernel/vfs/vfs.h>
+#include "kernel/elf.h"
 #include "task/scheduler.h"
 #include "task/task.h"
 #include "test/memory_leak_tests.h"
@@ -86,6 +87,7 @@ static void handle_command_sent()
     }
     if (strcmp(command, "help") == 0) {
         puts("Available commands:");
+        puts("  elf_dump [F]   - Dumps info about ELF file at path [F]");
         puts("  kmalloc_a [N]  - allocates [N] bytes with kmalloc");
         puts("  kmalloc_f [AD] - frees address [AD] with kfree");
         puts("  kmalloc_stats  - Prints kmalloc statistics");
@@ -108,6 +110,25 @@ static void handle_command_sent()
         puts("  vmm_memory_map - Prints detailed memory map");
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
+    }
+    else if (strcmp(command, "elf_dump") == 0) {
+        if (argcount != 1) {
+            puts("vfs_cat requires 1 argument");
+        } else {
+            vfs_node_t* node = vfs_resolve(args[0]);
+            if (node == NULL) {
+                puts("File or directory not found.");
+            } else if ((node->type & VFS_TYPE_FILE) == 0) {
+                puts("Found node, but it's not a file.");
+            } else {
+                void* file = kmalloc_flags(node->length, KMALLOC_ZERO);
+                vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
+                vfs_read(handle, node->length, file);
+                vfs_close(handle);
+                elf_validate(file);
+                kfree(file);
+            }
+        }
     }
     else if (strcmp(command, "kmalloc_a") == 0) {
         if (argcount != 1) {
