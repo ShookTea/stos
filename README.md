@@ -27,14 +27,15 @@ then prints to the command line.
 ### Source code structure
 ```
 <root directory>
-└── kernel/                 # Main source directory 
-│   ├── arch/               # Files specific to a specific infrastructure
+├── kernel/              # Main source directory 
+│   ├── arch/            # Files specific to a specific infrastructure
 │   │   └── i386/
-│   ├── include/kernel/     # Common header files used by the kernel that are
-│   │                       # implemented in the infra-specific code
-│   ├── kernel/             # Main source code of the kernel
-│   └── grub.cfg            # Bootloader configuration
-└── libc/include/           # implementation of libc standard library
+│   ├── include/kernel/  # Common header files used by the kernel that are
+│   │                    # implemented in the infra-specific code
+│   ├── kernel/          # Main source code of the kernel
+│   └── grub.cfg         # Bootloader configuration
+├── libc/include/        # implementation of libc standard library
+└── usermode/            # Usermode programs built and loaded into initrd
 ```
 
 ### What's implemented

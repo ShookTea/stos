@@ -1,8 +1,10 @@
 # Directories and paths
 KERNEL_SRC_DIR := kernel
 LIBC_SRC_DIR := libc
+USERMODE_SRC_DIR := usermode
 BUILD_DIR := build
-LIBK_BUILD_DIR := build/lib
+LIBK_BUILD_DIR := $(BUILD_DIR)/lib
+USERMODE_BUILD_DIR := $(BUILD_DIR)/usermode
 
 # Compiler / tools
 CC      := i686-elf-gcc
@@ -14,6 +16,9 @@ CFLAGS  := $(CFLAGS) -I$(KERNEL_SRC_DIR)/include
 ASFLAGS := # asm flags if needed
 LDFLAGS := -T kernel/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000
 LIBK_CFLAGS := $(CFLAGS) -D__is_libk
+USERMODE_CFLAGS := -std=gnu99 -O2 -Wall -Wextra -I$(LIBC_SRC_DIR)/include -ffreestanding
+USERMODE_LDFLAGS := -T $(USERMODE_SRC_DIR)/linker.ld -nostdlib -ffreestanding -lgcc
+
 TARGET := build/stos
 LIBK_TARGET := build/lib/libk.a
 INITRD := build/isodir/boot/stos.initrd
@@ -30,11 +35,19 @@ LIBK_C := $(shell find $(LIBC_SRC_DIR) -name '*.c')
 LIBK_S := $(shell find $(LIBC_SRC_DIR) -name '*.s')
 LIBK_SRCS := $(LIBK_C) $(LIBK_S)
 
+# Usermode files - each file is treated as its own program
+USERMODE_C := $(shell find $(USERMODE_SRC_DIR) -name '*.c')
+USERMODE_SRCS := $(USERMODE_C)
+
 # Convert e.g. kernel/foo/bar.c -> build/foo/bar.o
 KERNEL_OBJS := $(patsubst $(KERNEL_SRC_DIR)/%,$(BUILD_DIR)/%,$(KERNEL_SRCS:.c=.o))
 KERNEL_OBJS := $(patsubst $(KERNEL_SRC_DIR)/%,$(BUILD_DIR)/%,$(KERNEL_OBJS:.s=.o))
 LIBK_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBK_BUILD_DIR)/%,$(LIBK_SRCS:.c=.libk.o))
 LIBK_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBK_BUILD_DIR)/%,$(LIBK_OBJS:.s=.libk.o))
+USERMODE_OBJS := $(patsubst $(USERMODE_SRC_DIR)/%,$(USERMODE_BUILD_DIR)/%,$(USERMODE_SRCS:.c=.u.o))
+
+# Create usermode bin files (final ELF files after linking)
+USERMODE_BIN := $(patsubst $(USERMODE_BUILD_DIR)/%.u.o,$(USERMODE_BUILD_DIR)/%,$(USERMODE_OBJS))
 
 .PHONY: all clean qemu
 
@@ -80,10 +93,16 @@ $(LIBK_TARGET): $(LIBK_OBJS)
 
 # Building initrd memory by creating a tar file with all required files.
 # Temporary solution: just tar the grub.cfg file and few other files
-$(INITRD): $(KERNEL_SRC_DIR)/grub.cfg $(LIBC_SRC_DIR)/include/ctype.h $(LIBC_SRC_DIR)/include/stdio.h
+$(INITRD): $(USERMODE_BIN)
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
-	tar -C $(KERNEL_SRC_DIR) -cf $@ grub.cfg
-	tar -C $(LIBC_SRC_DIR) --append -f $@ include/ctype.h include/stdio.h
+	tar -C $(USERMODE_BUILD_DIR) -cf $@ $(notdir $(USERMODE_BIN))
+
+$(USERMODE_BUILD_DIR)/%: $(USERMODE_BUILD_DIR)/%.u.o
+	$(CC) -o $@ $^ $(USERMODE_LDFLAGS)
+
+$(USERMODE_BUILD_DIR)/%.u.o: $(USERMODE_SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(USERMODE_CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)
