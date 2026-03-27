@@ -1,7 +1,7 @@
-#include "task.h"
+#include <kernel/task/task.h>
 #include "kernel/memory/pmm.h"
 #include "kernel/spinlock.h"
-#include "scheduler.h"
+#include <kernel/task/scheduler.h>
 #include <kernel/memory/vmm.h>
 #include <stdio.h>
 #include <stdlib.h>

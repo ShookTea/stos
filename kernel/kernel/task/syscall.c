@@ -1,8 +1,8 @@
 #include "syscall.h"
-#include "kernel/memory/vmm.h"
-#include "kernel/terminal.h"
-#include "scheduler.h"
-#include "task.h"
+#include <kernel/memory/vmm.h>
+#include <kernel/terminal.h>
+#include <kernel/task/scheduler.h>
+#include <kernel/task/task.h>
 #include <stdint.h>
 #include <kernel/task/syscall_handler.h>
 #include <stdio.h>

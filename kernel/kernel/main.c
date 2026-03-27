@@ -12,9 +12,9 @@
 #include <kernel/drivers/keyboard.h>
 #include <kernel/vfs/initrd.h>
 #include <string.h>
-#include "kernel/vfs/vfs.h"
-#include "task/scheduler.h"
-#include "task/task.h"
+#include <kernel/vfs/vfs.h>
+#include <kernel/task/scheduler.h>
+#include <kernel/task/task.h>
 #include "task/syscall.h"
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"

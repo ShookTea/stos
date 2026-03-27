@@ -1,7 +1,8 @@
 #ifndef KERNEL_ELF_H
 #define KERNEL_ELF_H
 
-#include "kernel/vfs/vfs.h"
+#include <kernel/vfs/vfs.h>
+#include <kernel/task/task.h>
 #include <stdint.h>
 #include <stdbool.h>
 

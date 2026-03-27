@@ -13,9 +13,9 @@
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
 #include <kernel/vfs/vfs.h>
-#include "kernel/elf.h"
-#include "task/scheduler.h"
-#include "task/task.h"
+#include <kernel/elf.h>
+#include <kernel/task/scheduler.h>
+#include <kernel/task/task.h>
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"

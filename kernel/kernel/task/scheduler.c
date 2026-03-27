@@ -1,11 +1,11 @@
-#include "scheduler.h"
+#include <kernel/task/scheduler.h>
 #include <kernel/drivers/pit.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/memory/tss.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "kernel/spinlock.h"
-#include "task.h"
+#include <kernel/spinlock.h>
+#include <kernel/task/task.h>
 
 static spinlock_t scheduler_lock = SPINLOCK_INIT;
 
