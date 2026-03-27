@@ -88,6 +88,7 @@ static void handle_command_sent()
     if (strcmp(command, "help") == 0) {
         puts("Available commands:");
         puts("  elf_dump [F]   - Dumps info about ELF file at path [F]");
+        puts("  exec [F]       - Runs executable ELF file at path [F]");
         puts("  kmalloc_a [N]  - allocates [N] bytes with kmalloc");
         puts("  kmalloc_f [AD] - frees address [AD] with kfree");
         puts("  kmalloc_stats  - Prints kmalloc statistics");
@@ -113,7 +114,7 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "elf_dump") == 0) {
         if (argcount != 1) {
-            puts("vfs_cat requires 1 argument");
+            puts("elf_dump requires 1 argument");
         } else {
             vfs_node_t* node = vfs_resolve(args[0]);
             if (node == NULL) {
@@ -123,6 +124,25 @@ static void handle_command_sent()
             } else {
                 vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
                 elf_dump(handle);
+            }
+        }
+    }
+    else if (strcmp(command, "exec") == 0) {
+        if (argcount != 1) {
+            puts("exec requires 1 argument");
+        } else {
+            vfs_node_t* node = vfs_resolve(args[0]);
+            if (node == NULL) {
+                puts("File or directory not found.");
+            } else if ((node->type & VFS_TYPE_FILE) == 0) {
+                puts("Found node, but it's not a file.");
+            } else {
+                vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
+                void* file = kmalloc_flags(handle->node->length, KMALLOC_ZERO);
+                vfs_read(handle, handle->node->length, file);
+                vfs_close(handle);
+                elf_create_task(node->filename, file);
+                kfree(file);
             }
         }
     }

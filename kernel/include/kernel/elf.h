@@ -152,4 +152,9 @@ void elf_dump(vfs_file_t* file);
  */
 void elf_parse(void* addr, elf_t* store);
 
+/**
+ * Creates a new task from ELF binary data
+ */
+task_t* elf_create_task(const char* name, void* elf_data);
+
 #endif
