@@ -22,6 +22,36 @@
 #define ELF_SEGMENT_FLAGS_WRITE 0x02 // Writeable
 #define ELF_SEGMENT_FLAGS_READ  0x04 // Readable
 
+#define ELF_SECTION_TYPE_NULL           0x00 // Unused
+#define ELF_SECTION_TYPE_PROGBITS       0x01 // Program data
+#define ELF_SECTION_TYPE_SYMTAB         0x02 // Symbol table
+#define ELF_SECTION_TYPE_STRTAB         0x03 // String table
+#define ELF_SECTION_TYPE_RELA           0x04 // Relocation entries with addends
+#define ELF_SECTION_TYPE_HASH           0x05 // Symbol hash table
+#define ELF_SECTION_TYPE_DYNAMIC        0x06 // Dynamic linking info
+#define ELF_SECTION_TYPE_NOTE           0x07 // Notes
+#define ELF_SECTION_TYPE_NOBITS         0x08 // BSS (program space, no data)
+#define ELF_SECTION_TYPE_REL            0x09 // Relocation entries, no addends
+#define ELF_SECTION_TYPE_SHLIB          0x0A // Reserved
+#define ELF_SECTION_TYPE_DYNSYM         0x0B // Dynamic linker symbol table
+#define ELF_SECTION_TYPE_INIT_ARRAY     0x0E // Array of constructors
+#define ELF_SECTION_TYPE_FINI_ARRAY     0x0F // Array of destructors
+#define ELF_SECTION_TYPE_PREINIT_ARRAY  0x10 // Array of pre-constructors
+#define ELF_SECTION_TYPE_GROUP          0x11 // Section group
+#define ELF_SECTION_TYPE_SYMTAB_SHNDX   0x12 // Extended section indices
+#define ELF_SECTION_TYPE_NUM            0x13 // Number of defined types
+
+#define ELF_SECTION_FLAGS_WRITE     0x0001 // Writeable
+#define ELF_SECTION_FLAGS_ALLOC     0x0002 // Occupies memory during execution
+#define ELF_SECTION_FLAGS_EXEC      0x0004 // Executable
+#define ELF_SECTION_FLAGS_MERGE     0x0010 // Might be merged
+#define ELF_SECTION_FLAGS_STRINGS   0x0020 // Contains null-terminated strings
+#define ELF_SECTION_FLAGS_INFO_LINK 0x0040 // sh_info contains SHT index
+#define ELF_SECTION_FLAGS_LINK_ORDR 0x0080 // Preserve order after combining
+#define ELF_SECTION_FLAGS_OS_NONCMF 0x0100 // non-standard specifict handling
+#define ELF_SECTION_FLAGS_GROUP     0x0200 // Member of a group
+#define ELF_SECTION_FLAGS_TLS       0x0400 // Thread-local data
+
 typedef struct {
     uint8_t magic[4]; // 0x7F followed by "ELF" (0x45 0x4C 0x46)
     uint8_t class; // set to 1 for 32-bit, 2 for 64-bit format
@@ -59,6 +89,24 @@ typedef struct {
      */
     uint32_t align;
 } elf_program_header_32bit_t;
+
+typedef struct {
+    /**
+     * offset to string in SHT section name table that represents the name of
+     * this section
+     */
+    uint32_t name;
+    uint32_t type; // One of ELF_SECTION_TYPE_ values
+    uint32_t flags; // Section attributes (ELF_SECTION_FLAGS_)
+    uint32_t addr; // Virt. address of section, for those that are loaded
+    uint32_t offset; // Offset of the section in the file image
+    uint32_t size; // Size of bytes in the section (may be 0)
+    uint32_t link; // Section index of an associated section (depends on type)
+    uint32_t info; // Extra information (depends on type)
+    uint32_t addr_align; // Required alignment of the section
+    /** Size of each entry, for sections that contain fixed-size entries */
+    uint32_t ent_size;
+} elf_section_header_32bit_t;
 
 /**
  * Validates if data stored at [addr] is a valid ELF file that is understood

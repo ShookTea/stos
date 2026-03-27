@@ -81,5 +81,56 @@ bool elf_validate(void* addr)
         printf("    align:  %#x\n", pht->align);
     }
 
+    puts("SHT table:");
+    for (uint32_t shti = 0; shti < header->sht_num; shti++) {
+        elf_section_header_32bit_t* sht = (elf_section_header_32bit_t*)(
+            addr + header->sht_pointer + (header->sht_entry_size * shti)
+        );
+        if (sht->type == ELF_SECTION_TYPE_NULL) {
+            continue;
+        }
+        char* type;
+        char* flags = "          ";
+        switch (sht->type) {
+            case ELF_SECTION_TYPE_PROGBITS: type = "program data"; break;
+            case ELF_SECTION_TYPE_SYMTAB: type = "symbol table"; break;
+            case ELF_SECTION_TYPE_STRTAB: type = "string table"; break;
+            case ELF_SECTION_TYPE_RELA: type = "relococation entries"; break;
+            case ELF_SECTION_TYPE_HASH: type = "symbol hash table"; break;
+            case ELF_SECTION_TYPE_DYNAMIC: type = "dyn. linkining info"; break;
+            case ELF_SECTION_TYPE_NOTE: type = "notes"; break;
+            case ELF_SECTION_TYPE_NOBITS: type = "bss"; break;
+            case ELF_SECTION_TYPE_REL: type = "relocation entries"; break;
+            case ELF_SECTION_TYPE_SHLIB: type = "shlib (reserved)"; break;
+            case ELF_SECTION_TYPE_DYNSYM: type = "dyn. link. symbol tbl"; break;
+            case ELF_SECTION_TYPE_INIT_ARRAY: type = "init array"; break;
+            case ELF_SECTION_TYPE_FINI_ARRAY: type = "fini array"; break;
+            case ELF_SECTION_TYPE_PREINIT_ARRAY: type = "preinit_array"; break;
+            case ELF_SECTION_TYPE_GROUP: type = "group"; break;
+            case ELF_SECTION_TYPE_SYMTAB_SHNDX: type = "ext. sect. indx"; break;
+            case ELF_SECTION_TYPE_NUM: type = "number of defined types"; break;
+            default: type = "unrecognized"; return false;
+        }
+        flags[0] = sht->flags & ELF_SECTION_FLAGS_WRITE ? 'W' : ' ';
+        flags[1] = sht->flags & ELF_SECTION_FLAGS_ALLOC ? 'A' : ' ';
+        flags[2] = sht->flags & ELF_SECTION_FLAGS_EXEC ? 'X' : ' ';
+        flags[3] = sht->flags & ELF_SECTION_FLAGS_MERGE ? 'M' : ' ';
+        flags[4] = sht->flags & ELF_SECTION_FLAGS_STRINGS ? 'S' : ' ';
+        flags[5] = sht->flags & ELF_SECTION_FLAGS_INFO_LINK ? 'L' : ' ';
+        flags[6] = sht->flags & ELF_SECTION_FLAGS_LINK_ORDR ? 'O' : ' ';
+        flags[7] = sht->flags & ELF_SECTION_FLAGS_OS_NONCMF ? 'N' : ' ';
+        flags[8] = sht->flags & ELF_SECTION_FLAGS_GROUP ? 'G' : ' ';
+        flags[9] = sht->flags & ELF_SECTION_FLAGS_TLS ? 'T' : ' ';
+
+        printf("[%02u] Type: [%s] %s\n", shti, flags, type);
+        printf("    addr:      %#x\n", sht->addr);
+        printf("    offset:    %#x\n", sht->offset);
+        printf("    size:      %#x\n", sht->size);
+        printf("    link:      %#x\n", sht->link);
+        printf("    info:      %#x\n", sht->info);
+        printf("    align:     %#x\n", sht->addr_align);
+        printf("    ent. size: %#x\n", sht->ent_size);
+    }
+
     return true;
 }
