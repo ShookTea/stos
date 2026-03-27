@@ -53,6 +53,9 @@
 #define ELF_SECTION_FLAGS_GROUP     0x0200 // Member of a group
 #define ELF_SECTION_FLAGS_TLS       0x0400 // Thread-local data
 
+/**
+ * ELF file structure, for 32-bit systems
+ */
 typedef struct {
     uint8_t magic[4]; // 0x7F followed by "ELF" (0x45 0x4C 0x46)
     uint8_t class; // set to 1 for 32-bit, 2 for 64-bit format
@@ -110,6 +113,29 @@ typedef struct {
 } elf_section_header_32bit_t;
 
 /**
+ * Structure representing a single loadable segment info after parsing.
+ */
+typedef struct {
+    uint32_t vaddr; // virtual address to load at
+    uint32_t memsz; // Size in memory
+    uint32_t filesz; // Size in file (may be < memsz for BSS sections)
+    uint32_t offset; // Offset in ELF file
+    uint32_t page_flags; // PAGE_PRESENT | PAGE_WRITE | PAGE_USER etc
+} elf_segment_t;
+
+/**
+ * Parsed structure of the ELF file
+ */
+typedef struct {
+    bool success; // Whether the file was parsed successfully or not
+    uint32_t entry_point;
+    uint32_t min_vaddr; // Lowest virt. address used
+    uint32_t max_vaddr; // Highest virt. address used
+    size_t segment_count;
+    elf_segment_t segments[32]; // Max. 32 loadable segments
+} elf_t;
+
+/**
  * Validates if data stored at [addr] is a valid ELF file that is understood
  * by the kernel.
  */
@@ -119,5 +145,10 @@ bool elf_validate(void* addr);
  * Loads content of the file, treating it as an ELF file, and dumps information
  */
 void elf_dump(vfs_file_t* file);
+
+/**
+ * Loads ELF from address and parses it for execution
+ */
+void elf_parse(void* addr, elf_t* store);
 
 #endif
