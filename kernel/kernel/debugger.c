@@ -121,12 +121,8 @@ static void handle_command_sent()
             } else if ((node->type & VFS_TYPE_FILE) == 0) {
                 puts("Found node, but it's not a file.");
             } else {
-                void* file = kmalloc_flags(node->length, KMALLOC_ZERO);
                 vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
-                vfs_read(handle, node->length, file);
-                vfs_close(handle);
-                elf_validate(file);
-                kfree(file);
+                elf_dump(handle);
             }
         }
     }

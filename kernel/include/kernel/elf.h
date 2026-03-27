@@ -1,6 +1,7 @@
 #ifndef KERNEL_ELF_H
 #define KERNEL_ELF_H
 
+#include "kernel/vfs/vfs.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -113,5 +114,10 @@ typedef struct {
  * by the kernel.
  */
 bool elf_validate(void* addr);
+
+/**
+ * Loads content of the file, treating it as an ELF file, and dumps information
+ */
+void elf_dump(vfs_file_t* file);
 
 #endif
