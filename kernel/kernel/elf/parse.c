@@ -2,12 +2,14 @@
 #include <kernel/elf.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 void elf_parse(void* addr, elf_t* store)
 {
     memset(store, 0, sizeof(elf_t));
     if (!elf_validate(addr)) {
+        puts("Invalid ELF file.");
         store->success = false;
         return;
     }
@@ -43,6 +45,8 @@ void elf_parse(void* addr, elf_t* store)
         }
         idx++;
     }
+
+    printf("min=%#x, max=%#x\n", min_vaddr, max_vaddr);
 
     store->success = true;
     store->segment_count = idx;

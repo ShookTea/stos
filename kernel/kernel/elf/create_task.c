@@ -20,6 +20,9 @@ task_t* elf_create_task(const char* name, void* elf_data)
 {
     elf_t* parsed = kmalloc(sizeof(elf_t));
     elf_parse(elf_data, parsed);
+    if (!parsed->success) {
+        return NULL;
+    }
 
     printf("ELF: Entry point: %#x\n", parsed->entry_point);
     printf(
