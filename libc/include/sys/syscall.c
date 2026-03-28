@@ -1,4 +1,5 @@
 #if !(defined(__is_libk))
+#include <sys/syscall.h>
 
 int syscall(int number, int arg1, int arg2, int arg3)
 {
