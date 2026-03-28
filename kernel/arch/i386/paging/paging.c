@@ -365,6 +365,11 @@ void paging_switch_directory(uint32_t page_dir_addr)
     paging_load_directory((uint32_t*)pd_phys);
 }
 
+void* paging_get_current_directory()
+{
+    return current_page_directory;
+}
+
 void paging_flush_tlb_entry(uint32_t virt)
 {
     paging_flush_tlb_single(virt);

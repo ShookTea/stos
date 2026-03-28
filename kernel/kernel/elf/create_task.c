@@ -53,30 +53,70 @@ task_t* elf_create_task(const char* name, void* elf_data)
     }
 
     task_t* task = task_create(name, (void (*)())parsed->entry_point, false);
+    void* old_dir = paging_get_current_directory();
     paging_switch_directory(task->page_dir_phys);
 
     // Load all segments to the memory
     for (size_t i = 0; i < parsed->segment_count; i++) {
         elf_segment_t segment = parsed->segments[i];
-        uint32_t size = segment.memsz;
-        // Adding PMM_PAGE_SIZE-1 will guarantee that we will allocate required
-        // number of pages. Without it, dividing i.e. 5000 / 4096 will give us
-        // 1 page count instead of 2.
-        uint32_t page_count = (size + PMM_PAGE_SIZE - 1) / PMM_PAGE_SIZE;
-        void* allocation_addr = vmm_alloc(page_count, segment.page_flags);
-        // Copy [filesz] bytes from ELF file to allocation address
-        memcpy(
-            allocation_addr,
-            elf_data + segment.offset,
-            segment.filesz
-        );
-        // Zero out BSS region (remaining memsz-filesz bytes)
-        memset(
-            allocation_addr + segment.filesz,
-            0,
-            segment.memsz - segment.filesz
-        );
+
+        // Calculate page-aligned range
+        uint32_t vaddr_start = PAGE_ALIGN_DOWN(segment.vaddr);
+        uint32_t vaddr_end = PAGE_ALIGN_UP(segment.vaddr + segment.memsz);
+        uint32_t num_pages = (vaddr_end - vaddr_start) / PAGE_SIZE;
+
+        // Allocate and map each page
+        for (uint32_t p = 0; p < num_pages; p++) {
+            uint32_t vaddr = vaddr_start + (p * PAGE_SIZE);
+            // Allocate physical page
+            uint32_t phys = pmm_alloc_page();
+            if (phys == 0) {
+                printf("ELF: Failed to allocate page for segment %u\n", i);
+                paging_switch_directory((uint32_t)old_dir);
+                // TODO: cleanup task
+                return NULL;
+            }
+
+            // Map at the requested virtual address
+            if (!paging_map_page(vaddr, phys, segment.page_flags)) {
+                printf("ELF: Failed to map page at %#x\n", vaddr);
+                pmm_free_page(phys);
+                paging_switch_directory((uint32_t)old_dir);
+                // TODO: cleanup task
+                return NULL;
+            }
+
+            // Now page is accessible at vaddr - copy data to it
+            uint32_t page_offset = vaddr - segment.vaddr;
+            if (page_offset < segment.filesz) {
+                // This page contains file data
+                uint32_t bytes_to_copy = PAGE_SIZE;
+                if (page_offset + bytes_to_copy > segment.filesz) {
+                    bytes_to_copy = segment.filesz - page_offset;
+                }
+                memcpy(
+                    (void*)vaddr,
+                    elf_data + segment.offset + page_offset,
+                    bytes_to_copy
+                );
+                // Zero BSS portion if any
+                if (bytes_to_copy < PAGE_SIZE) {
+                    memset(
+                        (void*)(vaddr + bytes_to_copy),
+                        0,
+                        PAGE_SIZE - bytes_to_copy
+                    );
+                }
+            } else {
+                // Pure BSS - zero entire page
+                memset((void*)vaddr, 0, PAGE_SIZE);
+            }
+        }
     }
 
+    // Switch back to kernel directory
+    paging_switch_directory((uint32_t)old_dir);
+
+    kfree(parsed);
     return task;
 }

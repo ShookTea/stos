@@ -226,4 +226,6 @@ void paging_free_user_pages(void* pd);
  */
 void paging_switch_directory(uint32_t page_directory);
 
+void* paging_get_current_directory();
+
 #endif
