@@ -181,13 +181,6 @@ uint32_t paging_get_physical_address(uint32_t virt);
 bool paging_is_mapped(uint32_t virt);
 
 /**
- * Switch to a different page directory
- *
- * @param page_directory Physical address of the page directory
- */
-void paging_switch_directory(page_directory_t* page_directory);
-
-/**
  * Flush the Translation Lookaside Buffer (TLB) for a specific page
  *
  * @param virt Virtual address of the page to flush

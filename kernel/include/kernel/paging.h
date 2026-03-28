@@ -219,4 +219,11 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr);
  */
 void paging_free_user_pages(void* pd);
 
+/**
+ * Switch to a different page directory
+ *
+ * @param page_directory Physical address of the page directory
+ */
+void paging_switch_directory(uint32_t page_directory);
+
 #endif

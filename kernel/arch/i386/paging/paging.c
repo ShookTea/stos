@@ -342,8 +342,10 @@ bool paging_is_mapped(uint32_t virt)
     return pte->present;
 }
 
-void paging_switch_directory(page_directory_t* page_directory)
+void paging_switch_directory(uint32_t page_dir_addr)
 {
+    page_directory_t* page_directory = (page_directory_t*)page_dir_addr;
+
     if (page_directory == NULL) {
         printf("PAGING: Cannot switch to NULL page directory\n");
         return;
