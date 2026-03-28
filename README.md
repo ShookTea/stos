@@ -1,5 +1,7 @@
 # StOS
 
+Operating system kernel, working on x86 architecture.
+
 ### Prerequisites
 
 1. GCC Cross-Compiler - you can find installation instructions in the 
