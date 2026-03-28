@@ -677,11 +677,6 @@ static page_table_t* paging_clone_page_table(
     for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
         page_table_entry_t* src_pte = &src_pt->entries[i];
         page_table_entry_t* dst_pte = &dst_pt->entries[i];
-        if (!src_pte->present) {
-            // Skip non-present pages
-            continue;
-        }
-
         uint32_t virt = pt_virt_base + (i * PAGE_SIZE);
         // Determine if this is a stack page
         uint32_t stack_start = user_stack_base;
@@ -693,7 +688,7 @@ static page_table_t* paging_clone_page_table(
         if (is_stack_page) {
             // Stack pages are always physically copied
             uint32_t new_phys = pmm_alloc_page();
-            if (dst_pt_phys == 0) {
+            if (new_phys == 0) {
                 printf(
                     "Failed to allocate page table for stack clone at %#x\n",
                     virt
@@ -704,26 +699,27 @@ static page_table_t* paging_clone_page_table(
                 return NULL;
             }
 
-            // If source page exists, copy it, otherwise zero it
-            if (src_pte->present) {
-                uint32_t src_phys = src_pte->frame << 12;
-                void* src_page = phys_to_virt_internal(src_phys);
-                void* dst_page = phys_to_virt_internal(new_phys);
-                memcpy(dst_page, src_page, PAGE_SIZE);
-                *dst_pte = *src_pte;
-                dst_pte->frame = new_phys >> 12;
-            } else {
-                void* dst_page = phys_to_virt_internal(new_phys);
-                memset(dst_page, 0, PAGE_SIZE);
-                // Set up PTE for usermode stack
-                dst_pte->present = 1;
-                dst_pte->rw = 1;
-                dst_pte->user = 1;
-                dst_pte->frame = new_phys >> 12;
-            }
+            printf(
+                "PAGING: Allocating stack page at vaddr=%#x, phys=%#x\n",
+                virt,
+                new_phys
+            );
 
-            // Ensure user flag is set for stack pages
+            // Zero the stack page
+            void* dst_page = phys_to_virt_internal(new_phys);
+            memset(dst_page, 0, PAGE_SIZE);
+            // Set up PTE for usermode stack
+            dst_pte->present = 1;
+            dst_pte->rw = 1;
             dst_pte->user = 1;
+            dst_pte->frame = new_phys >> 12;
+
+            printf(
+                "PAGING: Stack page created - present=%d, user=%d, rw=%d\n",
+                dst_pte->present,
+                dst_pte->user,
+                dst_pte->rw
+            );
         } else if (src_pte->present) {
             // Data/heap pages use copy-on-write - mark as COW and read-only
 
@@ -764,6 +760,58 @@ static page_table_t* paging_clone_page_table(
     }
 
     return dst_pt;
+}
+
+/**
+ * Create a new page table containing only stack pages
+ */
+static page_table_t* paging_create_stack_page_table(
+    uint32_t pd_index,
+    uint32_t user_stack_base,
+    uint32_t user_stack_size
+) {
+    // Allocate new page table
+    uint32_t pt_phys = pmm_alloc_page();
+    if (pt_phys == 0) {
+        puts("PAGING: failed to allocate page table for stack");
+        return NULL;
+    }
+    page_table_t* pt = (page_table_t*)phys_to_virt_internal(pt_phys);
+    memset(pt, 0, sizeof(page_table_t));
+
+    // Calculate virt. address range for this page table
+    uint32_t pt_virt_base = pd_index * 1024 * PAGE_SIZE;
+    uint32_t stack_end = user_stack_base + user_stack_size;
+
+    // Create entries for stack pages
+    for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
+        uint32_t virt = pt_virt_base + (i * PAGE_SIZE);
+        if (virt >= user_stack_base && virt < stack_end) {
+            uint32_t phys = pmm_alloc_page();
+            if (phys == 0) {
+                printf("PAGING: failed to alloc stack page at %#x\n", virt);
+                // TODO: cleanup
+                pmm_free_page(pt_phys);
+                return NULL;
+            }
+
+            printf(
+                "PAGING: creating stack page at vaddr=%#x, phys=%#x\n",
+                virt,
+                phys
+            );
+            void* page = phys_to_virt_internal(phys);
+            memset(page, 0, PAGE_SIZE);
+
+            // Set up PTE
+            pt->entries[i].present = 1;
+            pt->entries[i].rw = 1;
+            pt->entries[i].user = 1;
+            pt->entries[i].frame = phys >> 12;
+        }
+    }
+
+    return pt;
 }
 
 void* paging_clone_directory(
@@ -822,8 +870,41 @@ void* paging_clone_directory(
         uint32_t cloned_tables = 0;
         for (uint32_t pd_idx = user_start_pd; pd_idx < user_end_pd; pd_idx++) {
             page_directory_entry_t* src_pde = &src->entries[pd_idx];
+
+            // Check if this PD entry should contain the user stack
+            uint32_t pd_virt_start = pd_idx * (1024 * PAGE_SIZE);
+            uint32_t pd_virt_end = pd_virt_start + (1024 * PAGE_SIZE);
+            bool contains_stack = user_stack_size > 0
+                && user_stack_base >= pd_virt_start
+                && user_stack_base < pd_virt_end;
+
             if (!src_pde->present) {
-                continue; // No page table at this index
+                if (contains_stack) {
+                    // Need to create a new page table for the stack
+                    printf(
+                        "PAGING: creating new page table for stack at PD[%u]\n",
+                        pd_idx
+                    );
+                    page_table_t* stack_pt = paging_create_stack_page_table(
+                        pd_idx,
+                        user_stack_base,
+                        user_stack_size
+                    );
+                    if (stack_pt == NULL) {
+                        puts("PAGING: Failed to create stack page table");
+                        pmm_free_page(VIRT_TO_PHYS(dst));
+                        abort();
+                        return NULL;
+                    }
+
+                    uint32_t stack_pt_phys = VIRT_TO_PHYS(stack_pt);
+                    dst->entries[pd_idx].present = 1;
+                    dst->entries[pd_idx].rw = 1;
+                    dst->entries[pd_idx].user = 1;
+                    dst->entries[pd_idx].frame = stack_pt_phys >> 12;
+                    cloned_tables++;
+                }
+                continue;
             }
             page_table_t* src_pt = paging_get_page_table_from_pde(src_pde);
             if (src_pt == NULL) {
