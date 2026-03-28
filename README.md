@@ -56,10 +56,10 @@ then prints to the command line.
 - Basic ACPI parsing - shutdown & reboot support
 - Virtual File System (with initrd)
 - Multitasking
+- Usermode tasks
 
 ### Short-term todo list
 
-- Usermode
 - Support for more than 1 GiB of RAM
   - that's currently not working because we're trying to map all physical
     RAM in paging, which doesn't make sense above 1 GiB. We should implement
