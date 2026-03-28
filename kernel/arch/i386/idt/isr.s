@@ -47,7 +47,14 @@ syscall_stub:
 
     call syscall_handler_wrapper
 
-    addl $16, %esp
+    # EAX contains return value, save it temporarily
+    movl %eax, 12(%esp)   # Store return value in the saved EAX slot
+
+    # Restore registers (return value will be in EAX)
+    popl %eax             # Restore EAX (now contains return value)
+    popl %ecx             # Restore ECX
+    popl %edx             # Restore EDX
+    popl %ebx             # Restore EBX
     iret
 
 .extern exception_handler

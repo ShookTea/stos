@@ -30,6 +30,7 @@ int main(void)
     print("Hello from userspace!\n");
     print("This is a test program.\n");
     print("It works!\n");
+    print("Holy shit.\n");
 
     return 0;
 }
