@@ -141,8 +141,9 @@ static void handle_command_sent()
                 void* file = kmalloc_flags(handle->node->length, KMALLOC_ZERO);
                 vfs_read(handle, handle->node->length, file);
                 vfs_close(handle);
-                elf_create_task(node->filename, file);
+                task_t* task = elf_create_task(node->filename, file);
                 kfree(file);
+                scheduler_add_task(task);
             }
         }
     }
