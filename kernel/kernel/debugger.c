@@ -145,6 +145,7 @@ static void handle_command_sent()
                 kfree(file);
                 scheduler_add_task(task);
                 printf("Task [%u] '%s' scheduled.\n", task->pid, task->name);
+                // TODO: add waiting for task to be finished and reaped
             }
         }
     }
