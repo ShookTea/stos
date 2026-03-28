@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// Space between heap and stack (e.g. 1 MB)
+#define MIN_HEAP_STACK_GAP (1 * 1024 * 1024) // 1 MB
+
 static inline bool in_userspace(uint32_t addr)
 {
     return addr < VMM_USER_END;
@@ -113,6 +116,28 @@ task_t* elf_create_task(const char* name, void* elf_data)
             }
         }
     }
+
+    // Set up the heap after highest virt address, page aligned
+    uint32_t heap_start = PAGE_ALIGN_UP(parsed->max_vaddr);
+    uint32_t stack_bottom = task->user_stack_base;
+    uint32_t heap_max = stack_bottom - MIN_HEAP_STACK_GAP;
+    if (heap_start >= heap_max) {
+        puts("ELF: no space for heap (segments too large");
+        paging_switch_directory(old_dir);
+        // TODO: cleanup
+        return NULL;
+    }
+    task->heap_start = heap_start;
+    task->heap_end = heap_start; // Empty initially
+    task->heap_max = heap_max;
+    printf(
+        "Task [%u] heap: start=%#x end=%#x max=%#x (available: %u KiB)\n",
+        task->pid,
+        task->heap_start,
+        task->heap_end,
+        task->heap_max,
+        (task->heap_max - task->heap_start) / 1024
+    );
 
     // Switch back to kernel directory
     paging_switch_directory(old_dir);
