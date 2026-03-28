@@ -71,7 +71,7 @@ typedef struct {
     uint32_t entrypoint;
     uint32_t pht_pointer; // Program Header Table pointer
     uint32_t sht_pointer; // Section Header Table pointer
-    uint16_t flags;
+    uint32_t flags;
     uint16_t header_size; // header size (typically 52 B for 32-bit)
     uint16_t pht_entry_size; // PHT entry size (typically 32 B for 32-bit)
     uint16_t pht_num; // Number of entries in PHT
