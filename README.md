@@ -36,7 +36,9 @@ then prints to the command line.
 │   │                    # implemented in the infra-specific code
 │   ├── kernel/          # Main source code of the kernel
 │   └── grub.cfg         # Bootloader configuration
-├── libc/include/        # implementation of libc standard library
+├── libc/                # implementation of libc standard library
+│   ├── include/         # libc headers
+│   └── src/             # Implementations of libc headers
 └── usermode/            # Usermode programs built and loaded into initrd
 ```
 
