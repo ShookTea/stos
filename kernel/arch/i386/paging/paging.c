@@ -78,7 +78,8 @@ static page_table_t* paging_get_page_table(uint32_t virt, bool create)
         // Set up the page directory entry (always uses physical address)
         pde->present = 1;
         pde->rw = 1;
-        pde->user = 0;  // Kernel page table
+        bool in_usermode = virt >= VMM_USER_START && virt < VMM_USER_END;
+        pde->user = in_usermode ? 1 : 0;
         pde->frame = pt_phys >> 12;
 
         // Flush TLB for this virtual address range
