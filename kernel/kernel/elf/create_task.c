@@ -10,25 +10,6 @@ static inline bool in_userspace(uint32_t addr)
     return addr < VMM_USER_END;
 }
 
-static inline bool memory_overlap(
-    uint32_t start_1,
-    uint32_t end_1,
-    uint32_t start_2,
-    uint32_t end_2
-) {
-    if (start_1 > end_1 || start_2 > end_2) {
-        printf(
-            "Invalid values: s1=%#x e1=%#x s2=%#x e2=%#x\n",
-            start_1,
-            end_1,
-            start_2,
-            end_2
-        );
-        abort();
-    }
-    return !(end_1 < start_2 || end_2 < start_1);
-}
-
 task_t* elf_create_task(const char* name, void* elf_data)
 {
     elf_t* parsed = kmalloc(sizeof(elf_t));
@@ -65,17 +46,6 @@ task_t* elf_create_task(const char* name, void* elf_data)
                 end
             );
             return NULL;
-        }
-        if (memory_overlap(start, end, VMM_KERNEL_HEAP, VMM_USER_START)) {
-            printf(
-                "%s seg. %u (%#x-%#x) overlaps with kernel heap (%#x-%#x)\n",
-                "ELF invalid:",
-                i,
-                start,
-                end,
-                VMM_KERNEL_HEAP,
-                VMM_USER_START
-            );
         }
     }
 
