@@ -36,8 +36,12 @@ LIBK_S := $(shell find $(LIBC_SRC_DIR) -name '*.s')
 LIBK_SRCS := $(LIBK_C) $(LIBK_S)
 
 # Usermode files - each file is treated as its own program
-USERMODE_C := $(shell find $(USERMODE_SRC_DIR) -name '*.c')
+USERMODE_C := $(shell find $(USERMODE_SRC_DIR) -name '*.c' ! -name 'crt0.c')
 USERMODE_SRCS := $(USERMODE_C)
+
+# CRT0 is linked with all usermode programs
+USERMODE_CRT0 := $(USERMODE_SRC_DIR)/crt0.c
+USERMODE_CRT0_OBJ := $(USERMODE_BUILD_DIR)/crt0.u.o
 
 # Convert e.g. kernel/foo/bar.c -> build/foo/bar.o
 KERNEL_OBJS := $(patsubst $(KERNEL_SRC_DIR)/%,$(BUILD_DIR)/%,$(KERNEL_SRCS:.c=.o))
@@ -97,7 +101,7 @@ $(INITRD): $(USERMODE_BIN)
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	tar -C $(USERMODE_BUILD_DIR) -cf $@ $(notdir $(USERMODE_BIN))
 
-$(USERMODE_BUILD_DIR)/%: $(USERMODE_BUILD_DIR)/%.u.o
+$(USERMODE_BUILD_DIR)/%: $(USERMODE_CRT0_OBJ) $(USERMODE_BUILD_DIR)/%.u.o
 	$(CC) -o $@ $^ $(USERMODE_LDFLAGS)
 
 $(USERMODE_BUILD_DIR)/%.u.o: $(USERMODE_SRC_DIR)/%.c

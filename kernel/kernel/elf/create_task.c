@@ -6,7 +6,7 @@
 
 inline bool in_userspace(uint32_t addr)
 {
-    return addr >= VMM_USER_START && addr < VMM_USER_END;
+    return addr < VMM_USER_END;
 }
 
 task_t* elf_create_task(const char* name, void* elf_data)

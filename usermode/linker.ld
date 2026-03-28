@@ -16,6 +16,7 @@ SECTIONS
     /* Text + rodata */
     .text ALIGN(0x1000) :
     {
+        *(.text._start)
         *(.text .text.*)
         *(.rodata .rodata.*)
     }
