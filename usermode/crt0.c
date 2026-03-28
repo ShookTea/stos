@@ -15,6 +15,17 @@ extern int main(void);
 __attribute__((section(".text._start")))
 void _start(void) {
     int ret = main();
-    // TODO: syscall to exit with ret value
+
+    // Syscall: exit(ret)
+    // Syscall number 1 (SYS_EXIT) in EAX, status code in ECX
+    __asm__ volatile(
+        "movl $1, %%eax\n" // 1 = SYS_EXIT
+        "movl %0, %%ecx\n" // status code in ECX (arg1)
+        "int $0x80\n"      // trigger syscall
+        :                  // no outputs
+        : "r"(ret)         // input: ret value
+        : "eax", "ecx"     // clobbered registers
+    );
+
     while(1); // hang for now
 }
