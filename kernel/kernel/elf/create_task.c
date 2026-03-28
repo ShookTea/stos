@@ -27,7 +27,7 @@ task_t* elf_create_task(const char* name, void* elf_data)
     printf("ELF: Entry point: %#x\n", parsed->entry_point);
     printf(
         "ELF: min_vaddr=%#x, max_vaddr=%#x\n",
-        parsed->max_vaddr,
+        parsed->min_vaddr,
         parsed->max_vaddr
     );
 
