@@ -144,6 +144,7 @@ static void handle_command_sent()
                 task_t* task = elf_create_task(node->filename, file);
                 kfree(file);
                 scheduler_add_task(task);
+                printf("Task [%u] '%s' scheduled.\n", task->pid, task->name);
             }
         }
     }
