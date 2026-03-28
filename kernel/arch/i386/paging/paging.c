@@ -342,7 +342,7 @@ bool paging_is_mapped(uint32_t virt)
     return pte->present;
 }
 
-void paging_switch_directory(uint32_t page_dir_addr)
+void paging_switch_directory(void* page_dir_addr)
 {
     page_directory_t* page_directory = (page_directory_t*)page_dir_addr;
 

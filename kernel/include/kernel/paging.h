@@ -222,10 +222,13 @@ void paging_free_user_pages(void* pd);
 /**
  * Switch to a different page directory
  *
- * @param page_directory Physical address of the page directory
+ * @param page_directory virtual address of the page directory
  */
-void paging_switch_directory(uint32_t page_directory);
+void paging_switch_directory(void* page_directory);
 
+/**
+ * Returns virtual address of the page directory
+ */
 void* paging_get_current_directory();
 
 #endif

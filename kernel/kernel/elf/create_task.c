@@ -54,7 +54,7 @@ task_t* elf_create_task(const char* name, void* elf_data)
 
     task_t* task = task_create(name, (void (*)())parsed->entry_point, false);
     void* old_dir = paging_get_current_directory();
-    paging_switch_directory(task->page_dir_phys);
+    paging_switch_directory(task->page_dir_virt);
 
     // Load all segments to the memory
     for (size_t i = 0; i < parsed->segment_count; i++) {
@@ -72,7 +72,7 @@ task_t* elf_create_task(const char* name, void* elf_data)
             uint32_t phys = pmm_alloc_page();
             if (phys == 0) {
                 printf("ELF: Failed to allocate page for segment %u\n", i);
-                paging_switch_directory((uint32_t)old_dir);
+                paging_switch_directory(old_dir);
                 // TODO: cleanup task
                 return NULL;
             }
@@ -81,7 +81,7 @@ task_t* elf_create_task(const char* name, void* elf_data)
             if (!paging_map_page(vaddr, phys, segment.page_flags)) {
                 printf("ELF: Failed to map page at %#x\n", vaddr);
                 pmm_free_page(phys);
-                paging_switch_directory((uint32_t)old_dir);
+                paging_switch_directory(old_dir);
                 // TODO: cleanup task
                 return NULL;
             }
@@ -115,7 +115,7 @@ task_t* elf_create_task(const char* name, void* elf_data)
     }
 
     // Switch back to kernel directory
-    paging_switch_directory((uint32_t)old_dir);
+    paging_switch_directory(old_dir);
 
     kfree(parsed);
     return task;
