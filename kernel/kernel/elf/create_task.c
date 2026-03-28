@@ -81,6 +81,12 @@ task_t* elf_create_task(const char* name, void* elf_data)
         // Allocate and map each page
         for (uint32_t p = 0; p < num_pages; p++) {
             uint32_t vaddr = vaddr_start + (p * PAGE_SIZE);
+            if (paging_is_mapped(vaddr)) {
+                printf("ELF error: vaddr %#x is already mapped\n", vaddr);
+                paging_switch_directory(old_dir);
+                // TODO: cleanup task
+                return NULL;
+            }
             // Allocate physical page
             uint32_t phys = pmm_alloc_page();
             if (phys == 0) {
