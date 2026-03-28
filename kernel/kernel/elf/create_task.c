@@ -1,10 +1,10 @@
-#include "kernel/memory/kmalloc.h"
-#include "kernel/memory/vmm.h"
-#include "kernel/task/task.h"
+#include <kernel/memory/kmalloc.h>
+#include <kernel/memory/vmm.h>
+#include <kernel/task/task.h>
 #include <kernel/elf.h>
 #include <stdio.h>
 
-inline bool in_userspace(uint32_t addr)
+static inline bool in_userspace(uint32_t addr)
 {
     return addr < VMM_USER_END;
 }
