@@ -40,6 +40,15 @@ static uint32_t sys_getpid()
     return current ? current->pid : 0;
 }
 
+static uint32_t sys_getppid()
+{
+    task_t* current = scheduler_get_current_task();
+    if (current == NULL || current->parent == NULL) {
+        return 0;
+    }
+    return current->parent->pid;
+}
+
 static uint32_t sys_yield()
 {
     scheduler_yield();
@@ -54,10 +63,11 @@ static uint32_t syscall_int_handler(
 ) {
     switch (syscall_num) {
         case SYS_EXIT: return sys_exit((int)arg1);
+        case SYS_YIELD: return sys_yield();
+        case SYS_GETPID: return sys_getpid();
+        case SYS_GETPPID: return sys_getppid();
         case SYS_WRITE:
             return sys_write((int)arg1, (const void*)arg2, (size_t)arg3);
-        case SYS_GETPID: return sys_getpid();
-        case SYS_YIELD: return sys_yield();
         default:
             printf("Unknown syscall: %d\n", syscall_num);
             return SYSCALL_ERROR;

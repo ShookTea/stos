@@ -5,6 +5,7 @@
 #if !(defined(__is_libk))
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,6 +17,16 @@ extern "C" {
  * is returned.
  */
 int write(int fd, const void* buffer, size_t count);
+
+/**
+ * Returns the process ID of the current process.
+ */
+uint32_t getpid(void);
+
+/**
+ * Returns the process ID of the parent of the current process.
+ */
+uint32_t getppid(void);
 
 #ifdef __cplusplus
 }
