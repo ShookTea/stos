@@ -33,8 +33,6 @@ static size_t total_regions_destroyed = 0;
 static size_t bootstrap_regions_created = 0;
 static size_t dynamic_regions_created = 0;
 
-
-
 // Forward declarations for internal functions
 static vmm_region_t* vmm_create_region(uint32_t start, uint32_t end, uint32_t flags, bool is_free);
 static void vmm_destroy_region(vmm_region_t* region);
@@ -43,6 +41,11 @@ static void vmm_remove_region(vmm_region_t* region);
 static vmm_region_t* vmm_find_region(uint32_t virt);
 static void vmm_merge_free_regions(void);
 static vmm_region_t* vmm_split_region(vmm_region_t* region, uint32_t split_point);
+
+static inline bool is_kernel_address(uint32_t addr) {
+    return (addr >= VMM_KERNEL_START && addr < VMM_USER_START) ||
+           (addr >= VMM_KERNEL_HEAP && addr < VMM_KERNEL_END);
+}
 
 /**
  * Enable dynamic allocation for VMM regions
@@ -87,7 +90,7 @@ void vmm_init(void) {
     // Create initial region for kernel (1MB - 4MB, already mapped)
     vmm_region_t* kernel_region = vmm_create_region(
         VMM_KERNEL_START,
-        VMM_KERNEL_HEAP,
+        VMM_USER_START,
         VMM_KERNEL | VMM_WRITE | VMM_PRESENT,
         false  // Not free, in use by kernel
     );
@@ -98,21 +101,6 @@ void vmm_init(void) {
     }
 
     vmm_insert_region(kernel_region);
-
-    // Create initial free region for kernel heap (4MB - 1GB)
-    vmm_region_t* heap_region = vmm_create_region(
-        VMM_KERNEL_HEAP,
-        VMM_USER_START,
-        VMM_KERNEL | VMM_WRITE,
-        true  // Free, available for allocation
-    );
-
-    if (!heap_region) {
-        printf("[VMM] ERROR: Failed to create initial heap region\n");
-        return;
-    }
-
-    vmm_insert_region(heap_region);
 
     // Create initial free region for user space (1GB - 3GB)
     vmm_region_t* user_region = vmm_create_region(
@@ -128,6 +116,21 @@ void vmm_init(void) {
     }
 
     vmm_insert_region(user_region);
+
+    // Create initial free region for kernel heap (4MB - 1GB)
+    vmm_region_t* heap_region = vmm_create_region(
+        VMM_KERNEL_HEAP,
+        VMM_KERNEL_END,
+        VMM_KERNEL | VMM_WRITE,
+        true  // Free, available for allocation
+    );
+
+    if (!heap_region) {
+        printf("[VMM] ERROR: Failed to create initial heap region\n");
+        return;
+    }
+
+    vmm_insert_region(heap_region);
 
     printf("[VMM] Initialization complete\n");
     printf("[VMM] Kernel region: 0x%x - 0x%x\n", VMM_KERNEL_START, VMM_KERNEL_HEAP);
@@ -152,7 +155,8 @@ void* vmm_alloc(size_t pages, uint32_t flags) {
         if (region->is_free && (region->end - region->start) >= size) {
             // Check if this region matches the requested flags (kernel vs user)
             bool is_kernel_request = !(flags & VMM_USER);
-            bool is_kernel_region = region->start < VMM_USER_START;
+            bool is_kernel_region = is_kernel_address(region->start);
+
 
             if (is_kernel_request == is_kernel_region) {
                 // Found a suitable region

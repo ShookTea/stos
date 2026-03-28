@@ -799,7 +799,7 @@ void* paging_clone_directory(
 
     // Copy kernel heap region
     uint32_t kernel_heap_start_pd = paging_get_pd_index(VMM_KERNEL_HEAP);
-    uint32_t kernel_heap_end_pd = paging_get_pd_index(VMM_USER_START);
+    uint32_t kernel_heap_end_pd = paging_get_pd_index(VMM_KERNEL_END);
 
     for (uint32_t i = kernel_heap_start_pd; i < kernel_heap_end_pd; i++) {
         if (src->entries[i].present) {

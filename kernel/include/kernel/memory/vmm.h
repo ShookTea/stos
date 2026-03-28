@@ -11,12 +11,17 @@
 #define VMM_USER        0x4     // Region is accessible from user mode
 #define VMM_KERNEL      0x0     // Region is kernel-only
 
-// Virtual memory layout constants
-#define VMM_KERNEL_START    0x00100000  // 1MB - Kernel start
-#define VMM_KERNEL_HEAP     0x00400000  // 4MB - Kernel heap start
-#define VMM_USER_START      0x40000000  // 1GB - User space start
-#define VMM_USER_END        0xC0000000  // 3GB - User space end
-#define VMM_KERNEL_END      0xFFFFFFFF  // 4GB - Kernel space end
+// Memory layout for 32-bit x86
+// 0x00000000 - 0x000FFFFF : Identity mapped (first 1MB)
+// 0x00100000 - 0x003FFFFF : Kernel code/data (identity mapped, 3MB)
+// 0x00400000 - 0x3FFFFFFF : User space (~1GB)
+// 0x40000000 - 0xBFFFFFFF : Kernel heap (~2GB)
+// 0xC0000000 - 0xFFFFFFFF : Physical memory map (1GB)
+#define VMM_KERNEL_START    0x00100000  // 1 MiB - Kernel start
+#define VMM_USER_START      0x00400000  // 4 MiB - User space start
+#define VMM_USER_END        0x40000000  // 1 GiB - User space end
+#define VMM_KERNEL_HEAP     0x40000000  // 1 GiB - Kernel heap start
+#define VMM_KERNEL_END      0xC0000000  // 3 GiB - Kernel heap end
 
 // Page alignment macros
 #define PAGE_SIZE           4096
