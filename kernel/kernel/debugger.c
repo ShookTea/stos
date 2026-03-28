@@ -145,7 +145,7 @@ static void handle_command_sent()
                 kfree(file);
                 scheduler_add_task(task);
                 printf("Task [%u] '%s' scheduled.\n", task->pid, task->name);
-                // TODO: add waiting for task to be finished and reaped
+                task_wait(task->pid, NULL);
             }
         }
     }
@@ -208,8 +208,9 @@ static void handle_command_sent()
                 default: status = "???"; break;
             }
             printf(
-                "-[%u] '%s' (status: '%s')\n",
+                "-[%u] (parent: %d) '%s' (status: '%s')\n",
                 task->pid,
+                task->parent == NULL ? 0 : task->parent->pid,
                 task->name,
                 status
             );

@@ -219,7 +219,24 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
     task->page_dir_virt = kernel_dir_clone;
     task->page_dir_phys = paging_virt_to_phys(kernel_dir_clone);
 
-    // TODO: add support for usermode pages as well
+    // Set parent
+    task_t* parent = scheduler_get_current_task();
+    if (parent == NULL) {
+        task->parent = NULL;
+    } else {
+        task->parent = parent;
+        if (parent->first_child == NULL) {
+            parent->first_child = task;
+        } else {
+            task_t* last = parent->first_child;
+            while (last->next_sibling != NULL) {
+                last = last->next_sibling;
+            }
+            last->next_sibling = task;
+            task->prev_sibling = last;
+        }
+    }
+
     return task;
 }
 

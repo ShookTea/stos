@@ -5,6 +5,7 @@ __attribute__((__noreturn__))
 void exit(int status)
 {
     syscall(SYS_EXIT, status, 0, 0);
+    while (1) {} // unreachable
 }
 
 #endif
