@@ -46,4 +46,6 @@ void elf_parse(void* addr, elf_t* store)
 
     store->success = true;
     store->segment_count = idx;
+    store->min_vaddr = min_vaddr;
+    store->max_vaddr = max_vaddr;
 }

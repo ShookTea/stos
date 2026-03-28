@@ -21,6 +21,13 @@ task_t* elf_create_task(const char* name, void* elf_data)
     elf_t* parsed = kmalloc(sizeof(elf_t));
     elf_parse(elf_data, parsed);
 
+    printf("ELF: Entry point: %#x\n", parsed->entry_point);
+    printf(
+        "ELF: min_vaddr=%#x, max_vaddr=%#x\n",
+        parsed->max_vaddr,
+        parsed->max_vaddr
+    );
+
     // Check if entrypoint is in userspace
     if (!in_userspace(parsed->entry_point)) {
         printf(
