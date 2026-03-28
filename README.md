@@ -62,9 +62,12 @@ then prints to the command line.
 - Multitasking
 - Usermode tasks
 
-### Short-term todo list
+### (Short-term) todo list
 
+- Heap (alloc/free) for usermode
+- forking processes
 - Support for more than 1 GiB of RAM
   - that's currently not working because we're trying to map all physical
     RAM in paging, which doesn't make sense above 1 GiB. We should implement
     demand paging instead.
+- Long mode (64-bit)
