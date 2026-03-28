@@ -1,3 +1,5 @@
+#include <sys/syscall.h>
+
 extern int main(int argc, char** argv, char** envp);
 
 #ifdef __cplusplus
@@ -50,17 +52,7 @@ void _start(void) {
     #endif
 
     // 6. Exit with status code
-
-    // Syscall: exit(ret)
-    // Syscall number 1 (SYS_EXIT) in EAX, status code in ECX
-    __asm__ volatile(
-        "movl $1, %%eax\n" // 1 = SYS_EXIT
-        "movl %0, %%ecx\n" // status code in ECX (arg1)
-        "int $0x80\n"      // trigger syscall
-        :                  // no outputs
-        : "r"(ret)         // input: ret value
-        : "eax", "ecx"     // clobbered registers
-    );
+    syscall(SYS_EXIT, ret, 0, 0);
 
     __builtin_unreachable();
 }
