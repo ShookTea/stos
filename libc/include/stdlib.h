@@ -43,6 +43,14 @@ long strtol(const char* str, char** endptr, int base);
  */
 unsigned long strtoul(const char* str, char** endptr, int base);
 
+#if !(defined(__is_libk))
+/**
+ * Cause normal task termination, with given status code.
+ */
+__attribute__((__noreturn__))
+void exit(int status);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

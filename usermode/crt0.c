@@ -1,4 +1,4 @@
-#include <sys/syscall.h>
+#include <stdlib.h>
 
 extern int main(int argc, char** argv, char** envp);
 
@@ -52,7 +52,7 @@ void _start(void) {
     #endif
 
     // 6. Exit with status code
-    syscall(SYS_EXIT, ret, 0, 0);
+    exit(ret);
 
     __builtin_unreachable();
 }
