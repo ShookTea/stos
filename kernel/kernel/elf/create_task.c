@@ -96,8 +96,9 @@ task_t* elf_create_task(const char* name, void* elf_data)
                 return NULL;
             }
 
-            // Map at the requested virtual address
-            if (!paging_map_page(vaddr, phys, segment.page_flags)) {
+            // Map at the requested virtual address, with write permissions
+            uint32_t load_flags = segment.page_flags | PAGE_WRITE;
+            if (!paging_map_page(vaddr, phys, load_flags)) {
                 printf("ELF: Failed to map page at %#x\n", vaddr);
                 pmm_free_page(phys);
                 paging_switch_directory(old_dir);
@@ -129,6 +130,12 @@ task_t* elf_create_task(const char* name, void* elf_data)
             } else {
                 // Pure BSS - zero entire page
                 memset((void*)vaddr, 0, PAGE_SIZE);
+            }
+
+            // If segment's page flags don't require write permissions, remap
+            // the page as read-only
+            if (!(segment.page_flags & PAGE_WRITE)) {
+                paging_map_page(vaddr, phys, segment.page_flags);
             }
         }
 
