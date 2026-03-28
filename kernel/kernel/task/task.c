@@ -319,6 +319,30 @@ task_t* task_get_task_by_pid(uint32_t pid)
     return NULL;
 }
 
+void task_add_mem_region(
+    task_t* task,
+    uint32_t start,
+    uint32_t end,
+    uint32_t page_flags
+) {
+    task_memory_region_t* region = kmalloc(sizeof(task_memory_region_t));
+    region->start = start;
+    region->end = end;
+    region->page_flags = page_flags;
+    region->next = NULL;
+
+    // Add to linked list
+    if (task->memory_regions == NULL) {
+        task->memory_regions = region;
+    } else {
+        task_memory_region_t* last = task->memory_regions;
+        while (last->next != NULL) {
+            last = last->next;
+        }
+        last->next = region;
+    }
+}
+
 __attribute__((noreturn))
 void task_exit(int exit_code)
 {

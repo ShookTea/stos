@@ -115,6 +115,8 @@ task_t* elf_create_task(const char* name, void* elf_data)
                 memset((void*)vaddr, 0, PAGE_SIZE);
             }
         }
+
+        task_add_mem_region(task, vaddr_start, vaddr_end, segment.page_flags);
     }
 
     // Set up the heap after highest virt address, page aligned

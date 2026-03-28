@@ -147,6 +147,16 @@ task_t* task_get_task_by_index(size_t index);
 task_t* task_get_task_by_pid(uint32_t pid);
 
 /**
+ * Registers new memory region for the task.
+ */
+void task_add_mem_region(
+    task_t* task,
+    uint32_t start,
+    uint32_t end,
+    uint32_t page_flags
+);
+
+/**
  * Exit the currently running task with given exit code. Code = 0 is interpreted
  * as success, any other code is interpreted as an error.
  */
