@@ -34,6 +34,8 @@ void abort(void)
     #else
         // TODO: Abnormally terminate the process as if by SIGABRT.
         puts("abort()");
+        exit(1);
+
     #endif
     while(1) {}
     __builtin_unreachable();
