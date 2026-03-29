@@ -164,6 +164,11 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
     // Allocate kernel stack (required for usermode tasks as well), with
     // guard page (so that when task overflows its stack, we will hit the guard
     // page instead of corrupting other memory)
+    //
+    // Strategy: Allocate the entire region (guard + stack) to ensure they're
+    // contiguous, then free the physical page backing the guard page while
+    // keeping the virtual address mapped (but invalid).
+
     void* allocation = vmm_kernel_alloc(KERNEL_STACK_SIZE + GUARD_PAGE_SIZE);
     if (allocation == NULL) {
         // task_destroy(task);
@@ -171,9 +176,18 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
         abort();
     }
 
-    // Make the first (guard) page non-readable, causing page faults if trying
-    // to read/write
+    // Get the physical address of the guard page before unmapping
+    uint32_t guard_phys = paging_get_physical_address((uint32_t)allocation);
+
+    // Unmap the guard page (removes PTE)
     paging_unmap_page((uint32_t)allocation);
+
+    // Free the physical page that was backing the guard page
+    if (guard_phys != 0) {
+        pmm_free_page(guard_phys);
+    }
+
+    // Now the guard page virt. address is reserved but has no physical backing
     task->kernel_stack_size = KERNEL_STACK_SIZE;
     task->kernel_stack_base = (uint32_t)allocation + GUARD_PAGE_SIZE;
     task->kernel_stack_alloc_size = KERNEL_STACK_SIZE + GUARD_PAGE_SIZE;
@@ -250,6 +264,9 @@ void task_destroy(task_t* task)
     }
 
     // Free kernel stack, which is always allocated, even for usermode tasks
+    // Note: guard page's physical memory was already freed during creation,
+    // so vmm_kernel_free will only try to free the stack pages. The guard page
+    // virtual address will be freed as part of the contiguous region.
     if (task->kernel_stack_alloc_base != 0) {
         vmm_kernel_free(
             (void*)task->kernel_stack_alloc_base,
