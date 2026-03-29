@@ -10,9 +10,15 @@ They return a value in EAX as well.
 
 The libc library contains wrappers for all implemented syscalls.
 
-| Syscall name | ID | libc file | libc function | Docs |
+| Syscall name | ID | libc file | libc function | Description |
 |---|---|---|---|---|
-| EXIT | 0 | [`<stdlib.h>`](libc/include/stdlib.h) | `void exit(int status)` | [link](libc/include/stdlib.h) |
+| `EXIT` | 0 | [`<stdlib.h>`](libc/include/stdlib.h) | `void exit(int status)` | Causes task termination, with given status code |
+| `YIELD` | 1 | [`<sched.h>`](libc/include/sched.h) | `int sched_yield()` | Yield the processor, moving current task to the end of the queue |
+| `GETPID` | 2 | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getpid()` | Returns the process ID of the current process |
+| `GETPPID` | 3 | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getppid()` | Returns the process ID of the parent of the current process |
+| `BRK` | 4 | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
+| `WRITE` | 5 | [`<unistd.h>`](libc/include/unistd.h) | `int write(int fd, const void* buffer, size_t count)` | Writes up to _count_ bytes from _buffer_ to file descriptor _fd_ |
+
 
 ## Development
 
