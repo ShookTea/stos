@@ -47,5 +47,22 @@ inline stdlib_mem_alloc_header_t* __stdlib_mem_get_entry_of_ptr(void* ptr)
     );
 }
 
+/**
+ * Returns entry in the heap that points to this entry.
+ */
+static inline stdlib_mem_alloc_header_t* __stdlib_mem_get_previous(
+    stdlib_mem_alloc_header_t* entry
+) {
+    stdlib_mem_alloc_header_t* previous = __stdlib_mem_get_heap_start();
+    while (previous != NULL) {
+        if (previous->next == entry) {
+            return previous;
+        } else {
+            previous = previous->next;
+        }
+    }
+    return NULL;
+}
+
 #endif
 #endif

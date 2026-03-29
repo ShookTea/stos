@@ -3,22 +3,6 @@
 #include <stdlib.h>
 #include "_stdlib_mem.h"
 
-/**
- * Returns entry in the heap that points to this entry.
- */
-static stdlib_mem_alloc_header_t* get_previous(stdlib_mem_alloc_header_t* entry)
-{
-    stdlib_mem_alloc_header_t* previous = __stdlib_mem_get_heap_start();
-    while (previous != NULL) {
-        if (previous->next == entry) {
-            return previous;
-        } else {
-            previous = previous->next;
-        }
-    }
-    return NULL;
-}
-
 void free(void* ptr)
 {
     if (ptr == NULL) {
@@ -43,7 +27,7 @@ void free(void* ptr)
     }
 
     // Coalesce with previous entry, if exists and is also free
-    stdlib_mem_alloc_header_t* previous = get_previous(entry);
+    stdlib_mem_alloc_header_t* previous = __stdlib_mem_get_previous(entry);
     if (previous != NULL
         && !(previous->flags & STDLIB_MEM_ALLOC_FLAGS_PRESENT)
     ) {
@@ -51,6 +35,8 @@ void free(void* ptr)
         previous->length += sizeof(stdlib_mem_alloc_header_t);
         previous->next = entry->next;
     }
+
+    // TODO: if current entry was the last one, we can reduce the heap
 }
 
 #endif
