@@ -1,19 +1,20 @@
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 int main(void)
 {
     puts("Hello from userspace!");
-    void* heap_end = sbrk(0);
-    printf("Current heap end: %#x\n", heap_end);
-    heap_end = sbrk(10000);
-    printf("Heap end after increment: %#x\n", heap_end);
-    heap_end = sbrk(0);
-    printf("Current heap end: %#x\n", heap_end);
-    heap_end = sbrk(-5000);
-    printf("Heap end after decrement: %#x\n", heap_end);
-    heap_end = sbrk(0);
-    printf("Current heap end: %#x\n", heap_end);
+    void* array1 = malloc(sizeof(int) * 16);
+    void* array2 = malloc(sizeof(int) * 32);
+    void* array3 = malloc(sizeof(int) * 16);
+
+    printf("Addr array1 = %#x\n", array1);
+    printf("Addr array2 = %#x\n", array2);
+    printf("Addr array3 = %#x\n", array3);
+
+    ((int*)array1)[5] = 32;
+
+    printf("array1 val = %d\n", ((int*)array1)[5]);
 
     return 0;
 }
