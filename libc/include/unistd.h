@@ -45,6 +45,17 @@ uint32_t getppid(void);
  */
 void* brk(void* addr);
 
+/**
+ * Changes the heap size by incrementing the program data space by [increment]
+ * bytes. This value can be negative to shrink the heap size.
+ *
+ * On success, it returns the previous program break, which mean that (in case
+ * of increasing the heap) it can be used as a pointer to newly allocated area.
+ *
+ * In case of error it will return (void*)-1.
+ */
+void* sbrk(intptr_t increment);
+
 #ifdef __cplusplus
 }
 #endif
