@@ -48,7 +48,7 @@ syscall_stub:
     call syscall_handler_wrapper
 
     # EAX contains return value, save it temporarily
-    movl %eax, 12(%esp)   # Store return value in the saved EAX slot
+    movl %eax, 0(%esp)   # Store return value in the saved EAX slot
 
     # Restore registers (return value will be in EAX)
     popl %eax             # Restore EAX (now contains return value)

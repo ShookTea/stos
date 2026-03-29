@@ -1,3 +1,4 @@
+#include "kernel/paging.h"
 #include <kernel/task/scheduler.h>
 #include <kernel/drivers/pit.h>
 #include <kernel/memory/kmalloc.h>
@@ -19,8 +20,7 @@ static uint32_t idle_task_pid;
 
 extern void switch_to_stack(
     uint32_t* old_esp_ptr,
-    uint32_t new_esp,
-    uint32_t new_cr3
+    uint32_t new_esp
 );
 
 /**
@@ -193,13 +193,15 @@ static void scheduler_switch_task_context(
         new_task->kernel_stack_size
     );
 
+    // Switch to the new page directory
+    paging_switch_directory(new_task->page_dir_virt);
+
     // Get pointers for context switch
     uint32_t* old_esp_ptr = (old_task != NULL) ? &old_task->context.esp : NULL;
     uint32_t new_esp = new_task->context.esp;
-    uint32_t new_cr3 = new_task->page_dir_phys;
 
     // Perform the actual switch
-    switch_to_stack(old_esp_ptr, new_esp, new_cr3);
+    switch_to_stack(old_esp_ptr, new_esp);
 
     // TODO: when we return here, we're running as new_task now.
     // Should we do anything?
