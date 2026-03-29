@@ -2,6 +2,20 @@
 
 Operating system kernel, working on x86 architecture.
 
+## Syscalls
+
+Syscalls are implemented with interrupt `int 0x80`, that accept 4 arguments in
+registries (EAX, ECX, EDX, EBX), with first argument treated as a syscall ID.
+They return a value in EAX as well.
+
+The libc library contains wrappers for all implemented syscalls.
+
+| Syscall name | ID | libc file | libc function | Docs |
+|---|---|---|---|---|
+| EXIT | 0 | `<stdlib.h>` | `void exit(int status)` | [link](libc/include/stdlib.h) |
+
+## Development
+
 ### Prerequisites
 
 1. GCC Cross-Compiler - you can find installation instructions in the 
