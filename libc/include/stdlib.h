@@ -57,6 +57,13 @@ void exit(int status);
  */
 void* malloc(size_t size);
 
+/**
+ * Frees allocated address from the heap. The address must have been returned
+ * by malloc() or related functions - otherwise, or if [addr] has already been
+ * freed before, the behavior of this function is undefined.
+ */
+void free(void* addr);
+
 #endif
 
 #ifdef __cplusplus

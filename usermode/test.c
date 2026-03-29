@@ -20,5 +20,10 @@ int main(void)
     printf("array2 val = %d\n", ((int*)array2)[5]);
     printf("array3 val = %d\n", ((int*)array3)[5]);
 
+    free(array3);
+
+    void* array4 = malloc(sizeof(int) * 1024);
+    printf("Addr array4 = %#x\n", array4);
+
     return 0;
 }

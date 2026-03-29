@@ -32,8 +32,6 @@ typedef struct mem_alloc_header {
     struct mem_alloc_header* next;
 } stdlib_mem_alloc_header_t;
 
-static void* heap_start = NULL;
-
 /** Initialize memory data */
 void __stdlib_mem_init();
 /** Return heap start address */
