@@ -57,10 +57,6 @@ uint32_t sys_brk(uint32_t addr)
         return task->heap_end;
     }
 
-    // save current page dir and switch to task page dir
-    // void* old_dir = paging_get_current_directory();
-    // paging_switch_directory(task->page_dir_virt);
-
     if (new_heap_end > old_heap_end) {
         // Expanding heap - allocate and map new pages
         uint32_t num_pages = (new_heap_end - old_heap_end) / PAGE_SIZE;
@@ -77,7 +73,6 @@ uint32_t sys_brk(uint32_t addr)
                     paging_unmap_page(vaddr_rollback);
                     pmm_free_page(phys_rollback);
                 }
-                // paging_switch_directory(old_dir);
                 return task->heap_end;
             }
 
@@ -93,7 +88,6 @@ uint32_t sys_brk(uint32_t addr)
                     paging_unmap_page(vaddr_rollback);
                     pmm_free_page(phys_rollback);
                 }
-                // paging_switch_directory(old_dir);
                 return task->heap_end;
             }
 
@@ -113,8 +107,6 @@ uint32_t sys_brk(uint32_t addr)
         }
     }
 
-    // Switch back to original directory and return
-    // paging_switch_directory(old_dir);
     task->heap_end = addr;
     return task->heap_end;
 }
