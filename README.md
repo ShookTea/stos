@@ -12,7 +12,7 @@ The libc library contains wrappers for all implemented syscalls.
 
 | Syscall name | ID | libc file | libc function | Docs |
 |---|---|---|---|---|
-| EXIT | 0 | [`<stdlib.h>`](main/libc/include/stdlib.h) | `void exit(int status)` | [link](libc/include/stdlib.h) |
+| EXIT | 0 | [`<stdlib.h>`](libc/include/stdlib.h) | `void exit(int status)` | [link](libc/include/stdlib.h) |
 
 ## Development
 
