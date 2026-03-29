@@ -1,9 +1,10 @@
 #if !(defined(__is_libk))
 
-#ifndef _STDLIB_SRC_MEMORY_DEFINITIONS_H
-#define _STDLIB_SRC_MEMORY_DEFINITIONS_H
+#ifndef _STDLIB_SRC_STDLIB_MEM_H
+#define _STDLIB_SRC_STDLIB_MEM_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 // Minimal size allocation in bytes
 #define STDLIB_MEM_ALLOC_MIN_ALLOC 16
@@ -30,6 +31,13 @@ typedef struct mem_alloc_header {
      */
     struct mem_alloc_header* next;
 } stdlib_mem_alloc_header_t;
+
+static void* heap_start = NULL;
+
+/** Initialize memory data */
+void __stdlib_mem_init();
+/** Return heap start address */
+void* __stdlib_mem_get_heap_start();
 
 #endif
 #endif

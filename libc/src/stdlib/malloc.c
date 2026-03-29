@@ -4,10 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "memory_definitions.h"
+#include "_stdlib_mem.h"
 
-// Addresses to the start and end of the memory
-static void* heap_start = NULL;
+// Addresses to the end of the memory
 static void* heap_end = NULL;
 
 /**
@@ -15,7 +14,7 @@ static void* heap_end = NULL;
  */
 static stdlib_mem_alloc_header_t* find_fit(size_t size)
 {
-    stdlib_mem_alloc_header_t* current = heap_start;
+    stdlib_mem_alloc_header_t* current = __stdlib_mem_get_heap_start();
     while (current != NULL) {
         if (current->flags & STDLIB_MEM_ALLOC_FLAGS_PRESENT
             || current->length < size) {
@@ -51,6 +50,7 @@ static stdlib_mem_alloc_header_t* extend_heap(size_t size)
     entry->length = total_size - sizeof(stdlib_mem_alloc_header_t);
     entry->next = NULL;
 
+    void* heap_start = __stdlib_mem_get_heap_start();
     if (entry == heap_start) {
         // This was the first created entry - just return it
         return entry;
@@ -111,9 +111,11 @@ static void split_block(stdlib_mem_alloc_header_t* block, size_t size)
 
 void* malloc(size_t size)
 {
+    void* heap_start = __stdlib_mem_get_heap_start();
     // Initialize heap with sbrk
     if (heap_start == NULL) {
-        heap_start = sbrk(0);
+        __stdlib_mem_init();
+        heap_start = __stdlib_mem_get_heap_start();
         if (heap_start == (void*)-1) {
             return NULL;
         }
