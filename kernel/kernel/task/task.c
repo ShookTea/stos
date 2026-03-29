@@ -445,6 +445,8 @@ void task_exit(int exit_code)
     }
 
     scheduler_yield();
+    // We should never enter this part of code
+    while (1) {}
 }
 
 int task_wait(int pid, int* exit_code)
