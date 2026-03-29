@@ -24,6 +24,10 @@ int main(void)
 
     void* array4 = malloc(sizeof(int) * 1024);
     printf("Addr array4 = %#x\n", array4);
+    array4 = realloc(array4, sizeof(int) * 2048);
+    printf("Addr array4 = %#x\n", array4);
+    void* array5 = malloc(sizeof(int) * 512);
+    printf("Addr array5 = %#x\n", array5);
 
     return 0;
 }
