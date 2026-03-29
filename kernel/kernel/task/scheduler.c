@@ -417,15 +417,7 @@ task_t* scheduler_get_current_task()
     return scheduler_stats->current_task;
 }
 
-__attribute__((noreturn))
 void scheduler_yield()
 {
     scheduler_reschedule();
-
-    // If we return here, that means we're still the same task. It might
-    // happen if no other tasks are ready. Let's just enter a loop instead.
-    puts("WARN: scheduler_yield didn't change the running task.");
-    while (1) {
-        __asm__ volatile("hlt");
-    }
 }
