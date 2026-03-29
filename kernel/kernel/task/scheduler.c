@@ -273,8 +273,30 @@ static void scheduler_reschedule()
     cleanup_dead_tasks();
     task_t* old_task = scheduler_stats->current_task;
     task_t* next_task = scheduler_get_next_task();
-    if (next_task == NULL) {
-        // No rescheduling needed
+
+    // If current task is zombie or dead, we MUST switch away from it
+    // even if there's no other task ready (in which case we'll run idle)
+    if (old_task->state == TASK_ZOMBIE || old_task->state == TASK_DEAD) {
+        if (next_task == NULL) {
+            // Force switch to idle task - find it in waiting queue
+            next_task = waiting_queue;
+            if (next_task != NULL && next_task->pid == idle_task_pid) {
+                waiting_queue = next_task->next;
+                if (waiting_queue != NULL) {
+                    waiting_queue->prev = NULL;
+                }
+                next_task->next = NULL;
+                next_task->prev = NULL;
+                scheduler_stats->num_waiting--;
+            }
+        }
+        if (next_task == NULL) {
+            // This should never happen - idle task should always exist
+            puts("FATAL: No task to switch to from zombie/dead task");
+            abort();
+        }
+    } else if (next_task == NULL) {
+        // Current task is not zombie/dead and no reschedule needed
         return;
     }
 
@@ -287,9 +309,11 @@ static void scheduler_reschedule()
     }
     next_task->state = TASK_RUNNING;
 
-    // Enqueue current task
-    add_to_queue(old_task);
-    scheduler_stats->num_waiting++;
+    // Enqueue current task (only if not zombie/dead)
+    if (old_task->state == TASK_WAITING) {
+        add_to_queue(old_task);
+        scheduler_stats->num_waiting++;
+    }
     // Switch current task to the next_task
     scheduler_stats->current_task = next_task;
     scheduler_switch_task_context(old_task, next_task);
