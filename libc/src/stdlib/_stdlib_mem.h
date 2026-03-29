@@ -37,5 +37,15 @@ void __stdlib_mem_init();
 /** Return heap start address */
 void* __stdlib_mem_get_heap_start();
 
+/**
+ * Return entry header of a given pointer
+ */
+inline stdlib_mem_alloc_header_t* __stdlib_mem_get_entry_of_ptr(void* ptr)
+{
+    return (stdlib_mem_alloc_header_t*)(
+        ((char*)ptr) - sizeof(stdlib_mem_alloc_header_t)
+    );
+}
+
 #endif
 #endif

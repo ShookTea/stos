@@ -1,5 +1,6 @@
 #if !(defined(__is_libk))
 
+#include <stdlib.h>
 #include "_stdlib_mem.h"
 
 /**
@@ -25,9 +26,7 @@ void free(void* ptr)
     }
 
     // Get entry header
-    stdlib_mem_alloc_header_t* entry = (stdlib_mem_alloc_header_t*)(
-        ((char*)ptr) - sizeof(stdlib_mem_alloc_header_t)
-    );
+    stdlib_mem_alloc_header_t* entry = __stdlib_mem_get_entry_of_ptr(ptr);
 
     // Clear present flag
     entry->flags = 0;
