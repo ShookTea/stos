@@ -8,7 +8,8 @@
 #define SYS_YIELD 1 // void yield()
 #define SYS_GETPID 2 // uint32_t getpid()
 #define SYS_GETPPID 3 // uint32_t getpid()
-#define SYS_WRITE 4 // ssize_t write(int fd, const void *buf, size_t count)
+#define SYS_BRK 4 // uint32_t brk(void* addr)
+#define SYS_WRITE 5 // ssize_t write(int fd, const void *buf, size_t count)
 
 #ifdef __cplusplus
 extern "C" {

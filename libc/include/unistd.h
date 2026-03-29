@@ -28,6 +28,23 @@ uint32_t getpid(void);
  */
 uint32_t getppid(void);
 
+/**
+ * Changes the location of the program break (the end of the heap) to [addr].
+ *
+ * If [addr] is equal to NULL or it's equal to current program break,
+ * this function will return the current program break.
+ *
+ * If [addr] is invalid (below the start of the heap, or above the maximum heap
+ * size), this function will return NULL.
+ *
+ * If [addr] is greater than the current program break, this function will
+ * increase the heap size and return the new address of the program break.
+ *
+ * If [addr] is smaller than the current program break, this function will
+ * decrease the heap size and return the new address of the program break.
+ */
+void* brk(void* addr);
+
 #ifdef __cplusplus
 }
 #endif

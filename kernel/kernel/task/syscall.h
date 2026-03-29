@@ -17,7 +17,10 @@ uint32_t sys_getpid();
 #define SYS_GETPPID 3
 uint32_t sys_getppid();
 
-#define SYS_WRITE 4
+#define SYS_BRK 4
+uint32_t sys_brk(uint32_t addr);
+
+#define SYS_WRITE 5
 int sys_write(int fd, const void* buf, size_t count);
 
 // Syscall return values
