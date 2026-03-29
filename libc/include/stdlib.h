@@ -64,6 +64,19 @@ void* malloc(size_t size);
  */
 void free(void* addr);
 
+/**
+ * Changes the allocation size at pointer [ptr] to a new size [size], and
+ * returns a pointer to a newly allocated space. This pointer may or may not
+ * be different than [ptr].
+ * - If [ptr] is null, then this call is equivalent to malloc(size)
+ * - If [ptr] is not null and size=0, then this call is equivalent to free(ptr)
+ *
+ * If the returned pointer is different than [ptr], then the original [ptr]
+ * can be considered "freed" and doesn't need to be freed again. The resulting
+ * new pointer has to be freed later.
+ */
+void* realloc(void* ptr, size_t size);
+
 #endif
 
 #ifdef __cplusplus
