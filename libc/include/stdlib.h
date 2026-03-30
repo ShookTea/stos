@@ -77,6 +77,18 @@ void free(void* addr);
  */
 void* realloc(void* ptr, size_t size);
 
+/**
+ * Allocates count * size bytes in the heap and returns pointer to the area
+ * in memory.
+ *
+ * In contrast to malloc(count * size), this function will:
+ * 1. Clear the allocated memory to zero
+ * 2. Verify multiplication overflow - if multiplication of count*size would
+ *    cause an integer overflow, this function will return NULL instead of
+ *    allocating an incorrect amount of space.
+ */
+void* calloc(size_t count, size_t size);
+
 #endif
 
 #ifdef __cplusplus
