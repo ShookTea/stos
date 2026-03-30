@@ -3,7 +3,7 @@
 Operating system kernel, working on x86 architecture.
 
 _Kernel running in debug mode, in Qemu emulator_
-[!screenshot](./docs/screenshot1.png)
+![screenshot](./docs/screenshot1.png)
 
 ## Syscalls
 
