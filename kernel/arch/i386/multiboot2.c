@@ -25,6 +25,12 @@ static multiboot_tag_boot_module_t boot_modules[MAX_BOOT_MODULE_ENTRIES];
 static char boot_module_names[MAX_BOOT_MODULE_ENTRIES][64];
 static uint8_t saved_boot_modules_count = 0;
 
+static bool rgb_mode = false;
+static uint32_t* framebuffer_addr = NULL;
+static uint32_t framebuffer_width = 0;
+static uint32_t framebuffer_height = 0;
+static uint32_t framebuffer_pitch = 0;
+
 static void multiboot2_process_memory_map()
 {
     if (saved_mmap_count == 0) {
@@ -156,11 +162,31 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 multiboot_tag_framebuffer_info_t* fb_inf =
                     (multiboot_tag_framebuffer_info_t*)tag;
                 printf(
-                    "  framebuffer size: %u x %u, color mode %u\n",
+                    "  framebuffer size: %u x %u, color mode %u, addr: %x %x\n",
                     fb_inf->width,
                     fb_inf->height,
-                    fb_inf->color_type
+                    fb_inf->color_type,
+                    fb_inf->framebuffer_addr_high,
+                    fb_inf->framebuffer_addr_low
                 );
+                // uint32_t* fb = (uint32_t*)fb_inf->framebuffer_addr_low;
+                // for (size_t x = 0; x < fb_inf->width; x++) {
+                //     for (size_t y = 0; y < fb_inf->height; y++) {
+                //         uint32_t* pixel = fb + y * (fb_inf->pitch / 4) + x;
+                //         if ((x % 32 == 0) || (y % 32 == 0)) {
+                //             *pixel = 0xFFFF0000;  // Red grid lines (ARGB)
+                //         } else {
+                //             *pixel = 0xFF0000FF;  // Blue background
+                //         }
+                //     }
+                // }
+                if (fb_inf->color_type == 1) {
+                    rgb_mode = true;
+                    framebuffer_addr = (uint32_t*)fb_inf->framebuffer_addr_low;
+                    framebuffer_height = fb_inf->height;
+                    framebuffer_width = fb_inf->width;
+                    framebuffer_pitch = fb_inf->pitch;
+                }
                 break;
             }
             default:
@@ -273,4 +299,13 @@ char* multiboot2_get_boot_module_name(uint32_t i) {
         return NULL;
     }
     return boot_module_names[i];
+}
+
+void multiboot2_load_framebuffer_rgb_config(framebuffer_rgb_config_t* res)
+{
+    res->enabled = rgb_mode;
+    res->framebuffer_addr = framebuffer_addr;
+    res->framebuffer_pitch = framebuffer_pitch;
+    res->framebuffer_height = framebuffer_height;
+    res->framebuffer_width = framebuffer_width;
 }
