@@ -12,6 +12,7 @@
 #define MULTIBOOT2_TAG_TYPE_BOOT_LOADER_NAME 2
 #define MULTIBOOT2_TAG_TYPE_MODULES 3
 #define MULTIBOOT2_TAG_TYPE_MEMORY_MAP 6
+#define MULTIBOOT2_TAG_TYPE_FRAMEBUFFER_INFO 8
 #define MULTIBOOT2_TAG_TYPE_ACPI_OLD 14
 #define MULTIBOOT2_TAG_TYPE_ACPI_NEW 15
 #define MULTIBOOT2_TAG_TYPE_APM_TABLE 10
@@ -73,6 +74,48 @@ typedef struct {
     uint32_t module_phys_addr_end;
     char module_name[];
 } multiboot_tag_boot_module_t;
+
+typedef struct {
+    uint32_t type;
+    uint32_t size;
+    uint32_t framebuffer_addr_low;
+    uint32_t framebuffer_addr_high;
+    uint32_t pitch;
+    uint32_t width; // width of framebuffer in pixels
+    uint32_t height; // height of framebuffer in pixels
+    uint8_t bpp; // bits per pixel
+    /**
+     * Type of color, which defines content immediatelly following the reserved
+     * field:
+     * - if color_type=0: indexed color (fb_info_indexed_t)
+     * - if color_type=1: direct RGB (fb_info_rgb_t)
+     * - if color_type=2: EGA text:
+     *   - width and height are in characters instead of pixels
+     *   - pitch is expressed in bytes per text line
+     */
+    uint8_t color_type;
+    uint8_t reserved;
+} multiboot_tag_framebuffer_info_t;
+
+typedef struct {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} fb_info_indexed_palette_t;
+
+typedef struct {
+    uint32_t palette_count;
+    fb_info_indexed_palette_t palette[0];
+} fb_info_indexed_t;
+
+typedef struct {
+    uint8_t red_field_pos;
+    uint8_t red_mask_size;
+    uint8_t green_field_pos;
+    uint8_t green_mask_size;
+    uint8_t blue_field_pos;
+    uint8_t blue_mask_size;
+} fb_info_rgb_t;
 
 typedef struct {
     uint32_t type;

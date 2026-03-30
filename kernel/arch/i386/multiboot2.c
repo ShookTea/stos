@@ -152,6 +152,17 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
 
                 break;
             }
+            case MULTIBOOT2_TAG_TYPE_FRAMEBUFFER_INFO: {
+                multiboot_tag_framebuffer_info_t* fb_inf =
+                    (multiboot_tag_framebuffer_info_t*)tag;
+                printf(
+                    "  framebuffer size: %u x %u, color mode %u\n",
+                    fb_inf->width,
+                    fb_inf->height,
+                    fb_inf->color_type
+                );
+                break;
+            }
             default:
                 printf("  unsupported mb2 tag type: %d\n", tag->type);
                 break;
