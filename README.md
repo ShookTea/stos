@@ -84,10 +84,10 @@ then prints to the command line.
 - Virtual File System (with initrd)
 - Multitasking
 - Usermode tasks
+- Heap for usermode
 
 ### (Short-term) todo list
 
-- Heap (alloc/free) for usermode
 - forking processes
 - Support for more than 1 GiB of RAM
   - that's currently not working because we're trying to map all physical
