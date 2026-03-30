@@ -14,7 +14,7 @@ forced to be within the first 8 KiB of the kernel file.
 multiboot_header_start:
     # magic number for grub multiboot2:
     .long MAGIC
-    # value 0 = i385 architecture
+    # value 0 = i386 architecture
     .long 0
     # header length:
     .long multiboot_header_end - multiboot_header_start
