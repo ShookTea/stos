@@ -20,7 +20,18 @@ multiboot_header_start:
     .long multiboot_header_end - multiboot_header_start
     # checksum:
     .long - (MAGIC + 0 + (multiboot_header_end - multiboot_header_start))
-    # end tag (minimal)
+
+    # Framebuffer request tag
+    .short 5 # type 5 = framebuffer request
+    .short 0
+    .long 20 # tag size
+    .long 640 # width
+    .long 480 # height
+    .long 32 # color
+
+    .align 8
+
+    # end tag
     .short 0  # type
     .short 0  # flags
     .long 8   # size
