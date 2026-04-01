@@ -10,8 +10,9 @@
 #define SYS_GETPPID 3 // uint32_t getpid()
 #define SYS_BRK 4 // uint32_t brk(void* addr)
 #define SYS_OPEN 5 // int open(const char* path, int flags)
-#define SYS_WRITE 6 // int write(int fd, const void* buf, size_t count)
-#define SYS_READ 7 // int read(int fd, void* buf, size_t count)
+#define SYS_CLOSE 6 // int close(int fd);
+#define SYS_WRITE 7 // int write(int fd, const void* buf, size_t count)
+#define SYS_READ 8 // int read(int fd, void* buf, size_t count)
 
 #ifdef __cplusplus
 extern "C" {

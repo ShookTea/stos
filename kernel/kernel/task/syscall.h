@@ -23,10 +23,13 @@ uint32_t sys_brk(uint32_t addr);
 #define SYS_OPEN 5
 uint32_t sys_open(const char* path, uint32_t flags);
 
-#define SYS_WRITE 6
+#define SYS_CLOSE 6
+int sys_close(int fd);
+
+#define SYS_WRITE 7
 int sys_write(int fd, const void* buf, size_t count);
 
-#define SYS_READ 7
+#define SYS_READ 8
 int sys_read(int fd, void* buf, size_t count);
 
 // Syscall return values

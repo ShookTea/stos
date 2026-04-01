@@ -20,6 +20,7 @@ static uint32_t syscall_int_handler(
         case SYS_GETPPID: return sys_getppid();
         case SYS_BRK: return sys_brk(arg1);
         case SYS_OPEN: return sys_open((char*)arg1, arg2);
+        case SYS_CLOSE: return sys_close((int)arg1);
         case SYS_WRITE:
             return sys_write((int)arg1, (const void*)arg2, (size_t)arg3);
         case SYS_READ: return sys_read((int)arg1, (void*)arg2, (size_t)arg3);
