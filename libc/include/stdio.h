@@ -85,6 +85,13 @@ FILE* fopen(const char* restrict path, const char* restrict mode);
  * TODO: if stream is NULL, it should flush all open output streams.
  */
 int fflush(FILE* stream);
+
+/**
+ * Flush the stream and close the underlying file descriptor. On success returns
+ * 0, on failure returns EOF.
+ */
+int fclose(FILE* stream);
+
 #endif
 
 #ifdef __cplusplus
