@@ -24,6 +24,12 @@ extern "C" {
  */
 int open(const char* path, int flags);
 
+/**
+ * Closes a file descriptor, so it no longer refers to any file and can be
+ * reused. It returns 0 on success, or -1 on error.
+ */
+int close(int fd);
+
 #ifdef __cplusplus
 }
 #endif
