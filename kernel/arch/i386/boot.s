@@ -22,12 +22,13 @@ multiboot_header_start:
     .long - (MAGIC + 0 + (multiboot_header_end - multiboot_header_start))
 
     # Framebuffer request tag
-    .short 5 # type 5 = framebuffer request
-    .short 0
-    .long 20 # tag size
-    .long 640 # width
-    .long 480 # height
-    .long 32 # color
+    # uncomment to enable RGB mode
+    #.short 5 # type 5 = framebuffer request
+    #.short 0
+    #.long 20 # tag size
+    #.long 1280 # width
+    #.long 1024 # height
+    #.long 32 # color
 
     .align 8
 
