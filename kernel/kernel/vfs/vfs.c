@@ -215,7 +215,7 @@ void vfs_mount_node(vfs_node_t* node)
     spinlock_release(&vfs_lock);
 }
 
-vfs_node_t* vfs_resolve(char* abs_path)
+vfs_node_t* vfs_resolve(const char* abs_path)
 {
     // Make copy of the path (include space for null terminator)
     size_t path_len = strlen(abs_path);

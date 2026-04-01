@@ -13,7 +13,10 @@ int open(const char* path, int flags)
         return -1;
     }
 
-    return syscall(SYS_OPEN, (int)path, flags, 0);
+    int res = syscall(SYS_OPEN, (int)path, flags, 0);
+    if (res < 3) { // Entries 0-2 are reserved for stdin/out/err
+        return -1;
+    }
 }
 
 #endif
