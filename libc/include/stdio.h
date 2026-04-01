@@ -72,6 +72,19 @@ int vprintf(const char* __restrict, va_list list);
  * - "a+" - open the file for reading and appending.
  */
 FILE* fopen(const char* restrict path, const char* restrict mode);
+
+/**
+ * For output streams, this function will force write of all buffered data for
+ * the given output.
+ *
+ * For input streams, this function will discard any buffered data that has
+ * been fetched from the file, but hasn't been consumed by the application.
+ *
+ * In both cases, it will return 0 after success or EOF on failure.
+ *
+ * TODO: if stream is NULL, it should flush all open output streams.
+ */
+int fflush(FILE* stream);
 #endif
 
 #ifdef __cplusplus
