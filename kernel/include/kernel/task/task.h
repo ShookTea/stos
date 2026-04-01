@@ -1,6 +1,7 @@
 #ifndef KERNEL_TASK_TASK_H
 #define KERNEL_TASK_TASK_H
 
+#include "kernel/vfs/vfs.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -45,6 +46,15 @@ typedef struct memory_region {
     /** Next region in the linked list */
     struct memory_region* next;
 } task_memory_region_t;
+
+/**
+ * File descriptor list
+ */
+typedef struct {
+    vfs_file_t* file; // set to NULL if not present
+    // FD identifier, starting from 3 (0-2 are reserved for stdin/out/err)
+    uint32_t identifier;
+} task_file_descriptor_t;
 
 /**
  * Task Control Block (TCB) - defines all information needed to manage and
@@ -113,10 +123,11 @@ typedef struct task {
     /** Next task in the queue */
     struct task* next;
 
+    task_file_descriptor_t** fd;
+    size_t fd_count;
     // TODO: for future implementations:
     // - priority
     // - working directory ID/path
-    // - list of open file descriptors
     // - pending signals to be sent to the process
     // - signal handlers
 } task_t;

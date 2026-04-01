@@ -1,6 +1,7 @@
 #include <kernel/task/task.h>
 #include "kernel/memory/pmm.h"
 #include "kernel/spinlock.h"
+#include "kernel/vfs/vfs.h"
 #include <kernel/task/scheduler.h>
 #include <kernel/memory/vmm.h>
 #include <stdio.h>
@@ -125,6 +126,8 @@ static task_t* task_allocate(const char* name)
     task_t* task = kmalloc_flags(sizeof(task_t), KMALLOC_ZERO);
     strncpy(task->name, name, sizeof(task->name) - 1);
     task->name[sizeof(task->name) - 1] = '\0'; // Ensure null termination
+    task->fd = NULL;
+    task->fd_count = 0;
 
     if (tasks_length == tasks_present) {
         // Need to increase the size of tasks array by some constant margin
@@ -301,6 +304,16 @@ void task_destroy(task_t* task)
         memreg = next;
     }
     task->memory_regions = NULL;
+
+    // Free task descriptors
+    for (size_t i = 0; i < task->fd_count; i++) {
+        task_file_descriptor_t* fd = task->fd[i];
+        if (fd->file != NULL) {
+            vfs_close(fd->file);
+        }
+        kfree(fd);
+    }
+    kfree(task->fd);
 
     // Free task entry
     spinlock_acquire(&task_list_lock);
