@@ -17,6 +17,8 @@ int open(const char* path, int flags)
     if (res < 3) { // Entries 0-2 are reserved for stdin/out/err
         return -1;
     }
+
+    return res;
 }
 
 #endif

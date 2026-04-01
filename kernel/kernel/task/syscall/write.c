@@ -6,6 +6,7 @@
 int sys_write(int fd, const void* buf, size_t count)
 {
     // For now only support stdout (fd=1)
+    // TODO support all file descriptors
     if (fd != 1) {
         return -1;
     }

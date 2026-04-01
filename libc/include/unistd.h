@@ -19,6 +19,14 @@ extern "C" {
 int write(int fd, const void* buffer, size_t count);
 
 /**
+ * Reads up to [count] bytes from given file descriptor into the buffer starting
+ * at [buf].
+ * On success, returns the number of read bytes (zero indicates end of file),
+ * and the file position is advanced by this number. On error -1 is returned.
+ */
+int read(int fd, void* buf, size_t count);
+
+/**
  * Returns the process ID of the current process.
  */
 uint32_t getpid(void);

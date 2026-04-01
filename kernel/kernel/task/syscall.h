@@ -26,6 +26,9 @@ uint32_t sys_open(const char* path, uint32_t flags);
 #define SYS_WRITE 6
 int sys_write(int fd, const void* buf, size_t count);
 
+#define SYS_READ 7
+int sys_read(int fd, void* buf, size_t count);
+
 // Syscall return values
 #define SYSCALL_SUCCESS 0
 #define SYSCALL_ERROR -1
