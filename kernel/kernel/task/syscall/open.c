@@ -22,6 +22,17 @@ uint32_t sys_open(const char* path, uint32_t flags)
         return SYSCALL_ERROR;
     }
 
+    // First try to find first existing identifier that is already allocated but
+    // was freed before
+    for (size_t i = 0; i < current->fd_count; i++) {
+        task_file_descriptor_t* desc = current->fd[i];
+        if (desc->file == NULL) {
+            desc->file = handler;
+            return desc->identifier;
+        }
+    }
+
+    // Allocate new entry for file descriptor
     task_file_descriptor_t* desc = kmalloc(sizeof(task_file_descriptor_t));
     desc->file = handler;
     desc->identifier = current->fd_count + 3; // 0-2 are reserved
