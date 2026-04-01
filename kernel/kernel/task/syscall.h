@@ -20,7 +20,10 @@ uint32_t sys_getppid();
 #define SYS_BRK 4
 uint32_t sys_brk(uint32_t addr);
 
-#define SYS_WRITE 5
+#define SYS_OPEN 5
+uint32_t sys_open(const char* path, uint32_t flags);
+
+#define SYS_WRITE 6
 int sys_write(int fd, const void* buf, size_t count);
 
 // Syscall return values
