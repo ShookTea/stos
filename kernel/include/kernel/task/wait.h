@@ -1,14 +1,14 @@
 #ifndef KERNEL_TASK_WAIT_H
 #define KERNEL_TASK_WAIT_H
 
-#include "kernel/task/task.h"
+#include <stddef.h>
 #include <stdbool.h>
 
 /**
  * Representation of a waiting object, that can be used for waking up tasks.
  */
 typedef struct {
-    task_t** waiters; // List of tasks waiting for this object
+    void** waiters; // List of tasks waiting for this object (task_t* type)
     size_t count; // Current number of waiting tasks
     size_t capacity; // Size of waiters pointer
     /**

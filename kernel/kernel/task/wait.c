@@ -62,7 +62,6 @@ void wait_on_condition(
 
     // Dequeueing the task
     dequeue_waiter(wait_obj, task);
-    scheduler_move_task_to_state(task, TASK_WAITING);
 }
 
 void wait_wake_up(wait_obj_t* wait_obj)
@@ -74,4 +73,32 @@ void wait_wake_up(wait_obj_t* wait_obj)
     } else if (wait_obj->count > 0) {
         scheduler_move_task_to_state(wait_obj->waiters[0], TASK_WAITING);
     }
+}
+
+static wait_obj_t* wait_alloc(bool wakeup_all)
+{
+    wait_obj_t* wait_obj = kmalloc_flags(sizeof(wait_obj_t), KMALLOC_ZERO);
+    wait_obj->wakeup_all = wakeup_all;
+    wait_obj->capacity = 5;
+    wait_obj->waiters = kmalloc(sizeof(task_t*) * wait_obj->capacity);
+    return wait_obj;
+}
+
+wait_obj_t* wait_allocate_queue()
+{
+    return wait_alloc(false);
+}
+
+wait_obj_t* wait_allocate_event()
+{
+    return wait_alloc(true);
+}
+
+void wait_deallocate(wait_obj_t* wait_obj)
+{
+    if (wait_obj == NULL) {
+        return;
+    }
+    kfree(wait_obj->waiters);
+    kfree(wait_obj);
 }
