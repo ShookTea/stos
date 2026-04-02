@@ -15,7 +15,7 @@
 // A normal directory
 #define VFS_TYPE_DIRECTORY 0x02
 // Character device file (stream of bytes, handled sequentially)
-#define VFS_TYPE_CHARACTER_DEVICE 0x03
+#define VFS_TYPE_CHARACTER_DEVICE 0x04
 // Mounted file.
 #define VFS_TYPE_MOUNTPOINT 0x10
 // TODO: types for devices etc.

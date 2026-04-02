@@ -11,6 +11,6 @@ vfs_node_t* device_tty_mount()
     }
 
     node = kmalloc(sizeof(vfs_node_t));
-    vfs_populate_node(node, "dev", VFS_TYPE_CHARACTER_DEVICE);
+    vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);
     return node;
 }

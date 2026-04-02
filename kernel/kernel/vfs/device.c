@@ -2,6 +2,7 @@
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 static vfs_node_t* node = NULL;
@@ -22,7 +23,7 @@ static struct dirent* readdir(
     vfs_node_t* directory __attribute__((unused)),
     size_t index
 ) {
-    if (index > device_files_count) {
+    if (index >= device_files_count) {
         return NULL;
     }
     static struct dirent ent;
@@ -55,7 +56,7 @@ vfs_node_t* device_mount()
     node->finddir_node = finddir;
     vfs_mount_node(node);
 
-    // add_device_file(device_tty_mount());
+    add_device_file(device_tty_mount());
 
     return node;
 }
