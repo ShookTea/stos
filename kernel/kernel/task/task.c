@@ -424,11 +424,14 @@ void task_exit(int exit_code)
     current->exit_code = exit_code;
     scheduler_move_task_to_state(current, TASK_ZOMBIE);
 
-    // Wake up parent if it's waiting
-    // TODO: emit SIGCHLD as well
-    if (current->parent != NULL && current->parent->state == TASK_BLOCKED) {
-        scheduler_move_task_to_state(current->parent, TASK_WAITING);
+    // Notify all tasks waiting for this process to be over
+    wait_wake_up(current->waiting_queue);
+    // If parent is currently waiting for any child process, wake it up as well
+    if (current->parent != NULL) {
+        wait_wake_up(current->parent->children_wait_queue);
     }
+
+    // TODO: emit SIGCHLD if parent task exists
 
     // Handle cases where current task has children
     task_t* child = current->first_child;
@@ -470,57 +473,125 @@ void task_exit(int exit_code)
     while (1) {}
 }
 
+typedef struct {
+    int pid;
+    int* exit_code;
+} task_wait_on_child_params;
+
+/**
+ * Will return true if the child with given PID is in ZOMBIE state. It will
+ * store exit code in passed address, if given.
+ */
+static bool task_wait_for_child(void* _params)
+{
+    task_wait_on_child_params* params = _params;
+    int pid = params->pid;
+    int* exit_code = params->exit_code;
+
+    task_t* parent = scheduler_get_current_task();
+    if (parent == NULL) {
+        return false;
+    }
+    task_t* child = parent->first_child;
+    while (child != NULL) {
+        if (child->pid != (uint32_t)pid) {
+            child = child->next;
+            continue;
+        }
+
+        // Child found
+        if (child->state != TASK_ZOMBIE) {
+            return false;
+        }
+
+        if (exit_code != NULL) {
+            *exit_code = child->exit_code;
+        }
+        return true;
+    }
+    // Child not found
+    return false;
+}
+
+/**
+ * Will return true if any child with is in ZOMBIE state. It will
+ * store exit code in passed address, if given. "pid" parameter is ignored.
+ */
+static bool task_wait_for_any_child(void* _params)
+{
+    task_wait_on_child_params* params = _params;
+    int* exit_code = params->exit_code;
+
+    task_t* parent = scheduler_get_current_task();
+    if (parent == NULL) {
+        return false;
+    }
+    task_t* child = parent->first_child;
+    while (child != NULL) {
+        if (child->state != TASK_ZOMBIE) {
+            child = child->next;
+        }
+    }
+    if (child == NULL) {
+        // Child not found
+        return false;
+    }
+
+    // Child found - save exit code and return
+    if (exit_code != NULL) {
+        *exit_code = child->exit_code;
+    }
+    return true;
+}
+
 int task_wait(int pid, int* exit_code)
 {
     task_t* parent = scheduler_get_current_task();
-    while (1) {
-        // Look for zombie children
+    if (parent->first_child == NULL) {
+        // Parent doesn't have children
+        return -1;
+    }
+    // Check if parent has a child with that PID
+    if (pid >= 0) {
         task_t* child = parent->first_child;
-
         while (child != NULL) {
-            // If waiting for specific PID, check it
-            if (pid >= 0 && child->pid != (uint32_t)pid) {
-                child = child->next_sibling;
-                continue;
-            }
-
-            if (child->state == TASK_ZOMBIE) {
-                // Found zombie child to reap.
-                // Read exit code if requested
-                if (exit_code != NULL) {
-                    *exit_code = child->exit_code;
-                }
-
-                int child_pid = child->pid;
-
-                // Remove from parent's child list
-                if (child->prev_sibling != NULL) {
-                    child->prev_sibling->next_sibling = child->next_sibling;
-                }
-                if (child->next_sibling != NULL) {
-                    child->next_sibling->prev_sibling = child->prev_sibling;
-                }
-                if (parent->first_child == child) {
-                    parent->first_child = child->next_sibling;
-                }
-
-                // Mark child as DEAD (to be cleaned up by the scheduler)
-                child->state = TASK_DEAD;
-                return child_pid;
+            if (child->pid == (uint32_t)pid) {
+                break;
             }
             child = child->next_sibling;
         }
-
-        // No zombie children found
-
-        if (parent->first_child == NULL) {
-            // Parent doesn't have any children
-            return -1;
+        if (child == NULL) {
+            // Parent doesn't have a child with that PID
+            return -2;
         }
 
-        // Children exist, but none are zombies yet. Block and wait for a child
-        // to exit.
-        scheduler_move_task_to_state(parent, TASK_BLOCKED);
-        scheduler_yield();
+        // Parent has a child with given PID - we can register it in the waiting
+        // queue.
+
+        task_wait_on_child_params* params = kmalloc(
+            sizeof(task_wait_on_child_params)
+        );
+        params->pid = pid;
+        params->exit_code = exit_code;
+        wait_on_condition(
+            child->waiting_queue,
+            task_wait_for_child,
+            (void*)params
+        );
+        kfree(params);
+        return 0;
     }
+
+    // Parent wants to wait for any child to be completed.
+    task_wait_on_child_params* params = kmalloc(
+        sizeof(task_wait_on_child_params)
+    );
+    params->exit_code = exit_code;
+    wait_on_condition(
+        parent->children_wait_queue,
+        task_wait_for_any_child,
+        (void*)params
+    );
+    kfree(params);
+    return 0;
 }
