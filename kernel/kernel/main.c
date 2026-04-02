@@ -15,6 +15,7 @@
 #include <kernel/vfs/vfs.h>
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
+#include "kernel/vfs/device.h"
 #include "task/syscall.h"
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"
@@ -61,6 +62,7 @@ void kernel_main()
     // Initialize filesystem and mount initrd.
     vfs_init();
     initrd_mount();
+    device_mount();
 
     // Initialize drivers for basic devices
     pit_init();
