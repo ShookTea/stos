@@ -130,6 +130,8 @@ typedef struct task {
 
     /** Waiting queue for processes that wait for this task to be completed */
     wait_obj_t* waiting_queue;
+    /** Special queue for parent that waits for any children to complete */
+    wait_obj_t* children_wait_queue;
 
     // TODO: for future implementations:
     // - priority
