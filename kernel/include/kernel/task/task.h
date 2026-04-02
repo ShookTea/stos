@@ -1,6 +1,7 @@
 #ifndef KERNEL_TASK_TASK_H
 #define KERNEL_TASK_TASK_H
 
+#include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -123,8 +124,13 @@ typedef struct task {
     /** Next task in the queue */
     struct task* next;
 
+    // Open file descriptors + total count
     task_file_descriptor_t** fd;
     size_t fd_count;
+
+    /** Waiting queue for processes that wait for this task to be completed */
+    wait_obj_t* waiting_queue;
+
     // TODO: for future implementations:
     // - priority
     // - working directory ID/path

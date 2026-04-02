@@ -36,4 +36,24 @@ void wait_on_condition(
  */
 void wait_wake_up(wait_obj_t* wait_obj);
 
+/**
+ * Allocates a memory for wait_obj that works as a queue (wakeup_all=false).
+ * It is the responsibility of the caller to call void wait_deallocate() when
+ * it's no longer needed.
+ */
+wait_obj_t* wait_allocate_queue();
+
+/**
+ * Allocates a memory for wait_obj that works as an event listener
+ * (wakeup_all=true).
+ * It is the responsibility of the caller to call void wait_deallocate() when
+ * it's no longer needed.
+ */
+wait_obj_t* wait_allocate_event();
+
+/**
+ * Frees the memory for given wait_obj.
+ */
+void wait_deallocate(wait_obj_t* wait_obj);
+
 #endif
