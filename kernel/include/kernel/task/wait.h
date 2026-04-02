@@ -17,7 +17,7 @@ typedef struct {
      * file).
      */
     bool wakeup_all;
-} task_waiter_obj_t;
+} wait_obj_t;
 
 /**
  * Block current task until a specific condition is passed. While task is
