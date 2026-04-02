@@ -64,3 +64,14 @@ void wait_on_condition(
     dequeue_waiter(wait_obj, task);
     scheduler_move_task_to_state(task, TASK_WAITING);
 }
+
+void wait_wake_up(wait_obj_t* wait_obj)
+{
+    if (wait_obj->wakeup_all) {
+        for (size_t i = 0; i < wait_obj->count; i++) {
+            scheduler_move_task_to_state(wait_obj->waiters[i], TASK_WAITING);
+        }
+    } else if (wait_obj->count > 0) {
+        scheduler_move_task_to_state(wait_obj->waiters[0], TASK_WAITING);
+    }
+}

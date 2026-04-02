@@ -29,4 +29,11 @@ void wait_on_condition(
     void* arg
 );
 
+/**
+ * Wakes up first task in the queue or all of them, depending on the value of
+ * wakeup_all. They will re-check their condition and continue the execution
+ * if condition is passed.
+ */
+void wait_wake_up(wait_obj_t* wait_obj);
+
 #endif
