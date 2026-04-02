@@ -23,6 +23,10 @@ typedef struct {
  * Block current task until a specific condition is passed. While task is
  * waiting, it stays in BLOCKED state and isn't scheduled.
  */
-void wait_on_condition(bool (*condition)(void* arg), void* arg);
+void wait_on_condition(
+    wait_obj_t* wait_obj,
+    bool (*condition)(void* arg),
+    void* arg
+);
 
 #endif
