@@ -3,7 +3,6 @@
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include <stdbool.h>
-#include <stdio.h>
 
 static void enqueue_waiter(wait_obj_t* wait_obj, task_t* waiter)
 {
@@ -47,18 +46,14 @@ void wait_on_condition(
     if (task == NULL) {
         return;
     }
-    printf("\n\tTask %u '%s' enters waiting on loop\n", task->pid, task->name);
     scheduler_move_task_to_state(task, TASK_BLOCKED);
 
     // Enqueue task in waiting object's queue
     enqueue_waiter(wait_obj, task);
 
     while (task->state == TASK_BLOCKED && !condition(arg)) {
-        printf("\n\tTask %u '%s' still waiting\n", task->pid, task->name);
         scheduler_yield();
     }
-
-    printf("\n\tTask %u '%s' finished waiting\n", task->pid, task->name);
 
     // Dequeueing the task
     dequeue_waiter(wait_obj, task);
