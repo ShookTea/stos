@@ -16,6 +16,7 @@
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
 #include "kernel/vfs/device.h"
+#include <libds/libds.h>
 #include "task/syscall.h"
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"
@@ -47,6 +48,9 @@ void kernel_main()
     puts("VMM: Already initialized by early_init()");
     puts("Slab allocator: Already initialized by early_init()");
     puts("kmalloc/kfree: Already initialized by early_init()");
+
+    // Set allocators for libds library
+    libds_set_allocators(kmalloc, krealloc, kfree);
 
     bool in_debug_mode =
         strcmp(multiboot2_get_boot_command_line(), "debug") == 0;
