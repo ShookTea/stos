@@ -27,4 +27,18 @@ void libds_set_allocators(
     void (*f_free)(void*)
 );
 
+/**
+ * Definitions for status results of various operations
+ */
+typedef enum {
+    /** Operation was successful */
+    DS_SUCCESS = 0,
+    /** Pointer to a structure was invalid */
+    DS_ERR_INVALID,
+    /** Failed to save - container full */
+    DS_ERR_FULL,
+    /** Failed to read - container empty */
+    DS_ERR_EMPTY
+} ds_result_t;
+
 #endif
