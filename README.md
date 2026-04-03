@@ -65,6 +65,7 @@ then prints to the command line.
 ├── libc/                # implementation of libc standard library
 │   ├── include/         # libc headers
 │   └── src/             # Implementations of libc headers
+├── libds/               # implementation of libds library of data structures
 └── usermode/            # Usermode programs built and loaded into initrd
 ```
 
