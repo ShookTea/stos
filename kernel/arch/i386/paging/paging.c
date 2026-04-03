@@ -1036,6 +1036,7 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr)
     // If reference count reaches 0, free the page
     uint16_t old_refcount = pmm_dec_refcount(old_phys);
     if (old_refcount == 0) {
+        pmm_free_page(old_phys);
         printf(
             "PAGING: old COW page %#x freed (last ref. removed)\n",
             old_phys

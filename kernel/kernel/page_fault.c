@@ -358,7 +358,7 @@ bool page_fault_try_recover(const page_fault_info_t* info)
         return false;
     }
 
-    if (info->present && info->write_access && !info->user_mode) {
+    if (info->present && info->write_access) {
         // Check for copy-on-write page fault.
         if (paging_handle_page_fault_cow(info->faulting_address)) {
             pf_stats.recoverable++;
