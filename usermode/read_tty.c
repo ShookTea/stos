@@ -12,7 +12,7 @@ int main(void)
     read(fd, data, 32);
     data[31] = 0;
     char* text = (char*)data;
-    puts(text);
+    printf(">%s<\n", text);
     close(fd);
 
     return 0;

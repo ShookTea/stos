@@ -3,6 +3,7 @@
 #include "kernel/vfs/device.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
+#include "libds/libds.h"
 #include "libds/ringbuf.h"
 #include <stdio.h>
 #include <string.h>
@@ -12,39 +13,76 @@
 static vfs_node_t* node = NULL;
 static wait_obj_t* wait_obj;
 
+/**
+ * Buffer containing all "committed" bytes (after pressing Enter)
+ */
 static ds_ringbuf_t* buffer;
-static bool buffer_ready = false;
+static size_t ready_lines = 0;
+/**
+ * Currently read line
+ */
+static char current_line[BUFFER_SIZE];
+static size_t current_line_pos = 0;
+
+static void push_curr_line_to_buffer()
+{
+    for (size_t i = 0; i < current_line_pos; i++) {
+        ds_result_t res = ds_ringbuf_push(buffer, &current_line[i]);
+        if (res == DS_ERR_FULL) {
+            // Clear last character and reattempt pushing. We're doing it
+            // manually instead of passing fail_on_full=false to the ringbuf
+            // creation, because we need to decrent ready_lines when hitting
+            // new line.
+            char popped;
+            ds_ringbuf_pop(buffer, &popped);
+            if (popped == '\n') {
+                ready_lines--;
+            }
+            // Re-attempt pushing
+            ds_ringbuf_push(buffer, &current_line[i]);
+        }
+    }
+    current_line_pos = 0;
+    ready_lines++;
+}
 
 static void handle_key_event(keyboard_event_t evt)
 {
-    // if (wait_obj->count == 0) {
-        // There are no tasks reading this file right now
-        // return;
-    // }
-    if (buffer_ready || !evt.pressed || !evt.ascii) {
+    if (!evt.pressed || !evt.ascii) {
         // TODO: handle cursor moving left and right
         return;
     }
 
-    if (evt.key_code == KCODE_ENTER
+    if (evt.key_code == KCODE_BACKSPACE) {
+        if (current_line_pos > 0) {
+            current_line_pos--;
+            current_line[current_line_pos] = 0;
+            putchar('\b');
+        }
+    }
+    else if (evt.key_code == KCODE_ENTER
         || evt.key_code == KCODE_NUMPAD_ENTER) {
             char nline = '\n';
             putchar(nline);
-            ds_ringbuf_push(buffer, &nline);
-
+            current_line[current_line_pos] = '\n';
+            current_line_pos++;
+            // New line was commited - send it to buffer
+            // TODO: if last character was non-escaped backslash, that means
+            // "don't commit now, instead pass new line to the reading task"
+            push_curr_line_to_buffer();
             if (wait_obj->count > 0) {
-                buffer_ready = true;
                 wait_wake_up(wait_obj);
             }
     } else {
         putchar(evt.ascii);
-        ds_ringbuf_push(buffer, &(evt.ascii));
+        current_line[current_line_pos] = evt.ascii;
+        current_line_pos++;
     }
 }
 
 static bool is_buffer_ready()
 {
-    return buffer_ready;
+    return ready_lines > 0;
 }
 
 static size_t read(
@@ -55,16 +93,25 @@ static size_t read(
 ) {
     puts("Entering condition loop");
     wait_on_condition(wait_obj, is_buffer_ready, NULL);
-    size_t read_end = size;
-    if (read_end > ds_ringbuf_size(buffer)) {
-        read_end = ds_ringbuf_size(buffer);
+    size_t read_bytes = 0;
+    size_t buffer_size = ds_ringbuf_size(buffer);
+    if (buffer_size < size) {
+        size = buffer_size;
     }
-    for (size_t i = 0; i < read_end; i++) {
-        ds_ringbuf_pop(buffer, (uint8_t*)ptr + i);
+
+    for (size_t i = 0; i < size; i++) {
+        char c;
+        ds_ringbuf_pop(buffer, &c);
+        *((uint8_t*)ptr + i) = c;
+        read_bytes++;
+        if (c == '\n') {
+            // TODO: if previous character was non-escaped backslash, that means
+            // the new line character is a part of line
+            ready_lines--;
+            break;
+        }
     }
-    ds_ringbuf_clear(buffer);
-    buffer_ready = false;
-    return read_end;
+    return read_bytes;
 }
 
 vfs_node_t* device_tty_mount()
@@ -73,7 +120,7 @@ vfs_node_t* device_tty_mount()
         return node;
     }
 
-    buffer = ds_ringbuf_create(BUFFER_SIZE, sizeof(char), false);
+    buffer = ds_ringbuf_create(BUFFER_SIZE, sizeof(char), true);
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);
     node->read_node = read;
