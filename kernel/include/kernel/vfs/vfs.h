@@ -10,6 +10,9 @@
  * a root node. Each node represents either a file, or a directory.
  */
 
+// Max length of a full path.
+#define VFS_MAX_PATH_LENGTH 4096
+
 // A normal file
 #define VFS_TYPE_FILE 0x01
 // A normal directory

@@ -34,11 +34,6 @@ static task_file_descriptor_t* get_descriptor(int fd)
 
 int sys_read(int fd_id, void* buf, size_t count)
 {
-    // Validate user pointer is in user space
-    if ((uint32_t)buf < VMM_USER_START || (uint32_t)buf >= VMM_USER_END) {
-        return -1;
-    }
-
     // Get file descriptor
     task_file_descriptor_t* fd = get_descriptor(fd_id);
     if (fd == NULL) {
