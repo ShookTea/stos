@@ -495,7 +495,7 @@ static bool task_wait_for_child(void* _params)
     task_t* child = parent->first_child;
     while (child != NULL) {
         if (child->pid != (uint32_t)pid) {
-            child = child->next;
+            child = child->next_sibling;
             continue;
         }
 
@@ -529,7 +529,7 @@ static bool task_wait_for_any_child(void* _params)
     task_t* child = parent->first_child;
     while (child != NULL) {
         if (child->state != TASK_ZOMBIE) {
-            child = child->next;
+            child = child->next_sibling;
         }
     }
     if (child == NULL) {
