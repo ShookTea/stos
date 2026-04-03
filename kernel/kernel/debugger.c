@@ -1,6 +1,6 @@
 #include "debugger.h"
 
-#include <kernel/drivers/keyboard.h>
+// #include <kernel/drivers/keyboard.h>
 #include <stdio.h>
 #include <kernel/terminal.h>
 #include <stdlib.h>
@@ -26,7 +26,6 @@
 
 static char command_buffer[MAX_COMMAND_LENGTH];
 static uint8_t command_length = 0;
-static bool accept_commands = false;
 static uint32_t background_task_count = 0;
 
 static void background_task()
@@ -49,25 +48,11 @@ static void background_task()
     }
 }
 
-static void print_prompt_and_enable()
-{
-    puts("");
-    printf("\033[36;1m#\033[0m ");
-    terminal_enable_cursor();
-    command_length = 0;
-    memset(command_buffer, 0, MAX_COMMAND_LENGTH);
-    accept_commands = true;
-}
-
 static void handle_command_sent()
 {
-    // First, disable input
-    accept_commands = false;
-    terminal_disable_cursor();
     puts("");
 
     if (command_length == 0 || command_buffer[0] == '\0') {
-        print_prompt_and_enable();
         return;
     }
 
@@ -76,7 +61,6 @@ static void handle_command_sent()
     char* command = arg;
 
     if (command == NULL) {
-        print_prompt_and_enable();
         return;
     }
 
@@ -363,40 +347,35 @@ static void handle_command_sent()
     else {
         printf("Unrecognized command: %s\n", command);
     }
-
-    // Re-enable prompt
-    print_prompt_and_enable();
 }
 
-static void handle_key_event(keyboard_event_t evt)
+static void print_prompt_and_read_command()
 {
-    if (!accept_commands || !evt.pressed || !evt.ascii) {
-        // TODO: handle cursor moving left and right
-        return;
-    }
-    if (evt.key_code == KCODE_BACKSPACE) {
-        if (command_length > 0) {
-            terminal_write_char('\b');
-            command_length--;
-            command_buffer[command_length] = 0;
-        }
-    } else if (evt.key_code == KCODE_ENTER
-        || evt.key_code == KCODE_NUMPAD_ENTER) {
-            handle_command_sent();
-    } else if (command_length < (MAX_COMMAND_LENGTH - 1)) {
-        putchar(evt.ascii);
-        command_buffer[command_length] = evt.ascii;
-        command_length++;
-    }
+    puts("");
+    printf("\033[36;1m#\033[0m ");
+    terminal_enable_cursor();
+
+    vfs_node_t* tty = vfs_resolve("/dev/tty");
+    vfs_file_t* handle = vfs_open(tty, VFS_MODE_READONLY);
+    command_length = vfs_read(handle, MAX_COMMAND_LENGTH, command_buffer);
+    command_buffer[command_length] = '\0';
+    command_buffer[command_length - 1] = '\0'; // Clear new line character
+    vfs_close(handle);
+
+    terminal_disable_cursor();
+    handle_command_sent();
 }
 
 void debugger_init()
 {
-    keyboard_register_listener(handle_key_event);
     puts("");
     puts("");
     puts("Kernel debugger. Write \"help\" to get list of available commands.");
-    print_prompt_and_enable();
+
+    // Entering I/O loop with reading command from /dev/tty and analyzing it.
+    while (1) {
+        print_prompt_and_read_command();
+    }
 
     // Entering idle loop - debugger should run forever
     while (1) {
