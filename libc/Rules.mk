@@ -5,7 +5,7 @@ LIBC_BUILD_DIR := $(BUILD_DIR)/lib/libc
 LIBK_TARGET := $(BUILD_DIR)/lib/libk.a
 LIBC_TARGET := $(BUILD_DIR)/lib/libc.a
 
-LIBC_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I$(LIBC_DIR)/include
+LIBC_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra $(LIB_INCLUDE_FLAGS)
 LIBK_CFLAGS := $(LIBC_CFLAGS) -I$(KERNEL_SRC_DIR)/include -D__is_libk
 
 LIBC_C    := $(shell find $(LIBC_SRC_DIR) -name '*.c')

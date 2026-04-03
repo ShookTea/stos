@@ -6,12 +6,16 @@ AR := i686-elf-ar
 BUILD_DIR      := build
 KERNEL_SRC_DIR := kernel
 LIBC_DIR       := libc
+LIBDS_DIR      := libds
 TARGET         := $(BUILD_DIR)/stos
 INITRD         := $(BUILD_DIR)/isodir/boot/stos.initrd
+
+LIB_INCLUDE_FLAGS := -I$(LIBC_DIR)/include -I$(LIBDS_DIR)/include
 
 QEMU_FLAGS := -m 512M -serial stdio -boot order=dc
 
 include libc/Rules.mk
+include libds/Rules.mk
 include kernel/Rules.mk
 include usermode/Rules.mk
 

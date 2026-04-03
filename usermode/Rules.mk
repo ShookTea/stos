@@ -1,7 +1,7 @@
 USERMODE_SRC_DIR   := usermode
 USERMODE_BUILD_DIR := $(BUILD_DIR)/usermode
 
-USERMODE_CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I$(LIBC_DIR)/include
+USERMODE_CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra $(LIB_INCLUDE_FLAGS)
 USERMODE_LDFLAGS := -T $(USERMODE_SRC_DIR)/linker.ld -nostdlib -ffreestanding -lgcc
 
 USERMODE_C    := $(shell find $(USERMODE_SRC_DIR) -name '*.c' ! -name 'crt0.c')
@@ -17,7 +17,7 @@ $(INITRD): $(USERMODE_BIN)
 	mkdir -p $(@D)
 	tar -C $(USERMODE_BUILD_DIR) -cf $@ $(notdir $(USERMODE_BIN))
 
-$(USERMODE_BUILD_DIR)/%: $(USERMODE_CRT0_OBJ) $(USERMODE_BUILD_DIR)/%.u.o $(LIBC_TARGET)
+$(USERMODE_BUILD_DIR)/%: $(USERMODE_CRT0_OBJ) $(USERMODE_BUILD_DIR)/%.u.o $(LIBC_TARGET) $(LIBDS_TARGET)
 	$(CC) -o $@ $^ $(USERMODE_LDFLAGS)
 
 $(USERMODE_BUILD_DIR)/%.u.o: $(USERMODE_SRC_DIR)/%.c
