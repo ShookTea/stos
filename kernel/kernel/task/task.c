@@ -581,7 +581,7 @@ int task_wait(int pid, int* exit_code)
             (void*)params
         );
         kfree(params);
-        scheduler_move_task_to_state(child, TASK_DEAD);
+        child->state = TASK_DEAD;
         return 0;
     }
 
@@ -596,6 +596,6 @@ int task_wait(int pid, int* exit_code)
         (void*)params
     );
     kfree(params);
-    scheduler_move_task_to_state(any_child_zombie_found, TASK_DEAD);
+    any_child_zombie_found->state = TASK_DEAD;
     return 0;
 }
