@@ -1,11 +1,13 @@
 # Directories and paths
 KERNEL_SRC_DIR := kernel
+BUILD_DIR := build
+
 LIBC_DIR := libc
 LIBC_SRC_DIR := $(LIBC_DIR)/src
-USERMODE_SRC_DIR := usermode
-BUILD_DIR := build
 LIBK_BUILD_DIR := $(BUILD_DIR)/lib/libk
 LIBC_BUILD_DIR := $(BUILD_DIR)/lib/libc
+
+USERMODE_SRC_DIR := usermode
 USERMODE_BUILD_DIR := $(BUILD_DIR)/usermode
 
 # Compiler / tools
