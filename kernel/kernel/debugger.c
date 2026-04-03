@@ -1,6 +1,5 @@
 #include "debugger.h"
 
-// #include <kernel/drivers/keyboard.h>
 #include <stdio.h>
 #include <kernel/terminal.h>
 #include <stdlib.h>
