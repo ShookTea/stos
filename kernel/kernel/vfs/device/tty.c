@@ -59,7 +59,7 @@ static size_t read(
     if (read_end > ds_ringbuf_size(buffer)) {
         read_end = ds_ringbuf_size(buffer);
     }
-    for (size_t i = 0; i <= read_end; i++) {
+    for (size_t i = 0; i < read_end; i++) {
         ds_ringbuf_pop(buffer, (uint8_t*)ptr + i);
     }
     ds_ringbuf_clear(buffer);
