@@ -1,66 +1,19 @@
-# Directories and paths
-KERNEL_SRC_DIR := kernel
-BUILD_DIR := build
-
-LIBC_DIR := libc
-LIBC_SRC_DIR := $(LIBC_DIR)/src
-LIBK_BUILD_DIR := $(BUILD_DIR)/lib/libk
-LIBC_BUILD_DIR := $(BUILD_DIR)/lib/libc
-
-USERMODE_SRC_DIR := usermode
-USERMODE_BUILD_DIR := $(BUILD_DIR)/usermode
-
 # Compiler / tools
-CC      := i686-elf-gcc
-AS      := i686-elf-as
-AR      := i686-elf-ar
-CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-CFLAGS  := $(CFLAGS) -I$(LIBC_DIR)/include
-CFLAGS  := $(CFLAGS) -I$(KERNEL_SRC_DIR)/include
-ASFLAGS := # asm flags if needed
-LDFLAGS := -T kernel/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000
-LIBK_CFLAGS := $(CFLAGS) -D__is_libk
-USERMODE_CFLAGS := -std=gnu99 -O2 -Wall -Wextra -I$(LIBC_DIR)/include -ffreestanding
-USERMODE_LDFLAGS := -T $(USERMODE_SRC_DIR)/linker.ld -nostdlib -ffreestanding -lgcc
-LIBC_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I$(LIBC_DIR)/include
+CC := i686-elf-gcc
+AS := i686-elf-as
+AR := i686-elf-ar
 
-TARGET := build/stos
-LIBK_TARGET := build/lib/libk.a
-LIBC_TARGET := build/lib/libc.a
-INITRD := build/isodir/boot/stos.initrd
+BUILD_DIR      := build
+KERNEL_SRC_DIR := kernel
+LIBC_DIR       := libc
+TARGET         := $(BUILD_DIR)/stos
+INITRD         := $(BUILD_DIR)/isodir/boot/stos.initrd
 
 QEMU_FLAGS := -m 512M -serial stdio -boot order=dc
 
-# Kernel sources (exluding libc/libk)
-KERNEL_C := $(shell find $(KERNEL_SRC_DIR)/kernel $(KERNEL_SRC_DIR)/arch -name '*.c')
-KERNEL_S := $(shell find $(KERNEL_SRC_DIR)/kernel $(KERNEL_SRC_DIR)/arch -name '*.s')
-KERNEL_SRCS := $(KERNEL_C) $(KERNEL_S)
-
-# Libc/Libk sources
-LIBC_C := $(shell find $(LIBC_SRC_DIR) -name '*.c')
-LIBC_S := $(shell find $(LIBC_SRC_DIR) -name '*.s')
-LIBC_SRCS := $(LIBC_C) $(LIBC_S)
-LIBK_SRCS := $(LIBC_SRCS)
-
-# Usermode files - each file is treated as its own program
-USERMODE_C := $(shell find $(USERMODE_SRC_DIR) -name '*.c' ! -name 'crt0.c')
-USERMODE_SRCS := $(USERMODE_C)
-
-# CRT0 is linked with all usermode programs
-USERMODE_CRT0 := $(USERMODE_SRC_DIR)/crt0.c
-USERMODE_CRT0_OBJ := $(USERMODE_BUILD_DIR)/crt0.u.o
-
-# Convert e.g. kernel/foo/bar.c -> build/foo/bar.o
-KERNEL_OBJS := $(patsubst $(KERNEL_SRC_DIR)/%,$(BUILD_DIR)/%,$(KERNEL_SRCS:.c=.o))
-KERNEL_OBJS := $(patsubst $(KERNEL_SRC_DIR)/%,$(BUILD_DIR)/%,$(KERNEL_OBJS:.s=.o))
-LIBK_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBK_BUILD_DIR)/%,$(LIBK_SRCS:.c=.libk.o))
-LIBK_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBK_BUILD_DIR)/%,$(LIBK_OBJS:.s=.libk.o))
-LIBC_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBC_BUILD_DIR)/%,$(LIBC_SRCS:.c=.libc.o))
-LIBC_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBC_BUILD_DIR)/%,$(LIBC_OBJS:.s=.libc.o))
-USERMODE_OBJS := $(patsubst $(USERMODE_SRC_DIR)/%,$(USERMODE_BUILD_DIR)/%,$(USERMODE_SRCS:.c=.u.o))
-
-# Create usermode bin files (final ELF files after linking)
-USERMODE_BIN := $(patsubst $(USERMODE_BUILD_DIR)/%.u.o,$(USERMODE_BUILD_DIR)/%,$(USERMODE_OBJS))
+include libc/Rules.mk
+include kernel/Rules.mk
+include usermode/Rules.mk
 
 .PHONY: all clean qemu
 
@@ -70,65 +23,11 @@ qemu: $(TARGET).iso
 	# Boot order "dc": boot first from cdrom (d), then from hard disk (c)
 	qemu-system-i386 -cdrom $^ $(QEMU_FLAGS)
 
-# Make a bootable ISO file
-$(TARGET).iso: $(TARGET) $(KERNEL_SRC_DIR)/grub.cfg $(INITRD)
+$(TARGET).iso: $(TARGET) kernel/grub.cfg $(INITRD)
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
-	cp $(KERNEL_SRC_DIR)/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
+	cp kernel/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
-
-# Build all .c and .s source files and link them to the output file
-$(TARGET): $(KERNEL_OBJS) $(LIBK_TARGET)
-	$(CC) -o $@ $^ $(LDFLAGS)
-	grub-file --is-x86-multiboot2 $@ && echo "Multiboot validated"
-
-# Kernel .o rules
-$(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.s
-	@mkdir -p $(@D)
-	$(AS) $(ASFLAGS) -c $< -o $@
-
-# Libk .libk.o rules (freestanding)
-$(LIBK_BUILD_DIR)/%.libk.o: $(LIBC_SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(LIBK_CFLAGS) -c $< -o $@
-
-$(LIBK_BUILD_DIR)/%.libk.o: $(LIBC_SRC_DIR)/%.s
-	@mkdir -p $(@D)
-	$(AS) $(ASFLAGS) -c $< -o $@
-
-$(LIBK_TARGET): $(LIBK_OBJS)
-	@mkdir -p $(LIBK_BUILD_DIR)
-	$(AR) rcs $@ $^
-
-# Libc .libc.o rules (freestanding)
-$(LIBC_BUILD_DIR)/%.libc.o: $(LIBC_SRC_DIR)/%.c
-		@mkdir -p $(@D)
-		$(CC) $(LIBC_CFLAGS) -c $< -o $@
-
-$(LIBC_BUILD_DIR)/%.libc.o: $(LIBC_SRC_DIR)/%.s
-		@mkdir -p $(@D)
-		$(AS) $(ASFLAGS) -c $< -o $@
-
-$(LIBC_TARGET): $(LIBC_OBJS)
-		@mkdir -p $(LIBC_BUILD_DIR)
-		$(AR) rcs $@ $^
-
-# Building initrd memory by creating a tar file with all required files.
-# Temporary solution: just tar the grub.cfg file and few other files
-$(INITRD): $(USERMODE_BIN)
-	mkdir -p $(BUILD_DIR)/isodir/boot/grub
-	tar -C $(USERMODE_BUILD_DIR) -cf $@ $(notdir $(USERMODE_BIN))
-
-$(USERMODE_BUILD_DIR)/%: $(USERMODE_CRT0_OBJ) $(USERMODE_BUILD_DIR)/%.u.o $(LIBC_TARGET)
-	$(CC) -o $@ $^ $(USERMODE_LDFLAGS)
-
-$(USERMODE_BUILD_DIR)/%.u.o: $(USERMODE_SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(USERMODE_CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(BUILD_DIR)
