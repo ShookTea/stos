@@ -1,6 +1,7 @@
 # Directories and paths
 KERNEL_SRC_DIR := kernel
-LIBC_SRC_DIR := libc
+LIBC_DIR := libc
+LIBC_SRC_DIR := $(LIBC_DIR)/src
 USERMODE_SRC_DIR := usermode
 BUILD_DIR := build
 LIBK_BUILD_DIR := $(BUILD_DIR)/lib/libk
@@ -12,14 +13,14 @@ CC      := i686-elf-gcc
 AS      := i686-elf-as
 AR      := i686-elf-ar
 CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-CFLAGS  := $(CFLAGS) -I$(LIBC_SRC_DIR)/include
+CFLAGS  := $(CFLAGS) -I$(LIBC_DIR)/include
 CFLAGS  := $(CFLAGS) -I$(KERNEL_SRC_DIR)/include
 ASFLAGS := # asm flags if needed
 LDFLAGS := -T kernel/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000
 LIBK_CFLAGS := $(CFLAGS) -D__is_libk
-USERMODE_CFLAGS := -std=gnu99 -O2 -Wall -Wextra -I$(LIBC_SRC_DIR)/include -ffreestanding
+USERMODE_CFLAGS := -std=gnu99 -O2 -Wall -Wextra -I$(LIBC_DIR)/include -ffreestanding
 USERMODE_LDFLAGS := -T $(USERMODE_SRC_DIR)/linker.ld -nostdlib -ffreestanding -lgcc
-LIBC_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I$(LIBC_SRC_DIR)/include
+LIBC_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -I$(LIBC_DIR)/include
 
 TARGET := build/stos
 LIBK_TARGET := build/lib/libk.a
