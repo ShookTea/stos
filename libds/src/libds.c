@@ -25,4 +25,8 @@ void libds_set_allocators(
     void* (*f_malloc)(size_t),
     void* (*f_realloc)(void*, size_t),
     void (*f_free)(void*)
-);
+) {
+    set_malloc = f_malloc;
+    set_realloc = f_realloc;
+    set_free = f_free;
+}
