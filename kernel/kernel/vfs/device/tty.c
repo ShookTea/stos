@@ -113,6 +113,18 @@ static size_t read(
     return read_bytes;
 }
 
+static void open(
+    struct vfs_node* node __attribute__((unused)),
+    vfs_file_t* file __attribute__((unused)),
+    uint8_t mode __attribute__((unused))
+) {
+    // Flush current content of TTY when opened
+    ds_ringbuf_clear(buffer);
+    ready_lines = 0;
+    current_line_pos = 0;
+    memset(current_line, 0, sizeof(current_line));
+}
+
 vfs_node_t* device_tty_mount()
 {
     if (node != NULL) {
@@ -123,6 +135,7 @@ vfs_node_t* device_tty_mount()
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);
     node->read_node = read;
+    node->open_node = open;
 
     wait_obj = wait_allocate_queue();
     keyboard_register_listener(handle_key_event);
