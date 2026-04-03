@@ -527,10 +527,8 @@ static bool task_wait_for_any_child(void* _params)
         return false;
     }
     task_t* child = parent->first_child;
-    while (child != NULL) {
-        if (child->state != TASK_ZOMBIE) {
-            child = child->next_sibling;
-        }
+    while (child != NULL && child->state != TASK_ZOMBIE) {
+        child = child->next_sibling;
     }
     if (child == NULL) {
         // Child not found
