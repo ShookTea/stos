@@ -242,9 +242,19 @@ static task_t* scheduler_get_next_task()
     }
 
     if (first_task_in_queue->next == NULL) {
-        // This is the idle task, but there's nothing else - let's just keep
-        // the current task running
-        return NULL;
+        // Idle is the only task in the queue.
+        // If current task can continue running, let's keep it running.
+        task_t* current = scheduler_get_current_task();
+        if (current->state == TASK_RUNNING || current->state == TASK_WAITING) {
+            return NULL;
+        }
+        // Current task can't run (e.g. BLOCKED) - switch to idle.
+        // Remove idle from the queue, same as any other scheduled task.
+        waiting_queue = NULL;
+        first_task_in_queue->next = NULL;
+        first_task_in_queue->prev = NULL;
+        scheduler_stats->num_waiting--;
+        return first_task_in_queue;
     }
 
     // The first task in the queue is the idle task, but there are some other
