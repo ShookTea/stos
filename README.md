@@ -20,7 +20,10 @@ The libc library contains wrappers for all implemented syscalls.
 | `GETPID` | 2 | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getpid()` | Returns the process ID of the current process |
 | `GETPPID` | 3 | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getppid()` | Returns the process ID of the parent of the current process |
 | `BRK` | 4 | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
-| `WRITE` | 5 | [`<unistd.h>`](libc/include/unistd.h) | `int write(int fd, const void* buffer, size_t count)` | Writes up to _count_ bytes from _buffer_ to file descriptor _fd_ |
+| `OPEN` | 5 | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
+| `CLOSE`| 6 | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |
+| `WRITE` | 7 | [`<unistd.h>`](libc/include/unistd.h) | `int write(int fd, const void* buffer, size_t count)` | Writes up to _count_ bytes from _buffer_ to file descriptor _fd_ |
+| `READ` | 8 | [`<unistd.h>`](libc/include/unistd.h) | `int read(int fd, void* buf, size_t count)` | Reads up to _count_ bytes from file descriptor _fd_ to _buffer_ |
 
 
 ## Development
