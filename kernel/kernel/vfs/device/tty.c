@@ -91,7 +91,6 @@ static size_t read(
     size_t size,
     void* ptr
 ) {
-    puts("Entering condition loop");
     wait_on_condition(wait_obj, is_buffer_ready, NULL);
     size_t read_bytes = 0;
     size_t buffer_size = ds_ringbuf_size(buffer);
