@@ -60,3 +60,19 @@ vfs_node_t* device_mount()
 
     return node;
 }
+
+void device_unmount()
+{
+    if (node == NULL) {
+        return;
+    }
+    device_tty_unmount();
+    // TODO: call VFS and tell it that the node no longer exists
+    kfree(node);
+
+    if (device_files != NULL) {
+        kfree(device_files);
+        device_files = NULL;
+        device_files_count = 0;
+    }
+}

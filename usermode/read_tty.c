@@ -8,17 +8,12 @@ int main(void)
 {
     int fd = open("/dev/tty", O_RDONLY);
     printf("FD = %d\n", fd);
-    uint8_t* data = malloc(16);
-    int readcount = 0;
-    while ((readcount = read(fd, data, 16)) != 0) {
-        for (int i = 0; i < readcount; i++) {
-            printf("%02x", data[i]);
-            if (i % 2 == 1) {
-                printf(" ");
-            }
-        }
-        printf("\n");
-    }
+    uint8_t* data = malloc(32);
+    read(fd, data, 32);
+    data[31] = 0;
+    char* text = (char*)data;
+    puts(text);
+    close(fd);
 
     return 0;
 }

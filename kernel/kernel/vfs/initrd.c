@@ -276,6 +276,7 @@ static void free_node_recursive(vfs_node_t* node)
 void initrd_unmount()
 {
     if (mounted && initrd) {
+        // TODO: call VFS and tell it that the node no longer exists
         free_node_recursive(initrd);
         initrd = NULL;
         mounted = false;
