@@ -478,6 +478,9 @@ typedef struct {
     int* exit_code;
 } task_wait_on_child_params;
 
+// Pointer to a child found in a zombie state for task_wait_for_any_child.
+static task_t* any_child_zombie_found = NULL;
+
 /**
  * Will return true if the child with given PID is in ZOMBIE state. It will
  * store exit code in passed address, if given.
@@ -539,6 +542,7 @@ static bool task_wait_for_any_child(void* _params)
     if (exit_code != NULL) {
         *exit_code = child->exit_code;
     }
+    any_child_zombie_found = child;
     return true;
 }
 
@@ -577,6 +581,7 @@ int task_wait(int pid, int* exit_code)
             (void*)params
         );
         kfree(params);
+        scheduler_move_task_to_state(child, TASK_DEAD);
         return 0;
     }
 
@@ -591,5 +596,6 @@ int task_wait(int pid, int* exit_code)
         (void*)params
     );
     kfree(params);
+    scheduler_move_task_to_state(any_child_zombie_found, TASK_DEAD);
     return 0;
 }
