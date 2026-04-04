@@ -43,3 +43,13 @@ void vga_rgb_setpixel(size_t x, size_t y, uint32_t argb)
     uint32_t* pixel = addr + (y * pitch / 4) + x;
     *pixel = argb;
 }
+
+size_t vga_rgb_pitch()
+{
+    return pitch;
+}
+
+uint32_t* vga_rgb_framebuffer()
+{
+    return addr;
+}

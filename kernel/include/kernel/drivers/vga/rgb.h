@@ -24,4 +24,14 @@ size_t vga_rgb_height();
  */
 void vga_rgb_setpixel(size_t x, size_t y, uint32_t argb);
 
+/**
+ * Returns pitch (bytes per pixel row) of the framebuffer
+ */
+size_t vga_rgb_pitch();
+
+/**
+ * Returns pointer to the start of the framebuffer
+ */
+uint32_t* vga_rgb_framebuffer();
+
 #endif
