@@ -180,9 +180,12 @@ char* multiboot2_get_boot_module_name(uint32_t);
 void multiboot2_print_data();
 char* multiboot2_get_boot_command_line();
 
+// Virtual address where the framebuffer is mapped after paging is enabled
+#define FRAMEBUFFER_VIRT_BASE 0xB0000000
+
 typedef struct {
     bool enabled;
-    uint32_t* framebuffer_addr;
+    uint32_t framebuffer_addr_phys;
     uint32_t framebuffer_width;
     uint32_t framebuffer_height;
     uint32_t framebuffer_pitch;

@@ -26,7 +26,7 @@ static char boot_module_names[MAX_BOOT_MODULE_ENTRIES][64];
 static uint8_t saved_boot_modules_count = 0;
 
 static bool rgb_mode = false;
-static uint32_t* framebuffer_addr = NULL;
+static uint32_t framebuffer_addr_phys = 0;
 static uint32_t framebuffer_width = 0;
 static uint32_t framebuffer_height = 0;
 static uint32_t framebuffer_pitch = 0;
@@ -181,11 +181,15 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 //     }
                 // }
                 if (fb_inf->color_type == 1) {
-                    rgb_mode = true;
-                    framebuffer_addr = (uint32_t*)fb_inf->framebuffer_addr_low;
-                    framebuffer_height = fb_inf->height;
-                    framebuffer_width = fb_inf->width;
-                    framebuffer_pitch = fb_inf->pitch;
+                    if (fb_inf->framebuffer_addr_high != 0) {
+                        printf("WARNING: Framebuffer above 4GB, not supported in 32-bit mode\n");
+                    } else {
+                        rgb_mode = true;
+                        framebuffer_addr_phys = fb_inf->framebuffer_addr_low;
+                        framebuffer_height = fb_inf->height;
+                        framebuffer_width = fb_inf->width;
+                        framebuffer_pitch = fb_inf->pitch;
+                    }
                 }
                 break;
             }
@@ -304,7 +308,7 @@ char* multiboot2_get_boot_module_name(uint32_t i) {
 void multiboot2_load_framebuffer_rgb_config(framebuffer_rgb_config_t* res)
 {
     res->enabled = rgb_mode;
-    res->framebuffer_addr = framebuffer_addr;
+    res->framebuffer_addr_phys = framebuffer_addr_phys;
     res->framebuffer_pitch = framebuffer_pitch;
     res->framebuffer_height = framebuffer_height;
     res->framebuffer_width = framebuffer_width;

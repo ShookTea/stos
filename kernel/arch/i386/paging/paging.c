@@ -213,6 +213,29 @@ void paging_init(void)
     printf("Mapped %u pages of physical memory (%u MB)\n",
            phys_map_pages, (phys_map_pages * 4096) / (1024 * 1024));
 
+    // Map framebuffer physical pages with cache disabled (MMIO, not RAM)
+    framebuffer_rgb_config_t fb_cfg;
+    multiboot2_load_framebuffer_rgb_config(&fb_cfg);
+    if (fb_cfg.enabled) {
+        uint32_t fb_phys = fb_cfg.framebuffer_addr_phys;
+        uint32_t fb_size = fb_cfg.framebuffer_height * fb_cfg.framebuffer_pitch;
+        uint32_t fb_phys_base = paging_align_down(fb_phys);
+        uint32_t fb_map_size = paging_align_up(fb_size + (fb_phys - fb_phys_base));
+
+        printf("Mapping framebuffer: phys %#x, size %u bytes -> virt %#x\n",
+               fb_phys, fb_size, FRAMEBUFFER_VIRT_BASE);
+
+        for (uint32_t off = 0; off < fb_map_size; off += PAGE_SIZE) {
+            uint32_t virt = FRAMEBUFFER_VIRT_BASE + off;
+            uint32_t phys = fb_phys_base + off;
+            if (!paging_map_page(virt, phys, PAGE_FLAGS_KERNEL | PAGE_CACHE_DISABLE)) {
+                printf("PAGING: Failed to map framebuffer page phys %#x -> virt %#x\n",
+                       phys, virt);
+                return;
+            }
+        }
+    }
+
     // Load the page directory into CR3 (use physical address)
     paging_load_directory((uint32_t*)pd_phys);
     printf("Page directory loaded into CR3\n");
