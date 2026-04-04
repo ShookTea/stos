@@ -24,4 +24,10 @@ size_t fbcon_get_columns();
  */
 size_t fbcon_get_rows();
 
+void fbcon_scroll_up();
+void fbcon_scroll_down();
+void fbcon_set_cursor_position(size_t x, size_t y);
+void fbcon_enable_cursor();
+void fbcon_disable_cursor();
+
 #endif

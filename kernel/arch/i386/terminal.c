@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include "kernel/drivers/vga/fbcon.h"
 #include "kernel/drivers/vga/rgb.h"
+#include "kernel/multiboot2.h"
+#include "kernel/vfs/vfs.h"
 #include "vga.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -56,6 +58,8 @@ static size_t saved_cursor_row = 0;
 static size_t saved_cursor_column = 0;
 static uint8_t intensity_mode;
 
+static bool rgbmode = false;
+
 /**
  * Merges bg_color and fg_color into entry acceptable by VGA.
  * Also handles the intensity mode: if set to INTENSITY_MODE_BOLD,
@@ -68,6 +72,28 @@ static inline uint8_t get_current_color()
     | (intensity_mode == INTENSITY_MODE_BOLD ? 0x08 : 0);
 }
 
+static void putentryat(uint32_t c, size_t row, size_t column)
+{
+    if (rgbmode) {
+        // TODO: color mapping
+        fbcon_putentryat(c, 0xFFFFFFFF, 0xFF000000, column, row);
+    } else {
+        vga_putentryat(
+            c,
+            get_current_color(),
+            row,
+            column
+        );
+    }
+}
+
+static void set_cursor_position(size_t row, size_t column)
+{
+    rgbmode
+        ? fbcon_set_cursor_position(row, column)
+        : vga_set_cursor_position(column, row);
+}
+
 static void erase_at_pos(size_t row, size_t column)
 {
     size_t index = row * vga_width + column;
@@ -75,12 +101,7 @@ static void erase_at_pos(size_t row, size_t column)
     cell_buffer[index].flags = 0;
     cell_buffer[index].bg_color = bg_color;
     cell_buffer[index].fg_color = fg_color;
-    vga_putentryat(
-        ' ',
-        get_current_color(),
-        row,
-        column
-    );
+    putentryat(' ', row, column);
 }
 
 /**
@@ -88,7 +109,7 @@ static void erase_at_pos(size_t row, size_t column)
  */
 static void terminal_scroll_up()
 {
-    vga_scroll_up();
+    rgbmode ? fbcon_scroll_up() : vga_scroll_up();
     // Move characters up by line
     for (size_t i = 0; i < (vga_height - 1) * vga_width; i++) {
         cell_buffer[i] = cell_buffer[i + vga_width];
@@ -101,7 +122,7 @@ static void terminal_scroll_up()
 
 static void terminal_scroll_down()
 {
-    vga_scroll_down();
+    rgbmode ? fbcon_scroll_down() : vga_scroll_down();
     // Move characters down by line
     for (size_t i = vga_height * vga_width - 1; i >= vga_width; i--) {
         cell_buffer[i] = cell_buffer[i - vga_width];
@@ -177,7 +198,7 @@ static void terminal_handle_csi_sequence()
         } else {
             cursor_row -= args[0];
         }
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'B') {
         // Move cursor N cells down
@@ -189,7 +210,7 @@ static void terminal_handle_csi_sequence()
         } else {
             cursor_row += args[0];
         }
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'C') {
         // Move cursor N cells forward
@@ -201,7 +222,7 @@ static void terminal_handle_csi_sequence()
         } else {
             cursor_column += args[0];
         }
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'D') {
         // Move cursor N cells back
@@ -213,7 +234,7 @@ static void terminal_handle_csi_sequence()
         } else {
             cursor_column -= args[0];
         }
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'E') {
         // Move cursor to beginning of line, N rows down
@@ -226,7 +247,7 @@ static void terminal_handle_csi_sequence()
             cursor_row += args[0];
         }
         cursor_column = 0;
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'F') {
         // Move cursor to beginning of line, N rows up
@@ -239,7 +260,7 @@ static void terminal_handle_csi_sequence()
             cursor_row -= args[0];
         }
         cursor_column = 0;
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'G') {
         // Move cursor to column N (starting from 1)
@@ -252,7 +273,7 @@ static void terminal_handle_csi_sequence()
         } else {
             cursor_column = args[0];
         }
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'H') {
         // Move cursor to row arg[0], column arg[1] (starting from 1)
@@ -279,7 +300,7 @@ static void terminal_handle_csi_sequence()
         } else {
             cursor_column = column;
         }
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'J') {
         // Erase in display
@@ -366,16 +387,16 @@ static void terminal_handle_csi_sequence()
         // Restore saved cursor position
         cursor_row = saved_cursor_row;
         cursor_column = saved_cursor_column;
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'h') {
         if (args[0] == 25) {
-            vga_enable_cursor();
+            rgbmode ? fbcon_enable_cursor() : vga_enable_cursor();
         }
     }
     else if (mode == 'l') {
         if (args[0] == 25) {
-            vga_disable_cursor();
+            rgbmode ? fbcon_disable_cursor() : vga_disable_cursor();
         }
     }
     else if (mode == 'm') {
@@ -463,16 +484,29 @@ static void terminal_reset_escape_mode_state()
     }
 }
 
+static void terminal_detect_mode()
+{
+    framebuffer_rgb_config_t cfg;
+    multiboot2_load_framebuffer_rgb_config(&cfg);
+    rgbmode = cfg.enabled;
+}
+
 void terminal_init()
 {
     initialized = true;
+    terminal_detect_mode();
     terminal_reset_styling();
-    vga_rgb_init();
-    fbcon_init();
-    // vga_init(get_current_color());
-    // vga_disable_cursor();
-    vga_width = vga_get_columns();
-    vga_height = vga_get_rows();
+    if (rgbmode) {
+        vga_rgb_init();
+        fbcon_init();
+        vga_width = fbcon_get_columns();
+        vga_height = fbcon_get_rows();
+    } else {
+        vga_init(get_current_color());
+        vga_disable_cursor();
+        vga_width = vga_get_columns();
+        vga_height = vga_get_rows();
+    }
 
     cell_buffer = kmalloc_flags(
         vga_width * vga_height * sizeof(cell_t),
@@ -553,9 +587,8 @@ void terminal_write_char(char c)
                 cell_buffer[index].codepoint = '\0';
                 cell_buffer[index].flags = 0;
                 serial_put_c('\b');
-                vga_putentryat(
+                putentryat(
                     ' ',
-                    get_current_color(),
                     cursor_row,
                     cursor_column
                 );
@@ -569,7 +602,7 @@ void terminal_write_char(char c)
         serial_put_c(' ');
         serial_put_c('\b');
 
-        vga_set_cursor_position(cursor_row, cursor_column);
+        set_cursor_position(cursor_row, cursor_column);
         return;
     }
 
@@ -601,9 +634,8 @@ void terminal_write_char(char c)
         }
         size_t index_offset = 0;
         for (size_t i = cursor_column; i < new_column; i++) {
-            vga_putentryat(
+            putentryat(
                 ' ',
-                get_current_color(),
                 cursor_row,
                 cursor_column
             );
@@ -628,9 +660,8 @@ void terminal_write_char(char c)
     }
     else {
         // Display normal character
-        vga_putentryat(
+        putentryat(
             c,
-            get_current_color(),
             cursor_row,
             cursor_column
         );
@@ -644,7 +675,7 @@ void terminal_write_char(char c)
         }
     }
 
-    vga_set_cursor_position(cursor_row, cursor_column);
+    set_cursor_position(cursor_row, cursor_column);
 }
 
 void terminal_set_bg_color(enum vga_color color)

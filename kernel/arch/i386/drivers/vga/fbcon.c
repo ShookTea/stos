@@ -31,3 +31,28 @@ size_t fbcon_get_rows()
 {
     return vga_rgb_height() / PSF1_GLYPH_HEIGHT;
 }
+
+void fbcon_scroll_up()
+{
+    // TODO
+}
+
+void fbcon_scroll_down()
+{
+    // TODO
+}
+
+void fbcon_set_cursor_position(size_t x, size_t y)
+{
+    // TODO
+}
+
+void fbcon_enable_cursor()
+{
+    // TODO
+}
+
+void fbcon_disable_cursor()
+{
+    // TODO
+}
