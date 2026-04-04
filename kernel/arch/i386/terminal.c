@@ -4,6 +4,8 @@
 #include <kernel/serial.h>
 #include <kernel/memory/kmalloc.h>
 #include <stdio.h>
+#include "kernel/drivers/vga/fbcon.h"
+#include "kernel/drivers/vga/rgb.h"
 #include "vga.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -465,8 +467,10 @@ void terminal_init()
 {
     initialized = true;
     terminal_reset_styling();
-    vga_init(get_current_color());
-    vga_disable_cursor();
+    vga_rgb_init();
+    fbcon_init();
+    // vga_init(get_current_color());
+    // vga_disable_cursor();
     vga_width = vga_get_columns();
     vga_height = vga_get_rows();
 

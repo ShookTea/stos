@@ -8,10 +8,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define PSF1_GLYPH_COUNT  512
-#define PSF1_GLYPH_HEIGHT 16
-#define PSF1_GLYPH_WIDTH  8
-
 // Glyph bitmaps copied out of the font file. Each row is one byte; bit 7 is
 // the leftmost pixel.
 static uint8_t font_glyphs[PSF1_GLYPH_COUNT][PSF1_GLYPH_HEIGHT];

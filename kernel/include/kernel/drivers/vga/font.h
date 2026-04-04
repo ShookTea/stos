@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define PSF1_GLYPH_COUNT  512
+#define PSF1_GLYPH_HEIGHT 16
+#define PSF1_GLYPH_WIDTH  8
+
 /**
  * Loads PSF font from given absolute path.
  */
