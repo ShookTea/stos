@@ -7,8 +7,7 @@
 #include "kernel/drivers/vga/fbcon.h"
 #include "kernel/drivers/vga/rgb.h"
 #include "kernel/multiboot2.h"
-#include "kernel/vfs/vfs.h"
-#include "vga.h"
+#include "kernel/drivers/vga/text_mode.h"
 #include <ctype.h>
 #include <stdlib.h>
 
@@ -78,7 +77,7 @@ static void putentryat(uint32_t c, size_t row, size_t column)
         // TODO: color mapping
         fbcon_putentryat(c, 0xFFFFFFFF, 0xFF000000, column, row);
     } else {
-        vga_putentryat(
+        vga_text_putentryat(
             c,
             get_current_color(),
             row,
@@ -91,7 +90,7 @@ static void set_cursor_position(size_t row, size_t column)
 {
     rgbmode
         ? fbcon_set_cursor_position(row, column)
-        : vga_set_cursor_position(column, row);
+        : vga_text_set_cursor_position(column, row);
 }
 
 static void erase_at_pos(size_t row, size_t column)
@@ -109,7 +108,7 @@ static void erase_at_pos(size_t row, size_t column)
  */
 static void terminal_scroll_up()
 {
-    rgbmode ? fbcon_scroll_up() : vga_scroll_up();
+    rgbmode ? fbcon_scroll_up() : vga_text_scroll_up();
     // Move characters up by line
     for (size_t i = 0; i < (vga_height - 1) * vga_width; i++) {
         cell_buffer[i] = cell_buffer[i + vga_width];
@@ -122,7 +121,7 @@ static void terminal_scroll_up()
 
 static void terminal_scroll_down()
 {
-    rgbmode ? fbcon_scroll_down() : vga_scroll_down();
+    rgbmode ? fbcon_scroll_down() : vga_text_scroll_down();
     // Move characters down by line
     for (size_t i = vga_height * vga_width - 1; i >= vga_width; i--) {
         cell_buffer[i] = cell_buffer[i - vga_width];
@@ -391,12 +390,12 @@ static void terminal_handle_csi_sequence()
     }
     else if (mode == 'h') {
         if (args[0] == 25) {
-            rgbmode ? fbcon_enable_cursor() : vga_enable_cursor();
+            rgbmode ? fbcon_enable_cursor() : vga_text_enable_cursor();
         }
     }
     else if (mode == 'l') {
         if (args[0] == 25) {
-            rgbmode ? fbcon_disable_cursor() : vga_disable_cursor();
+            rgbmode ? fbcon_disable_cursor() : vga_text_disable_cursor();
         }
     }
     else if (mode == 'm') {
@@ -502,10 +501,10 @@ void terminal_init()
         vga_width = fbcon_get_columns();
         vga_height = fbcon_get_rows();
     } else {
-        vga_init(get_current_color());
-        vga_disable_cursor();
-        vga_width = vga_get_columns();
-        vga_height = vga_get_rows();
+        vga_text_init(get_current_color());
+        vga_text_disable_cursor();
+        vga_width = vga_text_get_columns();
+        vga_height = vga_text_get_rows();
     }
 
     cell_buffer = kmalloc_flags(
