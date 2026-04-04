@@ -5,6 +5,12 @@ Operating system kernel, working on x86 architecture.
 _Kernel running in debug mode, in Qemu emulator_
 ![screenshot](./docs/screenshot1.png)
 
+## Included dependencies
+
+- The source code contains, under `dep/spleen` directory, the
+  [Spleen](https://github.com/fcambus/spleen) monospaced font in version 2.2.0.
+  It is released under [BSD-2-Clause license](./dep/spleen/LICENSE)
+
 ## Syscalls
 
 Syscalls are implemented with interrupt `int 0x80`, that accept 4 arguments in
@@ -68,7 +74,8 @@ then prints to the command line.
 │   ├── include/         # libc headers
 │   └── src/             # Implementations of libc headers
 ├── libds/               # implementation of libds library of data structures
-└── usermode/            # Usermode programs built and loaded into initrd
+├── usermode/            # Usermode programs built and loaded into initrd
+└── dep/                 # Various external dependencies
 ```
 
 ### What's implemented
