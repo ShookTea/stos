@@ -23,12 +23,12 @@ multiboot_header_start:
 
     # Framebuffer request tag
     # uncomment to enable RGB mode
-    #.short 5 # type 5 = framebuffer request
-    #.short 0
-    #.long 20 # tag size
-    #.long 1280 # width
-    #.long 1024 # height
-    #.long 32 # color
+    .short 5 # type 5 = framebuffer request
+    .short 0
+    .long 20 # tag size
+    .long 1280 # width
+    .long 1024 # height
+    .long 32 # color
 
     .align 8
 

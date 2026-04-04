@@ -15,6 +15,8 @@
 #include <kernel/vfs/vfs.h>
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
+#include "kernel/drivers/vga/rgb.h"
+#include "kernel/drivers/vga/fbcon.h"
 #include "kernel/vfs/device.h"
 #include <libds/libds.h>
 #include "task/syscall.h"
@@ -32,7 +34,8 @@
 
 void kernel_main()
 {
-    terminal_init();
+    // terminal_init();
+    vga_rgb_init();
     terminal_disable_cursor();
     puts("\n\n=== kernel_main() ===");
 
@@ -67,6 +70,9 @@ void kernel_main()
     vfs_init();
     initrd_mount();
     device_mount();
+
+    // With filesystem initialized fbcon can now load fonts.
+    fbcon_init();
 
     // Initialize drivers for basic devices
     pit_init();
