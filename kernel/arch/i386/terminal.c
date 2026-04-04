@@ -89,8 +89,8 @@ static void putentryat(uint32_t c, size_t row, size_t column)
 static void set_cursor_position(size_t row, size_t column)
 {
     rgbmode
-        ? fbcon_set_cursor_position(row, column)
-        : vga_text_set_cursor_position(column, row);
+        ? fbcon_set_cursor_position(column, row)
+        : vga_text_set_cursor_position(row, column);
 }
 
 static void erase_at_pos(size_t row, size_t column)
