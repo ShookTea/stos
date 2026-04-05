@@ -6,8 +6,9 @@
 
 typedef struct {
     uint32_t codepoint;
-    uint32_t fg;
-    uint32_t bg;
+    uint8_t fg; // enum vga_color index (0-15)
+    uint8_t bg; // enum vga_color index (0-15)
+    uint8_t _pad[2];
 } fbcon_cell_t;
 
 /**
@@ -18,7 +19,7 @@ void fbcon_init();
 /**
  * Sets character at given row and column, with selected color.
  */
-void fbcon_putentryat(uint32_t c, uint32_t fg, uint32_t bg, size_t x, size_t y);
+void fbcon_putentryat(uint32_t c, uint8_t fg, uint8_t bg, size_t x, size_t y);
 
 /**
  * Returns the total number of columns available

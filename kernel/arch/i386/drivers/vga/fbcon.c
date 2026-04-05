@@ -34,7 +34,8 @@ static void draw_cursor(bool visible)
         }
     } else {
         fbcon_cell_t cell = char_buffer[cursor_y * fbcon_get_columns() + cursor_x];
-        font_render_char(cell.codepoint, px, py, cell.fg, cell.bg);
+        font_render_char(cell.codepoint, px, py,
+                         vga_color_to_argb(cell.fg), vga_color_to_argb(cell.bg));
     }
 }
 
@@ -51,19 +52,27 @@ static void fbcon_cursor_blink()
 
 void fbcon_init()
 {
-    size_t buf_size = sizeof(fbcon_cell_t) * fbcon_get_columns() * fbcon_get_rows();
+    size_t buf_size = sizeof(fbcon_cell_t)
+        * fbcon_get_columns()
+        * fbcon_get_rows();
     char_buffer = kmalloc(buf_size);
     memset(char_buffer, 0, buf_size);
     pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_cursor_blink, NULL);
 }
 
-void fbcon_putentryat(uint32_t c, uint32_t fg, uint32_t bg, size_t x, size_t y)
+void fbcon_putentryat(uint32_t c, uint8_t fg, uint8_t bg, size_t x, size_t y)
 {
     size_t index = y * fbcon_get_columns() + x;
     char_buffer[index].codepoint = c;
     char_buffer[index].fg = fg;
     char_buffer[index].bg = bg;
-    font_render_char(c, x * PSF1_GLYPH_WIDTH, y * PSF1_GLYPH_HEIGHT, fg, bg);
+    font_render_char(
+        c,
+        x * PSF1_GLYPH_WIDTH,
+        y * PSF1_GLYPH_HEIGHT,
+        vga_color_to_argb(fg),
+        vga_color_to_argb(bg)
+    );
 }
 
 size_t fbcon_get_columns()
@@ -97,8 +106,8 @@ void fbcon_scroll_up()
                 cell.codepoint,
                 col * PSF1_GLYPH_WIDTH,
                 row * PSF1_GLYPH_HEIGHT,
-                cell.fg,
-                cell.bg
+                vga_color_to_argb(cell.fg),
+                vga_color_to_argb(cell.bg)
             );
         }
     }

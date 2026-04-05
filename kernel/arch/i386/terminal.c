@@ -71,39 +71,10 @@ static inline uint8_t get_current_color()
     | (intensity_mode == INTENSITY_MODE_BOLD ? 0x08 : 0);
 }
 
-static inline uint32_t map_vga_to_argb(enum vga_color color)
-{
-    switch (color) {
-        case VGA_COLOR_BLACK: return 0xFF000000;
-        case VGA_COLOR_BLUE: return 0xFF001290;
-        case VGA_COLOR_GREEN: return 0xFF008F15;
-        case VGA_COLOR_CYAN: return 0xFF009092;
-        case VGA_COLOR_RED: return 0xFF9B1708;
-        case VGA_COLOR_MAGENTA: return 0xFF9A2091;
-        case VGA_COLOR_BROWN: return 0xFF949119;
-        case VGA_COLOR_LIGHT_GREY: return 0xFFB8B8B8;
-        case VGA_COLOR_DARK_GREY: return 0xFF686868;
-        case VGA_COLOR_LIGHT_BLUE: return 0xFF0027FB;
-        case VGA_COLOR_LIGHT_GREEN: return 0xFF00F92C;
-        case VGA_COLOR_LIGHT_CYAN: return 0xFF00FCFE;
-        case VGA_COLOR_LIGHT_RED: return 0xFFFF3016;
-        case VGA_COLOR_LIGHT_MAGENTA: return 0xFFFF3FFC;
-        case VGA_COLOR_LIGHT_BROWN: return 0xFFFFFD33;
-        case VGA_COLOR_WHITE: return 0xFFFFFFFF;
-        default: return 0xFF000000;
-    }
-}
-
 static void putentryat(uint32_t c, size_t row, size_t column)
 {
     if (rgbmode) {
-        fbcon_putentryat(
-            c,
-            map_vga_to_argb(fg_color),
-            map_vga_to_argb(bg_color),
-            column,
-            row
-        );
+        fbcon_putentryat(c, (uint8_t)fg_color, (uint8_t)bg_color, column, row);
     } else {
         vga_text_putentryat(
             c,
