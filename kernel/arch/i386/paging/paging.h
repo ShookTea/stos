@@ -34,7 +34,12 @@
 #define PAGE_ACCESSED   0x020  // Page has been accessed (set by CPU)
 #define PAGE_DIRTY      0x040  // Page has been written to (set by CPU, PTE only)
 #define PAGE_SIZE_4MB   0x080  // 4MB page size (PDE only)
+#define PAGE_PAT        0x080  // PTE bit 7: selects PAT entry 4-7 (ignored in PDEs)
 #define PAGE_GLOBAL     0x100  // Global page (not flushed from TLB, PTE only)
+
+// Write-combining via PAT4 (PWT=0, PCD=0, PAT=1).
+// Requires paging_init_pat() to have been called to program PAT4 as WC.
+#define PAGE_WRITECOMBINE PAGE_PAT
 
 // Common flag combinations
 #define PAGE_FLAGS_KERNEL (PAGE_PRESENT | PAGE_WRITE)

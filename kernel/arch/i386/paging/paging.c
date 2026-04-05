@@ -107,6 +107,42 @@ static page_table_t* paging_get_page_table_from_pde(page_directory_entry_t* pde)
     return pt;
 }
 
+static inline uint64_t rdmsr(uint32_t msr)
+{
+    uint32_t lo, hi;
+    __asm__ volatile("rdmsr" : "=a"(lo), "=d"(hi) : "c"(msr));
+    return ((uint64_t)hi << 32) | lo;
+}
+
+static inline void wrmsr(uint32_t msr, uint64_t value)
+{
+    __asm__ volatile(
+        "wrmsr" :: "c"(msr),
+        "a"((uint32_t)value),
+        "d"((uint32_t)(value >> 32))
+    );
+}
+
+// Program PAT4 (PWT=0, PCD=0, PAT=1) to Write-Combining (WC = 0x01).
+// The default PAT4 is WB (0x06); overwriting it with WC lets framebuffer pages
+// use write-combining simply by setting pte->pat=1, pte->pcd=0, pte->pwt=0.
+static void paging_init_pat(void)
+{
+    // Check CPUID leaf 1, EDX bit 16 for PAT support
+    uint32_t edx;
+    __asm__ volatile("cpuid" : "=d"(edx) : "a"(1) : "ebx", "ecx");
+    if (!(edx & (1u << 16))) {
+        puts("PAGING: PAT not supported, framebuff will use uncached mapping");
+        return;
+    }
+
+    uint64_t pat = rdmsr(0x277);
+    // Clear byte 4 (bits 39:32) and write WC (0x01) into it
+    pat = (pat & ~(0xFFULL << 32)) | (0x01ULL << 32);
+    wrmsr(0x277, pat);
+    puts("PAGING: PAT4 set to Write-Combining");
+}
+
 void paging_init(void)
 {
     printf("Initializing paging...\n");
@@ -213,7 +249,10 @@ void paging_init(void)
     printf("Mapped %u pages of physical memory (%u MB)\n",
            phys_map_pages, (phys_map_pages * 4096) / (1024 * 1024));
 
-    // Map framebuffer physical pages with cache disabled (MMIO, not RAM)
+    // Program PAT4 to write-combining before mapping the framebuffer
+    paging_init_pat();
+
+    // Map framebuffer physical pages with write-combining via PAT4
     framebuffer_rgb_config_t fb_cfg;
     multiboot2_load_framebuffer_rgb_config(&fb_cfg);
     if (fb_cfg.enabled) {
@@ -222,13 +261,13 @@ void paging_init(void)
         uint32_t fb_phys_base = paging_align_down(fb_phys);
         uint32_t fb_map_size = paging_align_up(fb_size + (fb_phys - fb_phys_base));
 
-        printf("Mapping framebuffer: phys %#x, size %u bytes -> virt %#x\n",
+        printf("Mapping framebuffer: phys %#x, size %u bytes -> virt %#x (write-combining)\n",
                fb_phys, fb_size, FRAMEBUFFER_VIRT_BASE);
 
         for (uint32_t off = 0; off < fb_map_size; off += PAGE_SIZE) {
             uint32_t virt = FRAMEBUFFER_VIRT_BASE + off;
             uint32_t phys = fb_phys_base + off;
-            if (!paging_map_page(virt, phys, PAGE_FLAGS_KERNEL | PAGE_CACHE_DISABLE)) {
+            if (!paging_map_page(virt, phys, PAGE_FLAGS_KERNEL | PAGE_WRITECOMBINE)) {
                 printf("PAGING: Failed to map framebuffer page phys %#x -> virt %#x\n",
                        phys, virt);
                 return;
@@ -294,6 +333,7 @@ bool paging_map_page(uint32_t virt, uint32_t phys, uint32_t flags)
     pte->user = (flags & PAGE_USER) ? 1 : 0;
     pte->pwt = (flags & PAGE_WRITETHROUGH) ? 1 : 0;
     pte->pcd = (flags & PAGE_CACHE_DISABLE) ? 1 : 0;
+    pte->pat = (flags & PAGE_PAT) ? 1 : 0;
     pte->global = (flags & PAGE_GLOBAL) ? 1 : 0;
     pte->frame = phys >> 12;
 
