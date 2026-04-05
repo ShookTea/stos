@@ -64,6 +64,13 @@ void* brk(void* addr);
  */
 void* sbrk(intptr_t increment);
 
+/**
+ * Creates a new process by duplicating the calling proccess. On success, it
+ * returns 0 for child process, and PID of the child for parent process. On
+ * failure it returns -1.
+ */
+int fork();
+
 #ifdef __cplusplus
 }
 #endif
