@@ -189,11 +189,13 @@ void font_render_char(uint32_t c, size_t x, size_t y, uint32_t fg, uint32_t bg)
     if (idx < 0) idx = 0; // last resort: glyph 0
 
     const uint8_t* bitmap = font_glyphs[idx];
+    uint32_t* fb = vga_rgb_framebuffer();
+    size_t pitch_words = vga_rgb_pitch() / 4;
     for (size_t row = 0; row < PSF1_GLYPH_HEIGHT; row++) {
         uint8_t bits = bitmap[row];
+        uint32_t* row_ptr = fb + (y + row) * pitch_words + x;
         for (size_t col = 0; col < PSF1_GLYPH_WIDTH; col++) {
-            uint32_t color = (bits & (0x80u >> col)) ? fg : bg;
-            vga_rgb_setpixel(x + col, y + row, color);
+            row_ptr[col] = (bits & (0x80u >> col)) ? fg : bg;
         }
     }
 }

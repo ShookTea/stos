@@ -76,23 +76,35 @@ size_t fbcon_get_rows()
 
 void fbcon_scroll_up()
 {
-    uint8_t* fb = (uint8_t*)vga_rgb_framebuffer();
-    size_t pitch = vga_rgb_pitch();
-    size_t h = vga_rgb_height();
-    size_t move_px = PSF1_GLYPH_HEIGHT;
-    size_t keep = h - move_px;
-
-    memmove(fb, fb + move_px * pitch, keep * pitch);
-    memset(fb + keep * pitch, 0, move_px * pitch);
-
     size_t cols = fbcon_get_columns();
     size_t rows = fbcon_get_rows();
+
+    // Shift char_buffer up (plain RAM, WB-cached — fast)
     memmove(
         char_buffer,
         char_buffer + cols,
         (rows - 1) * cols * sizeof(uint32_t)
     );
     memset(char_buffer + (rows - 1) * cols, 0, cols * sizeof(uint32_t));
+
+    // Rebuild framebuffer from char_buffer: only WC writes, no WC reads
+    for (size_t row = 0; row < rows - 1; row++) {
+        for (size_t col = 0; col < cols; col++) {
+            uint32_t c = char_buffer[row * cols + col];
+            font_render_char(
+                c,
+                col * PSF1_GLYPH_WIDTH,
+                row * PSF1_GLYPH_HEIGHT,
+                FBCON_DEFAULT_FG,
+                FBCON_DEFAULT_BG
+            );
+        }
+    }
+    // Clear last row pixels
+    uint8_t* fb = (uint8_t*)vga_rgb_framebuffer();
+    size_t pitch = vga_rgb_pitch();
+    size_t h = vga_rgb_height();
+    memset(fb + (h - PSF1_GLYPH_HEIGHT) * pitch, 0, PSF1_GLYPH_HEIGHT * pitch);
 }
 
 void fbcon_scroll_down()
