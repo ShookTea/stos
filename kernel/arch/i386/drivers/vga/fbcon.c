@@ -115,7 +115,9 @@ void fbcon_scroll_down()
 
 void fbcon_set_cursor_position(size_t x, size_t y)
 {
-    draw_cursor(false);
+    if (cursor_enabled) {
+        draw_cursor(false);
+    }
     cursor_x = x;
     cursor_y = y;
     if (cursor_enabled) {
