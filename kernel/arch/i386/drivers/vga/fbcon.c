@@ -61,7 +61,7 @@ void fbcon_putentryat(uint32_t c, uint32_t fg, uint32_t bg, size_t x, size_t y)
 {
     size_t index = y * fbcon_get_columns() + x;
     char_buffer[index] = c;
-    font_render_char(c, x, y, fg, bg);
+    font_render_char(c, x * PSF1_GLYPH_WIDTH, y * PSF1_GLYPH_HEIGHT, fg, bg);
 }
 
 size_t fbcon_get_columns()
