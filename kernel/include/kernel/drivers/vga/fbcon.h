@@ -4,6 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+typedef struct {
+    uint32_t codepoint;
+    uint32_t fg;
+    uint32_t bg;
+} fbcon_cell_t;
+
 /**
  * Initializes "framebuffer console" - a textmode-like layer on top of RGB mode.
  */

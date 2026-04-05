@@ -12,7 +12,7 @@
 #define FBCON_DEFAULT_BG 0xFF000000
 #define CURSOR_HEIGHT 2
 
-uint32_t* char_buffer;
+fbcon_cell_t* char_buffer;
 size_t cursor_x = 0;
 size_t cursor_y = 0;
 
@@ -33,8 +33,8 @@ static void draw_cursor(bool visible)
             }
         }
     } else {
-        uint32_t c = char_buffer[cursor_y * fbcon_get_columns() + cursor_x];
-        font_render_char(c, px, py, FBCON_DEFAULT_FG, FBCON_DEFAULT_BG);
+        fbcon_cell_t cell = char_buffer[cursor_y * fbcon_get_columns() + cursor_x];
+        font_render_char(cell.codepoint, px, py, cell.fg, cell.bg);
     }
 }
 
@@ -51,7 +51,7 @@ static void fbcon_cursor_blink()
 
 void fbcon_init()
 {
-    size_t buf_size = sizeof(uint32_t) * fbcon_get_columns() * fbcon_get_rows();
+    size_t buf_size = sizeof(fbcon_cell_t) * fbcon_get_columns() * fbcon_get_rows();
     char_buffer = kmalloc(buf_size);
     memset(char_buffer, 0, buf_size);
     pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_cursor_blink, NULL);
@@ -60,7 +60,9 @@ void fbcon_init()
 void fbcon_putentryat(uint32_t c, uint32_t fg, uint32_t bg, size_t x, size_t y)
 {
     size_t index = y * fbcon_get_columns() + x;
-    char_buffer[index] = c;
+    char_buffer[index].codepoint = c;
+    char_buffer[index].fg = fg;
+    char_buffer[index].bg = bg;
     font_render_char(c, x * PSF1_GLYPH_WIDTH, y * PSF1_GLYPH_HEIGHT, fg, bg);
 }
 
@@ -83,20 +85,20 @@ void fbcon_scroll_up()
     memmove(
         char_buffer,
         char_buffer + cols,
-        (rows - 1) * cols * sizeof(uint32_t)
+        (rows - 1) * cols * sizeof(fbcon_cell_t)
     );
-    memset(char_buffer + (rows - 1) * cols, 0, cols * sizeof(uint32_t));
+    memset(char_buffer + (rows - 1) * cols, 0, cols * sizeof(fbcon_cell_t));
 
     // Rebuild framebuffer from char_buffer: only WC writes, no WC reads
     for (size_t row = 0; row < rows - 1; row++) {
         for (size_t col = 0; col < cols; col++) {
-            uint32_t c = char_buffer[row * cols + col];
+            fbcon_cell_t cell = char_buffer[row * cols + col];
             font_render_char(
-                c,
+                cell.codepoint,
                 col * PSF1_GLYPH_WIDTH,
                 row * PSF1_GLYPH_HEIGHT,
-                FBCON_DEFAULT_FG,
-                FBCON_DEFAULT_BG
+                cell.fg,
+                cell.bg
             );
         }
     }
@@ -121,8 +123,8 @@ void fbcon_scroll_down()
     size_t cols = fbcon_get_columns();
     size_t rows = fbcon_get_rows();
     memmove(char_buffer + cols, char_buffer,
-            (rows - 1) * cols * sizeof(uint32_t));
-    memset(char_buffer, 0, cols * sizeof(uint32_t));
+            (rows - 1) * cols * sizeof(fbcon_cell_t));
+    memset(char_buffer, 0, cols * sizeof(fbcon_cell_t));
 }
 
 void fbcon_set_cursor_position(size_t x, size_t y)
