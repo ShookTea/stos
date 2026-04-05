@@ -546,6 +546,128 @@ static bool task_wait_for_any_child(void* _params)
     return true;
 }
 
+void task_set_fork_child_return(task_t* child)
+{
+    uint32_t* saved_eax = (uint32_t*)(child->context.esp + 36);
+    *saved_eax = 0;
+}
+
+task_t* task_fork(void)
+{
+    task_t* parent = scheduler_get_current_task();
+    task_t* child = task_allocate(parent->name);
+
+    // Copy user-space layout and heap bounds from parent
+    child->user_stack_base = parent->user_stack_base;
+    child->user_stack_size = parent->user_stack_size;
+    child->heap_start = parent->heap_start;
+    child->heap_end = parent->heap_end;
+    child->heap_max = parent->heap_max;
+
+    // Duplicate memory-region list
+    task_memory_region_t* tmr = parent->memory_regions;
+    while (tmr != NULL) {
+        task_add_mem_region(child, tmr->start, tmr->end, tmr->page_flags);
+        tmr = tmr->next;
+    }
+
+    // Allocate child kernel stack (same guard-page strategy as task_create)
+    void* allocation = vmm_kernel_alloc(KERNEL_STACK_SIZE + GUARD_PAGE_SIZE);
+    if (allocation == NULL) {
+        abort();
+    }
+    uint32_t guard_phys = paging_get_physical_address((uint32_t)allocation);
+    paging_unmap_page((uint32_t)allocation);
+    if (guard_phys != 0) {
+        pmm_free_page(guard_phys);
+    }
+    child->kernel_stack_size = KERNEL_STACK_SIZE;
+    child->kernel_stack_base = (uint32_t)allocation + GUARD_PAGE_SIZE;
+    child->kernel_stack_alloc_size = KERNEL_STACK_SIZE + GUARD_PAGE_SIZE;
+    child->kernel_stack_alloc_base = (uint32_t)allocation;
+
+    // Copy parent's kernel stack contents verbatim
+    memcpy(
+        (void*)child->kernel_stack_base,
+        (void*)parent->kernel_stack_base,
+        KERNEL_STACK_SIZE
+    );
+
+    // Adjust saved ESP: same byte-offset from stack base as parent's
+    child->context.esp =
+        child->kernel_stack_base +
+        (parent->context.esp - parent->kernel_stack_base);
+
+    // Clone parent's page directory with COW for user space
+    void* child_pd = paging_clone_directory(
+        parent->page_dir_virt,
+        true,
+        child->user_stack_base,
+        child->user_stack_size
+    );
+    if (child_pd == NULL) {
+        vmm_kernel_free(
+            (void*)child->kernel_stack_alloc_base,
+            child->kernel_stack_alloc_size
+        );
+        tasks[child->pid] = NULL;
+        tasks_present--;
+        kfree(child);
+        return NULL;
+    }
+    child->page_dir_virt = child_pd;
+    child->page_dir_phys = paging_virt_to_phys(child_pd);
+
+    // Duplicate open file descriptors
+    if (parent->fd_count > 0) {
+        child->fd = kmalloc(sizeof(task_file_descriptor_t*) * parent->fd_count);
+        child->fd_count = parent->fd_count;
+        for (size_t i = 0; i < parent->fd_count; i++) {
+            task_file_descriptor_t* pfd = parent->fd[i];
+            task_file_descriptor_t* cfd = kmalloc(
+                sizeof(task_file_descriptor_t)
+            );
+            cfd->identifier = pfd->identifier;
+            if (pfd->file == NULL) {
+                cfd->file = NULL;
+            } else {
+                uint8_t mode;
+                if (pfd->file->readable && pfd->file->writeable) {
+                    mode = VFS_MODE_READWRITE;
+                } else if (pfd->file->writeable) {
+                    mode = VFS_MODE_WRITEONLY;
+                } else {
+                    mode = VFS_MODE_READONLY;
+                }
+                cfd->file = vfs_open(pfd->file->node, mode);
+                cfd->file->offset = pfd->file->offset;
+            }
+            child->fd[i] = cfd;
+        }
+    }
+
+    // Child sees 0 as the fork() return value
+    task_set_fork_child_return(child);
+
+    // Wire into process hierarchy
+    child->parent = parent;
+    if (parent->first_child == NULL) {
+        parent->first_child = child;
+    } else {
+        task_t* last = parent->first_child;
+        while (last->next_sibling != NULL) {
+            last = last->next_sibling;
+        }
+        last->next_sibling = child;
+        child->prev_sibling = last;
+    }
+
+    child->state = TASK_WAITING;
+    scheduler_add_task(child);
+
+    return child;
+}
+
 int task_wait(int pid, int* exit_code)
 {
     task_t* parent = scheduler_get_current_task();

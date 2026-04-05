@@ -190,4 +190,20 @@ void task_exit(int exit_code);
  */
 int task_wait(int pid, int* exit_code);
 
+/**
+ * Patch the child task's saved EAX in its kernel-stack interrupt frame to 0,
+ * so that when the child is scheduled it returns 0 from fork() while the
+ * parent receives the child's PID.  Must be called after the child's kernel
+ * stack has been cloned and before the child is enqueued by the scheduler.
+ */
+void task_set_fork_child_return(task_t* child);
+
+/**
+ * Fork the current task. Clones the kernel stack, page directory (COW), and
+ * open file descriptors. The child is queued immediately; its fork() return
+ * value is patched to 0. Returns the new child task_t* (caller reads
+ * child->pid to return to the parent), or NULL on failure.
+ */
+task_t* task_fork(void);
+
 #endif
