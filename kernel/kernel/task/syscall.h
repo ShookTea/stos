@@ -20,6 +20,9 @@ uint32_t sys_getppid();
 #define SYS_BRK 0x04
 uint32_t sys_brk(uint32_t addr);
 
+#define SYS_FORK 0x05
+int sys_fork();
+
 #define SYS_OPEN 0x10
 uint32_t sys_open(const char* path, uint32_t flags);
 
