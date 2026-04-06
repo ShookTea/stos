@@ -2,19 +2,23 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define PRINT_DEBUG 0
+
 bool elf_validate(void* addr)
 {
     elf_header_32bit_t* header = addr;
-    printf("=== ELF Header Debug ===\n");
-    printf("Entry point:      %#x\n", header->entrypoint);
-    printf("PHT pointer:      %#x\n", header->pht_pointer);
-    printf("PHT entry count:  %u\n", header->pht_num);
-    printf("PHT entry size:   %u\n", header->pht_entry_size);
-    printf("SHT pointer:      %#x\n", header->sht_pointer);
-    printf("SHT entry count:  %u\n", header->sht_num);
-    printf("SHT entry size:   %u\n", header->sht_entry_size);
-    printf("SHT string index: %u\n", header->sht_str_index);
-    printf("========================\n");
+    if (PRINT_DEBUG) {
+        printf("=== ELF Header Debug ===\n");
+        printf("Entry point:      %#x\n", header->entrypoint);
+        printf("PHT pointer:      %#x\n", header->pht_pointer);
+        printf("PHT entry count:  %u\n", header->pht_num);
+        printf("PHT entry size:   %u\n", header->pht_entry_size);
+        printf("SHT pointer:      %#x\n", header->sht_pointer);
+        printf("SHT entry count:  %u\n", header->sht_num);
+        printf("SHT entry size:   %u\n", header->sht_entry_size);
+        printf("SHT string index: %u\n", header->sht_str_index);
+        printf("========================\n");
+    }
     // 0x7F454C46
     if (header->magic[0] != 0x7F
         || header->magic[1] != 'E'
@@ -62,7 +66,7 @@ bool elf_validate(void* addr)
             return false;
     }
 
-    puts("PHT table:");
+    if (PRINT_DEBUG) puts("PHT table:");
     bool pht_invalid = false;
     for (uint32_t phti = 0; phti < header->pht_num; phti++) {
         elf_program_header_32bit_t* pht = (elf_program_header_32bit_t*)(
@@ -83,16 +87,18 @@ bool elf_validate(void* addr)
         flags[0] = pht->flags & ELF_SEGMENT_FLAGS_EXEC ? 'X' : ' ';
         flags[1] = pht->flags & ELF_SEGMENT_FLAGS_WRITE ? 'W' : ' ';
         flags[2] = pht->flags & ELF_SEGMENT_FLAGS_READ ? 'R' : ' ';
-        printf("[%02u] Type: [%s] %s (%#x)\n", phti, flags, type, pht->type);
-        printf("    offset: %#x\n", pht->offset);
-        printf("    vaddr:  %#x\n", pht->vaddr);
-        printf("    paddr:  %#x\n", pht->paddr);
-        printf("    filesz: %#x\n", pht->filesz);
-        printf("    memsz:  %#x\n", pht->memsz);
-        printf("    align:  %#x\n", pht->align);
+        if (PRINT_DEBUG) {
+            printf("[%02u] Type: [%s]%s (%#x)\n", phti, flags, type, pht->type);
+            printf("    offset: %#x\n", pht->offset);
+            printf("    vaddr:  %#x\n", pht->vaddr);
+            printf("    paddr:  %#x\n", pht->paddr);
+            printf("    filesz: %#x\n", pht->filesz);
+            printf("    memsz:  %#x\n", pht->memsz);
+            printf("    align:  %#x\n", pht->align);
+        }
     }
 
-    puts("SHT table:");
+    if (PRINT_DEBUG) puts("SHT table:");
     bool sht_invalid = false;
     for (uint32_t shti = 0; shti < header->sht_num; shti++) {
         elf_section_header_32bit_t* sht = (elf_section_header_32bit_t*)(
@@ -134,14 +140,16 @@ bool elf_validate(void* addr)
         flags[8] = sht->flags & ELF_SECTION_FLAGS_GROUP ? 'G' : ' ';
         flags[9] = sht->flags & ELF_SECTION_FLAGS_TLS ? 'T' : ' ';
 
-        printf("[%02u] Type: [%s] %s (%#x)\n", shti, flags, type, sht->type);
-        printf("    addr:      %#x\n", sht->addr);
-        printf("    offset:    %#x\n", sht->offset);
-        printf("    size:      %#x\n", sht->size);
-        printf("    link:      %#x\n", sht->link);
-        printf("    info:      %#x\n", sht->info);
-        printf("    align:     %#x\n", sht->addr_align);
-        printf("    ent. size: %#x\n", sht->ent_size);
+        if (PRINT_DEBUG) {
+            printf("[%02u] Type: [%s]%s (%#x)\n", shti, flags, type, sht->type);
+            printf("    addr:      %#x\n", sht->addr);
+            printf("    offset:    %#x\n", sht->offset);
+            printf("    size:      %#x\n", sht->size);
+            printf("    link:      %#x\n", sht->link);
+            printf("    info:      %#x\n", sht->info);
+            printf("    align:     %#x\n", sht->addr_align);
+            printf("    ent. size: %#x\n", sht->ent_size);
+        }
     }
 
     if (pht_invalid || sht_invalid) {
