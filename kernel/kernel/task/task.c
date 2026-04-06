@@ -140,7 +140,11 @@ static task_t* task_allocate(const char* name)
 
         // Clear newly allocated memory to zero it out, which can be used later
         // to check if entry is empty (NULL) or not
-        memset(tasks + tasks_length, 0, TASKS_LIST_REALLOC_SIZE);
+        memset(
+            tasks + tasks_length,
+            0,
+            sizeof(task_t*) * TASKS_LIST_REALLOC_SIZE
+        );
         tasks_length = new_size;
 
         // tasks_present is now guaranteed to be equal to first empty entry
