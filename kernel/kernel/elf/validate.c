@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define PRINT_DEBUG 1
+#define PRINT_DEBUG 0
 
 bool elf_validate(void* addr)
 {
