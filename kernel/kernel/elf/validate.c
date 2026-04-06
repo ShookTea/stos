@@ -77,7 +77,11 @@ bool elf_validate(void* addr)
         if (pht->type == ELF_SEGMENT_TYPE_NULL) {
             continue;
         }
-        char* type;
+        #if PRINT_DEBUG
+            char* type;
+        #else
+            char* type __attribute__((unused));
+        #endif
         char* flags = "   ";
         switch (pht->type) {
             case ELF_SEGMENT_TYPE_LOAD: type = "loadable"; break;
@@ -111,7 +115,11 @@ bool elf_validate(void* addr)
         if (sht->type == ELF_SECTION_TYPE_NULL) {
             continue;
         }
-        char* type;
+        #if PRINT_DEBUG
+            char* type;
+        #else
+            char* type __attribute__((unused));
+        #endif
         char* flags = "          ";
         switch (sht->type) {
             case ELF_SECTION_TYPE_PROGBITS: type = "program data"; break;
