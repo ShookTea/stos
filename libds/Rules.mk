@@ -2,7 +2,7 @@ LIBDS_SRC_DIR   := $(LIBDS_DIR)/src
 LIBDS_BUILD_DIR := $(BUILD_DIR)/lib/libds
 LIBDS_TARGET := $(BUILD_DIR)/lib/libds.a
 
-LIBDS_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra $(LIB_INCLUDE_FLAGS)
+LIBDS_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Werror $(LIB_INCLUDE_FLAGS)
 
 LIBDS_C    := $(shell find $(LIBDS_SRC_DIR) -name '*.c')
 LIBDS_S    := $(shell find $(LIBDS_SRC_DIR) -name '*.s')

@@ -1,4 +1,4 @@
-CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra $(LIB_INCLUDE_FLAGS) -I$(KERNEL_SRC_DIR)/include
+CFLAGS  := -std=gnu99 -ffreestanding -O2 -Werror -Wall -Wextra $(LIB_INCLUDE_FLAGS) -I$(KERNEL_SRC_DIR)/include
 LDFLAGS := -T $(KERNEL_SRC_DIR)/arch/i386/linker.ld -ffreestanding -O2 -nostdlib -lgcc -z max-page-size=0x1000
 
 KERNEL_C    := $(shell find $(KERNEL_SRC_DIR)/kernel $(KERNEL_SRC_DIR)/arch -name '*.c')

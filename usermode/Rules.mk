@@ -2,7 +2,7 @@ USERMODE_SRC_DIR   := usermode
 DEP_SRC_DIR := dep
 USERMODE_BUILD_DIR := $(BUILD_DIR)/usermode
 
-USERMODE_CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra $(LIB_INCLUDE_FLAGS)
+USERMODE_CFLAGS  := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Werror $(LIB_INCLUDE_FLAGS)
 USERMODE_LDFLAGS := -T $(USERMODE_SRC_DIR)/linker.ld -nostdlib -ffreestanding -lgcc
 
 USERMODE_C    := $(shell find $(USERMODE_SRC_DIR) -name '*.c' ! -name 'crt0.c')
