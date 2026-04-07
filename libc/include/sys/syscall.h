@@ -10,6 +10,7 @@
 #define SYS_GETPPID 0x03 // uint32_t getpid()
 #define SYS_BRK 0x04 // uint32_t brk(void* addr)
 #define SYS_FORK 0x05 // int fork()
+#define SYS_WAIT 0x06 // int waitpid(int pid, int* status, int options)
 #define SYS_OPEN 0x10 // int open(const char* path, int flags)
 #define SYS_CLOSE 0x11 // int close(int fd);
 #define SYS_WRITE 0x12 // int write(int fd, const void* buf, size_t count)
