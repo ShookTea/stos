@@ -119,17 +119,6 @@ static void task_setup_initial_stack(
 
     // Save final ESP to task context
     task->context.esp = (uint32_t)stack;
-
-    // Dump the full stack layout for debugging
-    uint32_t* dbg = (uint32_t*)task->context.esp;
-    printf("STACK_SETUP[task esp=%x]: EDI=%x ESI=%x EBX=%x EBP=%x ret=%x\n",
-        task->context.esp, dbg[0], dbg[1], dbg[2], dbg[3], dbg[4]);
-    printf("  GP regs: EAX=%x ECX=%x EDX=%x EBX=%x ESP=%x EBP=%x ESI=%x EDI=%x\n",
-        dbg[9], dbg[10], dbg[11], dbg[12], dbg[13], dbg[14], dbg[15], dbg[16]);  // reverse pushal order (but index from bottom of pushal frame)
-    // Actually print raw: [5]=int_no [6]=err_code? no - let's just dump 20 words
-    for (int _i = 0; _i < 20; _i++) {
-        printf("  [%d] = %x\n", _i, dbg[_i]);
-    }
 }
 
 /**
@@ -581,12 +570,6 @@ void task_save_syscall_user_context(uint32_t* syscall_frame)
         current->context.syscall_user_edi = syscall_frame[6];
         current->context.syscall_user_eip = syscall_frame[7];
         current->context.syscall_user_esp = syscall_frame[10];
-        printf("SYSCALL_CTX[%d]: frame=%x eax=%x ecx=%x edx=%x ebx=%x ebp=%x esi=%x edi=%x eip=%x esp=%x\n",
-            current->pid,
-            (uint32_t)syscall_frame,
-            syscall_frame[0], syscall_frame[1], syscall_frame[2], syscall_frame[3],
-            syscall_frame[4], syscall_frame[5], syscall_frame[6],
-            syscall_frame[7], syscall_frame[10]);
     }
 }
 

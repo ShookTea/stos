@@ -188,35 +188,20 @@ static void scheduler_switch_task_context(
     if (new_task == NULL) {
         return; // Nothing to switch to
     }
-    puts("pre-tss_set_kernel_stack");
-    serial_put_c('1');
     // Update TSS with new kernel stack - needs to be done before switching
     tss_set_kernel_stack(
         new_task->kernel_stack_base,
         new_task->kernel_stack_size
     );
-    serial_put_c('2');
 
     // Switch to the new page directory
     paging_switch_directory(new_task->page_dir_virt);
-    serial_put_c('3');
     // Get pointers for context switch
     uint32_t* old_esp_ptr = (old_task != NULL) ? &old_task->context.esp : NULL;
     uint32_t new_esp = new_task->context.esp;
 
     // Perform the actual switch
-    printf("SWITCH: new_esp=%x, stack=[%x, %x)\n",
-        new_esp,
-        new_task->kernel_stack_base,
-        new_task->kernel_stack_base + new_task->kernel_stack_size);
-    uint32_t* esp = (uint32_t*)new_esp;
-    printf("STACK at new_esp:");
-    for (int _i = 0; _i < 20; _i++) {
-        printf(" [%d]=%x", _i, esp[_i]);
-    }
-    puts("");
     switch_to_stack(old_esp_ptr, new_esp);
-    puts("post-switch_to_stack");
 
     // TODO: when we return here, we're running as new_task now.
     // Should we do anything?
@@ -300,17 +285,6 @@ static void scheduler_reschedule()
     cleanup_dead_tasks();
     task_t* old_task = scheduler_stats->current_task;
     task_t* next_task = scheduler_get_next_task();
-
-    if (old_task == NULL) {
-        puts("old = NULL");
-    } else {
-        printf("old = [%d] '%s', state = '%d'\n", old_task->pid, old_task->name, old_task->state);
-    }
-    if (next_task == NULL) {
-        puts("next = NULL");
-    } else {
-        printf("next = [%d] '%s', state = '%d'\n", next_task->pid, next_task->name, next_task->state);
-    }
 
     // If current task is zombie or dead, we MUST switch away from it
     // even if there's no other task ready (in which case we'll run idle)
