@@ -19,7 +19,7 @@ include libds/Rules.mk
 include kernel/Rules.mk
 include usermode/Rules.mk
 
-.PHONY: all clean qemu
+.PHONY: all clean qemu test
 
 all: $(TARGET).iso
 
@@ -32,6 +32,9 @@ $(TARGET).iso: $(TARGET) kernel/grub.cfg $(INITRD)
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
 	cp kernel/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
 	grub-mkrescue -o $@ $(BUILD_DIR)/isodir
+
+test: $(LIBDS_TEST_TARGET)
+	$(LIBDS_TEST_TARGET)
 
 clean:
 	rm -rf $(BUILD_DIR)
