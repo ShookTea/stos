@@ -1,5 +1,4 @@
 #include "kernel/paging.h"
-#include "kernel/serial.h"
 #include <kernel/task/scheduler.h>
 #include <kernel/drivers/pit.h>
 #include <kernel/memory/kmalloc.h>
@@ -352,7 +351,6 @@ static void scheduler_tick()
 
 void scheduler_add_task(task_t* task)
 {
-    printf("Adding task [%d] '%s' to scheduler\n", task->pid, task->name);
     scheduler_move_task_to_state(task, TASK_WAITING);
 }
 
