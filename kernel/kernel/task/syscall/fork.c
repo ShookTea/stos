@@ -12,6 +12,5 @@ int sys_fork()
 
     // Return PID of new child to the task. The child gets that return set to
     // 0 inside task_fork() implementation.
-    printf("syscall result: %d\n", forked->pid);
     return forked->pid;
 }
