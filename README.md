@@ -27,6 +27,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `GETPID` | `0x02` | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getpid()` | Returns the process ID of the current process |
 | `GETPPID` | `0x03` | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getppid()` | Returns the process ID of the parent of the current process |
 | `BRK` | `0x04` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
+| `FORK` | `0x05` | [`<unistd.h>`](libc/include/unistd.h) | `int fork()` | Creates a fork of a current process |
 | _file management_ |   |   |   |   |
 | `OPEN` | `0x10` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
 | `CLOSE`| `0x11` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |
