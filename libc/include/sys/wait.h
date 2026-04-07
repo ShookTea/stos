@@ -11,6 +11,14 @@ extern "C" {
 #define WNOHANG 1
 
 /**
+ * Suspends execution of current task until any child of this tasks finishes
+ * execution, and returns PID of that task.
+ *
+ * Calling this function is equivalent to `waitpid(-1, status_code, 0)`.
+ */
+int wait(int* status_code);
+
+/**
  * Suspends execution of current task until task with given PID stops execution
  * and is moved into ZOMBIE state.
  *

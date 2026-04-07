@@ -27,5 +27,5 @@ int main(void)
 
     printf("\n[%d] Testing completed\n", currpid);
 
-    return 0;
+    return childpid == 0 ? 15 : 0;
 }
