@@ -195,7 +195,6 @@ static void scheduler_switch_task_context(
 
     // Switch to the new page directory
     paging_switch_directory(new_task->page_dir_virt);
-
     // Get pointers for context switch
     uint32_t* old_esp_ptr = (old_task != NULL) ? &old_task->context.esp : NULL;
     uint32_t new_esp = new_task->context.esp;

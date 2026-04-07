@@ -31,6 +31,18 @@ typedef enum {
  */
 typedef struct {
     uint32_t esp;
+    /** User-mode EIP saved at syscall entry (used by fork) */
+    uint32_t syscall_user_eip;
+    /** User-mode ESP saved at syscall entry (used by fork) */
+    uint32_t syscall_user_esp;
+    /** GP registers saved at syscall entry (used by fork to clone parent state) */
+    uint32_t syscall_user_eax;
+    uint32_t syscall_user_ecx;
+    uint32_t syscall_user_edx;
+    uint32_t syscall_user_ebx;
+    uint32_t syscall_user_ebp;
+    uint32_t syscall_user_esi;
+    uint32_t syscall_user_edi;
 } task_cpu_context_t;
 
 /**
@@ -197,6 +209,14 @@ int task_wait(int pid, int* exit_code);
  * stack has been cloned and before the child is enqueued by the scheduler.
  */
 void task_set_fork_child_return(task_t* child);
+
+/**
+ * Save the user-mode registers from the syscall entry frame into the current
+ * task's context. Called from syscall_stub with the kernel ESP at the point
+ * where all 7 GP registers (EAX/ECX/EDX/EBX/EBP/ESI/EDI) have been pushed,
+ * so the IRET frame is at known offsets above that pointer.
+ */
+void task_save_syscall_user_context(uint32_t* syscall_frame);
 
 /**
  * Fork the current task. Clones the kernel stack, page directory (COW), and

@@ -45,7 +45,8 @@ static void task_entry_trampoline()
 static void task_setup_initial_stack(
     task_t* task,
     void (*entrypoint)(),
-    bool is_kernel
+    bool is_kernel,
+    uint32_t user_esp
 ) {
     // Get top of the kernel stack. Stack grows downward, so we push in reverse
     // order.
@@ -53,14 +54,18 @@ static void task_setup_initial_stack(
         task->kernel_stack_base + task->kernel_stack_size
     );
 
-    stack--; *stack = (uint32_t)task_entry_trampoline; // Return address
-
     if (!is_kernel) {
         // User mode task - need SS:ESP for IRET
+        if (!user_esp) {
+            // New task: push trampoline so that when main() returns, we exit cleanly
+            stack--; *stack = (uint32_t)task_entry_trampoline;
+        }
         stack--;
         *stack = 0x23; // User data segment (GDT entry 4, RPL=3)
         stack--;
-        *stack = task->user_stack_base + task->user_stack_size; // User ESP
+        *stack = user_esp ? user_esp : task->user_stack_base + task->user_stack_size;
+    } else {
+        stack--; *stack = (uint32_t)task_entry_trampoline; // Return address
     }
 
     // IRET frame (always present)
@@ -78,28 +83,28 @@ static void task_setup_initial_stack(
     stack--; *stack = 0; // err_code
     stack--; *stack = 0; // int_no
 
-    // Registers saved by PUSHA (in reverse order)
-    stack--; *stack = 0; // EDI
-    stack--; *stack = 0; // ESI
-    stack--; *stack = 0; // EBP
-    stack--; *stack = 0; // ESP placeholder, ignored by POPA
-    stack--; *stack = 0; // EBX
-    stack--; *stack = 0; // EDX
-    stack--; *stack = 0; // ECX
-    stack--; *stack = 0; // EAX
-
-    // Segment registers, saved by interrupt handler
+    // Segment registers, saved by interrupt handler (popped last by task_switch_return_point)
     if (is_kernel) {
-        stack--; *stack = 0x10; // DS (kernel data)
-        stack--; *stack = 0x10; // ES
+        stack--; *stack = 0x10; // GS (kernel data)
         stack--; *stack = 0x10; // FS
-        stack--; *stack = 0x10; // GS
+        stack--; *stack = 0x10; // ES
+        stack--; *stack = 0x10; // DS
     } else {
-        stack--; *stack = 0x23; // DS (user data, RPL=3)
-        stack--; *stack = 0x23; // ES
+        stack--; *stack = 0x23; // GS (user data, RPL=3)
         stack--; *stack = 0x23; // FS
-        stack--; *stack = 0x23; // GS
+        stack--; *stack = 0x23; // ES
+        stack--; *stack = 0x23; // DS
     }
+
+    // Registers saved by PUSHA (popped first by task_switch_return_point via popal)
+    stack--; *stack = 0; // EAX
+    stack--; *stack = 0; // ECX
+    stack--; *stack = 0; // EDX
+    stack--; *stack = 0; // EBX
+    stack--; *stack = 0; // ESP placeholder, ignored by POPA
+    stack--; *stack = 0; // EBP
+    stack--; *stack = 0; // ESI
+    stack--; *stack = 0; // EDI
 
     // Fake return address for the call chain - this will make the "ret"
     // instruction from switch_to_stack work correctly
@@ -214,7 +219,7 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
         // Physical pages will be allocated by page directory cloning with COW
     }
 
-    task_setup_initial_stack(task, entrypoint, is_kernel);
+    task_setup_initial_stack(task, entrypoint, is_kernel, 0);
 
     // Set initial state
     task->state = TASK_WAITING;
@@ -441,7 +446,7 @@ void task_exit(int exit_code)
     task_t* child = current->first_child;
     while (child != NULL) {
         task_t* next_child = child->next_sibling;
-        if (next_child->state == TASK_ZOMBIE) {
+        if (child->state == TASK_ZOMBIE) {
             // Child is already zombie, no one will wait for it.
             scheduler_move_task_to_state(child, TASK_DEAD);
             printf(
@@ -550,6 +555,24 @@ static bool task_wait_for_any_child(void* _params)
     return true;
 }
 
+void task_save_syscall_user_context(uint32_t* syscall_frame)
+{
+    // syscall_frame points to [EAX, ECX, EDX, EBX, EBP, ESI, EDI,
+    //                          user_EIP, CS, EFLAGS, user_ESP, SS]
+    task_t* current = scheduler_get_current_task();
+    if (current) {
+        current->context.syscall_user_eax = syscall_frame[0];
+        current->context.syscall_user_ecx = syscall_frame[1];
+        current->context.syscall_user_edx = syscall_frame[2];
+        current->context.syscall_user_ebx = syscall_frame[3];
+        current->context.syscall_user_ebp = syscall_frame[4];
+        current->context.syscall_user_esi = syscall_frame[5];
+        current->context.syscall_user_edi = syscall_frame[6];
+        current->context.syscall_user_eip = syscall_frame[7];
+        current->context.syscall_user_esp = syscall_frame[10];
+    }
+}
+
 void task_set_fork_child_return(task_t* child)
 {
     uint32_t* saved_eax = (uint32_t*)(child->context.esp + 36);
@@ -590,17 +613,30 @@ task_t* task_fork(void)
     child->kernel_stack_alloc_size = KERNEL_STACK_SIZE + GUARD_PAGE_SIZE;
     child->kernel_stack_alloc_base = (uint32_t)allocation;
 
-    // Copy parent's kernel stack contents verbatim
-    memcpy(
-        (void*)child->kernel_stack_base,
-        (void*)parent->kernel_stack_base,
-        KERNEL_STACK_SIZE
-    );
+    // Use user-mode EIP/ESP saved at syscall entry by task_save_syscall_user_context.
+    uint32_t fork_return_eip = parent->context.syscall_user_eip;
+    uint32_t fork_return_esp = parent->context.syscall_user_esp;
+    printf("FORK: parent eip=%x esp=%x\n", fork_return_eip, fork_return_esp);
 
-    // Adjust saved ESP: same byte-offset from stack base as parent's
-    child->context.esp =
-        child->kernel_stack_base +
-        (parent->context.esp - parent->kernel_stack_base);
+    // Build a fresh initial stack for the child that will IRET back to the
+    // instruction after the fork() syscall in user space, with EAX=0.
+    task_setup_initial_stack(child, (void(*)())fork_return_eip, false, fork_return_esp);
+
+    // Patch the child's PUSHA frame with the parent's register state so the
+    // child resumes with the same callee-saved registers the parent had at the
+    // fork() syscall.  EAX stays 0 (fork return value for child).
+    //
+    // Stack layout from context.esp (uint32_t offsets):
+    //   [0..3] switch_to_stack callee-saved (EDI, ESI, EBX, EBP)
+    //   [4]    return addr (task_switch_return_point)
+    //   [5..12] PUSHA frame: EDI, ESI, EBP, ESP(ignored), EBX, EDX, ECX, EAX
+    uint32_t* child_stack = (uint32_t*)child->context.esp;
+    child_stack[5]  = parent->context.syscall_user_edi;
+    child_stack[6]  = parent->context.syscall_user_esi;
+    child_stack[7]  = parent->context.syscall_user_ebp;
+    child_stack[9]  = parent->context.syscall_user_ebx;
+    child_stack[10] = parent->context.syscall_user_edx;
+    child_stack[11] = parent->context.syscall_user_ecx;
 
     // Clone parent's page directory with COW for user space
     void* child_pd = paging_clone_directory(
@@ -650,8 +686,7 @@ task_t* task_fork(void)
         }
     }
 
-    // Child sees 0 as the fork() return value
-    task_set_fork_child_return(child);
+    // Child sees 0 as the fork() return value (EAX=0 is already in the fresh stack)
 
     // Wire into process hierarchy
     child->parent = parent;

@@ -768,9 +768,13 @@ static page_table_t* paging_clone_page_table(
                 new_phys
             );
 
-            // Zero the stack page
             void* dst_page = phys_to_virt_internal(new_phys);
-            memset(dst_page, 0, PAGE_SIZE);
+            if (src_pte->present) {
+                void* src_page = phys_to_virt_internal(src_pte->frame << 12);
+                memcpy(dst_page, src_page, PAGE_SIZE);
+            } else {
+                memset(dst_page, 0, PAGE_SIZE);
+            }
             // Set up PTE for usermode stack
             dst_pte->present = 1;
             dst_pte->rw = 1;
