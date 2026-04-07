@@ -47,6 +47,7 @@ The libc library contains wrappers for all implemented syscalls.
     - used commands are: `grub-file`, `grub-mkrescue`
 3. Qemu virtual machine - for launching the OS somewhere
     - used command is: `qemu-system-i386`
+4. (optional) GCC compiler for host machine - for running unit tests
 
 ### Basic development tools
 
@@ -61,6 +62,12 @@ arguments for compiler that is respected by CLang.
 
 All text printed to VGA text mode is by default sent to COM1 port, which Qemu
 then prints to the command line.
+
+### Unit tests
+
+Some parts of the code (mainly in libraries) have unit tests. They are all
+compiled and executed on host machine with `make test`. Running it requires
+`gcc` compiler on host.
 
 ### Source code structure
 ```
