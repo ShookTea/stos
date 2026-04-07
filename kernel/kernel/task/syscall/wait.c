@@ -2,7 +2,6 @@
 #include "kernel/task/task.h"
 #include "../syscall.h"
 #include <stdbool.h>
-#include <stdio.h>
 
 static task_t* find_child(task_t* parent, int pid)
 {
