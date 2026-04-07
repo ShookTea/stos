@@ -742,6 +742,9 @@ int task_wait(int pid, int* exit_code)
             (void*)params
         );
         kfree(params);
+        if (exit_code != NULL) {
+            *exit_code = child->exit_code;
+        }
         child->state = TASK_DEAD;
         return child->pid;
     }
@@ -757,6 +760,9 @@ int task_wait(int pid, int* exit_code)
         (void*)params
     );
     kfree(params);
+    if (exit_code != NULL) {
+        *exit_code = any_child_zombie_found->exit_code;
+    }
     any_child_zombie_found->state = TASK_DEAD;
     return any_child_zombie_found->pid;
 }
