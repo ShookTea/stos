@@ -75,6 +75,15 @@ int fork();
  * Replace the current process image with the ELF executable at [path].
  * On success this function does not return; execution resumes at the new
  * program's entry point. On failure returns -1.
+ *
+ * argv[] is an array of pointers to strings passed to a program as its CLI
+ * arguments. By convention the first item in this array should contain the
+ * filename associated with the file being executed. The argv array must be
+ * terminated by a null pointer.
+ *
+ * envp[] is an array of pointers to strings, conventionally of the form
+ * key=value, which are passed as the environment variables of the new program.
+ * The envp[] array must be terminated by a null pointer.
  */
 int execve(const char* path, const char* argv[], const char* envp[]);
 
