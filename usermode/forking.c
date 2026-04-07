@@ -11,8 +11,8 @@ int main(void)
     int pid = fork();
     printf("[%d] fork res = %d\n", currpid, pid);
     printf("[%d] Entering loop\n", currpid);
-    for (int i = 0; i < 1000; i++) {
-        for (int j = 0; j < 1000; j++) {
+    for (int i = 0; i < 10000; i++) {
+        for (int j = 0; j < 10000; j++) {
             volatile int x __attribute__((unused)) = i * j;
         }
     }

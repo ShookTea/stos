@@ -44,6 +44,11 @@ syscall_stub:
     pushl %edx
     pushl %ecx
     pushl %eax
+    # Stack: [EAX, ECX, EDX, EBX, user_EIP, CS, EFLAGS, user_ESP, SS]
+    # Save user-mode EIP and ESP (offsets 4 and 7) into the current task.
+    pushl %esp
+    call task_save_syscall_user_context
+    addl $4, %esp
 
     call syscall_handler_wrapper
 
@@ -58,6 +63,7 @@ syscall_stub:
     iret
 
 .extern exception_handler
+.extern task_save_syscall_user_context
 isr_no_err_stub 0  # Divide error
 isr_no_err_stub 1  # Debug exception
 isr_no_err_stub 2  # NMI interrupt
