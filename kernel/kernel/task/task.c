@@ -457,7 +457,7 @@ void task_exit(int exit_code)
     task_t* child = current->first_child;
     while (child != NULL) {
         task_t* next_child = child->next_sibling;
-        if (next_child->state == TASK_ZOMBIE) {
+        if (child->state == TASK_ZOMBIE) {
             // Child is already zombie, no one will wait for it.
             scheduler_move_task_to_state(child, TASK_DEAD);
             printf(
