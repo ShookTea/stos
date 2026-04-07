@@ -76,7 +76,7 @@ int fork();
  * On success this function does not return; execution resumes at the new
  * program's entry point. On failure returns -1.
  */
-int exec(const char* path);
+int execve(const char* path, const char* argv[], const char* envp[]);
 
 #ifdef __cplusplus
 }

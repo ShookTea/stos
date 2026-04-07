@@ -15,7 +15,9 @@ int main(void)
         printf("\n[%d] running exec\n", currpid);
         puts("running exec");
         // In child task - run forking.c for demo
-        exec("/initrd/forking");
+        const char* argv[] = { "/initrd/forking", NULL };
+        const char* envp[] = { NULL };
+        execve("/initrd/forking", argv, envp);
         printf("\n[%d] ALERT: this line should never be printed.\n", currpid);
         return 1;
     } else {
