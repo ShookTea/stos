@@ -568,17 +568,25 @@ static bool task_wait_for_any_child(void* _params)
 
 void task_save_syscall_user_context(uint32_t* syscall_frame)
 {
-    // syscall_frame points to [EAX, ECX, EDX, EBX, user_EIP, CS, EFLAGS, user_ESP, SS]
-    // (the stack right after syscall_stub's 4 register pushes, before the call)
+    // syscall_frame points to [EAX, ECX, EDX, EBX, EBP, ESI, EDI,
+    //                          user_EIP, CS, EFLAGS, user_ESP, SS]
     task_t* current = scheduler_get_current_task();
     if (current) {
-        current->context.syscall_user_eip = syscall_frame[4];
-        current->context.syscall_user_esp = syscall_frame[7];
-        printf("SYSCALL_CTX[%d]: frame=%x eax=%x ecx=%x edx=%x ebx=%x eip=%x cs=%x eflags=%x esp=%x ss=%x\n",
+        current->context.syscall_user_eax = syscall_frame[0];
+        current->context.syscall_user_ecx = syscall_frame[1];
+        current->context.syscall_user_edx = syscall_frame[2];
+        current->context.syscall_user_ebx = syscall_frame[3];
+        current->context.syscall_user_ebp = syscall_frame[4];
+        current->context.syscall_user_esi = syscall_frame[5];
+        current->context.syscall_user_edi = syscall_frame[6];
+        current->context.syscall_user_eip = syscall_frame[7];
+        current->context.syscall_user_esp = syscall_frame[10];
+        printf("SYSCALL_CTX[%d]: frame=%x eax=%x ecx=%x edx=%x ebx=%x ebp=%x esi=%x edi=%x eip=%x esp=%x\n",
             current->pid,
             (uint32_t)syscall_frame,
             syscall_frame[0], syscall_frame[1], syscall_frame[2], syscall_frame[3],
-            syscall_frame[4], syscall_frame[5], syscall_frame[6], syscall_frame[7], syscall_frame[8]);
+            syscall_frame[4], syscall_frame[5], syscall_frame[6],
+            syscall_frame[7], syscall_frame[10]);
     }
 }
 
@@ -630,6 +638,22 @@ task_t* task_fork(void)
     // Build a fresh initial stack for the child that will IRET back to the
     // instruction after the fork() syscall in user space, with EAX=0.
     task_setup_initial_stack(child, (void(*)())fork_return_eip, false, fork_return_esp);
+
+    // Patch the child's PUSHA frame with the parent's register state so the
+    // child resumes with the same callee-saved registers the parent had at the
+    // fork() syscall.  EAX stays 0 (fork return value for child).
+    //
+    // Stack layout from context.esp (uint32_t offsets):
+    //   [0..3] switch_to_stack callee-saved (EDI, ESI, EBX, EBP)
+    //   [4]    return addr (task_switch_return_point)
+    //   [5..12] PUSHA frame: EDI, ESI, EBP, ESP(ignored), EBX, EDX, ECX, EAX
+    uint32_t* child_stack = (uint32_t*)child->context.esp;
+    child_stack[5]  = parent->context.syscall_user_edi;
+    child_stack[6]  = parent->context.syscall_user_esi;
+    child_stack[7]  = parent->context.syscall_user_ebp;
+    child_stack[9]  = parent->context.syscall_user_ebx;
+    child_stack[10] = parent->context.syscall_user_edx;
+    child_stack[11] = parent->context.syscall_user_ecx;
 
     // Clone parent's page directory with COW for user space
     void* child_pd = paging_clone_directory(

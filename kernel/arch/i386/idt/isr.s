@@ -40,12 +40,15 @@ common_stub:
     iret
 
 syscall_stub:
+    pushl %edi
+    pushl %esi
+    pushl %ebp
     pushl %ebx
     pushl %edx
     pushl %ecx
     pushl %eax
-    # Stack: [EAX, ECX, EDX, EBX, user_EIP, CS, EFLAGS, user_ESP, SS]
-    # Save user-mode EIP and ESP (offsets 4 and 7) into the current task.
+    # Stack: [EAX, ECX, EDX, EBX, EBP, ESI, EDI, user_EIP, CS, EFLAGS, user_ESP, SS]
+    # Save user-mode registers into the current task (used by fork).
     pushl %esp
     call task_save_syscall_user_context
     addl $4, %esp
@@ -60,6 +63,9 @@ syscall_stub:
     popl %ecx             # Restore ECX
     popl %edx             # Restore EDX
     popl %ebx             # Restore EBX
+    popl %ebp             # Restore EBP
+    popl %esi             # Restore ESI
+    popl %edi             # Restore EDI
     iret
 
 .extern exception_handler
