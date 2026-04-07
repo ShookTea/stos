@@ -5,9 +5,20 @@
 #include <sched.h>
 #include <sys/wait.h>
 
-int main(void)
+int main(int argc, char** argv, char** envp)
 {
     printf("Testing forking\n");
+    printf("  argc = %d\n", argc);
+    for (int i = 0; i < argc; i++) {
+        printf("  [%d] >%s<\n", i, argv[i]);
+    }
+    puts("  envp:");
+    int i = 0;
+    while (*envp != NULL) {
+        printf("  [%d] >%s<\n", i, envp[i]);
+        i++;
+        envp++;
+    }
     int childpid = fork();
     int currpid = getpid();
     printf("[%d] fork res = %d\n", currpid, childpid);

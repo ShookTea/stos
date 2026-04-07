@@ -235,13 +235,35 @@ void task_save_syscall_user_context(uint32_t* syscall_frame);
 task_t* task_fork(void);
 
 /**
+ * Write argc/argv/envp onto the user stack following the System V i386 ABI.
+ * *esp_inout: on entry, top of user stack; on exit, new ESP (points to argc).
+ * The task's page directory must be active when this is called.
+ * argv/envp may be NULL (treated as empty).
+ */
+void task_push_args(
+    uint32_t* esp_inout,
+    int argc,
+    const char** argv,
+    int envc,
+    const char** envp
+);
+
+/**
  * Replace the current task's address space with the ELF binary in elf_data.
  * Frees the old page directory, loads new segments, resets heap bounds, and
  * patches the live kernel-stack IRET frame so the task resumes at the new
  * entry point when the syscall returns. File descriptors and process identity
- * are preserved. Returns 0 on success, -1 on failure (old address space is
- * still live).
+ * are preserved. argc/argv/envp are written to the new user stack via the
+ * System V i386 ABI layout (argv/envp may be NULL for empty).
+ * Returns 0 on success, -1 on failure (old address space is still live).
  */
-int task_exec(void* elf_data, size_t elf_size);
+int task_exec(
+    void* elf_data,
+    size_t elf_size,
+    int argc,
+    const char** argv,
+    int envc,
+    const char** envp
+);
 
 #endif

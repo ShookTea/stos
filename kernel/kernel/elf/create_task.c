@@ -72,6 +72,32 @@ task_t* elf_create_task(const char* name, void* elf_data)
         (task->heap_max - task->heap_start) / 1024
     );
 
+    /* Push argv/envp onto the new user stack while the task's page directory
+     * is still active.  We pass the program name as argv[0] by default.
+     *
+     * The initial user ESP lives at a fixed offset inside the fake kernel-
+     * stack interrupt frame built by task_setup_initial_stack().  Counting
+     * upward from task->context.esp (which points at EDI callee-saved):
+     *   [0..3]  callee-saved regs (EDI,ESI,EBX,EBP) for switch_to_stack
+     *   [4]     task_switch_return_point
+     *   [5..12] PUSHA frame (EDI,ESI,EBP,ESP,EBX,EDX,ECX,EAX)
+     *   [13..16] segment regs (DS,ES,FS,GS)
+     *   [17]    int_no
+     *   [18]    err_code
+     *   [19]    EIP
+     *   [20]    CS
+     *   [21]    EFLAGS
+     *   [22]    user ESP   ← patch target
+     *   [23]    SS
+     *   [24]    task_entry_trampoline
+     */
+#define TASK_INITIAL_USER_ESP_OFFSET 22
+
+    uint32_t user_esp = task->user_stack_base + task->user_stack_size;
+    const char* default_argv[] = { name };
+    task_push_args(&user_esp, 1, default_argv, 0, NULL);
+    ((uint32_t*)task->context.esp)[TASK_INITIAL_USER_ESP_OFFSET] = user_esp;
+
     paging_switch_directory(old_dir);
     kfree(parsed);
     return task;

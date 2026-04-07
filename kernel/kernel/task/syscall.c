@@ -42,8 +42,10 @@ static uint32_t syscall_int_handler(
         }
         case SYS_EXEC: {
             const char* path = (const char*)arg1;
+            const char** argv = (const char**)arg2;
+            const char** envp = (const char**)arg3;
             assert_range(path, VFS_MAX_PATH_LENGTH);
-            return sys_exec(path);
+            return sys_exec(path, argv, envp);
         }
         case SYS_OPEN: {
             const char* path = (const char*)arg1;

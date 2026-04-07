@@ -770,8 +770,14 @@ int task_wait(int pid, int* exit_code)
     return any_child_zombie_found->pid;
 }
 
-int task_exec(void* elf_data, size_t elf_size)
-{
+int task_exec(
+    void* elf_data,
+    size_t elf_size,
+    int argc,
+    const char** argv,
+    int envc,
+    const char** envp
+) {
     (void)elf_size;
 
     elf_t* parsed = kmalloc(sizeof(elf_t));
@@ -849,6 +855,10 @@ int task_exec(void* elf_data, size_t elf_size)
     uint32_t* frame = (uint32_t*)current->context.syscall_frame_ptr;
     frame[7]  = parsed->entry_point;
     frame[10] = current->user_stack_base + current->user_stack_size;
+
+    /* Write argc/argv/envp onto the new user stack (page directory is already
+     * switched, so writes reach the new address space directly). */
+    task_push_args(&frame[10], argc, argv, envc, envp);
 
     kfree(parsed);
     return 0;
