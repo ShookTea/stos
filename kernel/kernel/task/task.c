@@ -743,7 +743,7 @@ int task_wait(int pid, int* exit_code)
         );
         kfree(params);
         child->state = TASK_DEAD;
-        return 0;
+        return child->pid;
     }
 
     // Parent wants to wait for any child to be completed.
@@ -758,5 +758,5 @@ int task_wait(int pid, int* exit_code)
     );
     kfree(params);
     any_child_zombie_found->state = TASK_DEAD;
-    return 0;
+    return any_child_zombie_found->pid;
 }

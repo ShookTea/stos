@@ -31,6 +31,15 @@ static uint32_t syscall_int_handler(
         case SYS_GETPPID: return sys_getppid();
         case SYS_BRK: return sys_brk(arg1);
         case SYS_FORK: return sys_fork();
+        case SYS_WAIT: {
+            int pid = (int)arg1;
+            int* status_code = (int*)arg2;
+            int options = (int)arg3;
+            if (status_code != NULL) {
+                assert_ptr(status_code);
+            }
+            return sys_wait(pid, status_code, options);
+        }
         case SYS_OPEN: {
             const char* path = (const char*)arg1;
             assert_range(path, VFS_MAX_PATH_LENGTH);
