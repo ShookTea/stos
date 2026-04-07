@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/paging.h>
+#include <kernel/elf.h>
 #include <string.h>
 
 /** When increasing tasks list length, use this size */
@@ -26,6 +27,7 @@ static spinlock_t task_list_lock = SPINLOCK_INIT;
 #define USER_STACK_SIZE (8 * 1024) // 8 KiB
 #define USER_STACK_TOP (VMM_USER_END - PAGE_SIZE)
 #define USER_STACK_BASE (USER_STACK_TOP - USER_STACK_SIZE)
+#define MIN_HEAP_STACK_GAP (1 * 1024 * 1024) // 1 MB
 
 /**
  * This function is never called directly, but it's a return address for a task.
@@ -570,6 +572,7 @@ void task_save_syscall_user_context(uint32_t* syscall_frame)
         current->context.syscall_user_edi = syscall_frame[6];
         current->context.syscall_user_eip = syscall_frame[7];
         current->context.syscall_user_esp = syscall_frame[10];
+        current->context.syscall_frame_ptr = (uint32_t)syscall_frame;
     }
 }
 
@@ -765,4 +768,88 @@ int task_wait(int pid, int* exit_code)
     }
     any_child_zombie_found->state = TASK_DEAD;
     return any_child_zombie_found->pid;
+}
+
+int task_exec(void* elf_data, size_t elf_size)
+{
+    (void)elf_size;
+
+    elf_t* parsed = kmalloc(sizeof(elf_t));
+    elf_parse(elf_data, parsed);
+    if (!parsed->success) {
+        kfree(parsed);
+        return -1;
+    }
+
+    task_t* current = scheduler_get_current_task();
+
+    void* old_pd_virt = current->page_dir_virt;
+    uint32_t old_pd_phys = current->page_dir_phys;
+
+    // Create a fresh page directory: kernel mappings + new user stack (COW)
+    void* new_pd = paging_clone_directory(
+        paging_get_kernel_directory(),
+        true,
+        current->user_stack_base,
+        current->user_stack_size
+    );
+    if (new_pd == NULL) {
+        kfree(parsed);
+        return -1;
+    }
+
+    // Switch to the new page directory and load ELF segments into it
+    paging_switch_directory(new_pd);
+
+    if (!elf_load_segments(elf_data, parsed)) {
+        // Loading failed: restore old address space and discard new one
+        paging_switch_directory(old_pd_virt);
+        paging_free_user_pages(new_pd);
+        pmm_free_page(paging_virt_to_phys(new_pd));
+        kfree(parsed);
+        return -1;
+    }
+
+    // Commit: free the old address space (we are already running on new_pd)
+    paging_free_user_pages(old_pd_virt);
+    pmm_free_page(old_pd_phys);
+
+    current->page_dir_virt = new_pd;
+    current->page_dir_phys = paging_virt_to_phys(new_pd);
+
+    // Rebuild memory region list from new ELF segments
+    task_memory_region_t* memreg = current->memory_regions;
+    while (memreg != NULL) {
+        task_memory_region_t* next = memreg->next;
+        kfree(memreg);
+        memreg = next;
+    }
+    current->memory_regions = NULL;
+    for (size_t i = 0; i < parsed->segment_count; i++) {
+        elf_segment_t* seg = &parsed->segments[i];
+        task_add_mem_region(
+            current,
+            PAGE_ALIGN_DOWN(seg->vaddr),
+            PAGE_ALIGN_UP(seg->vaddr + seg->memsz),
+            seg->page_flags
+        );
+    }
+
+    // Reset heap to start right after the highest loaded address
+    uint32_t heap_start = PAGE_ALIGN_UP(parsed->max_vaddr);
+    current->heap_start = heap_start;
+    current->heap_end = heap_start;
+    current->heap_max = current->user_stack_base - MIN_HEAP_STACK_GAP;
+
+    // Patch the live IRET frame on the kernel stack so that the iret executed
+    // by the syscall ISR on return will jump to the new entry point with a
+    // fresh user stack, instead of back into the now-destroyed old image.
+    // Frame layout (set by task_save_syscall_user_context):
+    //   [7] = user EIP, [10] = user ESP
+    uint32_t* frame = (uint32_t*)current->context.syscall_frame_ptr;
+    frame[7]  = parsed->entry_point;
+    frame[10] = current->user_stack_base + current->user_stack_size;
+
+    kfree(parsed);
+    return 0;
 }

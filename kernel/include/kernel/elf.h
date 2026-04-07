@@ -153,6 +153,14 @@ void elf_dump(vfs_file_t* file);
 void elf_parse(void* addr, elf_t* store);
 
 /**
+ * Load all PT_LOAD segments from a parsed ELF into the currently active page
+ * directory. Validates that all addresses are in user space. Does not modify
+ * any task state (memory regions, heap, etc.) — the caller is responsible for
+ * that. Returns true on success.
+ */
+bool elf_load_segments(void* elf_data, elf_t* parsed);
+
+/**
  * Creates a new task from ELF binary data
  */
 task_t* elf_create_task(const char* name, void* elf_data);

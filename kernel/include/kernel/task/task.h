@@ -43,6 +43,14 @@ typedef struct {
     uint32_t syscall_user_ebp;
     uint32_t syscall_user_esi;
     uint32_t syscall_user_edi;
+    /**
+     * Pointer to the live kernel-stack IRET frame saved at syscall entry.
+     * Layout: [EAX, ECX, EDX, EBX, EBP, ESI, EDI, user_EIP, CS, EFLAGS,
+     *          user_ESP, SS]
+     * Used by task_exec() to patch user_EIP and user_ESP in-place so that
+     * the iret at syscall exit jumps to the new entry point.
+     */
+    uint32_t syscall_frame_ptr;
 } task_cpu_context_t;
 
 /**
@@ -225,5 +233,15 @@ void task_save_syscall_user_context(uint32_t* syscall_frame);
  * child->pid to return to the parent), or NULL on failure.
  */
 task_t* task_fork(void);
+
+/**
+ * Replace the current task's address space with the ELF binary in elf_data.
+ * Frees the old page directory, loads new segments, resets heap bounds, and
+ * patches the live kernel-stack IRET frame so the task resumes at the new
+ * entry point when the syscall returns. File descriptors and process identity
+ * are preserved. Returns 0 on success, -1 on failure (old address space is
+ * still live).
+ */
+int task_exec(void* elf_data, size_t elf_size);
 
 #endif

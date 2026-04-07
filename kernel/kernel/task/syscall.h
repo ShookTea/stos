@@ -26,6 +26,9 @@ int sys_fork();
 #define SYS_WAIT 0x06
 int sys_wait(int pid, int* status_code, int options);
 
+#define SYS_EXEC 0x07
+int sys_exec(const char* path);
+
 #define SYS_OPEN 0x10
 uint32_t sys_open(const char* path, uint32_t flags);
 

@@ -71,6 +71,13 @@ void* sbrk(intptr_t increment);
  */
 int fork();
 
+/**
+ * Replace the current process image with the ELF executable at [path].
+ * On success this function does not return; execution resumes at the new
+ * program's entry point. On failure returns -1.
+ */
+int exec(const char* path);
+
 #ifdef __cplusplus
 }
 #endif
