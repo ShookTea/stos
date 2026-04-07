@@ -1,0 +1,335 @@
+ELF header validation completed successfully.
+Type: executable file
+min=0x400000, max=0x4023c8
+ELF: Entry point: 0x400000
+ELF: min_vaddr=0x400000, max_vaddr=0x4023c8
+STACK_SETUP[task esp=40061f9c]: EDI=0 ESI=0 EBX=0 EBP=0 ret=11dbfc
+  GP regs: EAX=0 ECX=0 EDX=0 EBX=0 ESP=23 EBP=23 ESI=23 EDI=23
+  [0] = 0
+  [1] = 0
+  [2] = 0
+  [3] = 0
+  [4] = 11dbfc
+  [5] = 0
+  [6] = 0
+  [7] = 0
+  [8] = 0
+  [9] = 0
+  [10] = 0
+  [11] = 0
+  [12] = 0
+  [13] = 23
+  [14] = 23
+  [15] = 23
+  [16] = 23
+  [17] = 0
+  [18] = 0
+  [19] = 400000
+PAGING: Cloning user space (PD entries 1-255)
+PAGING: creating new page table for stack at PD[255]
+PAGING: creating stack page at vaddr=0x3fffd000, phys=0x1ff2c000
+PAGING: creating stack page at vaddr=0x3fffe000, phys=0x1ff2d000
+PAGING: Cloned 2 userspace page tables
+PAGING: cloned page directory (kernel=yes, user=yes)
+PAGING: Warning - page 0x400000 already mapped to 0x1ff2e000, remapping to 0x1ff2e000
+PAGING: Warning - page 0x401000 already mapped to 0x1ff2f000, remapping to 0x1ff2f000
+PAGING: Warning - page 0x402000 already mapped to 0x1ff30000, remapping to 0x1ff30000
+Task [2] heap: start=0x403000 end=0x403000 max=0x3fefd000 (available: 1043432 KiB)
+Adding task [2] 'forking' to scheduler
+Task [2] 'forking' scheduled.
+old = [1] 'debugger', state = '3'
+next = [2] 'forking', state = '1'
+pre-tss_set_kernel_stack
+123SWITCH: new_esp=40061f9c, stack=[4005e000, 40062000)
+STACK at new_esp: [0]=0 [1]=0 [2]=0 [3]=0 [4]=11dbfc [5]=0 [6]=0 [7]=0 [8]=0 [9]=0 [10]=0 [11]=0 [12]=0 [13]=23 [14]=23 [15]=23 [16]=23 [17]=0 [18]=0 [19]=400000
+SYSCALL_CTX[2]: frame=40061fd0 eax=2 ecx=0 edx=0 ebx=0 ebp=3fffef98 esi=0 edi=0 eip=401b52 esp=3fffef94
+SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+[SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401f82 eip=401b52 esp=3fffedc4
+2SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+]SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+TSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+sSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+tSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+iSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+gSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+fSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+rSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+kSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+iSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+gSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f82 eip=401b52 esp=3fffedc4
+
+SYSCALL_CTX[2]: frame=40061fd0 eax=5 ecx=0 edx=0 ebx=0 ebp=3fffef88 esi=0 edi=0 eip=401b52 esp=3fffef84
+FORK: parent eip=401b52 esp=3fffef84
+STACK_SETUP[task esp=4005bfa0]: EDI=0 ESI=0 EBX=0 EBP=0 ret=11dbfc
+  GP regs: EAX=0 ECX=0 EDX=0 EBX=0 ESP=23 EBP=23 ESI=23 EDI=23
+  [0] = 0
+  [1] = 0
+  [2] = 0
+  [3] = 0
+  [4] = 11dbfc
+  [5] = 0
+  [6] = 0
+  [7] = 0
+  [8] = 0
+  [9] = 0
+  [10] = 0
+  [11] = 0
+  [12] = 0
+  [13] = 23
+  [14] = 23
+  [15] = 23
+  [16] = 23
+  [17] = 0
+  [18] = 0
+  [19] = 401b52
+PAGING: Cloning user space (PD entries 1-255)
+PAGING: Page 0x1ff2e000 now shared
+PAGING: Page 0x1ff2f000 now shared
+PAGING: Page 0x1ff30000 now shared
+PAGING: Allocating stack page at vaddr=0x3fffd000, phys=0x1ff22000
+PAGING: Stack page created - present=1, user=1, rw=1
+PAGING: Allocating stack page at vaddr=0x3fffe000, phys=0x1ff23000
+PAGING: Stack page created - present=1, user=1, rw=1
+PAGING: Cloned 2 userspace page tables
+PAGING: cloned page directory (kernel=yes, user=yes)
+Adding task [3] 'forking' to scheduler
+syscall result: 3
+SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+[SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401f98 eip=401b52 esp=3fffedc4
+2SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+]SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+fSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+rSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+kSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+rSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+sSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+=SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401f98 eip=401b52 esp=3fffedc4
+3SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefbc edi=401f98 eip=401b52 esp=3fffedc4
+
+SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+[SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401fac eip=401b52 esp=3fffedc4
+2SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+]SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+ESYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+tSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+rSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+iSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+gSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+lSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+pSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+
+old = [2] 'forking', state = '2'
+next = [3] 'forking', state = '1'
+pre-tss_set_kernel_stack
+123SWITCH: new_esp=4005bfa0, stack=[40058000, 4005c000)
+STACK at new_esp: [0]=0 [1]=0 [2]=0 [3]=0 [4]=11dbfc [5]=0 [6]=0 [7]=3fffef88 [8]=0 [9]=0 [10]=0 [11]=0 [12]=0 [13]=23 [14]=23 [15]=23 [16]=23 [17]=0 [18]=0 [19]=401b52
+SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+[SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401f98 eip=401b52 esp=3fffedc4
+2SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+]SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+fSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+rSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+kSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+rSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+sSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+=SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401f98 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401f98 eip=401b52 esp=3fffedc4
+0SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefbc edi=401f98 eip=401b52 esp=3fffedc4
+
+SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+[SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401fac eip=401b52 esp=3fffedc4
+2SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+]SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+ESYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+tSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+rSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+iSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+gSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+lSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+pSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fac eip=401b52 esp=3fffedc4
+
+old = [3] 'forking', state = '2'
+next = [2] 'forking', state = '1'
+pre-tss_set_kernel_stack
+123SWITCH: new_esp=40061edc, stack=[4005e000, 40062000)
+STACK at new_esp: [0]=4005bff0 [1]=4005bfa0 [2]=14 [3]=40061f28 [4]=107156 [5]=40044470 [6]=4005bfa0 [7]=401b52 [8]=107262 [9]=20 [10]=12da00 [11]=40061f28 [12]=40044470 [13]=a [14]=1072a0 [15]=0 [16]=12da00 [17]=1072a0 [18]=0 [19]=40061f58
+post-switch_to_stack
+old = [2] 'forking', state = '2'
+next = [3] 'forking', state = '1'
+pre-tss_set_kernel_stack
+123SWITCH: new_esp=4005bedc, stack=[40058000, 4005c000)
+STACK at new_esp: [0]=40061f2c [1]=40061edc [2]=14 [3]=4005bf28 [4]=107156 [5]=40044370 [6]=40061edc [7]=40061f58 [8]=107262 [9]=20 [10]=12da00 [11]=4005bf28 [12]=40044370 [13]=a [14]=1072a0 [15]=0 [16]=12da00 [17]=1072a0 [18]=0 [19]=4005bf58
+post-switch_to_stack
+SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+
+SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+[SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401fc0 eip=401b52 esp=3fffedc4
+2SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+]SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+TSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+sSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+tSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+iSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+gSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+cSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+mSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+pSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+lSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+tSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+dSYSCALL_CTX[3]: frame=4005bfd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+
+SYSCALL_CTX[3]: frame=4005bfd0 eax=0 ecx=0 edx=0 ebx=0 ebp=3fffefbc esi=0 edi=0 eip=401b52 esp=3fffefb8
+Task [3] 'forking' exited with code 0
+old = [3] 'forking', state = '5'
+next = [2] 'forking', state = '1'
+pre-tss_set_kernel_stack
+123SWITCH: new_esp=40061edc, stack=[4005e000, 40062000)
+STACK at new_esp: [0]=4005bf2c [1]=4005bedc [2]=14 [3]=40061f28 [4]=107156 [5]=40044470 [6]=4005bedc [7]=4005bf58 [8]=107262 [9]=20 [10]=12da00 [11]=40061f28 [12]=40044470 [13]=a [14]=1072a0 [15]=0 [16]=12da00 [17]=1072a0 [18]=0 [19]=40061f58
+post-switch_to_stack
+SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+
+SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=0 edi=0 eip=401b52 esp=3fffedc4
+[SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffee72 edi=401fc0 eip=401b52 esp=3fffedc4
+2SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+]SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+TSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+sSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+tSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+iSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+nSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+gSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+ SYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+cSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+oSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+mSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+pSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+lSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+tSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+eSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+dSYSCALL_CTX[2]: frame=40061fd0 eax=12 ecx=1 edx=3fffee0f ebx=1 ebp=3fffedc8 esi=3fffefb8 edi=401fc0 eip=401b52 esp=3fffedc4
+
+SYSCALL_CTX[2]: frame=40061fd0 eax=0 ecx=0 edx=0 ebx=0 ebp=3fffefbc esi=0 edi=0 eip=401b52 esp=3fffefb8
+Task [2] 'forking' exited with code 0
+Child [3] 'forking' changed parent to [1] 'debugger'
+
+========================================
+         PAGE FAULT EXCEPTION
+========================================
+
+Fault Category: Unmapped Kernel Address
+Faulting Address: 0x00f000ff97
+Error Code:       0x0000000000
+
+Error Code Analysis:
+  Present:          NO (page not present)
+  Access Type:      READ
+  Privilege Mode:   SUPERVISOR
+  Reserved Bit:     clear
+  Instruction Fetch:no
+
+Address Analysis:
+  Page-aligned:     0x00f000f000
+  Page offset:      0xf97 (3991 bytes)
+  Page mapped:      NO
+  Memory region:    Kernel space (> 3GB)
+
+Instruction Context:
+  Faulting EIP:     0x0000107f35 (mapped)
+  Stack Pointer:    0x0000000000 (mapped)
+  Base Pointer:     0x0000000004 (mapped)
+
+Memory context around faulting address:
+(Attempting to dump nearby memory...)
+
+Memory Dump around 0x00f000ff97:
+Address   | +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F | ASCII
+----------+-------------------------------------------------+------------------
+f000ff50 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ff60 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ff70 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ff80 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ff90 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ffa0 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ffb0 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ffc0 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+f000ffd0 | ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)
+----------+-------------------------------------------------+------------------
+Legend: Faulting byte highlighted in red
+
+Fault Explanation:
+  Accessed memory that is not mapped.
+  This could be:
+    - Use-after-free (memory was freed)
+    - Wild pointer (uninitialized or corrupted)
+    - Missing memory allocation
+    - Stack corruption
+
+Complete Register Dump:
+  EAX=0x00f000ff53  EBX=0x0040061f5c  ECX=0x0040044424  EDX=0x0040061fa8
+  ESI=0x0000123b18  EDI=0x00000011aa  EBP=0x0000000004  ESP=0x0000000000
+  EIP=0x0000107f35  EFLAGS=0x0000010002  CS=0x000008
+  INT#=0x000e  ERR=0x0000000000
+
+Stack Trace:
+  [0] Return address: 0x00f000e2c3 (INVALID - not mapped)
+      Stack may be corrupted
+
+Attempting recovery...
+
+========================================
+Cannot recover from page fault.
+System halted.
+========================================
+
+=== Page Fault Statistics ===
+Total page faults:      1
+NULL dereferences:      0
+Protection violations:  0
+  Write to read-only:   0
+  User->supervisor:     0
+  Instruction fetch:    0
+Not present faults:     1
+Recoverable faults:     0
+Unrecoverable faults:   1
+Recovery rate:          0%
