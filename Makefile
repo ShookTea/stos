@@ -13,6 +13,7 @@ HARD_DRIVE     := .qemu/disk.img
 
 LIB_INCLUDE_FLAGS := -I$(LIBC_DIR)/include -I$(LIBDS_DIR)/include
 
+# Boot order "dc": boot first from cdrom (d), then from hard disk (c)
 QEMU_FLAGS := -m 512M -serial stdio -boot order=dc
 
 include libc/Rules.mk
@@ -25,8 +26,10 @@ include usermode/Rules.mk
 all: $(TARGET).iso
 
 qemu: $(TARGET).iso $(HARD_DRIVE)
-	# Boot order "dc": boot first from cdrom (d), then from hard disk (c)
-	qemu-system-i386 -cdrom $^ $(QEMU_FLAGS)
+	qemu-system-i386 \
+	    -cdrom $(TARGET).iso \
+		-drive file=$(HARD_DRIVE),format=raw,media=disk \
+		$(QEMU_FLAGS)
 
 $(TARGET).iso: $(TARGET) kernel/grub.cfg $(INITRD)
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
