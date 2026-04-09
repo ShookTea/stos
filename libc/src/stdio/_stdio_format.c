@@ -178,7 +178,7 @@ int __stdio_format_core(
         uint8_t width = 0;
         while (isdigit(format[i])) {
             width *= 10;
-            width += format[i] - 48;
+            width += format[i] - '0';
             i++;
         }
 
@@ -188,7 +188,7 @@ int __stdio_format_core(
             i++;
             while (isdigit(format[i])) {
                 precision *= 10;
-                precision += format[i] - 48;
+                precision += format[i] - '0';
                 i++;
             }
         } else {

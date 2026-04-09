@@ -4,8 +4,7 @@
 
 static int emit_char(__stdio_format_out_t* out __attribute__((unused)), char c)
 {
-    putchar(c);
-    return 1;
+    return putchar(c) == EOF ? 0 : 1;
 }
 
 int vprintf(const char* restrict format, va_list list)

@@ -3,6 +3,7 @@
 
 #include <sys/cdefs.h>
 #include <stdarg.h>
+#include <stddef.h>
 
 #define EOF (-1)
 
@@ -38,8 +39,8 @@ int puts(const char*);
  * Prints formatted string. Returns the number of characters written, or EOF in
  * case of error.
  *
- * Documentation in the sdtio/vprintf.c file gives more information about format
- * placeholders.
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
  */
 int printf(const char* __restrict, ...);
 
@@ -47,10 +48,59 @@ int printf(const char* __restrict, ...);
  * Prints formatted string using va_list argument. Returns the number of
  * characters written, or EOF in case of error.
  *
- * Documentation in the sdtio/vprintf.c file gives more information about format
- * placeholders.
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
  */
 int vprintf(const char* __restrict, va_list list);
+
+/**
+ * Formats tring and puts the output into the buffer, followed by a NULL byte.
+ * Returns the number of characters written, or EOF in case of error. It is
+ * user's responsibility to ensure that enough space is available.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ */
+int sprintf(char* restrict buffer, const char* restrict format, ...);
+
+/**
+ * Formats tring and puts the output into the buffer, followed by a NULL byte.
+ * Returns the number of characters written, or EOF in case of error. It is
+ * user's responsibility to ensure that enough space is available.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ */
+int vsprintf(char* restrict buffer, const char* restrict format, va_list list);
+
+/**
+ * Formats tring and puts at most N-1 characters of output into the buffer,
+ * followed by a NULL byte. Returns the number of characters written, or EOF in
+ * case of error. If N is zero, then nothing will be written and buffer may be
+ * a null pointer. It is user's responsibility to ensure that enough space is
+ * available.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ */
+int snprintf(char* restrict buffer, size_t n, const char* restrict format, ...);
+
+/**
+ * Formats tring and puts at most N-1 characters of output into the buffer,
+ * followed by a NULL byte. Returns the number of characters written, or EOF in
+ * case of error. If N is zero, then nothing will be written and buffer may be
+ * a null pointer. It is user's responsibility to ensure that enough space is
+ * available.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ */
+int vsnprintf(
+    char* restrict buffer,
+    size_t n,
+    const char* restrict format,
+    va_list list
+);
 
 #if !(defined(__is_libk))
 /**
