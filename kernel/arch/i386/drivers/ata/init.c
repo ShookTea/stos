@@ -29,7 +29,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
     }
 
     // Wait for BSY flag to clear
-    _ata_wait_for_bsy_clear(bus_base);
+    status = _ata_wait_for_bsy_clear(bus_base);
 
     // Check ATA_BUS_OFFSET_CYLINDER_LOW and _HIGH - they should be clear now
     if (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW) != 0) {
@@ -39,6 +39,18 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
 
     if (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH) != 0) {
         debug_puts("Invalid device: cylinder_high set");
+        return;
+    }
+
+    // Continue polling until bit DRQ or ERR sets.
+    while ((status & (ATA_STATUS_ERR | ATA_STATUS_DRQ)) == 0) {
+        io_wait();
+        status = _ata_read_status(bus_base);
+        // TODO: introduce timeout here
+    }
+
+    if (status & ATA_STATUS_ERR) {
+        debug_puts("Invalid device: disk reports an error.");
         return;
     }
 
