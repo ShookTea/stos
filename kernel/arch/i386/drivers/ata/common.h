@@ -34,6 +34,24 @@
 #define ATA_COM_TARGET_DRIVE_MASTER 0xA0
 #define ATA_COM_TARGET_DRIVE_SLAVE 0xB0
 
+// Status register flags:
+// Indicates that an error occurred
+#define ATA_STATUS_ERR 0x01
+// Always set to 0
+#define ATA_STATUS_IDX 0x02
+// Always set to 0
+#define ATA_STATUS_CORR 0x04
+// has PIO data, or is ready to accept PIO data
+#define ATA_STATUS_DRQ 0x08
+// Overlapped Mode Service request
+#define ATA_STATUS_SRV 0x10
+// Drive fault error (doesn't set _ERR)
+#define ATA_STATUS_DF 0x20
+// Bit is clear when the drive is spun down or after an error, set otherwise
+#define ATA_STATUS_RDY 0x40
+// If set, drive is preparing and we need to wait. In case of hang needs reset
+#define ATA_STATUS_BSY 0x80
+
 /**
  * Selects a drive (ATA_COM_TARGET_DRIVE_) on given bus (ATA_BUS_BASE_).
  */
@@ -43,5 +61,11 @@ void _ata_drive_select(uint16_t bus_base, uint8_t drive_select);
  * Returns current status byte.
  */
 uint8_t _ata_read_status(uint16_t bus_base);
+
+/**
+ * Waits for BSY flag to be cleared, and returns the last status value with
+ * cleared BSY.
+ */
+uint8_t _ata_wait_for_bsy_clear(uint16_t bus_base);
 
 #endif

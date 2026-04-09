@@ -28,6 +28,9 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
         return;
     }
 
+    // Wait for BSY flag to clear
+    _ata_wait_for_bsy_clear(bus_base);
+
     debug_printf("Drive found, status: %#x\n", status);
 }
 
