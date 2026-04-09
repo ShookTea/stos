@@ -16,11 +16,15 @@ int main(int argc, char** argv, char** envp)
     puts("  envp:");
     int i = 0;
     while (*envp != NULL) {
-        printf("  [%d] >%s<\n", i, envp[i]);
+        printf("  [%d] >%s<\n", i, *envp);
         i++;
         envp++;
     }
-    printf("Test getenv: >%s<\n", getenv("foo"));
+    char* foo_env_val = getenv("foo");
+    printf(
+        foo_env_val == NULL ? "Test getenv: foo=%s\n" : "Test getenv: foo='%s'\n",
+        foo_env_val == NULL ? "null" : foo_env_val
+    );
     int childpid = fork();
     int currpid = getpid();
     printf("[%d] fork res = %d\n", currpid, childpid);
