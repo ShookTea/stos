@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sched.h>
@@ -19,6 +20,7 @@ int main(int argc, char** argv, char** envp)
         i++;
         envp++;
     }
+    printf("Test getenv: >%s<\n", getenv("foo"));
     int childpid = fork();
     int currpid = getpid();
     printf("[%d] fork res = %d\n", currpid, childpid);

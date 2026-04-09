@@ -89,6 +89,13 @@ void* realloc(void* ptr, size_t size);
  */
 void* calloc(size_t count, size_t size);
 
+/**
+ * Search environment variable list to find a variable with a given name and
+ * returns a pointer to a corresponding value string, or NULL if there is no
+ * match.
+ */
+char* getenv(const char* name);
+
 #endif
 
 #ifdef __cplusplus
