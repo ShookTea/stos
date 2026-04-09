@@ -3,6 +3,7 @@
 #include "./common.h"
 #include "../../io.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
 {
@@ -52,6 +53,45 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
     if (status & ATA_STATUS_ERR) {
         debug_puts("Invalid device: disk reports an error.");
         return;
+    }
+
+    // Data port now contains 256 16-bit values.
+    uint32_t lba28_sectors_count = 0;
+    uint64_t lba48_sectors_count = 0;
+    for (int i = 0; i < 256; i++) {
+        uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
+        // if i=0 - it's apparently useful if device is not a hard disk.
+        if (i == 88) {
+            // Checking UDMA modes - low byte shows supported, high byte shows
+            // the active mode.
+            uint8_t udma_sup = data & 0xFF;
+            uint8_t udma_act = (data >> 8) & 0xFF;
+            debug_printf("UDMA sup=%#02x act=%#02x\n", udma_sup, udma_act);
+        } else if (i == 60) {
+            // LBA28 sectors count
+            lba28_sectors_count = data;
+        } else if (i == 61) {
+            lba28_sectors_count |= (data << 16);
+            if (lba28_sectors_count == 0) {
+                debug_puts("LBA28 not supported");
+            } else {
+                debug_printf("LBA28 sectors count: %u\n", lba28_sectors_count);
+            }
+        } else if (i == 100) {
+            // LBA48 sectors count
+            lba28_sectors_count = data;
+        } else if (i == 101) {
+            lba28_sectors_count |= (((uint64_t)data) << 16);
+        } else if (i == 102) {
+            lba28_sectors_count |= (((uint64_t)data) << 32);
+        } else if (i == 103) {
+            lba28_sectors_count |= (((uint64_t)data) << 48);
+            if (lba48_sectors_count == 0) {
+                debug_puts("LBA48 not supported");
+            } else {
+                debug_printf("LBA48 sectors count: %u\n", lba48_sectors_count);
+            }
+        }
     }
 
     debug_printf("Drive found, status: %#x\n", status);
