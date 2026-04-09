@@ -166,8 +166,10 @@ void page_fault_print_info(const page_fault_info_t* info)
 
     // Address analysis
     debug_printf("\nAddress Analysis:\n");
-    uint32_t page_aligned = paging_align_down(info->faulting_address);
-    uint32_t offset = info->faulting_address & (PAGE_SIZE - 1);
+    #if KERNEL_DEBUG_ANY
+        uint32_t page_aligned = paging_align_down(info->faulting_address);
+        uint32_t offset = info->faulting_address & (PAGE_SIZE - 1);
+    #endif
     debug_printf("  Page-aligned:     %#010x\n", page_aligned);
     debug_printf("  Page offset:      %#x (%u bytes)\n", offset, offset);
     debug_printf("  Page mapped:      %s\n", info->page_mapped ? "YES" : "NO");
@@ -441,7 +443,9 @@ void page_fault_print_stats(void)
     debug_printf("Unrecoverable faults:   %u\n", pf_stats.unrecoverable);
 
     if (pf_stats.total_faults > 0) {
+        #if KERNEL_DEBUG_ANY
         uint32_t recovery_rate = (pf_stats.recoverable * 100) / pf_stats.total_faults;
+        #endif
         debug_printf("Recovery rate:          %u%%\n", recovery_rate);
     }
 }

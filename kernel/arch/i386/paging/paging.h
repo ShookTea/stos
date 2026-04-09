@@ -256,6 +256,6 @@ bool paging_validate_identity_mapping(void);
  * Print statistics about current paging state
  * Shows number of mapped pages, page directory entries, etc.
  */
-void paging_print_stats(void);
+void paging_print_stats(bool force_terminal_output);
 
 #endif

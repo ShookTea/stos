@@ -140,13 +140,13 @@ void slab_get_stats(slab_stats_t* stats);
  * Print slab allocator statistics
  * For debugging purposes
  */
-void slab_print_stats(void);
+void slab_print_stats(bool force_terminal_output);
 
 /**
  * Print detailed information about all slab caches
  * For debugging purposes
  */
-void slab_print_caches(void);
+void slab_print_caches(bool force_terminal_output);
 
 /**
  * Validate slab allocator integrity

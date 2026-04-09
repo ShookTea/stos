@@ -3,6 +3,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
 #include "kernel/debug.h"
+#include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -397,40 +398,42 @@ void vmm_get_stats(vmm_stats_t* stats) {
     }
 }
 
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
 /**
  * Print VMM statistics
  */
-void vmm_print_stats(void) {
+void vmm_print_stats(bool force_terminal_output) {
     vmm_stats_t stats;
     vmm_get_stats(&stats);
 
-    debug_printf("\n=== VMM Statistics ===\n");
-    debug_printf("Total Virtual Space: %u MB\n", stats.total_virtual_space / (1024 * 1024));
-    debug_printf("Used Virtual Space:  %u MB\n", stats.used_virtual_space / (1024 * 1024));
-    debug_printf("Free Virtual Space:  %u MB\n", stats.free_virtual_space / (1024 * 1024));
-    debug_printf("Total Regions:       %u\n", stats.num_regions);
-    debug_printf("Used Regions:        %u\n", stats.num_used_regions);
-    debug_printf("Free Regions:        %u\n", stats.num_free_regions);
-    debug_printf("  Kernel Heap Start:   %#x\n", stats.kernel_heap_start);
-    debug_printf("  Kernel Heap Current: %#x\n", stats.kernel_heap_current);
-    debug_printf("\nRegion Allocation Stats:\n");
-    debug_printf("  Total created:       %zu\n", total_regions_created);
-    debug_printf("  Total destroyed:     %zu\n", total_regions_destroyed);
-    debug_printf("  Currently active:    %zu\n", total_regions_created - total_regions_destroyed);
-    debug_printf("  Bootstrap created:   %zu\n", bootstrap_regions_created);
-    debug_printf("  Dynamic created:     %zu\n", dynamic_regions_created);
-    debug_printf("  Using dynamic alloc: %s\n", use_dynamic_allocation ? "Yes" : "No");
-    debug_printf("======================\n\n");
+    _puts("\n=== VMM Statistics ===");
+    _printf("Total Virtual Space: %u MB\n", stats.total_virtual_space / (1024 * 1024));
+    _printf("Used Virtual Space:  %u MB\n", stats.used_virtual_space / (1024 * 1024));
+    _printf("Free Virtual Space:  %u MB\n", stats.free_virtual_space / (1024 * 1024));
+    _printf("Total Regions:       %u\n", stats.num_regions);
+    _printf("Used Regions:        %u\n", stats.num_used_regions);
+    _printf("Free Regions:        %u\n", stats.num_free_regions);
+    _printf("  Kernel Heap Start:   %#x\n", stats.kernel_heap_start);
+    _printf("  Kernel Heap Current: %#x\n", stats.kernel_heap_current);
+    _puts("\nRegion Allocation Stats:");
+    _printf("  Total created:       %zu\n", total_regions_created);
+    _printf("  Total destroyed:     %zu\n", total_regions_destroyed);
+    _printf("  Currently active:    %zu\n", total_regions_created - total_regions_destroyed);
+    _printf("  Bootstrap created:   %zu\n", bootstrap_regions_created);
+    _printf("  Dynamic created:     %zu\n", dynamic_regions_created);
+    _printf("  Using dynamic alloc: %s\n", use_dynamic_allocation ? "Yes" : "No");
+    _puts("======================\n");
 }
 
 /**
  * Print detailed memory map
  */
-void vmm_print_memory_map(void) {
-    debug_printf("\n=== Virtual Memory Map ===\n");
-    debug_printf("%-12s %-12s %-10s %-8s %-10s\n",
+void vmm_print_memory_map(bool force_terminal_output) {
+    _puts("\n=== Virtual Memory Map ===");
+    _printf("%-12s %-12s %-10s %-8s %-10s\n",
            "Start", "End", "Size (KB)", "Flags", "Status");
-    debug_printf("-----------------------------------------------------------\n");
+    _puts("-----------------------------------------------------------");
 
     vmm_region_t* region = region_list;
     while (region != NULL) {
@@ -438,14 +441,14 @@ void vmm_print_memory_map(void) {
         const char* status = region->is_free ? "FREE" : "USED";
         const char* mode = (region->flags & VMM_USER) ? "USER" : "KERN";
 
-        debug_printf("%#10x  %#10x  %-10u %-8s %-10s\n",
+        _printf("%#10x  %#10x  %-10u %-8s %-10s\n",
                region->start, region->end, size_kb,
                mode, status);
 
         region = region->next;
     }
 
-    debug_printf("==========================\n\n");
+    _puts("==========================\n");
 }
 
 /**

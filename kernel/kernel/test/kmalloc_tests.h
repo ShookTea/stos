@@ -693,11 +693,16 @@ static inline bool kmalloc_test_macros(void) {
 /**
  * Print kmalloc and slab statistics
  */
-static inline void kmalloc_print_all_stats(const char* label) {
+static inline void kmalloc_print_all_stats(
+    const char* label
+    #if !KERNEL_DEBUG_ANY
+    __attribute__((unused))
+    #endif
+) {
     debug_printf("\n=== %s ===\n", label);
     kmalloc_print_stats();
     debug_printf("\n");
-    slab_print_stats();
+    slab_print_stats(false);
 }
 
 /**
@@ -790,7 +795,7 @@ static inline void kmalloc_run_all_tests(void) {
 
     // Optionally print detailed cache information
     debug_printf("\n");
-    slab_print_caches();
+    slab_print_caches(false);
 
     // Validate integrity
     debug_printf("\n=== Integrity Validation ===\n");

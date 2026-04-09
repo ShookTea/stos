@@ -5,6 +5,7 @@
 #include "paging.h"
 #include <stdlib.h>
 #include "kernel/debug.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -178,14 +179,18 @@ void paging_init(void)
     debug_printf("Identity mapping first 4MB...\n");
 
     uint32_t identity_map_end = 0x400000;  // 4MB
+    #if KERNEL_DEBUG_ANY
     uint32_t pages_mapped = 0;
+    #endif
 
     for (uint32_t addr = 0; addr < identity_map_end; addr += PAGE_SIZE) {
         if (!paging_map_page(addr, addr, PAGE_FLAGS_KERNEL)) {
             debug_printf("PAGING: Failed to map page at %#x\n", addr);
             return;
         }
-        pages_mapped++;
+        #if KERNEL_DEBUG_ANY
+            pages_mapped++;
+        #endif
     }
 
     debug_printf("Identity mapped %u pages (0x0 - %#x)\n",
@@ -236,14 +241,19 @@ void paging_init(void)
         phys_mem_size = PHYS_MAP_SIZE;
     }
 
-    uint32_t phys_map_pages = 0;
+    #if KERNEL_DEBUG_ANY
+        uint32_t phys_map_pages = 0;
+    #endif
+
     for (uint32_t phys = 0; phys < phys_mem_size; phys += PAGE_SIZE) {
         uint32_t virt = PHYS_MAP_BASE + phys;
         if (!paging_map_page(virt, phys, PAGE_FLAGS_KERNEL)) {
             debug_printf("PAGING: Failed to map physical page %#x to virtual %#x\n", phys, virt);
             return;
         }
-        phys_map_pages++;
+        #if KERNEL_DEBUG_ANY
+            phys_map_pages++;
+        #endif
     }
 
     debug_printf("Mapped %u pages of physical memory (%u MB)\n",
@@ -508,7 +518,9 @@ void paging_dump_page_directory(void)
     debug_printf("Paging Enabled: %s\n", paging_is_enabled() ? "Yes" : "No");
     debug_printf("\nPresent Page Directory Entries:\n");
 
-    uint32_t present_count = 0;
+    #if KERNEL_DEBUG_ANY
+        uint32_t present_count = 0;
+    #endif
     for (uint32_t i = 0; i < PAGE_DIRECTORY_SIZE; i++) {
         page_directory_entry_t* pde = &current_page_directory->entries[i];
         if (pde->present) {
@@ -517,7 +529,9 @@ void paging_dump_page_directory(void)
                    pde->frame << 12,
                    pde->rw ? "RW" : "RO",
                    pde->user ? "USER" : "KERNEL");
-            present_count++;
+            #if KERNEL_DEBUG_ANY
+                present_count++;
+            #endif
         }
     }
 
@@ -561,7 +575,9 @@ void paging_dump_page_table(uint32_t pd_index)
     for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
         page_table_entry_t* pte = &pt->entries[i];
         if (pte->present) {
-            uint32_t virt = (pd_index << 22) | (i << 12);
+            #if KERNEL_DEBUG_ANY
+                uint32_t virt = (pd_index << 22) | (i << 12);
+            #endif
             debug_printf("  PTE[%u]: virt=%#x -> phys=%#x, %s, %s%s%s\n",
                    i,
                    virt,
@@ -640,24 +656,27 @@ bool paging_validate_identity_mapping(void)
     return all_valid;
 }
 
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
 /**
  * Print statistics about current paging state
  */
-void paging_print_stats(void)
+void paging_print_stats(bool force_terminal_output)
 {
     if (!paging_is_enabled()) {
-        debug_printf("Paging is not enabled\n");
+        _puts("Paging is not enabled");
         return;
     }
 
-    debug_printf("=== Paging Statistics ===\n");
-    debug_printf("Paging Status: ENABLED\n");
-    debug_printf("Current CR3 (Physical): %#x\n", paging_get_cr3());
-    debug_printf("Kernel Page Directory (Virtual): %#x\n", (uint32_t)kernel_page_directory);
-    debug_printf("Current Page Directory (Virtual): %#x\n", (uint32_t)current_page_directory);
-    debug_printf("Physical Memory Mapping: %#x - %#x\n", PHYS_MAP_BASE, 0xFFFFFFFF);
+    _puts("=== Paging Statistics ===");
+    _puts("Paging Status: ENABLED");
+    _printf("Current CR3 (Physical): %#x\n", paging_get_cr3());
+    _printf("Kernel Page Directory (Virtual): %#x\n", (uint32_t)kernel_page_directory);
+    _printf("Current Page Directory (Virtual): %#x\n", (uint32_t)current_page_directory);
+    _printf("Physical Memory Mapping: %#x - %#x\n", PHYS_MAP_BASE, 0xFFFFFFFF);
 
     // Count present page directory entries
+    // #if KERNEL_DEBUG_ANY
     uint32_t present_pdes = 0;
     uint32_t total_mapped_pages = 0;
 
@@ -678,26 +697,26 @@ void paging_print_stats(void)
         }
     }
 
-    debug_printf(
+    _printf(
         "Present Page Directory Entries: %u / %u\n",
         present_pdes,
         PAGE_DIRECTORY_SIZE
     );
-    debug_printf(
+    _printf(
         "Total Mapped Pages: %u (%u KB, %u MB)\n",
         total_mapped_pages,
         total_mapped_pages * 4,
         (total_mapped_pages * 4) / 1024
     );
-    debug_printf(
+    _printf(
         "Virtual Address Space Used: %.2f%%\n",
         (total_mapped_pages * 100.0) / (PAGE_DIRECTORY_SIZE * PAGE_TABLE_SIZE)
     );
-    debug_printf(
+    _printf(
         "Pages saved by COW: %u\n",
         pages_saved_by_cow
     );
-    debug_puts("=========================");
+    _puts("=========================");
 }
 
 void* paging_get_kernel_directory()
@@ -934,7 +953,9 @@ void* paging_clone_directory(
             user_end_pd - 1
         );
 
-        uint32_t cloned_tables = 0;
+        #if KERNEL_DEBUG_ANY
+            uint32_t cloned_tables = 0;
+        #endif
         for (uint32_t pd_idx = user_start_pd; pd_idx < user_end_pd; pd_idx++) {
             page_directory_entry_t* src_pde = &src->entries[pd_idx];
 
@@ -969,7 +990,9 @@ void* paging_clone_directory(
                     dst->entries[pd_idx].rw = 1;
                     dst->entries[pd_idx].user = 1;
                     dst->entries[pd_idx].frame = stack_pt_phys >> 12;
-                    cloned_tables++;
+                    #if KERNEL_DEBUG_ANY
+                        cloned_tables++;
+                    #endif
                 }
                 continue;
             }
@@ -1038,7 +1061,9 @@ void* paging_clone_directory(
             uint32_t dst_pt_phys = VIRT_TO_PHYS(dst_pt);
             dst->entries[pd_idx] = *src_pde;
             dst->entries[pd_idx].frame = dst_pt_phys >> 12;
-            cloned_tables++;
+            #if KERNEL_DEBUG_ANY
+                cloned_tables++;
+            #endif
         }
 
         debug_printf(
@@ -1134,7 +1159,9 @@ void paging_free_user_pages(void* _pd)
     uint32_t user_start_pd = paging_get_pd_index(VMM_USER_START);
     uint32_t user_end_pd = paging_get_pd_index(VMM_USER_END);
     uint32_t freed_tables = 0;
-    uint32_t freed_pages = 0;
+    #if KERNEL_DEBUG_ANY
+        uint32_t freed_pages = 0;
+    #endif
 
     for (uint32_t pd_idx = user_start_pd; pd_idx < user_end_pd; pd_idx++) {
         page_directory_entry_t* pde = &pd->entries[pd_idx];
@@ -1163,7 +1190,9 @@ void paging_free_user_pages(void* _pd)
                 uint16_t new_refcount = pmm_dec_refcount(phys);
                 if (new_refcount == 0) {
                     pmm_free_page(phys);
-                    freed_pages++;
+                    #if KERNEL_DEBUG_ANY
+                        freed_pages++;
+                    #endif
                 }
                 // else: page is still referenced by other processes
             } else {
@@ -1171,7 +1200,9 @@ void paging_free_user_pages(void* _pd)
                 // Safe to free
                 uint32_t phys = pte->frame << 12;
                 pmm_free_page(phys);
-                freed_pages++;
+                #if KERNEL_DEBUG_ANY
+                    freed_pages++;
+                #endif
             }
         }
 

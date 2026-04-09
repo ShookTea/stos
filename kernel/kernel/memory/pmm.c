@@ -6,6 +6,7 @@
 #include "kernel/debug.h"
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 static spinlock_t pmm_lock = SPINLOCK_INIT;
 
@@ -587,7 +588,9 @@ static void buddy_reserve_region(uint32_t start_addr, uint32_t end_addr)
     }
 
     // Mark pages in this region as allocated (reserved)
+    #if KERNEL_DEBUG_ANY
     uint32_t count = 0;
+    #endif
     for (uint32_t addr = start_addr; addr < end_addr; addr += PMM_PAGE_SIZE) {
         uint32_t page = pmm_addr_to_page(addr);
 
@@ -598,7 +601,9 @@ static void buddy_reserve_region(uint32_t start_addr, uint32_t end_addr)
         if (!buddy_is_allocated(page)) {
             buddy_mark_allocated(page);
             pmm_used_pages++;
+            #if KERNEL_DEBUG_ANY
             count++;
+            #endif
         }
     }
     debug_printf("  Reserved %u pages from %#x to %#x\n", count, start_addr, end_addr);
@@ -777,29 +782,32 @@ uint32_t pmm_get_free_memory(void)
     return (pmm_total_pages - pmm_used_pages) * PMM_PAGE_SIZE;
 }
 
-void pmm_print_stats(void)
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
+
+void pmm_print_stats(bool force_terminal_output)
 {
     uint32_t total_kb = pmm_get_total_memory() / 1024;
     uint32_t used_kb = pmm_get_used_memory() / 1024;
     uint32_t free_kb = pmm_get_free_memory() / 1024;
     uint32_t used_percent = pmm_total_pages > 0 ? (pmm_used_pages * 100) / pmm_total_pages : 0;
 
-    debug_printf("=== Physical Memory Statistics ===\n");
-    debug_printf("Total memory: %u KB (%u MB)\n", total_kb, total_kb / 1024);
-    debug_printf("Used memory:  %u KB (%u MB) [%u%%]\n",
+    _puts("=== Physical Memory Statistics ===");
+    _printf("Total memory: %u KB (%u MB)\n", total_kb, total_kb / 1024);
+    _printf("Used memory:  %u KB (%u MB) [%u%%]\n",
            used_kb, used_kb / 1024, used_percent);
-    debug_printf("Free memory:  %u KB (%u MB)\n", free_kb, free_kb / 1024);
-    debug_printf("Page size:    %u bytes\n", PMM_PAGE_SIZE);
-    debug_printf("Total pages:  %u\n", pmm_total_pages);
-    debug_printf("Used pages:   %u\n", pmm_used_pages);
-    debug_printf("Free pages:   %u\n", pmm_total_pages - pmm_used_pages);
+    _printf("Free memory:  %u KB (%u MB)\n", free_kb, free_kb / 1024);
+    _printf("Page size:    %u bytes\n", PMM_PAGE_SIZE);
+    _printf("Total pages:  %u\n", pmm_total_pages);
+    _printf("Used pages:   %u\n", pmm_used_pages);
+    _printf("Free pages:   %u\n", pmm_total_pages - pmm_used_pages);
 
     // Buddy allocator specific stats
-    debug_printf("\n--- Buddy Allocator Stats ---\n");
-    debug_printf("Max order:    %u (max block size: %u KB)\n",
+    _puts("\n--- Buddy Allocator Stats ---");
+    _printf("Max order:    %u (max block size: %u KB)\n",
            BUDDY_MAX_ORDER, (PMM_PAGE_SIZE << BUDDY_MAX_ORDER) / 1024);
 
-    debug_printf("\nFree blocks per order:\n");
+    _puts("\nFree blocks per order:");
     for (int order = 0; order <= BUDDY_MAX_ORDER; order++) {
         uint32_t count = 0;
         uint32_t block_addr = buddy_free_lists[order];
@@ -808,7 +816,7 @@ void pmm_print_stats(void)
         while (block_addr != 0 && count < max_iterations) {
             // Validate address is in reasonable range
             if (block_addr >= pmm_get_total_memory()) {
-                debug_printf("  Order %2u: CORRUPTED (invalid block address %#x)\n",
+                _printf("  Order %2u: CORRUPTED (invalid block address %#x)\n",
                        order, block_addr);
                 break;
             }
@@ -819,15 +827,15 @@ void pmm_print_stats(void)
         }
 
         if (count >= max_iterations) {
-            debug_printf("  Order %2u: CORRUPTED (too many blocks, possible loop)\n", order);
+            _printf("  Order %2u: CORRUPTED (too many blocks, possible loop)\n", order);
         } else if (count > 0 || buddy_alloc_count[order] > 0) {
             uint32_t block_size_kb = (PMM_PAGE_SIZE << order) / 1024;
-            debug_printf("  Order %2u (%4u KB): %u free, %u allocated\n",
+            _printf("  Order %2u (%4u KB): %u free, %u allocated\n",
                    order, block_size_kb, count, buddy_alloc_count[order]);
         }
     }
 
-    debug_printf("==================================\n");
+    _puts("==================================");
 }
 
 // ============================================================================

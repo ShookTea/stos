@@ -2,6 +2,7 @@
 #include <kernel/memory/pmm.h>
 #include <stdbool.h>
 #include "kernel/debug.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <kernel/multiboot2.h>
@@ -225,12 +226,15 @@ const saved_mmap_entry_t* multiboot2_get_mmap_entry(uint32_t index)
     return &saved_mmap[index];
 }
 
-void multiboot2_print_data()
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
+
+void multiboot2_print_data(bool force_terminal_output)
 {
-    debug_printf("Bootloader name: %s\n", boot_loader_name);
-    debug_printf("Boot command: %s\n", boot_command_line);
-    debug_printf("Load base address: %#x\n", load_base_addr);
-    debug_puts("Memory map:");
+    _printf("Bootloader name: %s\n", boot_loader_name);
+    _printf("Boot command: %s\n", boot_command_line);
+    _printf("Load base address: %#x\n", load_base_addr);
+    _puts("Memory map:");
     for (uint32_t i = 0; i < multiboot2_get_mmap_count(); i++) {
         const saved_mmap_entry_t* entry = multiboot2_get_mmap_entry(i);
         char* type = "????";
@@ -253,11 +257,11 @@ void multiboot2_print_data()
         }
 
         uint64_t base = ((uint64_t)entry->base_high << 32) |
-                       entry->base_low;
+                    entry->base_low;
         uint64_t length = ((uint64_t)entry->length_high << 32) |
-                         entry->length_low;
+                        entry->length_low;
         uint64_t end = base + length;
-        debug_printf(
+        _printf(
             "  [%03d] %s %#016llx : %#016llx (%d KiB)\n",
             i,
             type,
@@ -266,11 +270,11 @@ void multiboot2_print_data()
             length / 1024
         );
     }
-    debug_puts("Boot modules data:");
+    _puts("Boot modules data:");
     for (uint32_t i = 0; i < saved_boot_modules_count; i++) {
         uint32_t start = boot_modules[i].module_phys_addr_start;
         uint32_t end = boot_modules[i].module_phys_addr_end;
-        debug_printf(
+        _printf(
             "  [%02d] >%s< %#x : %#x (len: %u KiB)\n",
             i,
             boot_module_names[i],

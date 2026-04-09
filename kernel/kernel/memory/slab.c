@@ -2,6 +2,7 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/pmm.h>
 #include "kernel/debug.h"
+#include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -456,32 +457,35 @@ void slab_get_stats(slab_stats_t* stats) {
     *stats = global_stats;
 }
 
-void slab_print_stats(void) {
-    debug_printf("\n=== Slab Allocator Statistics ===\n");
-    debug_printf("Total allocated: %zu bytes\n", global_stats.total_allocated);
-    debug_printf("Total freed:     %zu bytes\n", global_stats.total_freed);
-    debug_printf("Current usage:   %zu bytes\n", global_stats.current_usage);
-    debug_printf("Peak usage:      %zu bytes\n", global_stats.peak_usage);
-    debug_printf("Allocations:     %zu\n", global_stats.num_allocations);
-    debug_printf("Frees:           %zu\n", global_stats.num_frees);
-    debug_printf("Active allocs:   %zu\n", global_stats.num_allocations - global_stats.num_frees);
-    debug_printf("Slabs created:   %zu\n", global_stats.num_slabs_created);
-    debug_printf("Page allocations:%zu\n", global_stats.num_page_allocs);
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
+
+void slab_print_stats(bool force_terminal_output) {
+    _puts("\n=== Slab Allocator Statistics ===");
+    _printf("Total allocated: %zu bytes\n", global_stats.total_allocated);
+    _printf("Total freed:     %zu bytes\n", global_stats.total_freed);
+    _printf("Current usage:   %zu bytes\n", global_stats.current_usage);
+    _printf("Peak usage:      %zu bytes\n", global_stats.peak_usage);
+    _printf("Allocations:     %zu\n", global_stats.num_allocations);
+    _printf("Frees:           %zu\n", global_stats.num_frees);
+    _printf("Active allocs:   %zu\n", global_stats.num_allocations - global_stats.num_frees);
+    _printf("Slabs created:   %zu\n", global_stats.num_slabs_created);
+    _printf("Page allocations:%zu\n", global_stats.num_page_allocs);
 }
 
-void slab_print_caches(void) {
-    debug_printf("\n=== Slab Caches ===\n");
+void slab_print_caches(bool force_terminal_output) {
+    _puts("\n=== Slab Caches ===");
 
     for (size_t i = 0; i < SLAB_NUM_CACHES; i++) {
         slab_cache_t* cache = &slab_caches[i];
 
-        debug_printf("\nCache[%zu bytes]:\n", cache->object_size);
-        debug_printf("  Objects per slab: %zu\n", cache->objects_per_slab);
-        debug_printf("  Pages per slab:   %zu\n", cache->slab_pages);
-        debug_printf("  Total slabs:      %u\n", cache->num_slabs);
-        debug_printf("  Active objects:   %u\n", cache->num_active_objects);
-        debug_printf("  Allocations:      %u\n", cache->num_allocations);
-        debug_printf("  Frees:            %u\n", cache->num_frees);
+        _printf("\nCache[%zu bytes]:\n", cache->object_size);
+        _printf("  Objects per slab: %zu\n", cache->objects_per_slab);
+        _printf("  Pages per slab:   %zu\n", cache->slab_pages);
+        _printf("  Total slabs:      %u\n", cache->num_slabs);
+        _printf("  Active objects:   %u\n", cache->num_active_objects);
+        _printf("  Allocations:      %u\n", cache->num_allocations);
+        _printf("  Frees:            %u\n", cache->num_frees);
 
         // Count slabs in each list
         uint32_t partial_count = 0;
@@ -506,9 +510,9 @@ void slab_print_caches(void) {
             s = s->next;
         }
 
-        debug_printf("  Partial slabs:    %u\n", partial_count);
-        debug_printf("  Full slabs:       %u\n", full_count);
-        debug_printf("  Empty slabs:      %u\n", empty_count);
+        _printf("  Partial slabs:    %u\n", partial_count);
+        _printf("  Full slabs:       %u\n", full_count);
+        _printf("  Empty slabs:      %u\n", empty_count);
     }
 }
 
@@ -525,7 +529,9 @@ bool slab_validate(void) {
 
         // Validate each slab in each list
         slab_t* lists[] = {cache->partial_slabs, cache->full_slabs, cache->empty_slabs};
+        #if KERNEL_DEBUG_ANY
         const char* list_names[] = {"partial", "full", "empty"};
+        #endif
 
         for (int list_idx = 0; list_idx < 3; list_idx++) {
             slab_t* slab = lists[list_idx];

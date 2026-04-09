@@ -177,7 +177,7 @@ const saved_mmap_entry_t* multiboot2_get_mmap_entry(uint32_t index);
 uint32_t multiboot2_get_modules_count(void);
 multiboot_tag_boot_module_t* multiboot2_get_boot_module_entry(uint32_t);
 char* multiboot2_get_boot_module_name(uint32_t);
-void multiboot2_print_data();
+void multiboot2_print_data(bool force_terminal_output);
 char* multiboot2_get_boot_command_line();
 
 // Virtual address where the framebuffer is mapped after paging is enabled

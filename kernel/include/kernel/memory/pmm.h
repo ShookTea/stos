@@ -98,7 +98,7 @@ uint32_t pmm_get_free_memory(void);
  * Print physical memory statistics to the console
  * Includes buddy allocator specific information (free blocks per order)
  */
-void pmm_print_stats(void);
+void pmm_print_stats(bool force_terminal_output);
 
 /**
  * Notify PMM that paging has been enabled

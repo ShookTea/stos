@@ -492,13 +492,18 @@ static inline bool memory_test_vmm_kernel_heap(void) {
 /**
  * Print memory statistics
  */
-static inline void memory_print_all_stats(const char* label) {
+static inline void memory_print_all_stats(
+    const char* label
+    #if !KERNEL_DEBUG_ANY
+    __attribute__((unused))
+    #endif
+) {
     debug_printf("\n=== %s ===\n", label);
-    pmm_print_stats();
+    pmm_print_stats(false);
     debug_printf("\n");
-    paging_print_stats();
+    paging_print_stats(false);
     debug_printf("\n");
-    vmm_print_stats();
+    vmm_print_stats(false);
 }
 
 /**
@@ -510,7 +515,7 @@ static inline void memory_run_pmm_tests(void) {
     debug_printf("========================================\n");
 
     // Print baseline statistics
-    pmm_print_stats();
+    pmm_print_stats(false);
 
     int passed = 0;
     int total = 6;
@@ -525,7 +530,7 @@ static inline void memory_run_pmm_tests(void) {
 
     // Print final statistics
     debug_printf("\n");
-    pmm_print_stats();
+    pmm_print_stats(false);
 
     // Print results
     debug_printf("\n========================================\n");

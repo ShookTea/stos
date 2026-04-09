@@ -2,12 +2,10 @@
 #include <stdbool.h>
 #include "kernel/debug.h"
 
-#define PRINT_DEBUG 1
-
 bool elf_validate(void* addr)
 {
     elf_header_32bit_t* header = addr;
-    #if PRINT_DEBUG
+    #if KERNEL_DEBUG_ANY
         debug_printf("=== ELF Header Debug ===\n");
         debug_printf("Entry point:      %#x\n", header->entrypoint);
         debug_printf("PHT pointer:      %#x\n", header->pht_pointer);
@@ -66,7 +64,7 @@ bool elf_validate(void* addr)
             return false;
     }
 
-    #if PRINT_DEBUG
+    #if KERNEL_DEBUG_ANY
         debug_puts("PHT table:");
     #endif
     bool pht_invalid = false;
@@ -77,7 +75,7 @@ bool elf_validate(void* addr)
         if (pht->type == ELF_SEGMENT_TYPE_NULL) {
             continue;
         }
-        #if PRINT_DEBUG
+        #if KERNEL_DEBUG_ANY
             char* type;
         #else
             char* type __attribute__((unused));
@@ -93,7 +91,7 @@ bool elf_validate(void* addr)
         flags[0] = pht->flags & ELF_SEGMENT_FLAGS_EXEC ? 'X' : ' ';
         flags[1] = pht->flags & ELF_SEGMENT_FLAGS_WRITE ? 'W' : ' ';
         flags[2] = pht->flags & ELF_SEGMENT_FLAGS_READ ? 'R' : ' ';
-        #if PRINT_DEBUG
+        #if KERNEL_DEBUG_ANY
             debug_printf("[%02u] Type: [%s]%s (%#x)\n", phti, flags, type, pht->type);
             debug_printf("    offset: %#x\n", pht->offset);
             debug_printf("    vaddr:  %#x\n", pht->vaddr);
@@ -104,7 +102,7 @@ bool elf_validate(void* addr)
         #endif
     }
 
-    #if PRINT_DEBUG
+    #if KERNEL_DEBUG_ANY
         debug_puts("SHT table:");
     #endif
     bool sht_invalid = false;
@@ -115,7 +113,7 @@ bool elf_validate(void* addr)
         if (sht->type == ELF_SECTION_TYPE_NULL) {
             continue;
         }
-        #if PRINT_DEBUG
+        #if KERNEL_DEBUG_ANY
             char* type;
         #else
             char* type __attribute__((unused));
@@ -152,7 +150,7 @@ bool elf_validate(void* addr)
         flags[8] = sht->flags & ELF_SECTION_FLAGS_GROUP ? 'G' : ' ';
         flags[9] = sht->flags & ELF_SECTION_FLAGS_TLS ? 'T' : ' ';
 
-        #if PRINT_DEBUG
+        #if KERNEL_DEBUG_ANY
             debug_printf("[%02u] Type: [%s]%s (%#x)\n", shti, flags, type, sht->type);
             debug_printf("    addr:      %#x\n", sht->addr);
             debug_printf("    offset:    %#x\n", sht->offset);

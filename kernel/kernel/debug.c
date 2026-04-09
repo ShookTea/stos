@@ -3,7 +3,7 @@
 #include "kernel/serial.h"
 #include <stdio.h>
 
-#if (KERNEL_DEBUG_TERMINAL || KERNEL_DEBUG_COM)
+#if (KERNEL_DEBUG_ANY)
 
 int debug_puts(const char* string)
 {

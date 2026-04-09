@@ -129,13 +129,13 @@ void vmm_get_stats(vmm_stats_t* stats);
  * Print VMM statistics and memory map
  * For debugging purposes
  */
-void vmm_print_stats(void);
+void vmm_print_stats(bool force_terminal_output);
 
 /**
  * Print detailed memory map showing all regions
  * For debugging purposes
  */
-void vmm_print_memory_map(void);
+void vmm_print_memory_map(bool force_terminal_output);
 
 /**
  * Allocate kernel heap memory (foundation for kmalloc)

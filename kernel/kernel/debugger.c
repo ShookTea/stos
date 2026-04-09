@@ -140,16 +140,16 @@ static void handle_command_sent()
         libc_run_all_tests();
     }
     else if (strcmp(command, "mb2_data") == 0) {
-        multiboot2_print_data();
+        multiboot2_print_data(true);
     }
     else if (strcmp(command, "memleak_test") == 0) {
         memory_leak_run_test();
     }
     else if (strcmp(command, "pag_stats") == 0) {
-        paging_print_stats();
+        paging_print_stats(true);
     }
     else if (strcmp(command, "pmm_stats") == 0) {
-        pmm_print_stats();
+        pmm_print_stats(true);
     }
     else if (strcmp(command, "pmm_test") == 0) {
         memory_run_pmm_tests();
@@ -179,10 +179,10 @@ static void handle_command_sent()
         }
     }
     else if (strcmp(command, "slab_cache") == 0) {
-        slab_print_caches();
+        slab_print_caches(true);
     }
     else if (strcmp(command, "slab_stats") == 0) {
-        slab_print_stats();
+        slab_print_stats(true);
     }
     else if (strcmp(command, "vfs_cat") == 0) {
         if (argcount != 1) {
@@ -300,10 +300,10 @@ static void handle_command_sent()
         }
     }
     else if (strcmp(command, "vmm_memory_map") == 0) {
-        vmm_print_memory_map();
+        vmm_print_memory_map(true);
     }
     else if (strcmp(command, "vmm_stats") == 0) {
-        vmm_print_stats();
+        vmm_print_stats(true);
     }
     else if (strcmp(command, "vmm_test") == 0) {
         vmm_run_all_tests();
