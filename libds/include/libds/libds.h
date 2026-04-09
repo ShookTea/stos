@@ -38,7 +38,11 @@ typedef enum {
     /** Failed to save - container full */
     DS_ERR_FULL,
     /** Failed to read - container empty */
-    DS_ERR_EMPTY
+    DS_ERR_EMPTY,
+    /** Failed to write - item already exists */
+    DS_ERR_DUPLICATE,
+    /** Failed to read - item not found */
+    DS_ERR_NOT_FOUND
 } ds_result_t;
 
 #endif

@@ -7,6 +7,7 @@ int _failures = 0;
 int _total = 0;
 
 void test_ringbuf(void);
+void test_strdict(void);
 
 int main(void)
 {
@@ -14,6 +15,9 @@ int main(void)
 
     printf("ringbuf\n");
     test_ringbuf();
+
+    printf("strdict\n");
+    test_strdict();
 
     printf("\n%d passed, %d failed\n", _total - _failures, _failures);
     return _failures > 0 ? 1 : 0;
