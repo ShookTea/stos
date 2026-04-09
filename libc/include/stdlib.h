@@ -96,6 +96,31 @@ void* calloc(size_t count, size_t size);
  */
 char* getenv(const char* name);
 
+/**
+ * Adds or updates the environment variable name to value. If overwrite is
+ * zero and name already exists, the value is left unchanged. Returns 0 on
+ * success, -1 on error.
+ */
+int setenv(const char* name, const char* value, int overwrite);
+
+/**
+ * Removes the environment variable name. Returns 0 on success, -1 on error.
+ * Not an error if name does not exist.
+ */
+int unsetenv(const char* name);
+
+/**
+ * Puts string (in name=value format) directly into the environment. The
+ * string itself becomes part of the environment — do not free it while the
+ * variable remains set. Returns 0 on success, nonzero on error.
+ */
+int putenv(char* string);
+
+/**
+ * Clears the entire environment. Returns 0 on success.
+ */
+int clearenv(void);
+
 #endif
 
 #ifdef __cplusplus

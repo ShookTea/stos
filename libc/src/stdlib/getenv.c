@@ -1,6 +1,20 @@
-extern char** environ;
+#if !(defined(__is_libk))
 
-char* getenv(const char* name __attribute__((unused)))
+#include <string.h>
+#include "./_stdlib_environ.h"
+
+char* getenv(const char* name)
 {
-    return environ[0];
+    if (environ == NULL || name == NULL) {
+        return NULL;
+    }
+    size_t name_len = strlen(name);
+    for (char** entry = environ; *entry != NULL; entry++) {
+        if (strncmp(*entry, name, name_len) == 0 && (*entry)[name_len] == '=') {
+            return *entry + name_len + 1;
+        }
+    }
+    return NULL;
 }
+
+#endif
