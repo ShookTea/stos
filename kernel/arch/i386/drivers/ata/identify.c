@@ -149,7 +149,7 @@ void _ata_identify_devices()
     }
 }
 
-uint8_t ata_get_selected_driver()
+uint8_t ata_get_selected_drive()
 {
     return selected_drive;
 }

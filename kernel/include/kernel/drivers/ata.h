@@ -17,7 +17,7 @@ void ata_init();
 /**
  * Returns one of ATA_DRIVE_ values.
  */
-uint8_t ata_get_selected_driver();
+uint8_t ata_get_selected_drive();
 
 /**
  * Returns sectors count of currently selected drive.
