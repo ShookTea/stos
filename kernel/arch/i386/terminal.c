@@ -10,6 +10,7 @@
 #include "kernel/drivers/vga/text_mode.h"
 #include <ctype.h>
 #include <stdlib.h>
+#include "kernel/debug.h"
 
 #define TERMINAL_TAB_ALIGN 8
 // Space character created for tab alignment
@@ -514,7 +515,9 @@ void terminal_init()
 
 void terminal_write_char(char c)
 {
-    serial_put_c(c);
+    #if KERNEL_DEBUG_COM
+        serial_put_c(c);
+    #endif
     if (!initialized) {
         return;
     }
@@ -584,7 +587,9 @@ void terminal_write_char(char c)
                    (cell_buffer[index].flags & CHARFLAG_TABSPACE)) {
                 cell_buffer[index].codepoint = '\0';
                 cell_buffer[index].flags = 0;
-                serial_put_c('\b');
+                #if KERNEL_DEBUG_COM
+                    serial_put_c('\b');
+                #endif
                 putentryat(
                     ' ',
                     cursor_row,
@@ -597,8 +602,10 @@ void terminal_write_char(char c)
 
         // Clear the character at current position
         erase_at_pos(cursor_row, cursor_column);
-        serial_put_c(' ');
-        serial_put_c('\b');
+        #if KERNEL_DEBUG_COM
+            serial_put_c(' ');
+            serial_put_c('\b');
+        #endif
 
         set_cursor_position(cursor_row, cursor_column);
         return;
