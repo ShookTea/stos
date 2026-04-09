@@ -14,6 +14,7 @@
 #include <kernel/vfs/vfs.h>
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
+#include "kernel/drivers/ata.h"
 #include "kernel/drivers/vga/font.h"
 #include "kernel/vfs/device.h"
 #include <libds/libds.h>
@@ -76,6 +77,7 @@ void kernel_main()
     pit_init();
     ps2_init();
     keyboard_init();
+    ata_init();
 
     // Initialize multitasking scheduler & syscall handling
     scheduler_init();
