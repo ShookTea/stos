@@ -27,6 +27,8 @@ int vsnprintf(
     out.output.str.len = 0;
     out.output.str.cap = n;
     int res = __stdio_format_core(&out, format, list);
-    buffer[out.output.str.len] = '\0';
+    if (n > 0) {
+        buffer[out.output.str.len] = '\0';
+    }
     return res;
 }
