@@ -9,6 +9,7 @@ LIBC_DIR       := libc
 LIBDS_DIR      := libds
 TARGET         := $(BUILD_DIR)/stos
 INITRD         := $(BUILD_DIR)/isodir/boot/stos.initrd
+HARD_DRIVE     := .qemu/disk.img
 
 LIB_INCLUDE_FLAGS := -I$(LIBC_DIR)/include -I$(LIBDS_DIR)/include
 
@@ -23,7 +24,7 @@ include usermode/Rules.mk
 
 all: $(TARGET).iso
 
-qemu: $(TARGET).iso
+qemu: $(TARGET).iso $(HARD_DRIVE)
 	# Boot order "dc": boot first from cdrom (d), then from hard disk (c)
 	qemu-system-i386 -cdrom $^ $(QEMU_FLAGS)
 
@@ -35,6 +36,15 @@ $(TARGET).iso: $(TARGET) kernel/grub.cfg $(INITRD)
 
 test: $(LIBDS_TEST_TARGET)
 	$(LIBDS_TEST_TARGET)
+
+$(HARD_DRIVE):
+	@mkdir -p $(@D)
+	qemu-img create $@ 32G
+	echo "create"
+	touch $@
+
+clean-all: clean
+	rm -rf .qemu
 
 clean:
 	rm -rf $(BUILD_DIR)
