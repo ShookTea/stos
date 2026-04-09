@@ -30,6 +30,9 @@
 
 // Commands:
 #define ATA_COM_IDENTIFY 0xEC
+#define ATA_COM_READ_SECTORS 0x20
+#define ATA_COM_WRITE_SECTORS 0x30
+#define ATA_COM_FLUSH 0xE7
 // Select master/slave drive
 #define ATA_COM_TARGET_DRIVE_MASTER 0xA0
 #define ATA_COM_TARGET_DRIVE_SLAVE 0xB0

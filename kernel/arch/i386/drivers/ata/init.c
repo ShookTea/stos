@@ -5,10 +5,102 @@
 #include <stdbool.h>
 #include "../../idt/pic.h"
 #include "../../idt/idt.h"
+#include "../../io.h"
+#include "kernel/memory/kmalloc.h"
 
 static void _irq_handler()
 {
+    uint8_t drive = ata_get_selected_drive();
+    bool primary = drive == ATA_DRIVE_PRIMARY_MASTER
+        || drive == ATA_DRIVE_PRIMARY_SLAVE;
+    uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
+
     debug_puts("Received IRQ event on ATA");
+    for (int i = 0; i < 256; i++) {
+        uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
+        debug_printf("%04x ", data);
+        if (i % 16 == 15) {
+            debug_puts("");
+        }
+    }
+    debug_puts("Reading completed.");
+}
+
+/**
+ * Start read command on given sector
+ * lba - first sector ID
+ * sector_count - number of sectors to read
+ */
+void _test_read(uint32_t lba, uint8_t sector_count)
+{
+    // TODO: checking ATA status when reading needed
+    uint8_t drive = ata_get_selected_drive();
+    bool primary = drive == ATA_DRIVE_PRIMARY_MASTER
+        || drive == ATA_DRIVE_PRIMARY_SLAVE;
+    bool master = drive == ATA_DRIVE_PRIMARY_MASTER
+        || drive == ATA_DRIVE_SECONDARY_MASTER;
+    uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
+
+    // Select drive + top 4 bits of LBA
+    outb(
+        bus_base | ATA_BUS_OFFSET_DRIVE_HEAD,
+        0xE0 | ((master ? 0 : 1) << 4) | ((lba >> 24) & 0x0F)
+    );
+    // Send sector count + LBA bits 0-23
+    outb(bus_base | ATA_BUS_OFFSET_SECTOR_COUNT,  sector_count);
+    outb(bus_base | ATA_BUS_OFFSET_SECTOR_NUMBER, (uint8_t)(lba));
+    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW,  (uint8_t)(lba >> 8));
+    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH, (uint8_t)(lba >> 16));
+    // Send READ SECTORS command
+    outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_READ_SECTORS);
+
+    // Now we'll one IRQ for each sector_count. Each such interrupt will give us
+    // 256 16-bit values on port bus_base | ATA_BUS_OFFSET_DATA.
+}
+
+/**
+ * Write data from "data" pointer to given address.
+ */
+void _test_write(uint32_t lba, uint8_t sector_count, uint16_t* data)
+{
+    // TODO: checking ATA status when reading needed
+    uint8_t drive = ata_get_selected_drive();
+    bool primary = drive == ATA_DRIVE_PRIMARY_MASTER
+        || drive == ATA_DRIVE_PRIMARY_SLAVE;
+    bool master = drive == ATA_DRIVE_PRIMARY_MASTER
+        || drive == ATA_DRIVE_SECONDARY_MASTER;
+    uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
+
+    // Select drive + top 4 bits of LBA
+    outb(
+        bus_base | ATA_BUS_OFFSET_DRIVE_HEAD,
+        0xE0 | ((master ? 0 : 1) << 4) | ((lba >> 24) & 0x0F)
+    );
+    // Send sector count + LBA bits 0-23
+    outb(bus_base | ATA_BUS_OFFSET_SECTOR_COUNT,  sector_count);
+    outb(bus_base | ATA_BUS_OFFSET_SECTOR_NUMBER, (uint8_t)(lba));
+    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW,  (uint8_t)(lba >> 8));
+    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH, (uint8_t)(lba >> 16));
+    // Send WRITE SECTORS command
+    outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_WRITE_SECTORS);
+
+    // Wait for drive to be ready to accept data (DRQ set, BSY clear)
+    uint8_t status;
+    do {
+        status = _ata_read_status(bus_base);
+    } while ((status & ATA_STATUS_BSY) || !(status & ATA_STATUS_DRQ));
+
+    // Now we need to send data to port.
+    for (int i = 0; i < 256; i++) {
+        outw(bus_base | ATA_BUS_OFFSET_DATA, data[i]);
+        io_wait();
+    }
+
+    // Now we'll one IRQ for each sector_count. Each such interrupt will give us
+    // 256 16-bit values on port bus_base | ATA_BUS_OFFSET_DATA.
+
+    // Send FLUSH command at the end of every write
+    outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_FLUSH);
 }
 
 void ata_init()
@@ -27,4 +119,19 @@ void ata_init()
         pic_enable(PIC_LINE_SECONDARY_ATA);
     }
     debug_puts("ATA IRQ enabled");
+
+    for (int i = 0; i < 500000; i++) {
+        volatile int j __attribute__((unused)) = i * i;
+        io_wait();
+    }
+
+    _test_read(15, 1);
+
+    // uint16_t* data = kmalloc_flags(sizeof(uint16_t) * 256, KMALLOC_ZERO);
+    // data[14] = 0xDEAD;
+    // data[15] = 0xBEEF;
+    // data[0] = 0xCAFE;
+    // data[1] = 0xBABE;
+    // _test_write(15, 1, data);
+    // kfree(data);
 }
