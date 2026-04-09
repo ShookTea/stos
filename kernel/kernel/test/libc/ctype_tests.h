@@ -2,7 +2,7 @@
 #define KERNEL_LIBC_CTYPE_TESTS_H
 
 #include <ctype.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include "test_base.h"
 
 /**
@@ -341,7 +341,7 @@ static inline bool ctype_test_boundaries(void) {
  * Run all ctype tests
  */
 static inline bool ctype_run_all_tests(void) {
-    printf("\n=== Ctype Library Tests ===\n");
+    debug_printf("\n=== Ctype Library Tests ===\n");
     int passed = 0;
     int total = 13;
 
@@ -361,10 +361,10 @@ static inline bool ctype_run_all_tests(void) {
 
     // Print results
     if (passed == total) {
-        printf("Ctype: %d/%d PASSED\n", passed, total);
+        debug_printf("Ctype: %d/%d PASSED\n", passed, total);
         return true;
     } else {
-        printf("Ctype: %d/%d FAILED\n", passed, total);
+        debug_printf("Ctype: %d/%d FAILED\n", passed, total);
         return false;
     }
 }

@@ -2,7 +2,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
 #include <kernel/memory/vmm.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <string.h>
 
 static inline bool in_userspace(uint32_t addr)
@@ -13,7 +13,7 @@ static inline bool in_userspace(uint32_t addr)
 bool elf_load_segments(void* elf_data, elf_t* parsed)
 {
     if (!in_userspace(parsed->entry_point)) {
-        printf(
+        debug_printf(
             "ELF invalid: entrypoint outside of user space (%#x)\n",
             parsed->entry_point
         );
@@ -24,7 +24,7 @@ bool elf_load_segments(void* elf_data, elf_t* parsed)
         uint32_t start = parsed->segments[i].vaddr;
         uint32_t end = start + parsed->segments[i].memsz;
         if (!in_userspace(start) || !in_userspace(end)) {
-            printf(
+            debug_printf(
                 "ELF invalid: segment %u outside of user space\n",
                 (unsigned)i
             );
@@ -43,13 +43,13 @@ bool elf_load_segments(void* elf_data, elf_t* parsed)
             uint32_t vaddr = vaddr_start + (p * PAGE_SIZE);
 
             if (paging_is_mapped(vaddr)) {
-                printf("ELF error: vaddr %#x is already mapped\n", vaddr);
+                debug_printf("ELF error: vaddr %#x is already mapped\n", vaddr);
                 return false;
             }
 
             uint32_t phys = pmm_alloc_page();
             if (phys == 0) {
-                printf(
+                debug_printf(
                     "ELF: Failed to allocate page for segment %u\n",
                     (unsigned)i
                 );
@@ -58,7 +58,7 @@ bool elf_load_segments(void* elf_data, elf_t* parsed)
 
             uint32_t load_flags = segment.page_flags | PAGE_WRITE;
             if (!paging_map_page(vaddr, phys, load_flags)) {
-                printf("ELF: Failed to map page at %#x\n", vaddr);
+                debug_printf("ELF: Failed to map page at %#x\n", vaddr);
                 pmm_free_page(phys);
                 return false;
             }

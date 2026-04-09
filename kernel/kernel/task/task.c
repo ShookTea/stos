@@ -5,7 +5,7 @@
 #include "kernel/vfs/vfs.h"
 #include <kernel/task/scheduler.h>
 #include <kernel/memory/vmm.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <stdlib.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/paging.h>
@@ -237,7 +237,7 @@ task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
         task->user_stack_size
     );
     if (kernel_dir_clone == NULL) {
-        printf("TASK: Failed to clone page directory for task %s\n", name);
+        debug_printf("TASK: Failed to clone page directory for task %s\n", name);
         vmm_kernel_free(
             (void*)task->kernel_stack_alloc_base,
             task->kernel_stack_alloc_size
@@ -420,11 +420,11 @@ void task_exit(int exit_code)
         //     __asm__ volatile("hlt");
         // }
         // but for now, for sake of debugging, let's print some info instead.
-        puts("ERROR: task_exit called but no task is running.");
+        debug_puts("ERROR: task_exit called but no task is running.");
         abort();
     }
 
-    printf(
+    debug_printf(
         "Task [%u] '%s' exited with code %d\n",
         current->pid,
         current->name,
@@ -451,7 +451,7 @@ void task_exit(int exit_code)
         if (child->state == TASK_ZOMBIE) {
             // Child is already zombie, no one will wait for it.
             scheduler_move_task_to_state(child, TASK_DEAD);
-            printf(
+            debug_printf(
                 "Orphaned zombie [%u] '%s' marked as DEAD\n",
                 child->pid,
                 child->name
@@ -461,13 +461,13 @@ void task_exit(int exit_code)
             // original parent
             child->parent = current->parent;
             if (child->parent == NULL) {
-                printf(
+                debug_printf(
                     "Child [%u] '%s' orphaned\n",
                     child->pid,
                     child->name
                 );
             } else {
-                printf(
+                debug_printf(
                     "Child [%u] '%s' changed parent to [%u] '%s'\n",
                     child->pid,
                     child->name,
@@ -619,7 +619,7 @@ task_t* task_fork(void)
     // Use user-mode EIP/ESP saved at syscall entry by task_save_syscall_user_context.
     uint32_t fork_return_eip = parent->context.syscall_user_eip;
     uint32_t fork_return_esp = parent->context.syscall_user_esp;
-    printf("FORK: parent eip=%x esp=%x\n", fork_return_eip, fork_return_esp);
+    debug_printf("FORK: parent eip=%x esp=%x\n", fork_return_eip, fork_return_esp);
 
     // Build a fresh initial stack for the child that will IRET back to the
     // instruction after the fork() syscall in user space, with EAX=0.

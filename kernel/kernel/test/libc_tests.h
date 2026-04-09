@@ -16,7 +16,7 @@
  * Run all libc tests
  */
 static inline void libc_run_all_tests(void) {
-    printf("\n========== LIBC TEST SUITE ==========\n");
+    debug_printf("\n========== LIBC TEST SUITE ==========\n");
     bool success = true;
 
     if (!string_run_all_tests()) {
@@ -29,7 +29,7 @@ static inline void libc_run_all_tests(void) {
         success = false;
     }
 
-    printf("=====================================\n");
+    debug_printf("=====================================\n");
 
     if (!success) {
         abort();

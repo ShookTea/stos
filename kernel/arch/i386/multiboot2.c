@@ -1,7 +1,7 @@
 #include "kernel/paging.h"
 #include <kernel/memory/pmm.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <string.h>
 #include <stdint.h>
 #include <kernel/multiboot2.h>
@@ -34,11 +34,11 @@ static uint32_t framebuffer_pitch = 0;
 static void multiboot2_process_memory_map()
 {
     if (saved_mmap_count == 0) {
-        printf("WARNING: No memory map entries found\n");
+        debug_printf("WARNING: No memory map entries found\n");
         return;
     }
 
-    printf("Memory map entries: %u\n", saved_mmap_count);
+    debug_printf("Memory map entries: %u\n", saved_mmap_count);
 
     // Find the maximum usable memory address
     pmm_max_memory = 0;
@@ -65,7 +65,7 @@ static void multiboot2_process_memory_map()
         }
     }
 
-    printf("Maximum memory address: %#x (%u MB)\n",
+    debug_printf("Maximum memory address: %#x (%u MB)\n",
            pmm_max_memory, pmm_max_memory / (1024 * 1024));
 }
 
@@ -112,7 +112,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 uint32_t entries_count = (mmap->size - 16) / mmap->entry_size;
 
                 if (entries_count > MAX_MMAP_ENTRIES) {
-                    printf("WARNING: Too many memory map entries, truncating to %d\n",
+                    debug_printf("WARNING: Too many memory map entries, truncating to %d\n",
                            MAX_MMAP_ENTRIES);
                     entries_count = MAX_MMAP_ENTRIES;
                 }
@@ -161,7 +161,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
             case MULTIBOOT2_TAG_TYPE_FRAMEBUFFER_INFO: {
                 multiboot_tag_framebuffer_info_t* fb_inf =
                     (multiboot_tag_framebuffer_info_t*)tag;
-                printf(
+                debug_printf(
                     "  framebuffer size: %u x %u, color mode %u, addr: %x %x\n",
                     fb_inf->width,
                     fb_inf->height,
@@ -182,7 +182,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 // }
                 if (fb_inf->color_type == 1) {
                     if (fb_inf->framebuffer_addr_high != 0) {
-                        printf("WARNING: Framebuffer above 4GB, not supported in 32-bit mode\n");
+                        debug_printf("WARNING: Framebuffer above 4GB, not supported in 32-bit mode\n");
                     } else {
                         rgb_mode = true;
                         framebuffer_addr_phys = fb_inf->framebuffer_addr_low;
@@ -194,7 +194,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 break;
             }
             default:
-                printf("  unsupported mb2 tag type: %d\n", tag->type);
+                debug_printf("  unsupported mb2 tag type: %d\n", tag->type);
                 break;
         }
 
@@ -227,10 +227,10 @@ const saved_mmap_entry_t* multiboot2_get_mmap_entry(uint32_t index)
 
 void multiboot2_print_data()
 {
-    printf("Bootloader name: %s\n", boot_loader_name);
-    printf("Boot command: %s\n", boot_command_line);
-    printf("Load base address: %#x\n", load_base_addr);
-    puts("Memory map:");
+    debug_printf("Bootloader name: %s\n", boot_loader_name);
+    debug_printf("Boot command: %s\n", boot_command_line);
+    debug_printf("Load base address: %#x\n", load_base_addr);
+    debug_puts("Memory map:");
     for (uint32_t i = 0; i < multiboot2_get_mmap_count(); i++) {
         const saved_mmap_entry_t* entry = multiboot2_get_mmap_entry(i);
         char* type = "????";
@@ -257,7 +257,7 @@ void multiboot2_print_data()
         uint64_t length = ((uint64_t)entry->length_high << 32) |
                          entry->length_low;
         uint64_t end = base + length;
-        printf(
+        debug_printf(
             "  [%03d] %s %#016llx : %#016llx (%d KiB)\n",
             i,
             type,
@@ -266,11 +266,11 @@ void multiboot2_print_data()
             length / 1024
         );
     }
-    puts("Boot modules data:");
+    debug_puts("Boot modules data:");
     for (uint32_t i = 0; i < saved_boot_modules_count; i++) {
         uint32_t start = boot_modules[i].module_phys_addr_start;
         uint32_t end = boot_modules[i].module_phys_addr_end;
-        printf(
+        debug_printf(
             "  [%02d] >%s< %#x : %#x (len: %u KiB)\n",
             i,
             boot_module_names[i],

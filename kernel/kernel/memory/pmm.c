@@ -3,7 +3,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/multiboot2.h>
 #include <stdint.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -192,7 +192,7 @@ static inline uint16_t buddy_dec_refcount(uint32_t page)
     }
     uint16_t current = buddy_refcount_map[page];
     if (current == 0) {
-        printf(
+        debug_printf(
             "ERR: attemted to decrement refcount for free page %u\n", page
         );
         abort(); // TODO: is abort needed here?
@@ -378,7 +378,7 @@ static uint32_t buddy_coalesce(uint32_t addr, uint8_t order)
 static uint32_t buddy_alloc_order(uint8_t order)
 {
     if (order > BUDDY_MAX_ORDER) {
-        printf("PMM: Order %u exceeds maximum %u\n", order, BUDDY_MAX_ORDER);
+        debug_printf("PMM: Order %u exceeds maximum %u\n", order, BUDDY_MAX_ORDER);
         return 0;
     }
 
@@ -390,10 +390,10 @@ static uint32_t buddy_alloc_order(uint8_t order)
 
     // No block found
     if (current_order > BUDDY_MAX_ORDER) {
-        printf("PMM: Out of memory for order %u (no free blocks)\n", order);
+        debug_printf("PMM: Out of memory for order %u (no free blocks)\n", order);
         for (int i = 0; i <= BUDDY_MAX_ORDER; i++) {
             if (buddy_free_lists[i] != 0) {
-                printf("  Order %d has free blocks\n", i);
+                debug_printf("  Order %d has free blocks\n", i);
             }
         }
         return 0;
@@ -432,19 +432,19 @@ static uint32_t buddy_alloc_order(uint8_t order)
 static void buddy_free_order(uint32_t addr, uint8_t order)
 {
     if (!pmm_is_aligned(addr)) {
-        printf("PMM: Warning - freeing unaligned address %#x\n", addr);
+        debug_printf("PMM: Warning - freeing unaligned address %#x\n", addr);
         addr = pmm_align_down(addr);
     }
 
     uint32_t page = pmm_addr_to_page(addr);
 
     if (page >= pmm_total_pages) {
-        printf("PMM: Error - invalid page %u\n", page);
+        debug_printf("PMM: Error - invalid page %u\n", page);
         return;
     }
 
     if (!buddy_is_allocated(page)) {
-        printf("PMM: Warning - freeing already free block at %#x\n", addr);
+        debug_printf("PMM: Warning - freeing already free block at %#x\n", addr);
         return;
     }
 
@@ -454,12 +454,12 @@ static void buddy_free_order(uint32_t addr, uint8_t order)
     for (uint32_t i = 0; i < pages_in_block; i++) {
         uint16_t refcount = buddy_get_refcount(page + i);
         if (refcount > 1) {
-            printf(
+            debug_printf(
                 "ERR: cannot free block at %#x (order %u): ",
                 addr,
                 order
             );
-            printf(
+            debug_printf(
                 "page %u still has %u references\n",
                 page + i,
                 refcount
@@ -482,7 +482,7 @@ static void buddy_free_order(uint32_t addr, uint8_t order)
     if (buddy_alloc_count[order] > 0) {
         buddy_alloc_count[order]--;
     } else {
-        printf("PMM: Warning - tried to decrement buddy_alloc_count[%u] when already 0\n", order);
+        debug_printf("PMM: Warning - tried to decrement buddy_alloc_count[%u] when already 0\n", order);
     }
 
     // Coalesce with buddies
@@ -601,7 +601,7 @@ static void buddy_reserve_region(uint32_t start_addr, uint32_t end_addr)
             count++;
         }
     }
-    printf("  Reserved %u pages from %#x to %#x\n", count, start_addr, end_addr);
+    debug_printf("  Reserved %u pages from %#x to %#x\n", count, start_addr, end_addr);
 }
 
 // ============================================================================
@@ -784,22 +784,22 @@ void pmm_print_stats(void)
     uint32_t free_kb = pmm_get_free_memory() / 1024;
     uint32_t used_percent = pmm_total_pages > 0 ? (pmm_used_pages * 100) / pmm_total_pages : 0;
 
-    printf("=== Physical Memory Statistics ===\n");
-    printf("Total memory: %u KB (%u MB)\n", total_kb, total_kb / 1024);
-    printf("Used memory:  %u KB (%u MB) [%u%%]\n",
+    debug_printf("=== Physical Memory Statistics ===\n");
+    debug_printf("Total memory: %u KB (%u MB)\n", total_kb, total_kb / 1024);
+    debug_printf("Used memory:  %u KB (%u MB) [%u%%]\n",
            used_kb, used_kb / 1024, used_percent);
-    printf("Free memory:  %u KB (%u MB)\n", free_kb, free_kb / 1024);
-    printf("Page size:    %u bytes\n", PMM_PAGE_SIZE);
-    printf("Total pages:  %u\n", pmm_total_pages);
-    printf("Used pages:   %u\n", pmm_used_pages);
-    printf("Free pages:   %u\n", pmm_total_pages - pmm_used_pages);
+    debug_printf("Free memory:  %u KB (%u MB)\n", free_kb, free_kb / 1024);
+    debug_printf("Page size:    %u bytes\n", PMM_PAGE_SIZE);
+    debug_printf("Total pages:  %u\n", pmm_total_pages);
+    debug_printf("Used pages:   %u\n", pmm_used_pages);
+    debug_printf("Free pages:   %u\n", pmm_total_pages - pmm_used_pages);
 
     // Buddy allocator specific stats
-    printf("\n--- Buddy Allocator Stats ---\n");
-    printf("Max order:    %u (max block size: %u KB)\n",
+    debug_printf("\n--- Buddy Allocator Stats ---\n");
+    debug_printf("Max order:    %u (max block size: %u KB)\n",
            BUDDY_MAX_ORDER, (PMM_PAGE_SIZE << BUDDY_MAX_ORDER) / 1024);
 
-    printf("\nFree blocks per order:\n");
+    debug_printf("\nFree blocks per order:\n");
     for (int order = 0; order <= BUDDY_MAX_ORDER; order++) {
         uint32_t count = 0;
         uint32_t block_addr = buddy_free_lists[order];
@@ -808,7 +808,7 @@ void pmm_print_stats(void)
         while (block_addr != 0 && count < max_iterations) {
             // Validate address is in reasonable range
             if (block_addr >= pmm_get_total_memory()) {
-                printf("  Order %2u: CORRUPTED (invalid block address %#x)\n",
+                debug_printf("  Order %2u: CORRUPTED (invalid block address %#x)\n",
                        order, block_addr);
                 break;
             }
@@ -819,15 +819,15 @@ void pmm_print_stats(void)
         }
 
         if (count >= max_iterations) {
-            printf("  Order %2u: CORRUPTED (too many blocks, possible loop)\n", order);
+            debug_printf("  Order %2u: CORRUPTED (too many blocks, possible loop)\n", order);
         } else if (count > 0 || buddy_alloc_count[order] > 0) {
             uint32_t block_size_kb = (PMM_PAGE_SIZE << order) / 1024;
-            printf("  Order %2u (%4u KB): %u free, %u allocated\n",
+            debug_printf("  Order %2u (%4u KB): %u free, %u allocated\n",
                    order, block_size_kb, count, buddy_alloc_count[order]);
         }
     }
 
-    printf("==================================\n");
+    debug_printf("==================================\n");
 }
 
 // ============================================================================
@@ -865,7 +865,7 @@ uint16_t pmm_get_refcount(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        printf("ERR: get_refcount called with unaligned addr %#x\n", phys_addr);
+        debug_printf("ERR: get_refcount called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return 0;
     }
@@ -880,14 +880,14 @@ uint16_t pmm_inc_refcount(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        printf("ERR: inc_refcount called with unaligned addr %#x\n", phys_addr);
+        debug_printf("ERR: inc_refcount called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return 0;
     }
 
     uint32_t page = pmm_addr_to_page(phys_addr);
     if (!buddy_is_allocated(page)) {
-        printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
+        debug_printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
         abort(); // TODO: is abort() needed here?
         spinlock_release(&pmm_lock);
         return 0;
@@ -902,14 +902,14 @@ uint16_t pmm_dec_refcount(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        printf("ERR: dec_refcount called with unaligned addr %#x\n", phys_addr);
+        debug_printf("ERR: dec_refcount called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return 0;
     }
 
     uint32_t page = pmm_addr_to_page(phys_addr);
     if (!buddy_is_allocated(page)) {
-        printf("ERR: dec_refcount called on free page %#x\n", phys_addr);
+        debug_printf("ERR: dec_refcount called on free page %#x\n", phys_addr);
         abort(); // TODO: is abort() needed here?
         spinlock_release(&pmm_lock);
         return 0;
@@ -924,7 +924,7 @@ bool pmm_is_shared(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        printf("ERR: is_shared called with unaligned addr %#x\n", phys_addr);
+        debug_printf("ERR: is_shared called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return false;
     }

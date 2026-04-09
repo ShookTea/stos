@@ -5,7 +5,7 @@
 #include <kernel/memory/vmm.h>
 #include <kernel/task/task.h>
 #include <kernel/elf.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <string.h>
 
 // Space between heap and stack (e.g. 1 MB)
@@ -20,8 +20,8 @@ task_t* elf_create_task(const char* name, void* elf_data)
         return NULL;
     }
 
-    printf("ELF: Entry point: %#x\n", parsed->entry_point);
-    printf(
+    debug_printf("ELF: Entry point: %#x\n", parsed->entry_point);
+    debug_printf(
         "ELF: min_vaddr=%#x, max_vaddr=%#x\n",
         parsed->min_vaddr,
         parsed->max_vaddr
@@ -54,7 +54,7 @@ task_t* elf_create_task(const char* name, void* elf_data)
     uint32_t stack_bottom = task->user_stack_base;
     uint32_t heap_max = stack_bottom - MIN_HEAP_STACK_GAP;
     if (heap_start >= heap_max) {
-        puts("ELF: no space for heap (segments too large");
+        debug_puts("ELF: no space for heap (segments too large");
         paging_switch_directory(old_dir);
         kfree(parsed);
         // TODO: cleanup
@@ -63,7 +63,7 @@ task_t* elf_create_task(const char* name, void* elf_data)
     task->heap_start = heap_start;
     task->heap_end = heap_start; // Empty initially
     task->heap_max = heap_max;
-    printf(
+    debug_printf(
         "Task [%u] heap: start=%#x end=%#x max=%#x (available: %u KiB)\n",
         task->pid,
         task->heap_start,

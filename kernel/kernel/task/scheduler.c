@@ -3,7 +3,7 @@
 #include <kernel/drivers/pit.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/memory/tss.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <stdlib.h>
 #include <kernel/spinlock.h>
 #include <kernel/task/task.h>
@@ -165,7 +165,7 @@ static void cleanup_dead_tasks()
         task_t* next = zombie->next;
         if (zombie->state == TASK_DEAD) {
             remove_from_queue(zombie);
-            printf(
+            debug_printf(
                 "Cleaning up dead task [%u] '%s'\n",
                 zombie->pid,
                 zombie->name
@@ -303,7 +303,7 @@ static void scheduler_reschedule()
         }
         if (next_task == NULL) {
             // This should never happen - idle task should always exist
-            puts("FATAL: No task to switch to from zombie/dead task");
+            debug_puts("FATAL: No task to switch to from zombie/dead task");
             abort();
         }
     } else if (next_task == NULL) {
@@ -367,7 +367,7 @@ void scheduler_remove_task(task_t* task)
         case TASK_DEAD: return;
         case TASK_RUNNING:
             // TODO: what should we really do here?
-            puts("Attempted to remove running task");
+            debug_puts("Attempted to remove running task");
             abort();
             break;
         default: break;

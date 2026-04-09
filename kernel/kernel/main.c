@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <kernel/serial.h>
 #include <kernel/multiboot2.h>
 #include <kernel/memory/pmm.h>
@@ -24,6 +23,7 @@
 #include "test/memory_tests.h"
 #include "test/kmalloc_tests.h"
 #include "debugger.h"
+#include "kernel/debug.h"
 #include <kernel/terminal.h>
 
 
@@ -35,20 +35,20 @@ void kernel_main()
 {
     terminal_init();
     terminal_disable_cursor();
-    puts("\n\n=== kernel_main() ===");
+    debug_puts("\n\n=== kernel_main() ===");
 
     if (serial_init() != 0) {
-        puts("COM1 faulty");
+        debug_puts("COM1 faulty");
     } else {
-        puts("COM1 initialized correctly");
+        debug_puts("COM1 initialized correctly");
     }
 
-    puts("\n=== Boot Sequence Status ===");
-    puts("PMM: Already initialized by early_init()");
-    puts("Paging: Already enabled by early_init()");
-    puts("VMM: Already initialized by early_init()");
-    puts("Slab allocator: Already initialized by early_init()");
-    puts("kmalloc/kfree: Already initialized by early_init()");
+    debug_puts("\n=== Boot Sequence Status ===");
+    debug_puts("PMM: Already initialized by early_init()");
+    debug_puts("Paging: Already enabled by early_init()");
+    debug_puts("VMM: Already initialized by early_init()");
+    debug_puts("Slab allocator: Already initialized by early_init()");
+    debug_puts("kmalloc/kfree: Already initialized by early_init()");
 
     // Set allocators for libds library
     libds_set_allocators(kmalloc, krealloc, kfree);
@@ -81,9 +81,9 @@ void kernel_main()
     scheduler_init();
     syscall_init();
 
-    puts("\n=== Kernel Initialization Complete ===");
-    puts("All subsystems initialized and tested successfully");
-    puts("Entering idle loop...\n");
+    debug_puts("\n=== Kernel Initialization Complete ===");
+    debug_puts("All subsystems initialized and tested successfully");
+    debug_puts("Entering idle loop...\n");
 
     if (in_debug_mode) {
         task_t* debugger = task_create("debugger", debugger_init, true);

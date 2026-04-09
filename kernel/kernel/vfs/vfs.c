@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/memory/kmalloc.h>
-#include <stdio.h>
 #include <string.h>
 
 #define VFS_MAX_MOUNTED_NODES 32

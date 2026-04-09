@@ -4,7 +4,7 @@
 #include <kernel/memory/pmm.h>
 #include <kernel/paging.h>
 #include <kernel/memory/vmm.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <stdbool.h>
 #include "libc/test_base.h"
 #include "stdlib.h"
@@ -19,38 +19,38 @@
  * Test PMM: Basic allocation and freeing
  */
 static inline bool memory_test_pmm_basic(void) {
-    printf("\n[MEMORY TEST 1] PMM Basic Allocation\n");
+    debug_printf("\n[MEMORY TEST 1] PMM Basic Allocation\n");
 
     // Allocate single pages
     uint32_t page1 = pmm_alloc_page();
     uint32_t page2 = pmm_alloc_page();
 
     if (!page1 || !page2) {
-        printf("  FAILED: Could not allocate single pages\n");
+        debug_printf("  FAILED: Could not allocate single pages\n");
         return false;
     }
 
-    printf("  Page 1: %#x\n", page1);
-    printf("  Page 2: %#x\n", page2);
+    debug_printf("  Page 1: %#x\n", page1);
+    debug_printf("  Page 2: %#x\n", page2);
 
     // Allocate contiguous pages
     uint32_t pages = pmm_alloc_pages(3);
     if (!pages) {
-        printf("  FAILED: Could not allocate contiguous pages\n");
+        debug_printf("  FAILED: Could not allocate contiguous pages\n");
         pmm_free_page(page1);
         pmm_free_page(page2);
         return false;
     }
 
-    printf("  3-page block: %#x - %#x\n", pages, pages + (3 * 4096) - 1);
+    debug_printf("  3-page block: %#x - %#x\n", pages, pages + (3 * 4096) - 1);
 
     // Free all allocated pages
     pmm_free_page(page1);
     pmm_free_page(page2);
     pmm_free_pages(pages, 3);
 
-    printf("  All pages freed successfully\n");
-    printf("  PASSED\n");
+    debug_printf("  All pages freed successfully\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -58,7 +58,7 @@ static inline bool memory_test_pmm_basic(void) {
  * Test PMM: Buddy allocator power-of-2 allocations
  */
 static inline bool memory_test_pmm_buddy_orders(void) {
-    printf("\n[MEMORY TEST 2] PMM Buddy Allocator Orders\n");
+    debug_printf("\n[MEMORY TEST 2] PMM Buddy Allocator Orders\n");
 
     // Test allocations of different orders
     uint32_t order0 = pmm_alloc_pages(1);   // 1 page = order 0
@@ -67,30 +67,30 @@ static inline bool memory_test_pmm_buddy_orders(void) {
     uint32_t order3 = pmm_alloc_pages(8);   // 8 pages = order 3
 
     if (!order0 || !order1 || !order2 || !order3) {
-        printf("  FAILED: Could not allocate power-of-2 blocks\n");
+        debug_printf("  FAILED: Could not allocate power-of-2 blocks\n");
         if (order0) pmm_free_pages(order0, 1);
         if (order1) pmm_free_pages(order1, 2);
         if (order2) pmm_free_pages(order2, 4);
         return false;
     }
 
-    printf("  Order 0 (1 page):  %#x\n", order0);
-    printf("  Order 1 (2 pages): %#x\n", order1);
-    printf("  Order 2 (4 pages): %#x\n", order2);
-    printf("  Order 3 (8 pages): %#x\n", order3);
+    debug_printf("  Order 0 (1 page):  %#x\n", order0);
+    debug_printf("  Order 1 (2 pages): %#x\n", order1);
+    debug_printf("  Order 2 (4 pages): %#x\n", order2);
+    debug_printf("  Order 3 (8 pages): %#x\n", order3);
 
     // Verify alignment for higher orders
     bool aligned = true;
     if (order1 % (2 * 4096) != 0) {
-        printf("  FAILED: Order 1 block not properly aligned\n");
+        debug_printf("  FAILED: Order 1 block not properly aligned\n");
         aligned = false;
     }
     if (order2 % (4 * 4096) != 0) {
-        printf("  FAILED: Order 2 block not properly aligned\n");
+        debug_printf("  FAILED: Order 2 block not properly aligned\n");
         aligned = false;
     }
     if (order3 % (8 * 4096) != 0) {
-        printf("  FAILED: Order 3 block not properly aligned\n");
+        debug_printf("  FAILED: Order 3 block not properly aligned\n");
         aligned = false;
     }
 
@@ -104,8 +104,8 @@ static inline bool memory_test_pmm_buddy_orders(void) {
         return false;
     }
 
-    printf("  All blocks properly aligned and freed\n");
-    printf("  PASSED\n");
+    debug_printf("  All blocks properly aligned and freed\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -113,52 +113,52 @@ static inline bool memory_test_pmm_buddy_orders(void) {
  * Test PMM: Non-power-of-2 allocations (should round up)
  */
 static inline bool memory_test_pmm_buddy_rounding(void) {
-    printf("\n[MEMORY TEST 3] PMM Buddy Non-Power-of-2 Rounding\n");
+    debug_printf("\n[MEMORY TEST 3] PMM Buddy Non-Power-of-2 Rounding\n");
 
     // Request 3 pages, should get 4 (rounds up to order 2)
     uint32_t pages3 = pmm_alloc_pages(3);
     if (!pages3) {
-        printf("  FAILED: Could not allocate 3 pages\n");
+        debug_printf("  FAILED: Could not allocate 3 pages\n");
         return false;
     }
 
-    printf("  Requested 3 pages, got block at: %#x\n", pages3);
+    debug_printf("  Requested 3 pages, got block at: %#x\n", pages3);
 
     // Check alignment - should be aligned to 4 pages (16KB)
     if (pages3 % (4 * 4096) != 0) {
-        printf("  FAILED: Block not aligned to 4 pages (buddy allocator should round to order 2)\n");
+        debug_printf("  FAILED: Block not aligned to 4 pages (buddy allocator should round to order 2)\n");
         pmm_free_pages(pages3, 3);
         return false;
     }
 
-    printf("  Block correctly aligned to 4-page boundary\n");
+    debug_printf("  Block correctly aligned to 4-page boundary\n");
 
     // Request 5 pages, should get 8 (rounds up to order 3)
     uint32_t pages5 = pmm_alloc_pages(5);
     if (!pages5) {
-        printf("  FAILED: Could not allocate 5 pages\n");
+        debug_printf("  FAILED: Could not allocate 5 pages\n");
         pmm_free_pages(pages3, 3);
         return false;
     }
 
-    printf("  Requested 5 pages, got block at: %#x\n", pages5);
+    debug_printf("  Requested 5 pages, got block at: %#x\n", pages5);
 
     // Check alignment - should be aligned to 8 pages (32KB)
     if (pages5 % (8 * 4096) != 0) {
-        printf("  FAILED: Block not aligned to 8 pages (buddy allocator should round to order 3)\n");
+        debug_printf("  FAILED: Block not aligned to 8 pages (buddy allocator should round to order 3)\n");
         pmm_free_pages(pages3, 3);
         pmm_free_pages(pages5, 5);
         return false;
     }
 
-    printf("  Block correctly aligned to 8-page boundary\n");
+    debug_printf("  Block correctly aligned to 8-page boundary\n");
 
     // Free both
     pmm_free_pages(pages3, 3);
     pmm_free_pages(pages5, 5);
 
-    printf("  All blocks freed (count parameter ignored by buddy allocator)\n");
-    printf("  PASSED\n");
+    debug_printf("  All blocks freed (count parameter ignored by buddy allocator)\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -166,21 +166,21 @@ static inline bool memory_test_pmm_buddy_rounding(void) {
  * Test PMM: Buddy coalescing
  */
 static inline bool memory_test_pmm_buddy_coalescing(void) {
-    printf("\n[MEMORY TEST 4] PMM Buddy Coalescing\n");
+    debug_printf("\n[MEMORY TEST 4] PMM Buddy Coalescing\n");
 
     // Allocate two adjacent buddy blocks
     uint32_t block1 = pmm_alloc_pages(4);  // Order 2
     uint32_t block2 = pmm_alloc_pages(4);  // Order 2
 
     if (!block1 || !block2) {
-        printf("  FAILED: Could not allocate blocks for coalescing test\n");
+        debug_printf("  FAILED: Could not allocate blocks for coalescing test\n");
         if (block1) pmm_free_pages(block1, 4);
         return false;
     }
 
-    printf("  Allocated two 4-page blocks:\n");
-    printf("    Block 1: %#x\n", block1);
-    printf("    Block 2: %#x\n", block2);
+    debug_printf("  Allocated two 4-page blocks:\n");
+    debug_printf("    Block 1: %#x\n", block1);
+    debug_printf("    Block 2: %#x\n", block2);
 
     uint32_t used_before = pmm_get_used_memory();
 
@@ -190,23 +190,23 @@ static inline bool memory_test_pmm_buddy_coalescing(void) {
 
     uint32_t used_after = pmm_get_used_memory();
 
-    printf("  Memory used before free: %u KB\n", used_before / 1024);
-    printf("  Memory used after free:  %u KB\n", used_after / 1024);
+    debug_printf("  Memory used before free: %u KB\n", used_before / 1024);
+    debug_printf("  Memory used after free:  %u KB\n", used_after / 1024);
 
     // Verify memory was freed
     if (used_after >= used_before) {
-        printf("  FAILED: Memory not freed correctly\n");
+        debug_printf("  FAILED: Memory not freed correctly\n");
         return false;
     }
 
-    printf("  Blocks freed and coalesced successfully\n");
-    printf("  PASSED\n");
+    debug_printf("  Blocks freed and coalesced successfully\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
 static inline bool memory_test_refcount_base_allocation()
 {
-    printf("\n[MEMORY TEST 5] PMM refcount base allocation\n");
+    debug_printf("\n[MEMORY TEST 5] PMM refcount base allocation\n");
 
     uint32_t page = pmm_alloc_page();
     ASSERT_EQ(1, pmm_get_refcount(page), "Expected refcount=1 after alloc");
@@ -221,7 +221,7 @@ static inline bool memory_test_refcount_base_allocation()
 
 static inline bool memory_test_refcount_shared()
 {
-    printf("\n[MEMORY TEST 6] PMM refcount sharing\n");
+    debug_printf("\n[MEMORY TEST 6] PMM refcount sharing\n");
 
     uint32_t page = pmm_alloc_page();
     ASSERT_EQ(1, pmm_get_refcount(page), "Expected refcount=1 after alloc");
@@ -255,14 +255,14 @@ static inline bool memory_test_refcount_shared()
  * Test Paging: Identity mapping validation
  */
 static inline bool memory_test_paging_identity(void) {
-    printf("\n[MEMORY TEST 7] Paging Identity Mapping\n");
+    debug_printf("\n[MEMORY TEST 7] Paging Identity Mapping\n");
 
     if (!paging_validate_identity_mapping()) {
-        printf("  FAILED: Identity mapping validation failed\n");
+        debug_printf("  FAILED: Identity mapping validation failed\n");
         return false;
     }
 
-    printf("  Identity mapping validated\n");
+    debug_printf("  Identity mapping validated\n");
 
     // Check specific addresses
     uint32_t test_addrs[] = {
@@ -276,7 +276,7 @@ static inline bool memory_test_paging_identity(void) {
         uint32_t virt = test_addrs[i];
         if (paging_is_mapped(virt)) {
             uint32_t phys = paging_get_physical_address(virt);
-            printf("  Virtual %#x -> Physical %#x %s\n",
+            debug_printf("  Virtual %#x -> Physical %#x %s\n",
                    virt, phys,
                    (virt == phys) ? "(identity)" : "(NOT identity!)");
 
@@ -284,17 +284,17 @@ static inline bool memory_test_paging_identity(void) {
                 all_mapped = false;
             }
         } else {
-            printf("  Virtual %#x -> NOT MAPPED!\n", virt);
+            debug_printf("  Virtual %#x -> NOT MAPPED!\n", virt);
             all_mapped = false;
         }
     }
 
     if (!all_mapped) {
-        printf("  FAILED: Some addresses not properly identity-mapped\n");
+        debug_printf("  FAILED: Some addresses not properly identity-mapped\n");
         return false;
     }
 
-    printf("  PASSED\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -302,35 +302,35 @@ static inline bool memory_test_paging_identity(void) {
  * Test Paging: Dynamic page mapping and unmapping
  */
 static inline bool memory_test_paging_dynamic(void) {
-    printf("\n[MEMORY TEST 8] Paging Dynamic Mapping\n");
+    debug_printf("\n[MEMORY TEST 8] Paging Dynamic Mapping\n");
 
     // Allocate a physical page
     uint32_t phys_page = pmm_alloc_page();
     if (!phys_page) {
-        printf("  FAILED: Could not allocate physical page\n");
+        debug_printf("  FAILED: Could not allocate physical page\n");
         return false;
     }
 
-    printf("  Allocated physical page: %#x\n", phys_page);
+    debug_printf("  Allocated physical page: %#x\n", phys_page);
 
     // Map to a virtual address outside identity-mapped region
     uint32_t virt_page = 0x500000;  // 5MB
-    printf("  Mapping to virtual address: %#x\n", virt_page);
+    debug_printf("  Mapping to virtual address: %#x\n", virt_page);
 
     if (!paging_map_page(virt_page, phys_page, PAGE_FLAGS_KERNEL)) {
-        printf("  FAILED: Could not map page\n");
+        debug_printf("  FAILED: Could not map page\n");
         pmm_free_page(phys_page);
         return false;
     }
 
-    printf("  Successfully mapped page\n");
+    debug_printf("  Successfully mapped page\n");
 
     // Verify mapping
     uint32_t mapped_phys = paging_get_physical_address(virt_page);
-    printf("  Verification: virtual %#x -> physical %#x\n", virt_page, mapped_phys);
+    debug_printf("  Verification: virtual %#x -> physical %#x\n", virt_page, mapped_phys);
 
     if (mapped_phys != phys_page) {
-        printf("  FAILED: Mapping verification failed\n");
+        debug_printf("  FAILED: Mapping verification failed\n");
         paging_unmap_page(virt_page);
         pmm_free_page(phys_page);
         return false;
@@ -341,20 +341,20 @@ static inline bool memory_test_paging_dynamic(void) {
     *test_ptr = 0xDEADBEEF;
 
     if (*test_ptr != 0xDEADBEEF) {
-        printf("  FAILED: Read/write test failed\n");
+        debug_printf("  FAILED: Read/write test failed\n");
         paging_unmap_page(virt_page);
         pmm_free_page(phys_page);
         return false;
     }
 
-    printf("  Read/write test passed (wrote and read %#x)\n", *test_ptr);
+    debug_printf("  Read/write test passed (wrote and read %#x)\n", *test_ptr);
 
     // Clean up: unmap and free
     paging_unmap_page(virt_page);
     pmm_free_page(phys_page);
 
-    printf("  Page unmapped and freed\n");
-    printf("  PASSED\n");
+    debug_printf("  Page unmapped and freed\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -362,37 +362,37 @@ static inline bool memory_test_paging_dynamic(void) {
  * Test VMM: Basic allocation and freeing
  */
 static inline bool memory_test_vmm_basic(void) {
-    printf("\n[MEMORY TEST 9] VMM Basic Allocation\n");
+    debug_printf("\n[MEMORY TEST 9] VMM Basic Allocation\n");
 
     // Allocate single page
     void* vmem1 = vmm_alloc(1, VMM_KERNEL | VMM_WRITE);
     if (!vmem1) {
-        printf("  FAILED: Could not allocate 1 page\n");
+        debug_printf("  FAILED: Could not allocate 1 page\n");
         return false;
     }
 
-    printf("  Allocated 1 page at virtual address: %#x\n", (uint32_t)vmem1);
+    debug_printf("  Allocated 1 page at virtual address: %#x\n", (uint32_t)vmem1);
 
     // Test write
     uint32_t* test_write = (uint32_t*)vmem1;
     *test_write = 0xCAFEBABE;
 
     if (*test_write != 0xCAFEBABE) {
-        printf("  FAILED: Read/write test failed\n");
+        debug_printf("  FAILED: Read/write test failed\n");
         vmm_free(vmem1, 1);
         return false;
     }
 
-    printf("  Read/write test passed: wrote %#x, read %#x\n", 0xCAFEBABE, *test_write);
+    debug_printf("  Read/write test passed: wrote %#x, read %#x\n", 0xCAFEBABE, *test_write);
 
     // Free the page
     if (!vmm_free(vmem1, 1)) {
-        printf("  FAILED: Could not free page\n");
+        debug_printf("  FAILED: Could not free page\n");
         return false;
     }
 
-    printf("  Page freed successfully\n");
-    printf("  PASSED\n");
+    debug_printf("  Page freed successfully\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -400,17 +400,17 @@ static inline bool memory_test_vmm_basic(void) {
  * Test VMM: Multiple page allocation
  */
 static inline bool memory_test_vmm_multipage(void) {
-    printf("\n[MEMORY TEST 10] VMM Multiple Page Allocation\n");
+    debug_printf("\n[MEMORY TEST 10] VMM Multiple Page Allocation\n");
 
     const size_t num_pages = 4;
     void* vmem = vmm_alloc(num_pages, VMM_KERNEL | VMM_WRITE);
 
     if (!vmem) {
-        printf("  FAILED: Could not allocate %zu pages\n", num_pages);
+        debug_printf("  FAILED: Could not allocate %zu pages\n", num_pages);
         return false;
     }
 
-    printf("  Allocated %zu pages at virtual address: %#x\n", num_pages, (uint32_t)vmem);
+    debug_printf("  Allocated %zu pages at virtual address: %#x\n", num_pages, (uint32_t)vmem);
 
     // Write to each page
     bool write_success = true;
@@ -419,12 +419,12 @@ static inline bool memory_test_vmm_multipage(void) {
         *ptr = 0x1000 + i;
 
         if (*ptr != 0x1000 + i) {
-            printf("  FAILED: Read/write on page %zu\n", i);
+            debug_printf("  FAILED: Read/write on page %zu\n", i);
             write_success = false;
             break;
         }
 
-        printf("  Page %zu: wrote %#x, read %#x\n", i, 0x1000 + i, *ptr);
+        debug_printf("  Page %zu: wrote %#x, read %#x\n", i, 0x1000 + i, *ptr);
     }
 
     if (!write_success) {
@@ -434,12 +434,12 @@ static inline bool memory_test_vmm_multipage(void) {
 
     // Free all pages
     if (!vmm_free(vmem, num_pages)) {
-        printf("  FAILED: Could not free pages\n");
+        debug_printf("  FAILED: Could not free pages\n");
         return false;
     }
 
-    printf("  All pages freed successfully\n");
-    printf("  PASSED\n");
+    debug_printf("  All pages freed successfully\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -447,16 +447,16 @@ static inline bool memory_test_vmm_multipage(void) {
  * Test VMM: Kernel heap allocator
  */
 static inline bool memory_test_vmm_kernel_heap(void) {
-    printf("\n[MEMORY TEST 11] VMM Kernel Heap Allocator\n");
+    debug_printf("\n[MEMORY TEST 11] VMM Kernel Heap Allocator\n");
 
     // Allocate from kernel heap
     void* heap_mem = vmm_kernel_alloc(8192);  // 2 pages worth
     if (!heap_mem) {
-        printf("  FAILED: Could not allocate from kernel heap\n");
+        debug_printf("  FAILED: Could not allocate from kernel heap\n");
         return false;
     }
 
-    printf("  Allocated 8KB from kernel heap at: %#x\n", (uint32_t)heap_mem);
+    debug_printf("  Allocated 8KB from kernel heap at: %#x\n", (uint32_t)heap_mem);
 
     // Write pattern
     char* bytes = (char*)heap_mem;
@@ -469,7 +469,7 @@ static inline bool memory_test_vmm_kernel_heap(void) {
     for (int i = 0; i < 100; i++) {
         if (bytes[i] != (char)(i & 0xFF)) {
             pattern_ok = false;
-            printf("  FAILED: Data verification at byte %d\n", i);
+            debug_printf("  FAILED: Data verification at byte %d\n", i);
             break;
         }
     }
@@ -479,13 +479,13 @@ static inline bool memory_test_vmm_kernel_heap(void) {
         return false;
     }
 
-    printf("  Data pattern test passed (100 bytes verified)\n");
+    debug_printf("  Data pattern test passed (100 bytes verified)\n");
 
     // Free the allocation
     vmm_kernel_free(heap_mem, 8192);
-    printf("  Heap memory freed successfully\n");
+    debug_printf("  Heap memory freed successfully\n");
 
-    printf("  PASSED\n");
+    debug_printf("  PASSED\n");
     return true;
 }
 
@@ -493,11 +493,11 @@ static inline bool memory_test_vmm_kernel_heap(void) {
  * Print memory statistics
  */
 static inline void memory_print_all_stats(const char* label) {
-    printf("\n=== %s ===\n", label);
+    debug_printf("\n=== %s ===\n", label);
     pmm_print_stats();
-    printf("\n");
+    debug_printf("\n");
     paging_print_stats();
-    printf("\n");
+    debug_printf("\n");
     vmm_print_stats();
 }
 
@@ -505,9 +505,9 @@ static inline void memory_print_all_stats(const char* label) {
  * Run only PMM tests (no VMM tests)
  */
 static inline void memory_run_pmm_tests(void) {
-    printf("\n========================================\n");
-    printf("     PMM Test Suite\n");
-    printf("========================================\n");
+    debug_printf("\n========================================\n");
+    debug_printf("     PMM Test Suite\n");
+    debug_printf("========================================\n");
 
     // Print baseline statistics
     pmm_print_stats();
@@ -524,18 +524,18 @@ static inline void memory_run_pmm_tests(void) {
     if (memory_test_refcount_shared()) passed++;
 
     // Print final statistics
-    printf("\n");
+    debug_printf("\n");
     pmm_print_stats();
 
     // Print results
-    printf("\n========================================\n");
-    printf("  Results: %d/%d tests passed\n", passed, total);
-    printf("========================================\n");
+    debug_printf("\n========================================\n");
+    debug_printf("  Results: %d/%d tests passed\n", passed, total);
+    debug_printf("========================================\n");
 
     if (passed == total) {
-        printf("\n[OK] All PMM tests PASSED!\n\n");
+        debug_printf("\n[OK] All PMM tests PASSED!\n\n");
     } else {
-        printf("\n[FAIL] Some PMM tests FAILED\n\n");
+        debug_printf("\n[FAIL] Some PMM tests FAILED\n\n");
     }
 }
 
@@ -543,9 +543,9 @@ static inline void memory_run_pmm_tests(void) {
  * Run all memory system tests
  */
 static inline void memory_run_all_tests(void) {
-    printf("\n========================================\n");
-    printf("     Memory System Test Suite\n");
-    printf("========================================\n");
+    debug_printf("\n========================================\n");
+    debug_printf("     Memory System Test Suite\n");
+    debug_printf("========================================\n");
 
     // Print baseline statistics
     memory_print_all_stats("Baseline Memory Statistics");
@@ -570,14 +570,14 @@ static inline void memory_run_all_tests(void) {
     memory_print_all_stats("Final Memory Statistics");
 
     // Print results
-    printf("\n========================================\n");
-    printf("  Results: %d/%d tests passed\n", passed, total);
-    printf("========================================\n");
+    debug_printf("\n========================================\n");
+    debug_printf("  Results: %d/%d tests passed\n", passed, total);
+    debug_printf("========================================\n");
 
     if (passed == total) {
-        printf("\n[OK] All memory system tests PASSED!\n\n");
+        debug_printf("\n[OK] All memory system tests PASSED!\n\n");
     } else {
-        printf("\n[FAIL] Some tests FAILED\n\n");
+        debug_printf("\n[FAIL] Some tests FAILED\n\n");
         abort();
     }
 }

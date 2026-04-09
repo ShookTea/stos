@@ -4,7 +4,7 @@
 #include <kernel/vfs/vfs.h>
 #include <kernel/vfs/initrd.h>
 
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -211,7 +211,7 @@ vfs_node_t* initrd_mount()
         return initrd;
     }
     mounted = true;
-    puts("Loading initrd from memory");
+    debug_puts("Loading initrd from memory");
     memset(empty_name, 0, 100);
 
     multiboot_tag_boot_module_t* initrd_module = NULL;
@@ -223,7 +223,7 @@ vfs_node_t* initrd_mount()
     }
 
     if (!initrd_module) {
-        puts("There is no initrd module present.");
+        debug_puts("There is no initrd module present.");
         return NULL;
     }
 

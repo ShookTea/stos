@@ -1,6 +1,5 @@
 #include "kernel/task/task.h"
 #include "../syscall.h"
-#include <stdio.h>
 
 int sys_fork()
 {

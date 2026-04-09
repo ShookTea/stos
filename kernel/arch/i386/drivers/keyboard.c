@@ -9,7 +9,7 @@
 #include "keyboard_defines.h"
 
 #include <stdbool.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 
 #define COM_GET_SET_CURRENT_SCAN_CODE_SET 0xF0
 #define COM_ENABLE_SCANNING 0xF4
@@ -89,13 +89,13 @@ static bool send_command(uint8_t command)
             retry++;
         } else if (send_result == PS2_RESPONSE_UNAVAILABLE) {
             // we should probably get some better error handling in this case
-            puts("Unexpected PS2_RESPONSE_UNAVAILABLE from the keyboard");
+            debug_puts("Unexpected PS2_RESPONSE_UNAVAILABLE from the keyboard");
             abort();
         } else if (send_result == PS2_RESPONSE_OK) {
             // Command was delivered. Now let's read the response.
             read_result = ps2_read_byte_to_result(&read_value);
             if (read_result != PS2_RESPONSE_OK) {
-                printf(
+                debug_printf(
                     "Unexpected no-response to command %#02x on PS/2 keyboard",
                     command
                 );
@@ -107,14 +107,14 @@ static bool send_command(uint8_t command)
                 // Success!
                 return true;
             } else {
-                printf(
+                debug_printf(
                     "Unexpected resp. %#02x to command %#02x on PS/2 keyboard",
                     read_value,
                     command
                 );
             }
         } else {
-            printf("Unknown send_result code %#02x\n", send_result);
+            debug_printf("Unknown send_result code %#02x\n", send_result);
             abort();
         }
     }
@@ -128,9 +128,9 @@ static bool send_command(uint8_t command)
  */
 static void buffer_dump_and_panic()
 {
-    puts("Unrecognized PS/2 input buffer:");
+    debug_puts("Unrecognized PS/2 input buffer:");
     for (int i = 0; i < buffer_pos; i++) {
-        printf("%#02x ", buffer[i]);
+        debug_printf("%#02x ", buffer[i]);
     }
     buffer_pos = 0;
     abort();
@@ -166,7 +166,7 @@ static uint8_t get_key_code(
             case 0x7D: return KCODE_PAGE_UP;
             default:
                 // TODO: handle it gracefully instead of panicking
-                printf("Unrecognized extended key code: %#02x\n", byte);
+                debug_printf("Unrecognized extended key code: %#02x\n", byte);
                 abort();
         }
     }
@@ -266,7 +266,7 @@ static uint8_t get_key_code(
         case 0x83: return KCODE_F7;
         default:
             // TODO: handle it gracefully instead of panicking
-            printf("Unrecognized extended key code: %#02x\n", byte);
+            debug_printf("Unrecognized extended key code: %#02x\n", byte);
             abort();
     }
 }
@@ -539,43 +539,43 @@ void keyboard_init()
         (ps2_get_port1_device_type() & PS2_DEVICE_TYPE_MASK)
         == PS2_DEVICE_TYPE_KEYBOARD
     ) {
-        puts("PS/2 keyboard at port 1");
+        debug_puts("PS/2 keyboard at port 1");
     } else if (
         (ps2_get_port2_device_type() & PS2_DEVICE_TYPE_MASK)
         == PS2_DEVICE_TYPE_KEYBOARD
     ) {
-        puts("PS/2 keyboard at port 2");
+        debug_puts("PS/2 keyboard at port 2");
         keyboard_on_port2 = true;
     } else {
-        puts("No keyboard detected");
+        debug_puts("No keyboard detected");
     }
 
     uint8_t response, value;
 
     // Set scan code set = 2
     if (!send_command(COM_GET_SET_CURRENT_SCAN_CODE_SET)) {
-        puts("Failed to send command for updating scan code set");
+        debug_puts("Failed to send command for updating scan code set");
         abort();
     }
     if (!send_command(2)) {
-        puts("Failed to set scan code set = 2");
+        debug_puts("Failed to set scan code set = 2");
         abort();
     }
     // Confirm that scan code has been set to 2
     if (!send_command(COM_GET_SET_CURRENT_SCAN_CODE_SET)) {
-        puts("Failed to send command for reading scan code set");
+        debug_puts("Failed to send command for reading scan code set");
         abort();
     }
     if (!send_command(0)) { // 0 = "get current scan code"
-        puts("Failed to request for current scan code");
+        debug_puts("Failed to request for current scan code");
         abort();
     }
     response = ps2_read_byte_to_result(&value);
     if (response != PS2_RESPONSE_OK) {
-        printf("No valid response: %#02x\n", response);
+        debug_printf("No valid response: %#02x\n", response);
         abort();
     }
-    puts("Scan code set = 2");
+    debug_puts("Scan code set = 2");
 
     uint8_t pic_line = keyboard_on_port2
         ? PIC_LINE_PS2_PORT_2
@@ -583,12 +583,12 @@ void keyboard_init()
 
     // Enable scanning
     if (!send_command(COM_ENABLE_SCANNING)) {
-        puts("Failed to send command to enable scanning");
+        debug_puts("Failed to send command to enable scanning");
         abort();
     }
 
     // Enable IRQ
     idt_register_irq_handler(pic_line, &irq_callback);
     pic_enable(pic_line);
-    puts("Keyboard initialized");
+    debug_puts("Keyboard initialized");
 }

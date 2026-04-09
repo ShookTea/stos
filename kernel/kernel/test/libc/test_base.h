@@ -16,7 +16,7 @@
 #define ASSERT_EQ(actual, expected, msg) \
     do { \
         if ((actual) != (expected)) { \
-            printf("  FAILED: %s (expected %d, got %d)\n", msg, (int)(expected), (int)(actual)); \
+            debug_printf("  FAILED: %s (expected %d, got %d)\n", msg, (int)(expected), (int)(actual)); \
             return false; \
         } \
     } while(0)
@@ -27,7 +27,7 @@
 #define ASSERT_STR_EQ(actual, expected, msg) \
     do { \
         if (strcmp((actual), (expected)) != 0) { \
-            printf("  FAILED: %s (expected \"%s\", got \"%s\")\n", msg, expected, actual); \
+            debug_printf("  FAILED: %s (expected \"%s\", got \"%s\")\n", msg, expected, actual); \
             return false; \
         } \
     } while(0)
@@ -38,7 +38,7 @@
 #define ASSERT_TRUE(condition, msg) \
     do { \
         if (!(condition)) { \
-            printf("  FAILED: %s\n", msg); \
+            debug_printf("  FAILED: %s\n", msg); \
             return false; \
         } \
     } while(0)
@@ -49,7 +49,7 @@
 #define ASSERT_FALSE(condition, msg) \
     do { \
         if (condition) { \
-            printf("  FAILED: %s\n", msg); \
+            debug_printf("  FAILED: %s\n", msg); \
             return false; \
         } \
     } while(0)
@@ -60,7 +60,7 @@
 #define ASSERT_PTR_EQ(actual, expected, msg) \
     do { \
         if ((actual) != (expected)) { \
-            printf("  FAILED: %s (expected %p, got %p)\n", msg, (void*)(expected), (void*)(actual)); \
+            debug_printf("  FAILED: %s (expected %p, got %p)\n", msg, (void*)(expected), (void*)(actual)); \
             return false; \
         } \
     } while(0)
@@ -71,7 +71,7 @@
 #define ASSERT_NULL(ptr, msg) \
     do { \
         if ((ptr) != NULL) { \
-            printf("  FAILED: %s (expected NULL, got %p)\n", msg, (void*)(ptr)); \
+            debug_printf("  FAILED: %s (expected NULL, got %p)\n", msg, (void*)(ptr)); \
             return false; \
         } \
     } while(0)
@@ -82,7 +82,7 @@
 #define ASSERT_NOT_NULL(ptr, msg) \
     do { \
         if ((ptr) == NULL) { \
-            printf("  FAILED: %s (expected non-NULL, got NULL)\n", msg); \
+            debug_printf("  FAILED: %s (expected non-NULL, got NULL)\n", msg); \
             return false; \
         } \
     } while(0)

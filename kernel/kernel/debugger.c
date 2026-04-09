@@ -1,5 +1,4 @@
 #include "debugger.h"
-
 #include <stdio.h>
 #include <kernel/terminal.h>
 #include <stdlib.h>

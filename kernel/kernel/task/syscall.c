@@ -5,7 +5,7 @@
 #include <kernel/task/task.h>
 #include <stdint.h>
 #include <kernel/task/syscall_handler.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
 
 
@@ -64,7 +64,7 @@ static uint32_t syscall_int_handler(
             return sys_read((int)arg1, buf, (size_t)arg3);
         }
         default:
-            printf("Unknown syscall: %d\n", syscall_num);
+            debug_printf("Unknown syscall: %d\n", syscall_num);
             return SYSCALL_ERROR;
     }
 }

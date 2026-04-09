@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <string.h>
 #include "../syscall.h"
 #include "kernel/memory/pmm.h"
@@ -30,7 +30,7 @@ uint32_t sys_brk(uint32_t addr)
     }
 
     if (addr < task->heap_start) {
-        printf(
+        debug_printf(
             "BRK: addr %#x < heap_start %#x - PID [%u]\n",
             addr,
             task->heap_start,
@@ -40,7 +40,7 @@ uint32_t sys_brk(uint32_t addr)
     }
 
     if (addr > task->heap_max) {
-        printf(
+        debug_printf(
             "BRK: addr %#x > heap_max %#x - PID [%u]\n",
             addr,
             task->heap_max,
@@ -64,7 +64,7 @@ uint32_t sys_brk(uint32_t addr)
             uint32_t vaddr = old_heap_end + (i * PAGE_SIZE);
             uint32_t phys = pmm_alloc_page();
             if (phys == 0) {
-                puts("BRK: failed to allocate physical page");
+                debug_puts("BRK: failed to allocate physical page");
                 // Rollback
                 for (uint32_t j = 0; j < i; j++) {
                     uint32_t vaddr_rollback = old_heap_end + (j * PAGE_SIZE);
@@ -78,7 +78,7 @@ uint32_t sys_brk(uint32_t addr)
 
             // Map the page as user-accessible and writeable
             if (!paging_map_page(vaddr, phys, PAGE_FLAGS_USER)) {
-                printf("BRK: Failed to map page at %#x\n", vaddr);
+                debug_printf("BRK: Failed to map page at %#x\n", vaddr);
                 pmm_free_page(phys);
                 // Rollback
                 for (uint32_t j = 0; j < i; j++) {

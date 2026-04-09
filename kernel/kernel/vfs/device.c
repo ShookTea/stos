@@ -2,7 +2,6 @@
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 
 static vfs_node_t* node = NULL;

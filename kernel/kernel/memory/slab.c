@@ -1,7 +1,7 @@
 #include <kernel/memory/slab.h>
 #include <kernel/memory/vmm.h>
 #include <kernel/memory/pmm.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -82,11 +82,11 @@ void slab_init(void) {
 
     slab_initialized = true;
 
-    printf("Slab allocator initialized with size classes:");
+    debug_printf("Slab allocator initialized with size classes:");
     for (size_t i = 0; i < SLAB_NUM_CACHES; i++) {
-        printf(" %zu", SLAB_SIZE_CLASSES[i]);
+        debug_printf(" %zu", SLAB_SIZE_CLASSES[i]);
     }
-    printf(" bytes\n");
+    debug_printf(" bytes\n");
 }
 
 slab_cache_t* slab_find_cache(size_t size) {
@@ -244,7 +244,7 @@ void slab_update_lists(slab_t* slab) {
             break;
         default:
             // Should never happen, but satisfy compiler
-            printf("SLAB: ERROR - slab has invalid current_list value\n");
+            debug_printf("SLAB: ERROR - slab has invalid current_list value\n");
             return;
     }
     remove_from_list(slab, current_head);
@@ -263,7 +263,7 @@ void slab_update_lists(slab_t* slab) {
             break;
         default:
             // Should never happen, but satisfy compiler
-            printf("SLAB: ERROR - target_list has invalid value\n");
+            debug_printf("SLAB: ERROR - target_list has invalid value\n");
             return;
     }
     add_to_list(slab, target_head);
@@ -299,7 +299,7 @@ bool slab_free_to_slab(slab_t* slab, void* ptr) {
     slab_free_object_t* current = slab->free_list;
     while (current) {
         if (current == ptr) {
-            printf("ERROR: Double-free detected at %p (slab: %p, cache: %zu bytes)\n",
+            debug_printf("ERROR: Double-free detected at %p (slab: %p, cache: %zu bytes)\n",
                    ptr, slab, slab->object_size);
             return false;  // Already in free list!
         }
@@ -316,7 +316,7 @@ bool slab_free_to_slab(slab_t* slab, void* ptr) {
 
 void* slab_alloc(size_t size) {
     if (!slab_initialized) {
-        printf("ERROR: slab_alloc called before slab_init\n");
+        debug_printf("ERROR: slab_alloc called before slab_init\n");
         return NULL;
     }
 
@@ -409,7 +409,7 @@ bool slab_free(void* ptr) {
     slab_t* slab = slab_get_slab(ptr);
 
     if (!slab) {
-        printf("ERROR: slab_free called with invalid pointer: %#x\n", (uint32_t)ptr);
+        debug_printf("ERROR: slab_free called with invalid pointer: %#x\n", (uint32_t)ptr);
         return false;
     }
 
@@ -457,31 +457,31 @@ void slab_get_stats(slab_stats_t* stats) {
 }
 
 void slab_print_stats(void) {
-    printf("\n=== Slab Allocator Statistics ===\n");
-    printf("Total allocated: %zu bytes\n", global_stats.total_allocated);
-    printf("Total freed:     %zu bytes\n", global_stats.total_freed);
-    printf("Current usage:   %zu bytes\n", global_stats.current_usage);
-    printf("Peak usage:      %zu bytes\n", global_stats.peak_usage);
-    printf("Allocations:     %zu\n", global_stats.num_allocations);
-    printf("Frees:           %zu\n", global_stats.num_frees);
-    printf("Active allocs:   %zu\n", global_stats.num_allocations - global_stats.num_frees);
-    printf("Slabs created:   %zu\n", global_stats.num_slabs_created);
-    printf("Page allocations:%zu\n", global_stats.num_page_allocs);
+    debug_printf("\n=== Slab Allocator Statistics ===\n");
+    debug_printf("Total allocated: %zu bytes\n", global_stats.total_allocated);
+    debug_printf("Total freed:     %zu bytes\n", global_stats.total_freed);
+    debug_printf("Current usage:   %zu bytes\n", global_stats.current_usage);
+    debug_printf("Peak usage:      %zu bytes\n", global_stats.peak_usage);
+    debug_printf("Allocations:     %zu\n", global_stats.num_allocations);
+    debug_printf("Frees:           %zu\n", global_stats.num_frees);
+    debug_printf("Active allocs:   %zu\n", global_stats.num_allocations - global_stats.num_frees);
+    debug_printf("Slabs created:   %zu\n", global_stats.num_slabs_created);
+    debug_printf("Page allocations:%zu\n", global_stats.num_page_allocs);
 }
 
 void slab_print_caches(void) {
-    printf("\n=== Slab Caches ===\n");
+    debug_printf("\n=== Slab Caches ===\n");
 
     for (size_t i = 0; i < SLAB_NUM_CACHES; i++) {
         slab_cache_t* cache = &slab_caches[i];
 
-        printf("\nCache[%zu bytes]:\n", cache->object_size);
-        printf("  Objects per slab: %zu\n", cache->objects_per_slab);
-        printf("  Pages per slab:   %zu\n", cache->slab_pages);
-        printf("  Total slabs:      %u\n", cache->num_slabs);
-        printf("  Active objects:   %u\n", cache->num_active_objects);
-        printf("  Allocations:      %u\n", cache->num_allocations);
-        printf("  Frees:            %u\n", cache->num_frees);
+        debug_printf("\nCache[%zu bytes]:\n", cache->object_size);
+        debug_printf("  Objects per slab: %zu\n", cache->objects_per_slab);
+        debug_printf("  Pages per slab:   %zu\n", cache->slab_pages);
+        debug_printf("  Total slabs:      %u\n", cache->num_slabs);
+        debug_printf("  Active objects:   %u\n", cache->num_active_objects);
+        debug_printf("  Allocations:      %u\n", cache->num_allocations);
+        debug_printf("  Frees:            %u\n", cache->num_frees);
 
         // Count slabs in each list
         uint32_t partial_count = 0;
@@ -506,15 +506,15 @@ void slab_print_caches(void) {
             s = s->next;
         }
 
-        printf("  Partial slabs:    %u\n", partial_count);
-        printf("  Full slabs:       %u\n", full_count);
-        printf("  Empty slabs:      %u\n", empty_count);
+        debug_printf("  Partial slabs:    %u\n", partial_count);
+        debug_printf("  Full slabs:       %u\n", full_count);
+        debug_printf("  Empty slabs:      %u\n", empty_count);
     }
 }
 
 bool slab_validate(void) {
     if (!slab_initialized) {
-        printf("ERROR: Slab allocator not initialized\n");
+        debug_printf("ERROR: Slab allocator not initialized\n");
         return false;
     }
 
@@ -532,20 +532,20 @@ bool slab_validate(void) {
             while (slab) {
                 // Check magic number
                 if (slab->magic != SLAB_MAGIC) {
-                    printf("ERROR: Invalid magic in %s slab of cache %zu\n",
+                    debug_printf("ERROR: Invalid magic in %s slab of cache %zu\n",
                            list_names[list_idx], cache->object_size);
                     valid = false;
                 }
 
                 // Check cache pointer
                 if (slab->cache != cache) {
-                    printf("ERROR: Invalid cache pointer in slab\n");
+                    debug_printf("ERROR: Invalid cache pointer in slab\n");
                     valid = false;
                 }
 
                 // Check free count is reasonable
                 if (slab->num_free > slab->num_objects) {
-                    printf("ERROR: num_free > num_objects in slab\n");
+                    debug_printf("ERROR: num_free > num_objects in slab\n");
                     valid = false;
                 }
 
@@ -555,7 +555,7 @@ bool slab_validate(void) {
     }
 
     if (valid) {
-        printf("Slab allocator validation: OK\n");
+        debug_printf("Slab allocator validation: OK\n");
     }
 
     return valid;

@@ -9,7 +9,7 @@
 #include "stdlib.h"
 #include "vmm_tests.h"
 #include "kmalloc_tests.h"
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <stdint.h>
 
 #define KIB 1024
@@ -30,7 +30,7 @@ static inline void run_all_tests()
  */
 static inline void memory_leak_run_test()
 {
-    puts("=== memory leak test run ===");
+    debug_puts("=== memory leak test run ===");
 
     // First do a dry run, to set up the cache properly - it can influence
     // statistics, which would be reported as false negative.
@@ -57,9 +57,9 @@ static inline void memory_leak_run_test()
     slab_get_stats(&slab_stats_end);
 
     bool fail = false;
-    puts("");
-    puts(" === memory stats changes ===");
-    printf(
+    debug_puts("");
+    debug_puts(" === memory stats changes ===");
+    debug_printf(
         "  [PMM] used memory: %d KiB -> %d KiB\n",
         pmm_used_memory_start / KIB,
         pmm_used_memory_end / KIB
@@ -68,7 +68,7 @@ static inline void memory_leak_run_test()
         fail = true;
     }
 
-    printf(
+    debug_printf(
         "  [VMM] used virtual space: %d MiB -> %d MiB\n",
        vmm_stats_start.used_virtual_space / MIB,
        vmm_stats_end.used_virtual_space / MIB
@@ -78,7 +78,7 @@ static inline void memory_leak_run_test()
         fail = true;
     }
 
-    printf(
+    debug_printf(
         "  [VMM] used regions: %d -> %d\n",
         vmm_stats_start.num_used_regions,
         vmm_stats_end.num_used_regions
@@ -87,7 +87,7 @@ static inline void memory_leak_run_test()
         fail = true;
     }
 
-    printf(
+    debug_printf(
         "  [VMM] kernel heap current: %#x -> %#x\n",
         vmm_stats_start.kernel_heap_current,
         vmm_stats_end.kernel_heap_current
@@ -97,7 +97,7 @@ static inline void memory_leak_run_test()
         fail = true;
     }
 
-    printf(
+    debug_printf(
         "  [kmalloc] current usage: %d KiB -> %d KiB\n",
         kmalloc_stats_start.current_usage / KIB,
         kmalloc_stats_end.current_usage / KIB
@@ -117,7 +117,7 @@ static inline void memory_leak_run_test()
             kmalloc_stats_end.num_large_allocations) -
         (kmalloc_stats_end.num_small_frees +
             kmalloc_stats_end.num_large_frees);
-    printf(
+    debug_printf(
         "  [kmalloc] active allocations: %zu -> %zu\n",
         active_allocs_start,
         active_allocs_end
@@ -126,7 +126,7 @@ static inline void memory_leak_run_test()
         fail = true;
     }
 
-    printf(
+    debug_printf(
         "  [slab] current usage: %d B -> %d B\n",
         slab_stats_start.current_usage,
         slab_stats_end.current_usage
@@ -136,10 +136,10 @@ static inline void memory_leak_run_test()
     }
 
     if (fail) {
-        puts("memleak test FAILED!");
+        debug_puts("memleak test FAILED!");
         abort();
     } else {
-        puts("memleak test completed successfully.");
+        debug_puts("memleak test completed successfully.");
     }
 }
 

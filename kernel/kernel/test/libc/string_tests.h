@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <stdint.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include "test_base.h"
 
 /**
@@ -318,7 +318,7 @@ static inline bool string_test_strncpy_exact(void) {
     memset(dst, 'X', 20);
     strncpy(dst, "hello", 5);
     // No null terminator when n equals source length
-    ASSERT_TRUE(dst[0] == 'h' && dst[1] == 'e' && dst[2] == 'l' && 
+    ASSERT_TRUE(dst[0] == 'h' && dst[1] == 'e' && dst[2] == 'l' &&
                 dst[3] == 'l' && dst[4] == 'o', "exact length copy");
     ASSERT_TRUE(dst[5] == 'X', "no null terminator added");
 
@@ -337,7 +337,7 @@ static inline bool string_test_strncpy_truncate(void) {
     memset(dst, 'X', 20);
     strncpy(dst, "hello world", 5);
     // Should copy only first 5 characters, no null terminator
-    ASSERT_TRUE(dst[0] == 'h' && dst[1] == 'e' && dst[2] == 'l' && 
+    ASSERT_TRUE(dst[0] == 'h' && dst[1] == 'e' && dst[2] == 'l' &&
                 dst[3] == 'l' && dst[4] == 'o', "truncated copy");
     ASSERT_TRUE(dst[5] == 'X', "destination unchanged after n");
 
@@ -357,7 +357,7 @@ static inline bool string_test_strncpy_padding(void) {
     memset(dst, 'X', 20);
     strncpy(dst, "hi", 10);
     ASSERT_STR_EQ(dst, "hi", "copy with extensive padding");
-    
+
     // Verify all padding bytes are null
     bool all_null = true;
     for (int i = 3; i < 10; i++) {
@@ -380,7 +380,7 @@ static inline bool string_test_strncpy_empty(void) {
     memset(dst, 'X', 20);
     strncpy(dst, "", 5);
     ASSERT_TRUE(dst[0] == '\0', "null terminator copied");
-    
+
     // Verify padding
     bool padded = true;
     for (int i = 1; i < 5; i++) {
@@ -421,7 +421,7 @@ static inline bool string_test_strncpy_single(void) {
     memset(dst, 'X', 20);
     strncpy(dst, "a", 5);
     ASSERT_TRUE(dst[0] == 'a' && dst[1] == '\0', "single char with padding");
-    
+
     bool padded = true;
     for (int i = 2; i < 5; i++) {
         if (dst[i] != '\0') {
@@ -438,11 +438,11 @@ static inline bool string_test_strncpy_single(void) {
  */
 static inline bool string_test_strncpy_overlap(void) {
     char dst[20] = "hello world";
-    
+
     // Copy within same buffer (undefined behavior in standard, but test actual behavior)
     strncpy(dst, dst + 6, 5);
     // Should have copied "world" (first 5 chars)
-    ASSERT_TRUE(dst[0] == 'w' && dst[1] == 'o' && dst[2] == 'r' && 
+    ASSERT_TRUE(dst[0] == 'w' && dst[1] == 'o' && dst[2] == 'r' &&
                 dst[3] == 'l' && dst[4] == 'd', "overlapping copy");
     return true;
 }
@@ -626,7 +626,7 @@ static inline bool string_test_strtok_edges(void) {
  * Run all string tests
  */
 static inline bool string_run_all_tests(void) {
-    printf("\n=== String Library Tests ===\n");
+    debug_printf("\n=== String Library Tests ===\n");
     int passed = 0;
     int total = 33;
 
@@ -691,10 +691,10 @@ static inline bool string_run_all_tests(void) {
 
     // Print results
     if (passed == total) {
-        printf("String: %d/%d PASSED\n", passed, total);
+        debug_printf("String: %d/%d PASSED\n", passed, total);
         return true;
     } else {
-        printf("String: %d/%d FAILED\n", passed, total);
+        debug_printf("String: %d/%d FAILED\n", passed, total);
         return false;
     }
 }

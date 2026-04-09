@@ -1,6 +1,6 @@
 #include <kernel/page_fault.h>
 #include <kernel/paging.h>
-#include <stdio.h>
+#include "kernel/debug.h"
 #include <string.h>
 
 // Global statistics
@@ -148,72 +148,72 @@ void page_fault_print_info(const page_fault_info_t* info)
         return;
     }
 
-    printf("\n========================================\n");
-    printf("         PAGE FAULT EXCEPTION\n");
-    printf("========================================\n");
+    debug_printf("\n========================================\n");
+    debug_printf("         PAGE FAULT EXCEPTION\n");
+    debug_printf("========================================\n");
 
-    printf("\nFault Category: %s\n", page_fault_category_string(info->category));
-    printf("Faulting Address: %#010x\n", info->faulting_address);
-    printf("Error Code:       %#010x\n", info->error_code);
+    debug_printf("\nFault Category: %s\n", page_fault_category_string(info->category));
+    debug_printf("Faulting Address: %#010x\n", info->faulting_address);
+    debug_printf("Error Code:       %#010x\n", info->error_code);
 
     // Detailed error code breakdown
-    printf("\nError Code Analysis:\n");
-    printf("  Present:          %s\n", info->present ? "YES (protection violation)" : "NO (page not present)");
-    printf("  Access Type:      %s\n", info->write_access ? "WRITE" : "READ");
-    printf("  Privilege Mode:   %s\n", info->user_mode ? "USER" : "SUPERVISOR");
-    printf("  Reserved Bit:     %s\n", info->reserved_bit ? "SET (invalid)" : "clear");
-    printf("  Instruction Fetch:%s\n", info->instr_fetch ? "YES" : "no");
+    debug_printf("\nError Code Analysis:\n");
+    debug_printf("  Present:          %s\n", info->present ? "YES (protection violation)" : "NO (page not present)");
+    debug_printf("  Access Type:      %s\n", info->write_access ? "WRITE" : "READ");
+    debug_printf("  Privilege Mode:   %s\n", info->user_mode ? "USER" : "SUPERVISOR");
+    debug_printf("  Reserved Bit:     %s\n", info->reserved_bit ? "SET (invalid)" : "clear");
+    debug_printf("  Instruction Fetch:%s\n", info->instr_fetch ? "YES" : "no");
 
     // Address analysis
-    printf("\nAddress Analysis:\n");
+    debug_printf("\nAddress Analysis:\n");
     uint32_t page_aligned = paging_align_down(info->faulting_address);
     uint32_t offset = info->faulting_address & (PAGE_SIZE - 1);
-    printf("  Page-aligned:     %#010x\n", page_aligned);
-    printf("  Page offset:      %#x (%u bytes)\n", offset, offset);
-    printf("  Page mapped:      %s\n", info->page_mapped ? "YES" : "NO");
+    debug_printf("  Page-aligned:     %#010x\n", page_aligned);
+    debug_printf("  Page offset:      %#x (%u bytes)\n", offset, offset);
+    debug_printf("  Page mapped:      %s\n", info->page_mapped ? "YES" : "NO");
 
     if (info->page_mapped) {
-        printf("  Physical address: %#010x\n", info->physical_address);
+        debug_printf("  Physical address: %#010x\n", info->physical_address);
     }
 
     // Address region identification
-    printf("  Memory region:    ");
+    debug_printf("  Memory region:    ");
     if (info->faulting_address < 0x1000) {
-        printf("NULL page (0x0 - 0xFFF)\n");
+        debug_printf("NULL page (0x0 - 0xFFF)\n");
     } else if (info->faulting_address < 0x100000) {
-        printf("Low memory (< 1MB)\n");
+        debug_printf("Low memory (< 1MB)\n");
     } else if (info->faulting_address < 0x400000) {
-        printf("Kernel space (1MB - 4MB)\n");
+        debug_printf("Kernel space (1MB - 4MB)\n");
     } else if (info->faulting_address >= 0x40000000 && info->faulting_address < 0xC0000000) {
-        printf("User space (1GB - 3GB)\n");
+        debug_printf("User space (1GB - 3GB)\n");
     } else if (info->faulting_address >= 0xC0000000) {
-        printf("Kernel space (> 3GB)\n");
+        debug_printf("Kernel space (> 3GB)\n");
     } else {
-        printf("Kernel heap/other\n");
+        debug_printf("Kernel heap/other\n");
     }
 
     // Instruction context
-    printf("\nInstruction Context:\n");
-    printf("  Faulting EIP:     %#010x", info->eip);
+    debug_printf("\nInstruction Context:\n");
+    debug_printf("  Faulting EIP:     %#010x", info->eip);
     if (paging_is_mapped(info->eip)) {
-        printf(" (mapped)\n");
+        debug_printf(" (mapped)\n");
     } else {
-        printf(" (NOT MAPPED - invalid!)\n");
+        debug_printf(" (NOT MAPPED - invalid!)\n");
     }
 
     // Stack context
-    printf("  Stack Pointer:    %#010x", info->esp);
+    debug_printf("  Stack Pointer:    %#010x", info->esp);
     if (paging_is_mapped(info->esp)) {
-        printf(" (mapped)\n");
+        debug_printf(" (mapped)\n");
     } else {
-        printf(" (NOT MAPPED - corrupt!)\n");
+        debug_printf(" (NOT MAPPED - corrupt!)\n");
     }
 
-    printf("  Base Pointer:     %#010x", info->ebp);
+    debug_printf("  Base Pointer:     %#010x", info->ebp);
     if (paging_is_mapped(info->ebp)) {
-        printf(" (mapped)\n");
+        debug_printf(" (mapped)\n");
     } else {
-        printf(" (NOT MAPPED)\n");
+        debug_printf(" (NOT MAPPED)\n");
     }
 
     // Specific fault explanations
@@ -221,72 +221,72 @@ void page_fault_print_info(const page_fault_info_t* info)
     if (info->faulting_address >= 0x1000 &&
         info->faulting_address < 0xFFFF0000) {
         // Try to dump memory, but be careful
-        printf("\nMemory context around faulting address:\n");
-        printf("(Attempting to dump nearby memory...)\n");
+        debug_printf("\nMemory context around faulting address:\n");
+        debug_printf("(Attempting to dump nearby memory...)\n");
         // Dump 64 bytes before and after
         page_fault_dump_memory(info->faulting_address, 64);
     }
 
-    printf("\nFault Explanation:\n");
+    debug_printf("\nFault Explanation:\n");
     switch (info->category) {
         case PF_CAT_NULL_DEREF:
-            printf("  A NULL pointer (or near-NULL) was dereferenced.\n");
-            printf("  This is typically caused by:\n");
-            printf("    - Using an uninitialized pointer\n");
-            printf("    - Dereferencing a function that returned NULL\n");
-            printf("    - Array index out of bounds (negative)\n");
+            debug_printf("  A NULL pointer (or near-NULL) was dereferenced.\n");
+            debug_printf("  This is typically caused by:\n");
+            debug_printf("    - Using an uninitialized pointer\n");
+            debug_printf("    - Dereferencing a function that returned NULL\n");
+            debug_printf("    - Array index out of bounds (negative)\n");
             break;
 
         case PF_CAT_WRITE_READONLY:
-            printf("  Attempted to write to a read-only page.\n");
-            printf("  This could be:\n");
-            printf("    - Writing to read-only data (.rodata section)\n");
-            printf("    - Writing to code (.text section)\n");
-            printf("    - Violating copy-on-write protection\n");
+            debug_printf("  Attempted to write to a read-only page.\n");
+            debug_printf("  This could be:\n");
+            debug_printf("    - Writing to read-only data (.rodata section)\n");
+            debug_printf("    - Writing to code (.text section)\n");
+            debug_printf("    - Violating copy-on-write protection\n");
             break;
 
         case PF_CAT_USER_SUPERVISOR:
-            printf("  User mode code tried to access kernel memory.\n");
-            printf("  This is a security violation and indicates:\n");
-            printf("    - Buffer overflow exploit attempt\n");
-            printf("    - Incorrect privilege level\n");
-            printf("    - Corrupted user process state\n");
+            debug_printf("  User mode code tried to access kernel memory.\n");
+            debug_printf("  This is a security violation and indicates:\n");
+            debug_printf("    - Buffer overflow exploit attempt\n");
+            debug_printf("    - Incorrect privilege level\n");
+            debug_printf("    - Corrupted user process state\n");
             break;
 
         case PF_CAT_NOT_PRESENT:
         case PF_CAT_UNMAPPED_KERNEL:
         case PF_CAT_UNMAPPED_USER:
-            printf("  Accessed memory that is not mapped.\n");
-            printf("  This could be:\n");
-            printf("    - Use-after-free (memory was freed)\n");
-            printf("    - Wild pointer (uninitialized or corrupted)\n");
-            printf("    - Missing memory allocation\n");
-            printf("    - Stack corruption\n");
+            debug_printf("  Accessed memory that is not mapped.\n");
+            debug_printf("  This could be:\n");
+            debug_printf("    - Use-after-free (memory was freed)\n");
+            debug_printf("    - Wild pointer (uninitialized or corrupted)\n");
+            debug_printf("    - Missing memory allocation\n");
+            debug_printf("    - Stack corruption\n");
             break;
 
         case PF_CAT_STACK_OVERFLOW:
-            printf("  Stack has grown beyond its allocated region.\n");
-            printf("  This is typically caused by:\n");
-            printf("    - Deep recursion\n");
-            printf("    - Large local variables/arrays\n");
-            printf("    - Infinite recursion\n");
+            debug_printf("  Stack has grown beyond its allocated region.\n");
+            debug_printf("  This is typically caused by:\n");
+            debug_printf("    - Deep recursion\n");
+            debug_printf("    - Large local variables/arrays\n");
+            debug_printf("    - Infinite recursion\n");
             break;
 
         case PF_CAT_EXEC_NOEXEC:
-            printf("  Attempted to execute code from non-executable page.\n");
-            printf("  This could be:\n");
-            printf("    - Executing data as code\n");
-            printf("    - Stack-based exploit attempt (NX/DEP protection)\n");
-            printf("    - Corrupted function pointer\n");
+            debug_printf("  Attempted to execute code from non-executable page.\n");
+            debug_printf("  This could be:\n");
+            debug_printf("    - Executing data as code\n");
+            debug_printf("    - Stack-based exploit attempt (NX/DEP protection)\n");
+            debug_printf("    - Corrupted function pointer\n");
             break;
 
         case PF_CAT_RESERVED_BIT:
-            printf("  A reserved bit was set in a page table entry.\n");
-            printf("  This indicates page table corruption!\n");
+            debug_printf("  A reserved bit was set in a page table entry.\n");
+            debug_printf("  This indicates page table corruption!\n");
             break;
 
         default:
-            printf("  Unable to determine specific cause.\n");
+            debug_printf("  Unable to determine specific cause.\n");
             break;
     }
 }
@@ -296,10 +296,10 @@ void page_fault_print_info(const page_fault_info_t* info)
  */
 void page_fault_print_stack_trace(uint32_t ebp, int max_frames)
 {
-    printf("\nStack Trace:\n");
+    debug_printf("\nStack Trace:\n");
 
     if (!paging_is_mapped(ebp)) {
-        printf("  Cannot trace stack - EBP (%#x) not mapped\n", ebp);
+        debug_printf("  Cannot trace stack - EBP (%#x) not mapped\n", ebp);
         return;
     }
 
@@ -309,18 +309,18 @@ void page_fault_print_stack_trace(uint32_t ebp, int max_frames)
         // Check if frame pointer is valid
         if (!paging_is_mapped((uint32_t)frame) ||
             !paging_is_mapped((uint32_t)frame + 4)) {
-            printf("  [%d] Frame pointer %#x not mapped (end of trace)\n", i, (uint32_t)frame);
+            debug_printf("  [%d] Frame pointer %#x not mapped (end of trace)\n", i, (uint32_t)frame);
             break;
         }
 
         uint32_t ret_addr = frame[1];
-        printf("  [%d] Return address: %#010x", i, ret_addr);
+        debug_printf("  [%d] Return address: %#010x", i, ret_addr);
 
         if (paging_is_mapped(ret_addr)) {
-            printf(" (valid)\n");
+            debug_printf(" (valid)\n");
         } else {
-            printf(" (INVALID - not mapped)\n");
-            printf("      Stack may be corrupted\n");
+            debug_printf(" (INVALID - not mapped)\n");
+            debug_printf("      Stack may be corrupted\n");
             break;
         }
 
@@ -329,18 +329,18 @@ void page_fault_print_stack_trace(uint32_t ebp, int max_frames)
 
         // Sanity checks
         if (next_ebp == 0) {
-            printf("  [End of stack - EBP is 0]\n");
+            debug_printf("  [End of stack - EBP is 0]\n");
             break;
         }
 
         if (next_ebp <= (uint32_t)frame) {
-            printf("  [%d] Invalid frame pointer %#x (not growing up)\n", i + 1, next_ebp);
+            debug_printf("  [%d] Invalid frame pointer %#x (not growing up)\n", i + 1, next_ebp);
             break;
         }
 
         if (next_ebp > (uint32_t)frame + 0x10000) {
             // Frame pointer jumped more than 64KB - suspicious
-            printf("  [%d] Suspicious frame pointer %#x (jumped %u bytes)\n",
+            debug_printf("  [%d] Suspicious frame pointer %#x (jumped %u bytes)\n",
                    i + 1, next_ebp, next_ebp - (uint32_t)frame);
             break;
         }
@@ -362,7 +362,7 @@ bool page_fault_try_recover(const page_fault_info_t* info)
         // Check for copy-on-write page fault.
         if (paging_handle_page_fault_cow(info->faulting_address)) {
             pf_stats.recoverable++;
-            printf("COW page fault recovered at %#x\n", info->faulting_address);
+            debug_printf("COW page fault recovered at %#x\n", info->faulting_address);
             return true;
         }
     }
@@ -429,20 +429,20 @@ void page_fault_reset_stats(void)
  */
 void page_fault_print_stats(void)
 {
-    printf("\n=== Page Fault Statistics ===\n");
-    printf("Total page faults:      %u\n", pf_stats.total_faults);
-    printf("NULL dereferences:      %u\n", pf_stats.null_dereferences);
-    printf("Protection violations:  %u\n", pf_stats.protection_violations);
-    printf("  Write to read-only:   %u\n", pf_stats.write_readonly);
-    printf("  User->supervisor:     %u\n", pf_stats.user_supervisor);
-    printf("  Instruction fetch:    %u\n", pf_stats.instruction_fetch);
-    printf("Not present faults:     %u\n", pf_stats.not_present);
-    printf("Recoverable faults:     %u\n", pf_stats.recoverable);
-    printf("Unrecoverable faults:   %u\n", pf_stats.unrecoverable);
+    debug_printf("\n=== Page Fault Statistics ===\n");
+    debug_printf("Total page faults:      %u\n", pf_stats.total_faults);
+    debug_printf("NULL dereferences:      %u\n", pf_stats.null_dereferences);
+    debug_printf("Protection violations:  %u\n", pf_stats.protection_violations);
+    debug_printf("  Write to read-only:   %u\n", pf_stats.write_readonly);
+    debug_printf("  User->supervisor:     %u\n", pf_stats.user_supervisor);
+    debug_printf("  Instruction fetch:    %u\n", pf_stats.instruction_fetch);
+    debug_printf("Not present faults:     %u\n", pf_stats.not_present);
+    debug_printf("Recoverable faults:     %u\n", pf_stats.recoverable);
+    debug_printf("Unrecoverable faults:   %u\n", pf_stats.unrecoverable);
 
     if (pf_stats.total_faults > 0) {
         uint32_t recovery_rate = (pf_stats.recoverable * 100) / pf_stats.total_faults;
-        printf("Recovery rate:          %u%%\n", recovery_rate);
+        debug_printf("Recovery rate:          %u%%\n", recovery_rate);
     }
 }
 
@@ -454,14 +454,14 @@ void page_fault_print_stats(void)
  */
 void page_fault_dump_memory(uint32_t addr, uint32_t context)
 {
-    printf("\nMemory Dump around %#010x:\n", addr);
+    debug_printf("\nMemory Dump around %#010x:\n", addr);
 
     // Align to 16-byte boundary for nice formatting
     uint32_t start = (addr - context) & ~0xF;
     uint32_t end = (addr + context + 0xF) & ~0xF;
 
-    printf("Address   | +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F | ASCII\n");
-    printf("----------+-------------------------------------------------+------------------\n");
+    debug_printf("Address   | +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F | ASCII\n");
+    debug_printf("----------+-------------------------------------------------+------------------\n");
 
     for (uint32_t line_addr = start; line_addr < end; line_addr += 16) {
         // Check if this line is mapped
@@ -473,7 +473,7 @@ void page_fault_dump_memory(uint32_t addr, uint32_t context)
             }
         }
 
-        printf("%08x | ", line_addr);
+        debug_printf("%08x | ", line_addr);
 
         if (line_mapped) {
             uint8_t* bytes = (uint8_t*)line_addr;
@@ -482,33 +482,33 @@ void page_fault_dump_memory(uint32_t addr, uint32_t context)
             for (int i = 0; i < 16; i++) {
                 // Highlight the faulting byte
                 if (line_addr + i == addr) {
-                    printf("\033[1;31m%02x\033[0m ", bytes[i]);  // Red highlight
+                    debug_printf("\033[1;31m%02x\033[0m ", bytes[i]);  // Red highlight
                 } else {
-                    printf("%02x ", bytes[i]);
+                    debug_printf("%02x ", bytes[i]);
                 }
             }
 
-            printf("| ");
+            debug_printf("| ");
 
             // Print ASCII representation
             for (int i = 0; i < 16; i++) {
                 uint8_t c = bytes[i];
                 if (c >= 0x20 && c <= 0x7E) {
                     if (line_addr + i == addr) {
-                        printf("\033[1;31m%c\033[0m", c);  // Red highlight
+                        debug_printf("\033[1;31m%c\033[0m", c);  // Red highlight
                     } else {
-                        printf("%c", c);
+                        debug_printf("%c", c);
                     }
                 } else {
-                    printf(".");
+                    debug_printf(".");
                 }
             }
-            printf("\n");
+            debug_printf("\n");
         } else {
-            printf("?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)\n");
+            debug_printf("?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? | (unmapped)\n");
         }
     }
 
-    printf("----------+-------------------------------------------------+------------------\n");
-    printf("Legend: Faulting byte highlighted in red\n");
+    debug_printf("----------+-------------------------------------------------+------------------\n");
+    debug_printf("Legend: Faulting byte highlighted in red\n");
 }
