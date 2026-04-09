@@ -24,9 +24,7 @@ $(INITRD): $(USERMODE_TARGET)
 	tar -C $(USERMODE_BUILD_DIR) -cf $@ $(notdir $(USERMODE_TARGET))
 
 $(USERMODE_BUILD_DIR)/%: $(USERMODE_CRT0_OBJ) $(USERMODE_BUILD_DIR)/%.u.o $(LIBC_TARGET) $(LIBDS_TARGET)
-	$(CC) -o $@ $(USERMODE_CRT0_OBJ) $(USERMODE_BUILD_DIR)/$*.u.o \
-		-Wl,--start-group $(LIBC_TARGET) $(LIBDS_TARGET) -Wl,--end-group \
-		$(USERMODE_LDFLAGS)
+	$(CC) -o $@ $^ $(USERMODE_LDFLAGS)
 
 $(USERMODE_BUILD_DIR)/%.u.o: $(USERMODE_SRC_DIR)/%.c
 	@mkdir -p $(@D)

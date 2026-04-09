@@ -1,8 +1,6 @@
 #if !(defined(__is_libk))
 
 #include "./_stdlib_environ.h"
-#include <libds/libds.h>
-#include <libds/strdict.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,14 +10,6 @@
  * The array is terminated with a null pointer.
  */
 char** environ;
-
-ds_strdict_t* __stdlib_environ_get_dict()
-{
-    if (environ == NULL) {
-        return NULL;
-    }
-    return ds_strdict_create_environ((const char**)environ);
-}
 
 size_t __stdlib_environ_size()
 {

@@ -3,16 +3,9 @@
 #ifndef _STDLIB_SRC_STDLIB_ENVIRON_H
 #define _STDLIB_SRC_STDLIB_ENVIRON_H
 
-#include <libds/libds.h>
-#include <libds/strdict.h>
+#include <stddef.h>
 
 extern char** environ;
-
-/**
- * Return an strdict dictionary containing env variables. Remember to destroy
- * it later.
- */
-ds_strdict_t* __stdlib_environ_get_dict();
 
 /**
  * Returns the number of entries in environ (not counting NULL terminator).
