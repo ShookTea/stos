@@ -74,10 +74,28 @@ void _test_read_callback(void* data __attribute__((unused)))
     kfree(buffer);
 }
 
+void _test_write_callback(void* data __attribute__((unused)))
+{
+    debug_puts("Writing completed.");
+    kfree(buffer);
+}
+
 void _test_read()
 {
     buffer = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
     ata_read(15, 2, buffer, _test_read_callback, NULL);
+}
+
+void _test_write()
+{
+    buffer = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
+    // buffer[0] = 0xCAFE;
+    // buffer[1] = 0xBABE;
+    // buffer[256] = 0xDEAD;
+    // buffer[257] = 0xBEEF;
+    buffer[4] = 0xBABE;
+    buffer[258] = 0xBABE;
+    ata_write(15, 2, buffer, _test_write_callback, NULL);
 }
 
 void ata_init()
@@ -97,13 +115,6 @@ void ata_init()
     }
     debug_puts("ATA IRQ enabled");
 
-    _test_read();
-
-    // uint16_t* data = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
-    // data[256] = 0xDEAD;
-    // data[257] = 0xBEEF;
-    // data[0] = 0xCAFE;
-    // data[1] = 0xBABE;
-    // _test_write(15, 2, data);
-    // kfree(data);
+    // _test_read();
+    // _test_write();
 }
