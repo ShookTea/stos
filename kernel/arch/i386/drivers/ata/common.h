@@ -130,4 +130,9 @@ void _ata_read(ata_request_t* req);
  */
 void _ata_write(ata_request_t* req);
 
+/**
+ * Callback function for IRQ
+ */
+void _ata_irq_handler();
+
 #endif
