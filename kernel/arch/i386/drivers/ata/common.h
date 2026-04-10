@@ -103,4 +103,12 @@ void _ata_identify_devices();
  */
 bool _ata_enqueue_request(ata_request_t*);
 
+/**
+ * Check if there is anything in the queue, and if it is, run it. It should be
+ * called in two cases:
+ * 1. When there is something new added to the queue
+ * 2. When the current item in the queue was finalized
+ */
+void _ata_queue_schedule();
+
 #endif

@@ -10,6 +10,11 @@
  */
 static ds_ringbuf_t* queue = NULL;
 
+/**
+ * Set to true when there's a request currently being handled.
+ */
+static bool req_in_progress = false;
+
 bool _ata_enqueue_request(ata_request_t* request)
 {
     if (queue == NULL) {
@@ -20,7 +25,22 @@ bool _ata_enqueue_request(ata_request_t* request)
         );
     }
 
-    return ds_ringbuf_push(queue, request) == DS_SUCCESS;
+    bool result = ds_ringbuf_push(queue, request) == DS_SUCCESS;
+    if (result) {
+        _ata_queue_schedule();
+    }
+    return result;
+}
+
+void _ata_queue_schedule()
+{
+    if (queue == NULL || req_in_progress || ds_ringbuf_is_empty(queue)) {
+        return;
+    }
+    req_in_progress = true;
+
+    ata_request_t req;
+    ds_ringbuf_peek(queue, &req);
 }
 
 static bool create_and_enqueue(
