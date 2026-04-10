@@ -71,6 +71,9 @@ uint8_t _ata_read_status(uint16_t bus_base);
  */
 uint8_t _ata_wait_for_bsy_clear(uint16_t bus_base);
 
+/**
+ * Run device identification at init.
+ */
 void _ata_identify_devices();
 
 #endif

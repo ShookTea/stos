@@ -23,6 +23,8 @@ static void _irq_handler()
             debug_puts("");
         }
     }
+    // Read status register to acknowledge
+    _ata_read_status(bus_base);
     debug_puts("Reading completed.");
 }
 
@@ -90,11 +92,16 @@ void _test_write(uint32_t lba, uint8_t sector_count, uint16_t* data)
         status = _ata_read_status(bus_base);
     } while ((status & ATA_STATUS_BSY) || !(status & ATA_STATUS_DRQ));
 
-    // Now we need to send data to port.
-    for (int i = 0; i < 256; i++) {
-        outw(bus_base | ATA_BUS_OFFSET_DATA, data[i]);
-        io_wait();
+    // Now we need to send data to port, sector by sector
+    for (int s = 0; s < sector_count; s++) {
+        for (int i = 0; i < 256; i++) {
+            outw(bus_base | ATA_BUS_OFFSET_DATA, data[s * 256 + i]);
+            io_wait();
+        }
+        // Acknowledge status
+        _ata_read_status(bus_base);
     }
+
 
     // Now we'll one IRQ for each sector_count. Each such interrupt will give us
     // 256 16-bit values on port bus_base | ATA_BUS_OFFSET_DATA.
@@ -114,7 +121,7 @@ void ata_init()
     if (drive == ATA_DRIVE_PRIMARY_MASTER || drive == ATA_DRIVE_PRIMARY_SLAVE) {
         idt_register_irq_handler(PIC_LINE_PRIMARY_ATA, &_irq_handler);
         pic_enable(PIC_LINE_PRIMARY_ATA);
-    } {
+    } else {
         idt_register_irq_handler(PIC_LINE_SECONDARY_ATA, &_irq_handler);
         pic_enable(PIC_LINE_SECONDARY_ATA);
     }
@@ -125,13 +132,13 @@ void ata_init()
         io_wait();
     }
 
-    _test_read(15, 1);
+    _test_read(15, 2);
 
-    // uint16_t* data = kmalloc_flags(sizeof(uint16_t) * 256, KMALLOC_ZERO);
-    // data[14] = 0xDEAD;
-    // data[15] = 0xBEEF;
+    // uint16_t* data = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
+    // data[256] = 0xDEAD;
+    // data[257] = 0xBEEF;
     // data[0] = 0xCAFE;
     // data[1] = 0xBABE;
-    // _test_write(15, 1, data);
+    // _test_write(15, 2, data);
     // kfree(data);
 }
