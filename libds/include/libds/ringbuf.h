@@ -59,6 +59,13 @@ ds_result_t ds_ringbuf_pop(ds_ringbuf_t* ringbuf, void* addr);
 ds_result_t ds_ringbuf_peek(const ds_ringbuf_t* ringbuf, void* addr);
 
 /**
+ * Overwrites the item at the current read pointer with the value copied from
+ * "addr", without advancing the read pointer. Returns DS_SUCCESS on success,
+ * DS_ERR_INVALID if ringbuf is NULL or DS_ERR_EMPTY if the ringbuffer is empty.
+ */
+ds_result_t ds_ringbuf_poke(ds_ringbuf_t* ringbuf, const void* addr);
+
+/**
  * Clears content of the ringbuffer and resets read/write pointers.
  */
 ds_result_t ds_ringbuf_clear(ds_ringbuf_t* ringbuf);

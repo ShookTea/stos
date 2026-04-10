@@ -124,6 +124,25 @@ ds_result_t ds_ringbuf_peek(const ds_ringbuf_t* ringbuf, void* addr)
     return DS_SUCCESS;
 }
 
+ds_result_t ds_ringbuf_poke(ds_ringbuf_t* ringbuf, const void* addr)
+{
+    if (ringbuf == NULL) {
+        return DS_ERR_INVALID;
+    }
+
+    if (ringbuf->current_count == 0) {
+        return DS_ERR_EMPTY;
+    }
+
+    memcpy(
+        elem_ptr(ringbuf, ringbuf->read_ptr),
+        addr,
+        ringbuf->item_size
+    );
+
+    return DS_SUCCESS;
+}
+
 ds_result_t ds_ringbuf_clear(ds_ringbuf_t* ringbuf)
 {
     if (ringbuf == NULL) {

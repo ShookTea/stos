@@ -178,12 +178,56 @@ static void test_struct_item_size(void)
     ds_ringbuf_destroy(rb);
 }
 
+static void test_poke_basic(void)
+{
+    ds_ringbuf_t* rb = ds_ringbuf_create(4, sizeof(int), true);
+    int in = 10, replacement = 99, out = 0;
+    ds_ringbuf_push(rb, &in);
+    ASSERT(ds_ringbuf_poke(rb, &replacement) == DS_SUCCESS);
+    /* read pointer must not have moved */
+    ASSERT(ds_ringbuf_size(rb) == 1);
+    ds_ringbuf_pop(rb, &out);
+    ASSERT(out == 99);
+    ds_ringbuf_destroy(rb);
+}
+
+static void test_poke_does_not_advance_read_ptr(void)
+{
+    ds_ringbuf_t* rb = ds_ringbuf_create(4, sizeof(int), true);
+    int a = 1, b = 2, replacement = 42, out = 0;
+    ds_ringbuf_push(rb, &a);
+    ds_ringbuf_push(rb, &b);
+    ds_ringbuf_poke(rb, &replacement);
+    /* poke again — same slot, still no advance */
+    int replacement2 = 55;
+    ds_ringbuf_poke(rb, &replacement2);
+    ds_ringbuf_pop(rb, &out); ASSERT(out == 55);
+    ds_ringbuf_pop(rb, &out); ASSERT(out == 2);
+    ASSERT(ds_ringbuf_is_empty(rb));
+    ds_ringbuf_destroy(rb);
+}
+
+static void test_poke_empty(void)
+{
+    ds_ringbuf_t* rb = ds_ringbuf_create(4, sizeof(int), true);
+    int v = 0;
+    ASSERT(ds_ringbuf_poke(rb, &v) == DS_ERR_EMPTY);
+    ds_ringbuf_destroy(rb);
+}
+
+static void test_poke_null(void)
+{
+    int v = 0;
+    ASSERT(ds_ringbuf_poke(NULL, &v) == DS_ERR_INVALID);
+}
+
 static void test_null_handling(void)
 {
     int v = 0;
     ASSERT(ds_ringbuf_push(NULL, &v) == DS_ERR_INVALID);
     ASSERT(ds_ringbuf_pop(NULL, &v)  == DS_ERR_INVALID);
     ASSERT(ds_ringbuf_peek(NULL, &v) == DS_ERR_INVALID);
+    ASSERT(ds_ringbuf_poke(NULL, &v) == DS_ERR_INVALID);
     ASSERT(ds_ringbuf_clear(NULL)    == DS_ERR_INVALID);
     ASSERT(ds_ringbuf_size(NULL)     == 0);
     ASSERT(ds_ringbuf_capacity(NULL) == 0);
@@ -219,6 +263,10 @@ void test_ringbuf(void)
     RUN_TEST(test_clear);
     RUN_TEST(test_size_and_capacity);
     RUN_TEST(test_struct_item_size);
+    RUN_TEST(test_poke_basic);
+    RUN_TEST(test_poke_does_not_advance_read_ptr);
+    RUN_TEST(test_poke_empty);
+    RUN_TEST(test_poke_null);
     RUN_TEST(test_null_handling);
     RUN_TEST(test_no_leaks);
 }
