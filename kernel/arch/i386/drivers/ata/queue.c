@@ -34,13 +34,30 @@ bool _ata_enqueue_request(ata_request_t* request)
 
 void _ata_queue_schedule()
 {
-    if (queue == NULL || req_in_progress || ds_ringbuf_is_empty(queue)) {
+    if (queue == NULL || ds_ringbuf_is_empty(queue)) {
         return;
     }
-    req_in_progress = true;
-
     ata_request_t req;
     ds_ringbuf_peek(queue, &req);
+
+    if (req_in_progress) {
+        // the current request is already in progress
+        if (req.remaining_sectors == 0) {
+            // ...but it has been completed. We should dequeue it and re-run
+            // the schedule.
+            req_in_progress = false;
+            ds_ringbuf_pop(queue, &req);
+            _ata_queue_schedule();
+        }
+
+        // Either we called _ata_queue_schedule() again above, or the request
+        // should still be in progress - nothing else to be done.
+        return;
+    }
+
+    req_in_progress = true;
+
+    // Current request is a new request that should be handled appropriately.
 }
 
 static bool create_and_enqueue(
