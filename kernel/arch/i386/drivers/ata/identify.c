@@ -81,7 +81,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
             // LBA28 sectors count
             lba28_sectors_count = data;
         } else if (i == 61) {
-            lba28_sectors_count |= (data << 16);
+            lba28_sectors_count |= ((uint32_t)data << 16);
             if (lba28_sectors_count == 0) {
                 debug_puts("LBA28 not supported");
             } else {
@@ -108,7 +108,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
             if (lba48_sectors_count == 0) {
                 debug_puts("LBA48 not supported");
             } else {
-                debug_printf("LBA48 sectors count: %u\n", lba48_sectors_count);
+                debug_printf("LBA48 sec count: %llu\n", lba48_sectors_count);
             }
         }
     }
