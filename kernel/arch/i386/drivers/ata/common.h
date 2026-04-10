@@ -2,6 +2,7 @@
 #define ARCH_I386_DRIVERS_ATA_COMMON
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Two ports, for primary and secondary channel. Use that + ATA_BUS_OFFSET_.
 #define ATA_BUS_BASE_PRIMARY 0x1F0
@@ -56,6 +57,26 @@
 #define ATA_STATUS_BSY 0x80
 
 /**
+ * Type definition for a read/write request
+ */
+typedef struct {
+    // First sector location
+    uint32_t lba;
+    // Total number of sectors, starting from [lba], to read/write
+    uint8_t total_sectors;
+    // Counts down as IRQs fire
+    uint8_t remaining_sectors;
+    // Caller-provider buffer, for source/destination of data
+    uint16_t* buffer;
+    // Is this a write request?
+    bool is_write;
+    // Callback run when read/write is completed
+    void (*callback)(void* data);
+    // Data passed to [callback]
+    void* callback_data;
+} ata_request_t;
+
+/**
  * Selects a drive (ATA_COM_TARGET_DRIVE_) on given bus (ATA_BUS_BASE_).
  */
 void _ata_drive_select(uint16_t bus_base, uint8_t drive_select);
@@ -75,5 +96,11 @@ uint8_t _ata_wait_for_bsy_clear(uint16_t bus_base);
  * Run device identification at init.
  */
 void _ata_identify_devices();
+
+/**
+ * Enqueue a R/W request. Returns "true" when the request was accepted,
+ * or "false" on error.
+ */
+bool _ata_enqueue_request(ata_request_t*);
 
 #endif
