@@ -65,8 +65,12 @@ void _test_read_callback()
         if (i % 16 == 0) {
             debug_puts("");
         }
+        if (i == 256) {
+            debug_puts("");
+        }
         debug_printf("%04x ", buffer[i]);
     }
+    debug_puts("");
     kfree(buffer);
 }
 

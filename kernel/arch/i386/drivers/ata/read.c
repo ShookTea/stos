@@ -31,6 +31,9 @@ void _ata_read(ata_request_t* req)
     // Send READ SECTORS command
     outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_READ_SECTORS);
 
+    // Acknowledge status
+    _ata_read_status(bus_base);
+
     // Now we'll one IRQ for each sector_count. Each such interrupt will give us
     // 256 16-bit values on port bus_base | ATA_BUS_OFFSET_DATA.
 }
