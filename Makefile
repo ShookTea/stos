@@ -13,8 +13,10 @@ HARD_DRIVE     := .qemu/disk.img
 
 LIB_INCLUDE_FLAGS := -I$(LIBC_DIR)/include -I$(LIBDS_DIR)/include
 
-# Boot order "dc": boot first from cdrom (d), then from hard disk (c)
-QEMU_FLAGS := -m 512M -serial stdio -boot order=dc
+# Boot order:
+# "c" - hard disk
+# "d" - cdrom
+QEMU_FLAGS := -m 512M -serial stdio -boot order=cd
 
 include libc/Rules.mk
 include libds/Rules.mk
