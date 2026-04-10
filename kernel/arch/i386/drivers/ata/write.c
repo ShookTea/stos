@@ -37,19 +37,13 @@ void _ata_write(ata_request_t* req)
         status = _ata_read_status(bus_base);
     } while ((status & ATA_STATUS_BSY) || !(status & ATA_STATUS_DRQ));
 
-    // Now we need to send data to port, sector by sector
-    for (int s = 0; s < req->total_sectors; s++) {
-        for (int i = 0; i < 256; i++) {
-            outw(bus_base | ATA_BUS_OFFSET_DATA, req->buffer[s * 256 + i]);
-            io_wait();
-        }
-        // Acknowledge status
-        _ata_read_status(bus_base);
+    // Sending only first sector - remaining sectors have to be written after
+    // confirmation IRQ has been received
+    for (int i = 0; i < 256; i++) {
+        outw(bus_base | ATA_BUS_OFFSET_DATA, req->buffer[i]);
+        io_wait();
     }
 
-
-    // Now we'll one IRQ for each sector_count.
-
-    // Send FLUSH command at the end of write
-    outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_FLUSH);
+    // Acknowledge status
+    _ata_read_status(bus_base);
 }
