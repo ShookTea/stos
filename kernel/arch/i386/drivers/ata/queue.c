@@ -40,8 +40,8 @@ bool _ata_enqueue_request(ata_request_t* request)
 void _ata_queue_schedule()
 {
     if (queue == NULL || ds_ringbuf_is_empty(queue)) {
-        return;
         debug_puts("ATA queue: no tasks");
+        return;
     }
     ata_request_t req;
     ds_ringbuf_peek(queue, &req);

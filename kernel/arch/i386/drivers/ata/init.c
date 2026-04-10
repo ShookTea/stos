@@ -25,12 +25,12 @@ static void _irq_handler()
         req_loaded = ds_ringbuf_peek(queue, &req) == DS_SUCCESS;
     }
     bool is_read = req_loaded && !req.is_write;
-    // The current LBA for given request
-    size_t current_lba = req_loaded
-        ? (req.lba + req.total_sectors - req.remaining_sectors)
+    // The current sector offset for given request
+    size_t sector_offset = req_loaded
+        ? (req.total_sectors - req.remaining_sectors)
         : 0;
     // For read op: location on the buffer to where we should read data
-    uint16_t* read_buff = is_read ? (req.buffer + (current_lba * 256)) : NULL;
+    uint16_t* read_buff = is_read ? (req.buffer + (sector_offset * 256)) : NULL;
 
     debug_puts("Received IRQ event on ATA");
     for (int i = 0; i < 256; i++) {
@@ -58,7 +58,7 @@ static void _irq_handler()
 
 static uint16_t* buffer = NULL;
 
-void _test_read_callback()
+void _test_read_callback(void* data __attribute__((unused)))
 {
     debug_puts("Read completed, data:");
     for (size_t i = 0; i < 512; i++) {

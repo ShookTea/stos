@@ -80,9 +80,9 @@ uint8_t _ata_read_status(uint16_t bus_base)
     }
 
     if (bus_base == ATA_BUS_BASE_PRIMARY) {
-        selected_drive_primary = to_save;
+        saved_drive_primary = to_save;
     } else {
-        selected_drive_secondary = to_save;
+        saved_drive_secondary = to_save;
     }
     return res;
 }

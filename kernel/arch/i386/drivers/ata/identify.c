@@ -98,13 +98,13 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
             }
         } else if (i == 100) {
             // LBA48 sectors count
-            lba28_sectors_count = data;
+            lba48_sectors_count = data;
         } else if (i == 101) {
-            lba28_sectors_count |= (((uint64_t)data) << 16);
+            lba48_sectors_count |= (((uint64_t)data) << 16);
         } else if (i == 102) {
-            lba28_sectors_count |= (((uint64_t)data) << 32);
+            lba48_sectors_count |= (((uint64_t)data) << 32);
         } else if (i == 103) {
-            lba28_sectors_count |= (((uint64_t)data) << 48);
+            lba48_sectors_count |= (((uint64_t)data) << 48);
             if (lba48_sectors_count == 0) {
                 debug_puts("LBA48 not supported");
             } else {
@@ -121,9 +121,9 @@ void _ata_identify_devices()
     debug_puts("  Identifying master drive at primary port");
     _ata_identify(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
     debug_puts("  Identifying slave drive at primary port");
-    _ata_identify(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
+    _ata_identify(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_SLAVE);
     debug_puts("  Identifying master drive at secondary port");
-    _ata_identify(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
+    _ata_identify(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_MASTER);
     debug_puts("  Identifying slave drive at secondary port");
     _ata_identify(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
 

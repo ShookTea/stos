@@ -6,7 +6,7 @@
 
 void _ata_write(ata_request_t* req)
 {
-    if (req == NULL || req->is_write) {
+    if (req == NULL || !req->is_write) {
         return;
     }
 
@@ -48,8 +48,7 @@ void _ata_write(ata_request_t* req)
     }
 
 
-    // Now we'll one IRQ for each sector_count. Each such interrupt will give us
-    // 256 16-bit values on port bus_base | ATA_BUS_OFFSET_DATA.
+    // Now we'll one IRQ for each sector_count.
 
     // Send FLUSH command at the end of write
     outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_FLUSH);
