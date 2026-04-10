@@ -34,15 +34,15 @@ typedef enum {
     /** Operation was successful */
     DS_SUCCESS = 0,
     /** Pointer to a structure was invalid */
-    DS_ERR_INVALID,
+    DS_ERR_INVALID = 1,
     /** Failed to save - container full */
-    DS_ERR_FULL,
+    DS_ERR_FULL = 2,
     /** Failed to read - container empty */
-    DS_ERR_EMPTY,
+    DS_ERR_EMPTY = 3,
     /** Failed to write - item already exists */
-    DS_ERR_DUPLICATE,
+    DS_ERR_DUPLICATE = 4,
     /** Failed to read - item not found */
-    DS_ERR_NOT_FOUND
+    DS_ERR_NOT_FOUND = 5
 } ds_result_t;
 
 #endif

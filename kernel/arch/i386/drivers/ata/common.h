@@ -117,4 +117,14 @@ void _ata_queue_schedule();
  */
 ds_ringbuf_t* _ata_queue();
 
+/**
+ * Run read command based on the request.
+ */
+void _ata_read(ata_request_t* req);
+
+/**
+ * Run write command based on the request.
+ */
+void _ata_write(ata_request_t* req);
+
 #endif

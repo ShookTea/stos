@@ -1,5 +1,6 @@
 #include "./common.h"
 #include "kernel/drivers/ata.h"
+#include "kernel/debug.h"
 #include <libds/libds.h>
 #include <libds/ringbuf.h>
 
@@ -18,7 +19,7 @@ static bool req_in_progress = false;
 bool _ata_enqueue_request(ata_request_t* request)
 {
     if (queue == NULL) {
-        ds_ringbuf_create(
+        queue = ds_ringbuf_create(
             QUEUE_SIZE,
             sizeof(ata_request_t),
             true
@@ -27,6 +28,10 @@ bool _ata_enqueue_request(ata_request_t* request)
 
     bool result = ds_ringbuf_push(queue, request) == DS_SUCCESS;
     if (result) {
+        debug_printf(
+            "ATA queue: %s task enqueued\n",
+            request->is_write ? "write" : "read"
+        );
         _ata_queue_schedule();
     }
     return result;
@@ -36,6 +41,7 @@ void _ata_queue_schedule()
 {
     if (queue == NULL || ds_ringbuf_is_empty(queue)) {
         return;
+        debug_puts("ATA queue: no tasks");
     }
     ata_request_t req;
     ds_ringbuf_peek(queue, &req);
@@ -45,10 +51,13 @@ void _ata_queue_schedule()
         if (req.remaining_sectors == 0) {
             // ...but it has been completed. We should dequeue it and re-run
             // the schedule.
+            debug_puts("ATA queue: top task completed.");
             req_in_progress = false;
             req.callback(req.callback_data);
             ds_ringbuf_pop(queue, &req);
             _ata_queue_schedule();
+        } else {
+            debug_puts("ATA queue: current task still in progress");
         }
 
         // Either we called _ata_queue_schedule() again above, or the request
@@ -56,9 +65,17 @@ void _ata_queue_schedule()
         return;
     }
 
-    req_in_progress = true;
-
     // Current request is a new request that should be handled appropriately.
+    req_in_progress = true;
+    if (req.is_write) {
+        debug_puts("ATA queue: running write command");
+        _ata_write(&req);
+        debug_puts("ATA queue: write command completed");
+    } else {
+        debug_puts("ATA queue: running read command");
+        _ata_read(&req);
+        debug_puts("ATA queue: read command completed");
+    }
 }
 
 static bool create_and_enqueue(
