@@ -1,7 +1,7 @@
 #include "./common.h"
 #include "kernel/drivers/ata.h"
-#include "libds/libds.h"
-#include "libds/ringbuf.h"
+#include <libds/libds.h>
+#include <libds/ringbuf.h>
 
 #define QUEUE_SIZE 16
 
@@ -95,4 +95,9 @@ bool ata_write(
         callback_data,
         true
     );
+}
+
+ds_ringbuf_t* _ata_queue()
+{
+    return queue;
 }

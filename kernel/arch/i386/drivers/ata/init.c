@@ -7,6 +7,8 @@
 #include "../../idt/idt.h"
 #include "../../io.h"
 #include "kernel/memory/kmalloc.h"
+#include <libds/libds.h>
+#include <libds/ringbuf.h>
 
 static void _irq_handler()
 {
@@ -15,17 +17,43 @@ static void _irq_handler()
         || drive == ATA_DRIVE_PRIMARY_SLAVE;
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
 
+    // Get current task, if any exist
+    ds_ringbuf_t* queue = _ata_queue();
+    ata_request_t req;
+    bool req_loaded = false;
+    if (queue != NULL) {
+        req_loaded = ds_ringbuf_peek(queue, &req) == DS_SUCCESS;
+    }
+    bool is_read = req_loaded && !req.is_write;
+    // The current LBA for given request
+    size_t current_lba = req_loaded
+        ? (req.lba + req.total_sectors - req.remaining_sectors)
+        : 0;
+    // For read op: location on the buffer to where we should read data
+    uint16_t* read_buff = is_read ? (req.buffer + (current_lba * 256)) : NULL;
+
     debug_puts("Received IRQ event on ATA");
     for (int i = 0; i < 256; i++) {
         uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
-        debug_printf("%04x ", data);
-        if (i % 16 == 15) {
-            debug_puts("");
+        if (read_buff != NULL) {
+            read_buff[i] = data;
         }
     }
+
+    // Reduce the number of remaining sectors
+    bool reschedule_required = false;
+    if (req_loaded) {
+        req.remaining_sectors--;
+        reschedule_required = req.remaining_sectors == 0;
+        ds_ringbuf_poke(queue, &req);
+    }
+
     // Read status register to acknowledge
     _ata_read_status(bus_base);
     debug_puts("Reading completed.");
+    if (reschedule_required) {
+        _ata_queue_schedule();
+    }
 }
 
 /**
@@ -127,12 +155,7 @@ void ata_init()
     }
     debug_puts("ATA IRQ enabled");
 
-    for (int i = 0; i < 500000; i++) {
-        volatile int j __attribute__((unused)) = i * i;
-        io_wait();
-    }
-
-    _test_read(15, 2);
+    // _test_read(15, 2);
 
     // uint16_t* data = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
     // data[256] = 0xDEAD;

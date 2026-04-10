@@ -1,6 +1,7 @@
 #ifndef ARCH_I386_DRIVERS_ATA_COMMON
 #define ARCH_I386_DRIVERS_ATA_COMMON
 
+#include <libds/ringbuf.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -110,5 +111,10 @@ bool _ata_enqueue_request(ata_request_t*);
  * 2. When the current item in the queue was finalized
  */
 void _ata_queue_schedule();
+
+/**
+ * Returns pointer to the request queue.
+ */
+ds_ringbuf_t* _ata_queue();
 
 #endif
