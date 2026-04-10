@@ -46,6 +46,7 @@ void _ata_queue_schedule()
             // ...but it has been completed. We should dequeue it and re-run
             // the schedule.
             req_in_progress = false;
+            req.callback(req.callback_data);
             ds_ringbuf_pop(queue, &req);
             _ata_queue_schedule();
         }
