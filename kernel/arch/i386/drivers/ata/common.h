@@ -71,6 +71,9 @@ typedef struct {
     uint16_t* buffer;
     // Is this a write request?
     bool is_write;
+    // For write requests, to distinguish between "IRQ after write" and "IRQ
+    // after flush".
+    bool awaiting_flush;
     // Callback run when read/write is completed
     void (*callback)(void* data);
     // Data passed to [callback]

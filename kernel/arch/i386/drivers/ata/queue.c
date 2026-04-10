@@ -94,6 +94,7 @@ static bool create_and_enqueue(
     req.callback = callback;
     req.callback_data = callback_data;
     req.is_write = is_write;
+    req.awaiting_flush = false;
 
     return _ata_enqueue_request(&req);
 }
