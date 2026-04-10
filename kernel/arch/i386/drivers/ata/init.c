@@ -25,17 +25,15 @@ static void _irq_handler()
         req_loaded = ds_ringbuf_peek(queue, &req) == DS_SUCCESS;
     }
     bool is_read = req_loaded && !req.is_write;
-    // The current sector offset for given request
-    size_t sector_offset = req_loaded
-        ? (req.total_sectors - req.remaining_sectors)
-        : 0;
-    // For read op: location on the buffer to where we should read data
-    uint16_t* read_buff = is_read ? (req.buffer + (sector_offset * 256)) : NULL;
-
     debug_puts("Received IRQ event on ATA");
-    for (int i = 0; i < 256; i++) {
-        uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
-        if (read_buff != NULL) {
+
+    if (is_read) {
+        // The current sector offset for given request
+        size_t sector_offset = req.total_sectors - req.remaining_sectors;
+        // For read op: location on the buffer to where we should read data
+        uint16_t* read_buff = req.buffer + (sector_offset * 256);
+        for (int i = 0; i < 256; i++) {
+            uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
             read_buff[i] = data;
         }
     }
@@ -89,12 +87,12 @@ void _test_read()
 void _test_write()
 {
     buffer = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
-    // buffer[0] = 0xCAFE;
-    // buffer[1] = 0xBABE;
-    // buffer[256] = 0xDEAD;
-    // buffer[257] = 0xBEEF;
-    buffer[4] = 0xBABE;
-    buffer[258] = 0xBABE;
+    buffer[0] = 0xCAFE;
+    buffer[1] = 0xBABE;
+    buffer[256] = 0xDEAD;
+    buffer[257] = 0xBEEF;
+    // buffer[4] = 0xCAFE;
+    // buffer[258] = 0xCAFE;
     ata_write(15, 2, buffer, _test_write_callback, NULL);
 }
 
@@ -115,6 +113,6 @@ void ata_init()
     }
     debug_puts("ATA IRQ enabled");
 
-    // _test_read();
+    _test_read();
     // _test_write();
 }
