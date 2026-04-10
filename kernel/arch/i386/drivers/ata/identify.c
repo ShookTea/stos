@@ -74,9 +74,11 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
         if (i == 88) {
             // Checking UDMA modes - low byte shows supported, high byte shows
             // the active mode.
-            uint8_t udma_sup = data & 0xFF;
-            uint8_t udma_act = (data >> 8) & 0xFF;
-            debug_printf("UDMA sup=%#02x act=%#02x\n", udma_sup, udma_act);
+            #if KERNEL_DEBUG_ANY
+                uint8_t udma_sup = data & 0xFF;
+                uint8_t udma_act = (data >> 8) & 0xFF;
+                debug_printf("UDMA sup=%#02x act=%#02x\n", udma_sup, udma_act);
+            #endif
         } else if (i == 60) {
             // LBA28 sectors count
             lba28_sectors_count = data;

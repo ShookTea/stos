@@ -19,13 +19,11 @@
 #if (KERNEL_DEBUG_ANY)
     int debug_puts(const char* string);
     int debug_printf(const char* format, ...);
-    int debug_putchar(int ic);
     #define DEBUG_ONLY(expr) (expr)
 #else
     // No-op definitions
+    #define debug_puts(...) ((void)0)
     #define debug_printf(...) ((void)0)
-    #define debug_puts(s) ((void)0)
-    #define debug_putchar(c) ((void)0)
     #define DEBUG_ONLY(expr) ((void)(expr))
 #endif
 

@@ -41,16 +41,4 @@ int debug_printf(const char* format, ...)
     #endif
 }
 
-int debug_putchar(int ic)
-{
-    #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
-        serial_put_c(ic);
-        return 1;
-    #elif KERNEL_DEBUG_TERMINAL
-        return putchar(ic);
-    #else
-        return 0;
-    #endif
-}
-
 #endif
