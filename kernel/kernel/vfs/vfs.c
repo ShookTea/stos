@@ -13,7 +13,7 @@
 
 vfs_node_t* vfs_root = 0;
 static vfs_node_t** mounted_nodes = NULL;
-static uint32_t mounted_notes_count = 0;
+static uint32_t mounted_nodes_count = 0;
 
 // Allocation of some memory for existing file handles
 static vfs_file_t** file_handles = NULL;
@@ -50,7 +50,11 @@ static vfs_file_t* allocate_file_handle(
         );
         // Clear newly allocated memory to zero it out (which is used later
         // for checking if handle is present or not)
-        memset(file_handles + file_handles_size, 0, VFS_FILE_HANDLE_REALLOC_SIZE);
+        memset(
+            file_handles + file_handles_size,
+            0,
+            sizeof(vfs_file_t*) * VFS_FILE_HANDLE_REALLOC_SIZE
+        );
         file_handles_size = new_size;
 
         // file_handles_open_count is now guaranteed to point to the first
@@ -93,7 +97,7 @@ static struct dirent* vfs_root_readdir(
     __attribute__((unused))vfs_node_t* node,
     size_t index
 ) {
-    if (index >= mounted_notes_count) {
+    if (index >= mounted_nodes_count) {
         return NULL;
     }
     static struct dirent ent;
@@ -106,7 +110,7 @@ static vfs_node_t* vfs_root_finddir(
     __attribute__((unused))vfs_node_t* node,
     char* name
 ) {
-    for (size_t i = 0; i < mounted_notes_count; i++) {
+    for (size_t i = 0; i < mounted_nodes_count; i++) {
         if (strcmp(mounted_nodes[i]->filename, name) == 0) {
             return mounted_nodes[i];
         }
@@ -204,12 +208,13 @@ void vfs_mount_node(vfs_node_t* node)
 {
     spinlock_acquire(&vfs_lock);
 
-    if (mounted_notes_count >= VFS_MAX_MOUNTED_NODES) {
+    if (mounted_nodes_count >= VFS_MAX_MOUNTED_NODES) {
+        spinlock_release(&vfs_lock);
         return;
     }
 
-    mounted_nodes[mounted_notes_count] = node;
-    mounted_notes_count++;
+    mounted_nodes[mounted_nodes_count] = node;
+    mounted_nodes_count++;
 
     spinlock_release(&vfs_lock);
 }
@@ -268,6 +273,8 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     strcpy(node->filename, filename);
     node->type = type;
     node->length = 0;
+    node->open_count = 0;
+    node->inode = 0;
     node->open_node = NULL;
     node->close_node = NULL;
     node->read_node = NULL;

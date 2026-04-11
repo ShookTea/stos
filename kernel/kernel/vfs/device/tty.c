@@ -73,7 +73,7 @@ static void handle_key_event(keyboard_event_t evt)
             if (wait_obj->count > 0) {
                 wait_wake_up(wait_obj);
             }
-    } else {
+    } else if (current_line_pos < BUFFER_SIZE) {
         putchar(evt.ascii);
         current_line[current_line_pos] = evt.ascii;
         current_line_pos++;

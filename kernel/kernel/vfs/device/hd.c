@@ -2,6 +2,7 @@
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
 #include "kernel/memory/kmalloc.h"
+#include "kernel/spinlock.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include "stdlib.h"
@@ -47,6 +48,7 @@ typedef struct {
 static uint8_t* rw_wait_map = NULL;
 static size_t rw_wait_map_count = 0;
 static size_t rw_wait_map_capacity = 0;
+static spinlock_t rw_wait_spinlock = SPINLOCK_INIT;
 
 /**
  * Creates a new entry in rw_wait_map in "not ready" state and returns ID of
@@ -54,6 +56,7 @@ static size_t rw_wait_map_capacity = 0;
  */
 static size_t allocate_rw_wait_pos()
 {
+    spinlock_acquire(&rw_wait_spinlock);
     if (rw_wait_map_capacity == rw_wait_map_count) {
         rw_wait_map_capacity += 10;
         rw_wait_map = krealloc(
@@ -63,16 +66,19 @@ static size_t allocate_rw_wait_pos()
         memset(rw_wait_map + rw_wait_map_count, 0, 10);
         rw_wait_map[rw_wait_map_count] = 1;
         rw_wait_map_count++;
+        spinlock_release(&rw_wait_spinlock);
         return rw_wait_map_count - 1;
     }
 
     for (size_t i = 0; i < rw_wait_map_capacity; i++) {
         if (rw_wait_map[i] == 0) {
             rw_wait_map[i] = 1;
+            spinlock_release(&rw_wait_spinlock);
             return i;
         }
     }
     _debug_puts("ERR: unexpected situation at allocate_rw_wait_pos");
+    spinlock_release(&rw_wait_spinlock);
     abort();
 }
 
@@ -344,7 +350,7 @@ void device_hd_unmount()
         hd_metadata_t* metadata = node->metadata;
         if (metadata != NULL) {
             if (metadata->wait_obj != NULL) {
-                kfree(metadata->wait_obj);
+                wait_deallocate(metadata->wait_obj);
             }
             kfree(metadata);
         }

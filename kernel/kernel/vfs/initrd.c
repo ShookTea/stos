@@ -64,7 +64,7 @@ static size_t initrd_read(
 ) {
     initrd_file_data_t* metadata = file->node->metadata;
     void* file_start = metadata->address;
-    void* file_end = metadata->address + file->node->length;
+    void* file_end = (uint8_t*)metadata->address + file->node->length;
 
     void* read_start = file_start + offset;
     void* read_end = read_start + size;
