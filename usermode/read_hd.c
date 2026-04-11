@@ -16,7 +16,7 @@ int main(void)
     memset(data, 0, SIZE_BYTES);
     read(fd, data, SIZE_BYTES);
     for (size_t i = 0; i < SIZE_BYTES; i++) {
-        if (i % 16 == 0) {
+        if (i % 32 == 0) {
             puts("");
         }
         printf("%02X ", data[i]);

@@ -183,7 +183,7 @@ static size_t write(
     vfs_file_t* file,
     size_t offset,
     size_t size,
-    void* ptr
+    const void* ptr
 ) {
     if (!file->writeable) {
         return 0;

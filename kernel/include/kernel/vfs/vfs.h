@@ -88,7 +88,7 @@ typedef size_t (*write_node_t)(
     vfs_file_t* file,
     size_t offset,
     size_t size,
-    void* ptr
+    const void* ptr
 );
 // Handler for reading children of directory. For given directory `node`
 // returns name of N'th (`index`) child as a struct dirent, or NULL if no
@@ -129,7 +129,7 @@ struct dirent
 extern vfs_node_t* vfs_root;
 
 size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr);
-size_t vfs_write(vfs_file_t* file, uint32_t size, void* ptr);
+size_t vfs_write(vfs_file_t* file, uint32_t size, const void* ptr);
 vfs_file_t* vfs_open(vfs_node_t* node, uint8_t open_mode);
 void vfs_close(vfs_file_t* file);
 struct dirent* vfs_readdir(vfs_node_t* node, size_t index);

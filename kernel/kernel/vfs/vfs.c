@@ -143,7 +143,7 @@ size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr)
     return 0;
 }
 
-size_t vfs_write(vfs_file_t* file, uint32_t size, void* ptr)
+size_t vfs_write(vfs_file_t* file, uint32_t size, const void* ptr)
 {
     if (file->node->write_node != 0) {
         size_t bytes = file->node->write_node(file, file->offset, size, ptr);
