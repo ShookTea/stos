@@ -202,10 +202,13 @@ vfs_node_t** device_hd_mount()
             *ata_drive_ptr,
             drive_name
         );
+        ata_select_drive(*ata_drive_ptr);
 
         vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
         vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = read;
+        node->length = (uint64_t)ata_lba28_sectors_count() * SECTOR_SIZE;
+        _debug_printf("size set to %llu\n", node->length);
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),
             KMALLOC_ZERO

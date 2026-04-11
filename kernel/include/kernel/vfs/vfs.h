@@ -107,7 +107,7 @@ typedef struct vfs_node {
     char filename[128];
     uint8_t type; // one of VFS_TYPE_
     uint32_t inode; // File ID, device specific, to identify files (on a disk)
-    uint32_t length; // File size in bytes
+    uint64_t length; // File size in bytes
     uint32_t open_count;
     open_node_t open_node;
     close_node_t close_node;

@@ -228,7 +228,7 @@ static void handle_command_sent()
                         printf(" - %s (dir)\n", child->filename);
                     } else {
                         printf(
-                            " - %s (%d B)\n",
+                            " - %s (%llu B)\n",
                             child->filename,
                             child->length
                         );
