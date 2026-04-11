@@ -19,17 +19,18 @@ static void add_device_file(vfs_node_t* node)
     device_files_count++;
 }
 
-static struct dirent* readdir(
+static bool readdir(
     vfs_node_t* directory __attribute__((unused)),
-    size_t index
+    size_t index,
+    struct dirent* out
 ) {
     if (index >= device_files_count) {
-        return NULL;
+        return false;
     }
-    static struct dirent ent;
-    strcpy(ent.name, device_files[index]->filename);
-    ent.ino = device_files[index]->inode;
-    return &ent;
+
+    strcpy(out->name, device_files[index]->filename);
+    out->ino = device_files[index]->inode;
+    return true;
 }
 
 static vfs_node_t* finddir(

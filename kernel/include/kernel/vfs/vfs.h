@@ -91,9 +91,13 @@ typedef size_t (*write_node_t)(
     const void* ptr
 );
 // Handler for reading children of directory. For given directory `node`
-// returns name of N'th (`index`) child as a struct dirent, or NULL if no
-// child with given index exists.
-typedef struct dirent* (*readdir_node_t)(struct vfs_node* node, size_t index);
+// stores name of N'th (`index`) child as a struct dirent, or returns false if
+// no child with given index exists.
+typedef bool (*readdir_node_t)(
+    struct vfs_node* node,
+    size_t index,
+    struct dirent* out
+);
 // Handler for retrurning a child node from current `node` directory, based on
 // child's `name`.
 typedef struct vfs_node* (*finddir_node_t)(struct vfs_node* node, char* name);
@@ -132,7 +136,7 @@ size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr);
 size_t vfs_write(vfs_file_t* file, uint32_t size, const void* ptr);
 vfs_file_t* vfs_open(vfs_node_t* node, uint8_t open_mode);
 void vfs_close(vfs_file_t* file);
-struct dirent* vfs_readdir(vfs_node_t* node, size_t index);
+bool vfs_readdir(vfs_node_t* node, size_t index, struct dirent* out);
 vfs_node_t* vfs_finddir(vfs_node_t* node, char* name);
 
 void vfs_init();

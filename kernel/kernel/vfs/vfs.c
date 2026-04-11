@@ -93,17 +93,18 @@ static void deallocate_file_handle(vfs_file_t* handle)
     kfree(handle);
 }
 
-static struct dirent* vfs_root_readdir(
+static bool vfs_root_readdir(
     __attribute__((unused))vfs_node_t* node,
-    size_t index
+    size_t index,
+    struct dirent* out
 ) {
     if (index >= mounted_nodes_count) {
-        return NULL;
+        return false;
     }
-    static struct dirent ent;
-    strcpy(ent.name, mounted_nodes[index]->filename);
-    ent.ino = mounted_nodes[index]->inode;
-    return &ent;
+
+    strcpy(out->name, mounted_nodes[index]->filename);
+    out->ino = mounted_nodes[index]->inode;
+    return true;
 }
 
 static vfs_node_t* vfs_root_finddir(
@@ -188,12 +189,12 @@ void vfs_close(vfs_file_t* file)
     deallocate_file_handle(file);
 }
 
-struct dirent* vfs_readdir(vfs_node_t* node, size_t index)
+bool vfs_readdir(vfs_node_t* node, size_t index, struct dirent* out)
 {
     if ((node->type & VFS_TYPE_DIRECTORY) != 0 && node->readdir_node != 0) {
-        return node->readdir_node(node, index);
+        return node->readdir_node(node, index, out);
     }
-    return NULL;
+    return false;
 }
 
 vfs_node_t* vfs_finddir(vfs_node_t* node, char* name)

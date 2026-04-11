@@ -25,18 +25,19 @@ static vfs_node_t* initrd = NULL;
 static bool mounted = false;
 static char empty_name[100];
 
-static struct dirent* initrd_readdir(
+static bool initrd_readdir(
     vfs_node_t* directory,
-    size_t index
+    size_t index,
+    struct dirent* out
 ) {
     initrd_directory_data_t* dir_data = directory->metadata;
     if (index >= dir_data->children_count) {
-        return NULL;
+        return false;
     }
-    static struct dirent ent;
-    strcpy(ent.name, dir_data->children[index]->filename);
-    ent.ino = dir_data->children[index]->inode;
-    return &ent;
+
+    strcpy(out->name, dir_data->children[index]->filename);
+    out->ino = dir_data->children[index]->inode;
+    return true;
 }
 
 static vfs_node_t* initrd_finddir(

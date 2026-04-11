@@ -224,11 +224,10 @@ static void handle_command_sent()
             } else if (node->type & VFS_TYPE_DIRECTORY) {
                 puts("Directory found. Children:");
                 size_t i = 0;
-                struct dirent* dir = vfs_readdir(node, i);
-                while (dir != NULL) {
-                    vfs_node_t* child = vfs_finddir(node, dir->name);
+                struct dirent dir;
+                while (vfs_readdir(node, i, &dir)) {
+                    vfs_node_t* child = vfs_finddir(node, dir.name);
                     i++;
-                    dir = vfs_readdir(node, i);
 
                     if (child->type & VFS_TYPE_DIRECTORY) {
                         printf(" - %s (dir)\n", child->filename);
