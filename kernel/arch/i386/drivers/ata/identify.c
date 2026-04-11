@@ -182,6 +182,7 @@ void ata_get_available_drives(uint8_t* res)
 void ata_select_drive(uint8_t drive)
 {
     selected_drive = drive;
+    // TODO: implement drive switch?
 }
 
 uint32_t ata_lba28_sectors_count()
