@@ -26,7 +26,7 @@
  * Structure describing a single character on screen
  */
 typedef struct {
-    char codepoint; // displayed character
+    uint32_t codepoint; // displayed character
     enum vga_color bg_color;
     enum vga_color fg_color;
     uint8_t flags;
@@ -522,6 +522,36 @@ void terminal_write_char(char c)
         return;
     }
 
+    static uint32_t utf8 = 0;
+    static int utf8_remaining = 0;
+
+    if (c & 0x80) {
+        uint8_t v = c;
+        // This is a part of unicode character.
+        if (v >= 0xC0 && v <= 0xDF) {
+            // 2-byte lead
+            utf8 = v & 0x1F;
+            utf8_remaining = 1;
+        } else if (v >= 0xE0 && v <= 0xEF) {
+            // 3-byte lead
+            utf8 = v & 0x0F;
+            utf8_remaining = 2;
+        } else if (v >= 0xF0 && v <= 0xF7) {
+            // 4-byte lead
+            utf8 = v & 0x07;
+            utf8_remaining = 3;
+        } else {
+            // Continuation - accumulate
+            utf8 = (utf8 << 6) | (v & 0x3F);
+            utf8_remaining--;
+        }
+    } else {
+        utf8 = c;
+    }
+    if (utf8_remaining > 0) {
+        return;
+    }
+
     if (!in_escape_mode && c == '\033') {
         // Entering escape mode
         in_escape_mode = true;
@@ -666,7 +696,7 @@ void terminal_write_char(char c)
     else {
         // Display normal character
         putentryat(
-            c,
+            utf8,
             cursor_row,
             cursor_column
         );
