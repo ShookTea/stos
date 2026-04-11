@@ -57,6 +57,11 @@ vfs_node_t* device_mount()
     vfs_mount_node(node);
 
     add_device_file(device_tty_mount());
+    vfs_node_t** hd = device_hd_mount();
+    while (hd != NULL) {
+        add_device_file(*hd);
+        hd++;
+    }
 
     return node;
 }
@@ -67,6 +72,7 @@ void device_unmount()
         return;
     }
     device_tty_unmount();
+    device_hd_unmount();
     // TODO: call VFS and tell it that the node no longer exists
     kfree(node);
 
