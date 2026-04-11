@@ -118,6 +118,7 @@ static size_t read(
         return 0;
     }
 
+    ata_select_drive(meta->disk_id);
     size_t wait_idx = allocate_rw_wait_pos();
 
     hd_wakeup_data_t wakeup_data;
@@ -136,7 +137,7 @@ static size_t read(
     size_t highest_sector_byte = sector_align_up(offset + size);
     size_t low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
     size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
-    size_t sector_count = high_sector_lba - low_sector_lba + 1;
+    size_t sector_count = high_sector_lba - low_sector_lba;
 
     _debug_printf(
         "[wait_idx=%u] lba=%u, sector count=%u\n",
@@ -169,11 +170,12 @@ static size_t read(
 
     // Reading was completed - copy data to output pointer
     size_t offset_in_buffer = offset - lowest_sector_byte;
-    memcpy(ptr, buffer + offset_in_buffer, size);
+    memcpy(ptr, ((uint8_t*)buffer) + offset_in_buffer, size);
 
     // Mark rw_map entry as free to use
     rw_wait_map[wait_idx] = 0;
 
+    kfree(buffer);
     return size;
 }
 
@@ -183,7 +185,7 @@ static size_t write(
     size_t size,
     void* ptr
 ) {
-    if (!file->readable) {
+    if (!file->writeable) {
         return 0;
     }
 
@@ -193,6 +195,7 @@ static size_t write(
         return 0;
     }
 
+    ata_select_drive(meta->disk_id);
     size_t wait_idx = allocate_rw_wait_pos();
 
     hd_wakeup_data_t wakeup_data;
@@ -211,7 +214,7 @@ static size_t write(
     size_t highest_sector_byte = sector_align_up(offset + size);
     size_t low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
     size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
-    size_t sector_count = high_sector_lba - low_sector_lba + 1;
+    size_t sector_count = high_sector_lba - low_sector_lba;
 
     _debug_printf(
         "[wait_idx=%u] lba=%u, sector count=%u\n",
@@ -252,7 +255,7 @@ static size_t write(
 
     // Copy data from pointer to sectors
     size_t offset_in_buffer = offset - lowest_sector_byte;
-    memcpy(buffer + offset_in_buffer, ptr, size);
+    memcpy(((uint8_t*)buffer) + offset_in_buffer, ptr, size);
 
     // Run write command
     ata_write(
@@ -273,6 +276,7 @@ static size_t write(
     // Mark rw_map entry as free to use
     rw_wait_map[wait_idx] = 0;
 
+    kfree(buffer);
     return size;
 }
 
@@ -291,7 +295,7 @@ vfs_node_t** device_hd_mount()
     uint8_t ata_drives[5];
     ata_get_available_drives(ata_drives);
     uint8_t* ata_drive_ptr = ata_drives;
-    char* drive_name = "hda";
+    char drive_name[] = "hda";
     char drive_letter = 'a';
     size_t pointer_index = 0;
     while (*ata_drive_ptr != 0) {
@@ -331,20 +335,22 @@ vfs_node_t** device_hd_mount()
 
 void device_hd_unmount()
 {
-    if (nodes != NULL) {
-        vfs_node_t** ptr = nodes;
-        while (*ptr != NULL) {
-            vfs_node_t* node = *ptr;
-            hd_metadata_t* metadata = node->metadata;
-            if (metadata != NULL) {
-                if (metadata->wait_obj != NULL) {
-                    kfree(metadata->wait_obj);
-                }
-                kfree(metadata);
-            }
-            kfree(node);
-            ptr++;
-        }
-        kfree(nodes);
+    if (nodes == NULL) {
+        return;
     }
+    vfs_node_t** ptr = nodes;
+    while (*ptr != NULL) {
+        vfs_node_t* node = *ptr;
+        hd_metadata_t* metadata = node->metadata;
+        if (metadata != NULL) {
+            if (metadata->wait_obj != NULL) {
+                kfree(metadata->wait_obj);
+            }
+            kfree(metadata);
+        }
+        kfree(node);
+        ptr++;
+    }
+    kfree(nodes);
+    nodes = NULL;
 }
