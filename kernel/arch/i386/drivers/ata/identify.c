@@ -2,7 +2,6 @@
 #include "kernel/debug.h"
 #include "./common.h"
 #include "../../io.h"
-#include "kernel/memory/kmalloc.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
