@@ -180,6 +180,17 @@ dentry_t* vfs_dentry_create(
 dentry_t* vfs_resolve(const char* abs_path);
 
 /**
+ * Resolves the passed path, either as an absolute path (when starting with /)
+ * or a path relative to [current], while making sure that it doesn't go outside
+ * of [root] dentry.
+ */
+dentry_t* vfs_resolve_relative(
+    dentry_t* root,
+    dentry_t* current,
+    const char* path
+);
+
+/**
  * Populates the new node with the filename and type, and sets the rest of
  * properties to NULL/zero.
  */

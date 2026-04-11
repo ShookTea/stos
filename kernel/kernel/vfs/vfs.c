@@ -326,6 +326,56 @@ dentry_t* vfs_resolve(const char* abs_path)
     return current;
 }
 
+dentry_t* vfs_resolve_relative(
+    dentry_t* root,
+    dentry_t* current,
+    const char* path
+) {
+    if (path == NULL || path[0] == '\0') {
+        return current;
+    }
+
+    // Absolute path: resolve from root, not vfs_root
+    dentry_t* node = (path[0] == '/') ? root : current;
+
+    size_t path_len = strlen(path);
+    char* path_copy = kmalloc(path_len + 1);
+    strcpy(path_copy, path);
+
+    char* ptr = path_copy;
+    while (*ptr != '\0' && node != NULL) {
+        // Skip slashes
+        while (*ptr == '/') ptr++;
+        if (*ptr == '\0') break;
+
+        // Isolate the next component
+        char* end = ptr;
+        while (*end != '\0' && *end != '/') end++;
+        char saved = *end;
+        *end = '\0';
+
+        if (strcmp(ptr, ".") == 0) {
+            // Stay in current directory
+        } else if (strcmp(ptr, "..") == 0) {
+            // Go to parent, but never above root
+            if (node != root) {
+                node = node->parent;
+                if (node == NULL) {
+                    node = root; // Safety: clamp if tree is malformed
+                }
+            }
+        } else {
+            node = vfs_finddir(node, ptr);
+        }
+
+        *end = saved;
+        ptr = end;
+    }
+
+    kfree(path_copy);
+    return node;
+}
+
 void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
 {
     strcpy(node->filename, filename);
