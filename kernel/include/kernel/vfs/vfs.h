@@ -153,4 +153,10 @@ vfs_node_t* vfs_resolve(const char* abs_path);
  */
 void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type);
 
+/**
+ * Returns the real root node of the VFS (as opposed to the root node as seen
+ * by a particular task)
+ */
+vfs_node_t* vfs_get_real_root_node();
+
 #endif

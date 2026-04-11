@@ -14,8 +14,12 @@
 // Space between heap and stack (e.g. 1 MB)
 #define MIN_HEAP_STACK_GAP (1 * 1024 * 1024) // 1 MB
 
-task_t* elf_create_task(const char* name, void* elf_data)
-{
+task_t* elf_create_task(
+    const char* name,
+    void* elf_data,
+    vfs_node_t* root_dir,
+    vfs_node_t* working_dir
+) {
     elf_t* parsed = kmalloc(sizeof(elf_t));
     elf_parse(elf_data, parsed);
     if (!parsed->success) {
@@ -30,7 +34,13 @@ task_t* elf_create_task(const char* name, void* elf_data)
         parsed->max_vaddr
     );
 
-    task_t* task = task_create(name, (void (*)())parsed->entry_point, false);
+    task_t* task = task_create(
+        name,
+        (void (*)())parsed->entry_point,
+        false,
+        root_dir,
+        working_dir
+    );
     void* old_dir = paging_get_current_directory();
     paging_switch_directory(task->page_dir_virt);
 

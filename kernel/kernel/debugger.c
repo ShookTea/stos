@@ -98,11 +98,17 @@ static void handle_command_sent()
             } else if ((node->type & VFS_TYPE_FILE) == 0) {
                 puts("Found node, but it's not a file.");
             } else {
+                vfs_node_t* root_dir = vfs_get_real_root_node();
                 vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
                 void* file = kmalloc_flags(handle->node->length, KMALLOC_ZERO);
                 vfs_read(handle, handle->node->length, file);
                 vfs_close(handle);
-                task_t* task = elf_create_task(node->filename, file);
+                task_t* task = elf_create_task(
+                    node->filename,
+                    file,
+                    root_dir,
+                    root_dir
+                );
                 kfree(file);
                 scheduler_add_task(task);
                 printf("Task [%u] '%s' scheduled.\n", task->pid, task->name);

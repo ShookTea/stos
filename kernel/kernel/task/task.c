@@ -178,9 +178,17 @@ static task_t* task_allocate(const char* name)
     return task;
 }
 
-task_t* task_create(const char* name, void (*entrypoint)(), bool is_kernel)
+task_t* task_create(
+    const char* name,
+    void (*entrypoint)(),
+    bool is_kernel,
+    vfs_node_t* root_node,
+    vfs_node_t* working_dir
+)
 {
     task_t* task = task_allocate(name);
+    task->root_node = root_node;
+    task->working_directory = working_dir;
 
     // Allocate kernel stack (required for usermode tasks as well), with
     // guard page (so that when task overflows its stack, we will hit the guard

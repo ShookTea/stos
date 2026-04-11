@@ -91,7 +91,13 @@ void kernel_main()
     _debug_puts("Entering idle loop...\n");
 
     if (in_debug_mode) {
-        task_t* debugger = task_create("debugger", debugger_init, true);
+        task_t* debugger = task_create(
+            "debugger",
+            debugger_init,
+            true,
+            vfs_get_real_root_node(),
+            vfs_get_real_root_node()
+        );
         scheduler_add_task(debugger);
     }
 

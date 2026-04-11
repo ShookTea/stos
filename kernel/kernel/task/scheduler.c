@@ -4,6 +4,7 @@
 #include <kernel/memory/kmalloc.h>
 #include <kernel/memory/tss.h>
 #include "kernel/debug.h"
+#include "kernel/vfs/vfs.h"
 #include <stdlib.h>
 #include <kernel/spinlock.h>
 #include <kernel/task/task.h>
@@ -415,7 +416,13 @@ void scheduler_init()
 
     // Create idle task - runs when nothing else is ready
     // TODO: when priorities are implemented, use lowest possible here
-    task_t* idle_task = task_create("idle", idle_task_function, true);
+    task_t* idle_task = task_create(
+        "idle",
+        idle_task_function,
+        true,
+        vfs_get_real_root_node(),
+        vfs_get_real_root_node()
+    );
     idle_task->state = TASK_RUNNING;
     idle_task_pid = idle_task->pid;
     scheduler_stats->current_task = idle_task;

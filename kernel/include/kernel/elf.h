@@ -163,6 +163,11 @@ bool elf_load_segments(void* elf_data, elf_t* parsed);
 /**
  * Creates a new task from ELF binary data
  */
-task_t* elf_create_task(const char* name, void* elf_data);
+task_t* elf_create_task(
+    const char* name,
+    void* elf_data,
+    vfs_node_t* root_dir,
+    vfs_node_t* working_dir
+);
 
 #endif

@@ -153,6 +153,12 @@ typedef struct task {
     /** Special queue for parent that waits for any children to complete */
     wait_obj_t* children_wait_queue;
 
+    // Root node in the VFS for the task. Process can't leave it, or access
+    // anything outside of it.
+    vfs_node_t* root_node;
+    // Current working directory of the task
+    vfs_node_t* working_directory;
+
     // TODO: for future implementations:
     // - priority
     // - working directory ID/path
@@ -163,7 +169,13 @@ typedef struct task {
 /**
  * Create a new task with given name, entrypoint, and permission ring
  */
-task_t* task_create(const char* name, void (*entry_point)(), bool is_kernel);
+task_t* task_create(
+    const char* name,
+    void (*entry_point)(),
+    bool is_kernel,
+    vfs_node_t* root_node,
+    vfs_node_t* working_directory
+);
 
 /**
  * Deallocates all memory from a task, fixes linked lists if necessary

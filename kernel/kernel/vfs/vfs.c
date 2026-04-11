@@ -276,3 +276,8 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     node->finddir_node = NULL;
     node->metadata = NULL;
 }
+
+vfs_node_t* vfs_get_real_root_node()
+{
+    return vfs_root;
+}
