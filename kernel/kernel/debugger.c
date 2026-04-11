@@ -68,6 +68,7 @@ static void handle_command_sent()
         puts("  vfs_cat [F]    - Prints content of a file at abs. path");
         puts("  vfs_ls [F]     - Prints info about file at abs. path [F]");
         puts("  vga_colors     - Prints VGA colors map");
+        puts("  vga_utf8 [N]   - Dumps Nth page of UTF-8, starting from 0");
         puts("  vmm_memory_map - Prints detailed memory map");
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
@@ -297,6 +298,70 @@ static void handle_command_sent()
                 );
             }
             puts("\033[m");
+        }
+    }
+    else if (strcmp(command, "vga_utf8") == 0) {
+        if (argcount != 1) {
+            puts("vga_utf8 requires 1 argument");
+        } else {
+            int page = atoi(args[0]);
+            if (page < 0) {
+                puts("Page must be greater or equal to 0");
+            } else {
+                uint32_t page_size = 0x80;
+                uint32_t first_char = page * page_size;
+                uint32_t last_char = ((page + 1) * page_size) - 1;
+                printf(
+                    "Page %d selected (U-%04X - U-%04X)",
+                    page,
+                    first_char,
+                    last_char
+                );
+
+                for (uint32_t i = 0; i < page_size; i++) {
+                    if (i % 16 == 0) {
+                        puts("");
+                    }
+                    uint32_t utf8_value = first_char + i;
+                    uint8_t byte_buf[4];
+                    uint8_t byte_buf_size = 0;
+                    if (utf8_value <= 0x7F) {
+                        // ASCII
+                        byte_buf_size = 1;
+                        byte_buf[0] = utf8_value;
+                    } else if (utf8_value <= 0x7FF) {
+                        // 2-byte UTF-8
+                        byte_buf_size = 2;
+                        byte_buf[1] = 0x80 | (utf8_value & 0x3F);
+                        utf8_value >>= 6;
+                        byte_buf[0] = utf8_value | 0xC0;
+                    } else if (utf8_value <= 0xFFFF) {
+                        // 3-byte UTF-8
+                        byte_buf_size = 3;
+                        byte_buf[2] = 0x80 | (utf8_value & 0x3F);
+                        utf8_value >>= 6;
+                        byte_buf[1] = 0x80 | (utf8_value & 0x3F);
+                        utf8_value >>= 6;
+                        byte_buf[0] = utf8_value | 0xE0;
+                    } else {
+                        // 4-byte UTF-8
+                        byte_buf_size = 4;
+                        byte_buf[3] = 0x80 | (utf8_value & 0x3F);
+                        utf8_value >>= 6;
+                        byte_buf[2] = 0x80 | (utf8_value & 0x3F);
+                        utf8_value >>= 6;
+                        byte_buf[1] = 0x80 | (utf8_value & 0x3F);
+                        utf8_value >>= 6;
+                        byte_buf[0] = utf8_value | 0xF0;
+                    }
+
+                    printf(" ");
+                    for (uint8_t j = 0; j < byte_buf_size; j++) {
+                        putchar(byte_buf[j]);
+                    }
+                }
+                puts("");
+            }
         }
     }
     else if (strcmp(command, "vmm_memory_map") == 0) {
