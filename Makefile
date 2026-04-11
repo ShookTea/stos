@@ -16,7 +16,7 @@ LIB_INCLUDE_FLAGS := -I$(LIBC_DIR)/include -I$(LIBDS_DIR)/include
 # Boot order:
 # "c" - hard disk
 # "d" - cdrom
-QEMU_FLAGS := -m 512M -serial stdio -boot order=cd
+QEMU_FLAGS := -m 512M -serial stdio -boot order=dc
 
 include libc/Rules.mk
 include libds/Rules.mk

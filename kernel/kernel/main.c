@@ -67,6 +67,12 @@ void kernel_main()
         kmalloc_run_all_tests();
     }
 
+    // Initialize drivers for basic devices
+    pit_init();
+    ps2_init();
+    keyboard_init();
+    ata_init();
+
     // Initialize filesystem and mount initrd.
     vfs_init();
     initrd_mount();
@@ -74,12 +80,6 @@ void kernel_main()
 
     // With filesystem initialized fbcon can now load fonts.
     font_load_psf("/initrd/font.psf");
-
-    // Initialize drivers for basic devices
-    pit_init();
-    ps2_init();
-    keyboard_init();
-    ata_init();
 
     // Initialize multitasking scheduler & syscall handling
     scheduler_init();
