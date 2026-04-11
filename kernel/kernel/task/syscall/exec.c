@@ -1,6 +1,7 @@
 #include "../syscall.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/memory/vmm.h"
+#include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
 #include <string.h>
@@ -68,7 +69,16 @@ static void exec_free_string_array(const char** arr, int count) {
 
 int sys_exec(const char* path, const char** uargv, const char** uenvp)
 {
-    dentry_t* node = vfs_resolve(path);
+    task_t* current_task = scheduler_get_current_task();
+    if (current_task == NULL) {
+        return SYSCALL_ERROR;
+    }
+
+    dentry_t* node = vfs_resolve_relative(
+        current_task->root_node,
+        current_task->working_directory,
+        path
+    );
     if (node == NULL) {
         return SYSCALL_ERROR;
     }

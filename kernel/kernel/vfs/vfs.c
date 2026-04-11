@@ -6,6 +6,10 @@
 #include <stdbool.h>
 #include <kernel/memory/kmalloc.h>
 #include <string.h>
+#include "kernel/debug.h"
+
+#define _debug_puts(...) debug_puts_c("VFS", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("VFS", __VA_ARGS__)
 
 // By how many entries should we extend file_handles array if needed?
 #define VFS_FILE_HANDLE_REALLOC_SIZE 10
@@ -331,6 +335,12 @@ dentry_t* vfs_resolve_relative(
     dentry_t* current,
     const char* path
 ) {
+    _debug_printf(
+        "Resolving relative %s for root=%s current=%s\n",
+        path,
+        root->name,
+        current->name
+    );
     if (path == NULL || path[0] == '\0') {
         return current;
     }
