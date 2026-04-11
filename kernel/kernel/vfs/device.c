@@ -1,4 +1,5 @@
 #include "kernel/vfs/device.h"
+#include "./device.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include <stddef.h>

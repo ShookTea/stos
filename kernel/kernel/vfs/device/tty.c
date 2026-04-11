@@ -1,6 +1,6 @@
 #include "kernel/drivers/keyboard.h"
 #include "kernel/task/wait.h"
-#include "kernel/vfs/device.h"
+#include "../device.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include "libds/libds.h"
