@@ -6,7 +6,7 @@
 /**
  * Mounts /dev directory.
  */
-vfs_node_t* device_mount();
+dentry_t* device_mount();
 
 /**
  * Unmounts /dev directory and clears resources.

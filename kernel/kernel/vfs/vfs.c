@@ -7,13 +7,10 @@
 #include <kernel/memory/kmalloc.h>
 #include <string.h>
 
-#define VFS_MAX_MOUNTED_NODES 32
 // By how many entries should we extend file_handles array if needed?
 #define VFS_FILE_HANDLE_REALLOC_SIZE 10
 
-vfs_node_t* vfs_root = 0;
-static vfs_node_t** mounted_nodes = NULL;
-static uint32_t mounted_nodes_count = 0;
+dentry_t* vfs_root = NULL;
 
 // Allocation of some memory for existing file handles
 static vfs_file_t** file_handles = NULL;
@@ -30,15 +27,15 @@ static spinlock_t vfs_lock = SPINLOCK_INIT;
  * Allocate a new entry for file handle.
  */
 static vfs_file_t* allocate_file_handle(
-    vfs_node_t* node,
+    dentry_t* dentry,
     uint8_t mode
 ) {
     spinlock_acquire(&vfs_lock);
     vfs_file_t* handle = kmalloc_flags(sizeof(vfs_file_t), KMALLOC_ZERO);
-    handle->node = node;
+    handle->dentry = dentry;
     handle->readable = mode & (VFS_MODE_READONLY | VFS_MODE_READWRITE);
     handle->writeable = mode & (VFS_MODE_WRITEONLY | VFS_MODE_READWRITE);
-    handle->offset = (mode & VFS_MODE_APPEND) ? node->length : 0;
+    handle->offset = (mode & VFS_MODE_APPEND) ? dentry->inode->length : 0;
     // TODO: handle VFS_MODE_TRUNCATE and VFS_MODE_CREATE
 
     if (file_handles_open_count == file_handles_size) {
@@ -93,53 +90,61 @@ static void deallocate_file_handle(vfs_file_t* handle)
     kfree(handle);
 }
 
-static bool vfs_root_readdir(
-    __attribute__((unused))vfs_node_t* node,
-    size_t index,
-    struct dirent* out
-) {
-    if (index >= mounted_nodes_count) {
-        return false;
-    }
-
-    strcpy(out->name, mounted_nodes[index]->filename);
-    out->ino = mounted_nodes[index]->inode;
-    return true;
-}
-
-static vfs_node_t* vfs_root_finddir(
-    __attribute__((unused))vfs_node_t* node,
-    char* name
-) {
-    for (size_t i = 0; i < mounted_nodes_count; i++) {
-        if (strcmp(mounted_nodes[i]->filename, name) == 0) {
-            return mounted_nodes[i];
-        }
-    }
-    return NULL;
-}
-
 void vfs_init()
 {
-    vfs_root = kmalloc(sizeof(vfs_node_t));
-    strcpy(vfs_root->filename, "");
-    vfs_root->type = VFS_TYPE_DIRECTORY;
-    vfs_root->length = 0;
-    vfs_root->metadata = NULL;
-    vfs_root->open_node = NULL;
-    vfs_root->close_node = NULL;
-    vfs_root->read_node = NULL;
-    vfs_root->write_node = NULL;
-    vfs_root->readdir_node = vfs_root_readdir;
-    vfs_root->finddir_node = vfs_root_finddir;
+    vfs_node_t* root_inode = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
+    vfs_populate_node(root_inode, "", VFS_TYPE_DIRECTORY);
+    // Root directory has no readdir_node/finddir_node: all children are
+    // registered via vfs_mount and stored directly in the root dentry's
+    // children array, so the dentry cache fallback in vfs_readdir handles it.
 
-    mounted_nodes = kmalloc(sizeof(vfs_node_t*) * VFS_MAX_MOUNTED_NODES);
+    vfs_root = kmalloc_flags(sizeof(dentry_t), KMALLOC_ZERO);
+    vfs_root->name[0] = '\0';
+    vfs_root->parent = vfs_root; // root's parent is itself (for ".." handling)
+    vfs_root->inode = root_inode;
+    vfs_root->children = NULL;
+    vfs_root->children_count = 0;
+}
+
+dentry_t* vfs_dentry_create(
+    dentry_t* parent,
+    const char* name,
+    vfs_node_t* inode
+) {
+    dentry_t* d = kmalloc_flags(sizeof(dentry_t), KMALLOC_ZERO);
+    strncpy(d->name, name, sizeof(d->name) - 1);
+    d->parent = parent;
+    d->inode = inode;
+    d->children = NULL;
+    d->children_count = 0;
+
+    if (parent != NULL) {
+        spinlock_acquire(&vfs_lock);
+        parent->children = krealloc(
+            parent->children,
+            sizeof(dentry_t*) * (parent->children_count + 1)
+        );
+        parent->children[parent->children_count] = d;
+        parent->children_count++;
+        spinlock_release(&vfs_lock);
+    }
+
+    return d;
+}
+
+dentry_t* vfs_mount(const char* name, vfs_node_t* inode)
+{
+    if (vfs_root == NULL) {
+        return NULL;
+    }
+    return vfs_dentry_create(vfs_root, name, inode);
 }
 
 size_t vfs_read(vfs_file_t* file, size_t size, void* ptr)
 {
-    if (file->node->read_node != NULL) {
-        size_t bytes = file->node->read_node(file, file->offset, size, ptr);
+    vfs_node_t* node = file->dentry->inode;
+    if (node->read_node != NULL) {
+        size_t bytes = node->read_node(file, file->offset, size, ptr);
         if (bytes > 0) {
             file->offset += bytes;
         }
@@ -150,8 +155,9 @@ size_t vfs_read(vfs_file_t* file, size_t size, void* ptr)
 
 size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr)
 {
-    if (file->node->write_node != 0) {
-        size_t bytes = file->node->write_node(file, file->offset, size, ptr);
+    vfs_node_t* node = file->dentry->inode;
+    if (node->write_node != NULL) {
+        size_t bytes = node->write_node(file, file->offset, size, ptr);
         if (bytes > 0) {
             file->offset += bytes;
         }
@@ -160,8 +166,9 @@ size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr)
     return 0;
 }
 
-vfs_file_t* vfs_open(vfs_node_t* node, uint8_t mode)
+vfs_file_t* vfs_open(dentry_t* dentry, uint8_t mode)
 {
+    vfs_node_t* node = dentry->inode;
     if ((node->type & VFS_TYPE_DIRECTORY)) {
         // TODO: report error?
         return NULL;
@@ -170,7 +177,7 @@ vfs_file_t* vfs_open(vfs_node_t* node, uint8_t mode)
     // TODO: this is the place where we could introduce some kind of a lock
     // mechanism for multiple write prevention (if necessary)
 
-    vfs_file_t* handle = allocate_file_handle(node, mode);
+    vfs_file_t* handle = allocate_file_handle(dentry, mode);
     // Allow specific file system to populate metadata
     if (node->open_node != NULL) {
         node->open_node(node, handle, mode);
@@ -181,46 +188,96 @@ vfs_file_t* vfs_open(vfs_node_t* node, uint8_t mode)
 
 void vfs_close(vfs_file_t* file)
 {
+    vfs_node_t* node = file->dentry->inode;
     // Allow specific file system to clear metadata
-    if (file->node->close_node != NULL) {
-        file->node->close_node(file->node, file);
+    if (node->close_node != NULL) {
+        node->close_node(node, file);
     }
-    file->node->open_count--;
+    node->open_count--;
     deallocate_file_handle(file);
 }
 
-bool vfs_readdir(vfs_node_t* node, size_t index, struct dirent* out)
+bool vfs_readdir(dentry_t* dentry, size_t index, struct dirent* out)
 {
-    if ((node->type & VFS_TYPE_DIRECTORY) != 0 && node->readdir_node != 0) {
-        return node->readdir_node(node, index, out);
+    vfs_node_t* inode = dentry->inode;
+    if ((inode->type & VFS_TYPE_DIRECTORY) == 0) {
+        return false;
     }
-    return false;
+
+    // If the inode has a readdir handler, use it (filesystem-backed directory)
+    if (inode->readdir_node != NULL) {
+        return inode->readdir_node(inode, index, out);
+    }
+
+    // Fallback: iterate pre-populated dentry children (e.g. VFS root, whose
+    // children are registered via vfs_mount rather than a filesystem handler)
+    if (index >= dentry->children_count) {
+        return false;
+    }
+    strncpy(out->name, dentry->children[index]->name, sizeof(out->name) - 1);
+    out->name[sizeof(out->name) - 1] = '\0';
+    out->ino = dentry->children[index]->inode
+        ? dentry->children[index]->inode->inode
+        : 0;
+    return true;
 }
 
-vfs_node_t* vfs_finddir(vfs_node_t* node, char* name)
+dentry_t* vfs_finddir(dentry_t* dentry, const char* name)
 {
-    if ((node->type & VFS_TYPE_DIRECTORY) != 0 && node->finddir_node != 0) {
-        return node->finddir_node(node, name);
+    vfs_node_t* inode = dentry->inode;
+    if ((inode->type & VFS_TYPE_DIRECTORY) == 0) {
+        return NULL;
     }
-    return NULL;
-}
 
-void vfs_mount_node(vfs_node_t* node)
-{
+    // 1. Check dentry cache
     spinlock_acquire(&vfs_lock);
+    for (size_t i = 0; i < dentry->children_count; i++) {
+        if (strcmp(dentry->children[i]->name, name) == 0) {
+            spinlock_release(&vfs_lock);
+            return dentry->children[i];
+        }
+    }
+    spinlock_release(&vfs_lock);
 
-    if (mounted_nodes_count >= VFS_MAX_MOUNTED_NODES) {
-        spinlock_release(&vfs_lock);
-        return;
+    // 2. Cache miss: ask the filesystem for the inode (no lock held; the
+    //    filesystem callback may block or be slow)
+    if (inode->finddir_node == NULL) {
+        return NULL;
+    }
+    vfs_node_t* child_inode = inode->finddir_node(inode, (char*)name);
+    if (child_inode == NULL) {
+        return NULL;
     }
 
-    mounted_nodes[mounted_nodes_count] = node;
-    mounted_nodes_count++;
+    // 3. Re-check cache under lock (another thread may have populated it while
+    //    we were in the filesystem callback), then insert if still absent
+    spinlock_acquire(&vfs_lock);
+    for (size_t i = 0; i < dentry->children_count; i++) {
+        if (strcmp(dentry->children[i]->name, name) == 0) {
+            spinlock_release(&vfs_lock);
+            return dentry->children[i];
+        }
+    }
+
+    dentry_t* child = kmalloc_flags(sizeof(dentry_t), KMALLOC_ZERO);
+    strncpy(child->name, name, sizeof(child->name) - 1);
+    child->parent = dentry;
+    child->inode = child_inode;
+    child->children = NULL;
+    child->children_count = 0;
+
+    dentry->children = krealloc(
+        dentry->children,
+        sizeof(dentry_t*) * (dentry->children_count + 1)
+    );
+    dentry->children[dentry->children_count] = child;
+    dentry->children_count++;
 
     spinlock_release(&vfs_lock);
+    return child;
 }
 
-vfs_node_t* vfs_resolve(const char* abs_path)
+dentry_t* vfs_resolve(const char* abs_path)
 {
     // Make copy of the path (include space for null terminator)
     size_t path_len = strlen(abs_path);
@@ -253,11 +310,11 @@ vfs_node_t* vfs_resolve(const char* abs_path)
         }
     }
 
-    vfs_node_t* current_node = vfs_root;
+    dentry_t* current = vfs_root;
 
     for (size_t i = 0; i < part_count; i++) {
-        current_node = vfs_finddir(current_node, parts[i]);
-        if (current_node == NULL) {
+        current = vfs_finddir(current, parts[i]);
+        if (current == NULL) {
             break;
         }
     }
@@ -266,7 +323,7 @@ vfs_node_t* vfs_resolve(const char* abs_path)
     kfree(parts);
     kfree(path_copy);
 
-    return current_node;
+    return current;
 }
 
 void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
@@ -285,7 +342,7 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     node->metadata = NULL;
 }
 
-vfs_node_t* vfs_get_real_root_node()
+dentry_t* vfs_get_real_root()
 {
     return vfs_root;
 }

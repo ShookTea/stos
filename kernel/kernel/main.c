@@ -95,8 +95,8 @@ void kernel_main()
             "debugger",
             debugger_init,
             true,
-            vfs_get_real_root_node(),
-            vfs_get_real_root_node()
+            vfs_get_real_root(),
+            vfs_get_real_root()
         );
         scheduler_add_task(debugger);
     }

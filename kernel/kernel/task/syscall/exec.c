@@ -68,11 +68,11 @@ static void exec_free_string_array(const char** arr, int count) {
 
 int sys_exec(const char* path, const char** uargv, const char** uenvp)
 {
-    vfs_node_t* node = vfs_resolve(path);
+    dentry_t* node = vfs_resolve(path);
     if (node == NULL) {
         return SYSCALL_ERROR;
     }
-    if (!(node->type & VFS_TYPE_FILE)) {
+    if (!(node->inode->type & VFS_TYPE_FILE)) {
         return SYSCALL_ERROR;
     }
 
@@ -81,7 +81,7 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
         return SYSCALL_ERROR;
     }
 
-    size_t size = file->node->length;
+    size_t size = file->dentry->inode->length;
     void* buf = kmalloc(size);
     if (buf == NULL) {
         vfs_close(file);

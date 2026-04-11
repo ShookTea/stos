@@ -182,8 +182,8 @@ task_t* task_create(
     const char* name,
     void (*entrypoint)(),
     bool is_kernel,
-    vfs_node_t* root_node,
-    vfs_node_t* working_dir
+    dentry_t* root_node,
+    dentry_t* working_dir
 )
 {
     task_t* task = task_allocate(name);
@@ -693,7 +693,7 @@ task_t* task_fork(void)
                 } else {
                     mode = VFS_MODE_READONLY;
                 }
-                cfd->file = vfs_open(pfd->file->node, mode);
+                cfd->file = vfs_open(pfd->file->dentry, mode);
                 cfd->file->offset = pfd->file->offset;
             }
             child->fd[i] = cfd;

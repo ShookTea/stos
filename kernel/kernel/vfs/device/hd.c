@@ -118,7 +118,7 @@ static size_t read(
         return 0;
     }
 
-    hd_metadata_t* meta = file->node->metadata;
+    hd_metadata_t* meta = file->dentry->inode->metadata;
     if (meta->is_partition) {
         // TODO: handle reading from specific partition
         return 0;
@@ -195,7 +195,7 @@ static size_t write(
         return 0;
     }
 
-    hd_metadata_t* meta = file->node->metadata;
+    hd_metadata_t* meta = file->dentry->inode->metadata;
     if (meta->is_partition) {
         // TODO: handle reading from specific partition
         return 0;

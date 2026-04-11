@@ -5,13 +5,13 @@
 
 /**
  * Attempts to load initrd (passed as .tar file) from memory and returns a valid
- * vfs_node_t, or NULL if initrd was not present. Will cause kernel panic if
+ * dentry_t, or NULL if initrd was not present. Will cause kernel panic if
  * initrd is present, but invalid.
  */
-vfs_node_t* initrd_mount();
+dentry_t* initrd_mount();
 
 /**
- * Removes initrd from VFS and frees memory allocated for vfs_node_t
+ * Removes initrd from VFS and frees memory allocated for its nodes
  */
 void initrd_unmount();
 

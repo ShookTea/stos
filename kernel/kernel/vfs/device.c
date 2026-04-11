@@ -45,17 +45,17 @@ static vfs_node_t* finddir(
     return NULL;
 }
 
-vfs_node_t* device_mount()
+dentry_t* device_mount()
 {
     if (node != NULL) {
-        return node;
+        return vfs_resolve("/dev");
     }
 
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "dev", VFS_TYPE_DIRECTORY | VFS_TYPE_MOUNTPOINT);
     node->readdir_node = readdir;
     node->finddir_node = finddir;
-    vfs_mount_node(node);
+    dentry_t* dev_dentry = vfs_mount("dev", node);
 
     add_device_file(device_tty_mount());
     vfs_node_t** hd = device_hd_mount();
@@ -64,7 +64,7 @@ vfs_node_t* device_mount()
         hd++;
     }
 
-    return node;
+    return dev_dentry;
 }
 
 void device_unmount()

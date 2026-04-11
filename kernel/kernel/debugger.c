@@ -77,10 +77,10 @@ static void handle_command_sent()
         if (argcount != 1) {
             puts("elf_dump requires 1 argument");
         } else {
-            vfs_node_t* node = vfs_resolve(args[0]);
+            dentry_t* node = vfs_resolve(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
-            } else if ((node->type & VFS_TYPE_FILE) == 0) {
+            } else if ((node->inode->type & VFS_TYPE_FILE) == 0) {
                 puts("Found node, but it's not a file.");
             } else {
                 vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
@@ -92,19 +92,22 @@ static void handle_command_sent()
         if (argcount != 1) {
             puts("exec requires 1 argument");
         } else {
-            vfs_node_t* node = vfs_resolve(args[0]);
+            dentry_t* node = vfs_resolve(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
-            } else if ((node->type & VFS_TYPE_FILE) == 0) {
+            } else if ((node->inode->type & VFS_TYPE_FILE) == 0) {
                 puts("Found node, but it's not a file.");
             } else {
-                vfs_node_t* root_dir = vfs_get_real_root_node();
+                dentry_t* root_dir = vfs_get_real_root();
                 vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
-                void* file = kmalloc_flags(handle->node->length, KMALLOC_ZERO);
-                vfs_read(handle, handle->node->length, file);
+                void* file = kmalloc_flags(
+                    handle->dentry->inode->length,
+                    KMALLOC_ZERO
+                );
+                vfs_read(handle, handle->dentry->inode->length, file);
                 vfs_close(handle);
                 task_t* task = elf_create_task(
-                    node->filename,
+                    node->name,
                     file,
                     root_dir,
                     root_dir
@@ -195,10 +198,10 @@ static void handle_command_sent()
         if (argcount != 1) {
             puts("vfs_cat requires 1 argument");
         } else {
-            vfs_node_t* node = vfs_resolve(args[0]);
+            dentry_t* node = vfs_resolve(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
-            } else if ((node->type & VFS_TYPE_FILE) == 0) {
+            } else if ((node->inode->type & VFS_TYPE_FILE) == 0) {
                 puts("Found node, but it's not a file.");
             } else {
                 char* buffer = kmalloc_flags(sizeof(char) * 17, KMALLOC_ZERO);
@@ -218,28 +221,28 @@ static void handle_command_sent()
         if (argcount != 1) {
             puts("vfs_ls requires 1 argument");
         } else {
-            vfs_node_t* node = vfs_resolve(args[0]);
+            dentry_t* node = vfs_resolve(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
-            } else if (node->type & VFS_TYPE_DIRECTORY) {
+            } else if (node->inode->type & VFS_TYPE_DIRECTORY) {
                 puts("Directory found. Children:");
                 size_t i = 0;
                 struct dirent dir;
                 while (vfs_readdir(node, i, &dir)) {
-                    vfs_node_t* child = vfs_finddir(node, dir.name);
+                    dentry_t* child = vfs_finddir(node, dir.name);
                     i++;
 
-                    if (child->type & VFS_TYPE_DIRECTORY) {
-                        printf(" - %s (dir)\n", child->filename);
+                    if (child->inode->type & VFS_TYPE_DIRECTORY) {
+                        printf(" - %s (dir)\n", child->name);
                     } else {
                         printf(
                             " - %s (%llu B)\n",
-                            child->filename,
-                            child->length
+                            child->name,
+                            child->inode->length
                         );
                     }
                 }
-            } else if (node->type & VFS_TYPE_FILE) {
+            } else if (node->inode->type & VFS_TYPE_FILE) {
                 puts("File found");
             } else {
                 puts("Unknown vfs node found");
@@ -399,7 +402,7 @@ static void print_prompt_and_read_command()
     printf("\033[36;1m#\033[0m ");
     terminal_enable_cursor();
 
-    vfs_node_t* tty = vfs_resolve("/dev/tty");
+    dentry_t* tty = vfs_resolve("/dev/tty");
     vfs_file_t* handle = vfs_open(tty, VFS_MODE_READONLY);
     command_length = vfs_read(handle, MAX_COMMAND_LENGTH, command_buffer);
     command_buffer[command_length] = '\0';

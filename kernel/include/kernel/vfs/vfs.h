@@ -52,12 +52,27 @@
 
 struct vfs_node;
 struct dirent;
+struct dentry;
+
+/**
+ * A dentry (directory entry) represents a name in the VFS namespace. It links
+ * a name and its position in the directory hierarchy to an inode (vfs_node_t).
+ * This separation allows parent-pointer traversal, path reconstruction, and a
+ * dentry cache that avoids repeated filesystem lookups.
+ */
+typedef struct dentry {
+    char name[128];
+    struct dentry* parent;
+    struct vfs_node* inode;
+    struct dentry** children; // Cached child dentries
+    size_t children_count;
+} dentry_t;
 
 /**
  * Struct for file handle.
  */
 typedef struct {
-    struct vfs_node* node; // Node pointed by this handle
+    dentry_t* dentry; // Dentry pointed by this handle
     uint32_t id; // Handle ID (used internally by VFS)
     uint64_t offset; // Current offset in bytes from the start of file
     bool readable; // Is file readable?
@@ -98,17 +113,19 @@ typedef bool (*readdir_node_t)(
     size_t index,
     struct dirent* out
 );
-// Handler for retrurning a child node from current `node` directory, based on
-// child's `name`.
+// Handler for returning a child inode from current `node` directory, based on
+// child's `name`. Returns the inode, or NULL if not found. The dentry layer
+// wraps the returned inode in a new dentry and caches it.
 typedef struct vfs_node* (*finddir_node_t)(struct vfs_node* node, char* name);
 
 /*
- * Basic definition of a single node in the VFS.
+ * Basic definition of a single inode in the VFS. Contains file data and
+ * filesystem-level operations. Name and hierarchy are managed by dentry_t.
  * TODO: Implementation of ownership and permissions system (owner, group,
  * read/write/execute flags)
  */
 typedef struct vfs_node {
-    char filename[128];
+    char filename[128]; // Filesystem-internal name (used by filesystem callbacks)
     uint8_t type; // one of VFS_TYPE_
     uint32_t inode; // File ID, device specific, to identify files (on a disk)
     uint64_t length; // File size in bytes
@@ -129,38 +146,48 @@ struct dirent
   uint32_t ino; // Inode number. Required by POSIX.
 };
 
-// The root of the filesystem
-extern vfs_node_t* vfs_root;
+// The root dentry of the filesystem
+extern dentry_t* vfs_root;
 
 size_t vfs_read(vfs_file_t* file, size_t size, void* ptr);
 size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr);
-vfs_file_t* vfs_open(vfs_node_t* node, uint8_t open_mode);
+vfs_file_t* vfs_open(dentry_t* dentry, uint8_t open_mode);
 void vfs_close(vfs_file_t* file);
-bool vfs_readdir(vfs_node_t* node, size_t index, struct dirent* out);
-vfs_node_t* vfs_finddir(vfs_node_t* node, char* name);
+bool vfs_readdir(dentry_t* dentry, size_t index, struct dirent* out);
+dentry_t* vfs_finddir(dentry_t* dentry, const char* name);
 
 void vfs_init();
 
 /**
- * Adds node to the mounted list. TODO: possibility of unmounting
+ * Mounts an inode under the VFS root with the given name. Returns the created
+ * dentry, or NULL if the root is not yet initialized.
  */
-void vfs_mount_node(vfs_node_t* node);
+dentry_t* vfs_mount(const char* name, vfs_node_t* inode);
 
 /**
- * Resolves an absolute path and returns a valid node, or NULL if not found.
+ * Creates a new dentry as a child of `parent`, wrapping `inode`. Used by
+ * vfs_mount and the dentry cache to register newly discovered children.
  */
-vfs_node_t* vfs_resolve(const char* abs_path);
+dentry_t* vfs_dentry_create(
+    dentry_t* parent,
+    const char* name,
+    vfs_node_t* inode
+);
+
+/**
+ * Resolves an absolute path and returns a valid dentry, or NULL if not found.
+ */
+dentry_t* vfs_resolve(const char* abs_path);
 
 /**
  * Populates the new node with the filename and type, and sets the rest of
- * properties to NULL.
+ * properties to NULL/zero.
  */
 void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type);
 
 /**
- * Returns the real root node of the VFS (as opposed to the root node as seen
- * by a particular task)
+ * Returns the real root dentry of the VFS.
  */
-vfs_node_t* vfs_get_real_root_node();
+dentry_t* vfs_get_real_root();
 
 #endif

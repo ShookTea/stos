@@ -420,8 +420,8 @@ void scheduler_init()
         "idle",
         idle_task_function,
         true,
-        vfs_get_real_root_node(),
-        vfs_get_real_root_node()
+        vfs_get_real_root(),
+        vfs_get_real_root()
     );
     idle_task->state = TASK_RUNNING;
     idle_task_pid = idle_task->pid;

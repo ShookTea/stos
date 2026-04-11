@@ -149,13 +149,13 @@ static void parse_psf(uint8_t* file, size_t file_size)
 
 void font_load_psf(char* path)
 {
-    vfs_node_t* node = vfs_resolve(path);
+    dentry_t* node = vfs_resolve(path);
     if (node == NULL) {
         _debug_printf("font: path %s not found\n", path);
         return;
     }
     vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
-    size_t size = handle->node->length;
+    size_t size = handle->dentry->inode->length;
     uint8_t* file = kmalloc_flags(size, KMALLOC_ZERO);
     vfs_read(handle, size, file);
     vfs_close(handle);

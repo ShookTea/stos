@@ -63,9 +63,9 @@ static size_t initrd_read(
     size_t size,
     void* ptr
 ) {
-    initrd_file_data_t* metadata = file->node->metadata;
+    initrd_file_data_t* metadata = file->dentry->inode->metadata;
     uint8_t* file_start = metadata->address;
-    uint8_t* file_end = metadata->address + file->node->length;
+    uint8_t* file_end = metadata->address + file->dentry->inode->length;
 
     uint8_t* read_start = file_start + offset;
     uint8_t* read_end = read_start + size;
@@ -209,10 +209,10 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
     kfree(filename_buffer);
 }
 
-vfs_node_t* initrd_mount()
+dentry_t* initrd_mount()
 {
     if (mounted) {
-        return initrd;
+        return vfs_resolve("/initrd");
     }
     mounted = true;
     _debug_puts("Loading initrd from memory");
@@ -254,10 +254,10 @@ vfs_node_t* initrd_mount()
     } while (tar_header != NULL);
 
     if (initrd) {
-        vfs_mount_node(initrd);
+        return vfs_mount("initrd", initrd);
     }
 
-    return initrd;
+    return NULL;
 }
 
 static void free_node_recursive(vfs_node_t* node)

@@ -12,7 +12,7 @@ uint32_t sys_open(const char* path, uint32_t flags)
         return SYSCALL_ERROR;
     }
 
-    vfs_node_t* node = vfs_resolve(path);
+    dentry_t* node = vfs_resolve(path);
     if (node == NULL) {
         return SYSCALL_ERROR;
     }
