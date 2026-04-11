@@ -11,7 +11,7 @@
  * compared with KERNEL_DEBUG_TERMINAL - when terminal debugging is enabled,
  * there's a separate check for "KERNEL_DEBUG_COM".
  */
-#define KERNEL_DEBUG_COM 0
+#define KERNEL_DEBUG_COM 1
 
 #define KERNEL_DEBUG_ANY (KERNEL_DEBUG_TERMINAL || KERNEL_DEBUG_COM)
 

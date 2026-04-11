@@ -17,7 +17,7 @@ void debug_puts(const char* string)
 
 void debug_puts_c(const char* cat, const char* string)
 {
-    debug_printf("\033[32;1m[%s]\033[0m %s", cat, string);
+    debug_printf("\033[32;1m[%s]\033[0m %s\n", cat, string);
 }
 
 void debug_printf(const char* format, ...)

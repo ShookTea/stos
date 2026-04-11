@@ -85,7 +85,8 @@ void kernel_main()
     scheduler_init();
     syscall_init();
 
-    _debug_puts("\n=== Kernel Initialization Complete ===");
+    debug_puts("");
+    _debug_puts("=== Kernel Initialization Complete ===");
     _debug_puts("All subsystems initialized and tested successfully");
     _debug_puts("Entering idle loop...\n");
 
