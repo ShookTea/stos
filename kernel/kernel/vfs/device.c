@@ -58,7 +58,7 @@ vfs_node_t* device_mount()
 
     add_device_file(device_tty_mount());
     vfs_node_t** hd = device_hd_mount();
-    while (hd != NULL) {
+    while (*hd != NULL) {
         add_device_file(*hd);
         hd++;
     }
