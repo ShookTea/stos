@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define _debug_puts(...) debug_puts_c("VFS/Initrd", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/Initrd", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c("VFS/initrd", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("VFS/initrd", __VA_ARGS__)
 
 typedef struct {
     void* address;

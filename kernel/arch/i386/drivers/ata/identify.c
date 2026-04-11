@@ -2,8 +2,10 @@
 #include "kernel/debug.h"
 #include "./common.h"
 #include "../../io.h"
+#include "kernel/memory/kmalloc.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
@@ -137,7 +139,7 @@ void _ata_identify_devices()
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_PRIMARY_MASTER;
         _debug_puts("Primary/master drive selected");
-    } else if (lba28_sec_count_primary_slave) {
+    } else if (lba28_sec_count_primary_slave > 0) {
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_PRIMARY_SLAVE;
         _debug_puts("Primary/slave drive selected");
@@ -145,7 +147,7 @@ void _ata_identify_devices()
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_SECONDARY_MASTER;
         _debug_puts("Secondary/master drive selected");
-    } else if (lba28_sec_count_secondary_slave) {
+    } else if (lba28_sec_count_secondary_slave > 0) {
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_SECONDARY_SLAVE;
         _debug_puts("Secondary/slave drive selected");
@@ -157,6 +159,29 @@ void _ata_identify_devices()
 uint8_t ata_get_selected_drive()
 {
     return selected_drive;
+}
+
+void ata_get_available_drives(uint8_t* res)
+{
+    memset(res, 0, sizeof(uint8_t) * 5);
+    size_t idx = 0;
+    if (lba28_sec_count_primary_master) {
+        res[idx++] = ATA_DRIVE_PRIMARY_MASTER;
+    }
+    if (lba28_sec_count_primary_slave) {
+        res[idx++] = ATA_DRIVE_PRIMARY_SLAVE;
+    }
+    if (lba28_sec_count_secondary_master) {
+        res[idx++] = ATA_DRIVE_SECONDARY_MASTER;
+    }
+    if (lba28_sec_count_secondary_slave) {
+        res[idx++] = ATA_DRIVE_SECONDARY_SLAVE;
+    }
+}
+
+void ata_select_drive(uint8_t drive)
+{
+    selected_drive = drive;
 }
 
 uint32_t ata_lba28_sectors_count()

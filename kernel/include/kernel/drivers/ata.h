@@ -16,9 +16,21 @@
 void ata_init();
 
 /**
+ * Stores NULL-terminated list of available ATA_DRIVE_ values. Caller is
+ * responsible for making sure that there's enough free memory available under
+ * given address.
+ */
+void ata_get_available_drives(uint8_t*);
+
+/**
  * Returns one of ATA_DRIVE_ values.
  */
 uint8_t ata_get_selected_drive();
+
+/**
+ * Select a drive.
+ */
+void ata_select_drive(uint8_t);
 
 /**
  * Returns sectors count of currently selected drive.
