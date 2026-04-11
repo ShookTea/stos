@@ -76,6 +76,7 @@ void device_unmount()
     device_hd_unmount();
     // TODO: call VFS and tell it that the node no longer exists
     kfree(node);
+    node = NULL;
 
     if (device_files != NULL) {
         kfree(device_files);

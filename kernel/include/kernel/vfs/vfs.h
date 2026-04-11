@@ -132,8 +132,8 @@ struct dirent
 // The root of the filesystem
 extern vfs_node_t* vfs_root;
 
-size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr);
-size_t vfs_write(vfs_file_t* file, uint32_t size, const void* ptr);
+size_t vfs_read(vfs_file_t* file, size_t size, void* ptr);
+size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr);
 vfs_file_t* vfs_open(vfs_node_t* node, uint8_t open_mode);
 void vfs_close(vfs_file_t* file);
 bool vfs_readdir(vfs_node_t* node, size_t index, struct dirent* out);

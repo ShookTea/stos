@@ -136,7 +136,7 @@ void vfs_init()
     mounted_nodes = kmalloc(sizeof(vfs_node_t*) * VFS_MAX_MOUNTED_NODES);
 }
 
-size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr)
+size_t vfs_read(vfs_file_t* file, size_t size, void* ptr)
 {
     if (file->node->read_node != NULL) {
         size_t bytes = file->node->read_node(file, file->offset, size, ptr);
@@ -148,7 +148,7 @@ size_t vfs_read(vfs_file_t* file, uint32_t size, void* ptr)
     return 0;
 }
 
-size_t vfs_write(vfs_file_t* file, uint32_t size, const void* ptr)
+size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr)
 {
     if (file->node->write_node != 0) {
         size_t bytes = file->node->write_node(file, file->offset, size, ptr);
