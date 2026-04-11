@@ -80,6 +80,24 @@ typedef struct {
     void* callback_data;
 } ata_request_t;
 
+typedef struct __attribute__((packed)) {
+    uint8_t drive_attributes;
+    uint8_t chs_addr_start[3];
+    uint8_t partition_type;
+    uint8_t chs_addr_end[3];
+    uint32_t partition_start_lba;
+    uint32_t partition_sectors_count;
+} ata_mbr_partition_table_entry_t;
+
+typedef struct __attribute__((packed)) {
+    uint8_t mbr_bootstrap[446];
+    ata_mbr_partition_table_entry_t partition_1;
+    ata_mbr_partition_table_entry_t partition_2;
+    ata_mbr_partition_table_entry_t partition_3;
+    ata_mbr_partition_table_entry_t partition_4;
+    uint16_t signature_bytes; // 0x55 0xAA for "valid bootsector"
+} ata_mbr_t;
+
 /**
  * Selects a drive (ATA_COM_TARGET_DRIVE_) on given bus (ATA_BUS_BASE_).
  */

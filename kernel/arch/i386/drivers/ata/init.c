@@ -14,44 +14,22 @@
 
 static uint16_t* buffer = NULL;
 
-void _test_read_callback(void* data __attribute__((unused)))
+void _ata_load_mbr_callback(void* data __attribute__((unused)))
 {
-    _debug_puts("Read completed, data:");
-    for (size_t i = 0; i < 512; i++) {
-        if (i % 16 == 0) {
-            debug_puts("");
-        }
-        if (i == 256) {
-            debug_puts("");
-        }
-        debug_printf("%04x ", buffer[i]);
-    }
-    debug_puts("");
+    _debug_puts("MBR load completed");
+    ata_mbr_t* mbr = (ata_mbr_t*)buffer;
+    _debug_printf("MBR signature bytes: %#04x\n", mbr->signature_bytes);
+    _debug_printf("part1 type=%02x\n", mbr->partition_1.partition_type);
+    _debug_printf("part2 type=%02x\n", mbr->partition_2.partition_type);
+    _debug_printf("part3 type=%02x\n", mbr->partition_3.partition_type);
+    _debug_printf("part4 type=%02x\n", mbr->partition_4.partition_type);
     kfree(buffer);
 }
 
-void _test_write_callback(void* data __attribute__((unused)))
-{
-    _debug_puts("Writing completed.");
-    kfree(buffer);
-}
-
-void _test_read()
+static void _ata_load_mbr()
 {
     buffer = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
-    ata_read(15, 2, buffer, _test_read_callback, NULL);
-}
-
-void _test_write()
-{
-    buffer = kmalloc_flags(sizeof(uint16_t) * 256 * 2, KMALLOC_ZERO);
-    buffer[0] = 0xCAFE;
-    buffer[1] = 0xBABE;
-    buffer[256] = 0xDEAD;
-    buffer[257] = 0xBEEF;
-    buffer[4] = 0xCAFE;
-    buffer[258] = 0xCAFE;
-    ata_write(15, 2, buffer, _test_write_callback, NULL);
+    ata_read(0, 1, buffer, _ata_load_mbr_callback, NULL);
 }
 
 void ata_init()
@@ -70,7 +48,5 @@ void ata_init()
         pic_enable(PIC_LINE_SECONDARY_ATA);
     }
     _debug_puts("IRQ enabled");
-
-    // _test_read();
-    // _test_write();
+    _ata_load_mbr();
 }
