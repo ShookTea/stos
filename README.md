@@ -99,6 +99,7 @@ compiled and executed on host machine with `make test`. Running it requires
 - PIT driver
 - PS/2 driver
 - PS/2 keyboard driver
+- ATA driver
 - Debugging CLI - running tests, displaying stats, shutdown, reboot
 - Unit tests for libc
 - memory leak test - check memory stats, then run all mem tests multiple times,
@@ -108,10 +109,11 @@ compiled and executed on host machine with `make test`. Running it requires
 - Multitasking
 - Usermode tasks
 - Heap for usermode
+- forking and `exec` processes
 
 ### (Short-term) todo list
 
-- forking processes
+
 - Support for more than 1 GiB of RAM
   - that's currently not working because we're trying to map all physical
     RAM in paging, which doesn't make sense above 1 GiB. We should implement
