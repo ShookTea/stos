@@ -34,7 +34,7 @@ vfs_node_t** device_hd_mount()
         );
 
         vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
-        vfs_populate_node(node, drive_name, VFS_TYPE_CHARACTER_DEVICE);
+        vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         nodes[pointer_index] = node;
 
         drive_letter++;

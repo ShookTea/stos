@@ -19,9 +19,10 @@
 #define VFS_TYPE_DIRECTORY 0x02
 // Character device file (stream of bytes, handled sequentially)
 #define VFS_TYPE_CHARACTER_DEVICE 0x04
+// Block device file (allowing reading any block size and alignment)
+#define VFS_TYPE_BLOCK_DEVICE 0x08
 // Mounted file.
 #define VFS_TYPE_MOUNTPOINT 0x10
-// TODO: types for devices etc.
 
 // Read-only mode
 #define VFS_MODE_READONLY 0x01
