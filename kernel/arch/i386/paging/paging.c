@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define _debug_puts(...) debug_puts_c("Paging", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("Paging", __VA_ARGS__)
+
 // Assembly functions from paging_asm.s
 extern void paging_load_directory(uint32_t* page_directory_physical);
 extern void paging_enable(void);
@@ -66,7 +69,7 @@ static page_table_t* paging_get_page_table(uint32_t virt, bool create)
         // Allocate a new page table
         uint32_t pt_phys = pmm_alloc_page();
         if (pt_phys == 0) {
-            debug_printf("PAGING: Failed to allocate page table\n");
+            _debug_printf("PAGING: Failed to allocate page table\n");
             return NULL;
         }
 
@@ -133,7 +136,7 @@ static void paging_init_pat(void)
     uint32_t edx;
     __asm__ volatile("cpuid" : "=d"(edx) : "a"(1) : "ebx", "ecx");
     if (!(edx & (1u << 16))) {
-        debug_puts("PAGING: PAT not supported, framebuff will use uncached mapping");
+        _debug_puts("PAGING: PAT not supported, framebuff will use uncached mapping");
         return;
     }
 
@@ -141,23 +144,23 @@ static void paging_init_pat(void)
     // Clear byte 4 (bits 39:32) and write WC (0x01) into it
     pat = (pat & ~(0xFFULL << 32)) | (0x01ULL << 32);
     wrmsr(0x277, pat);
-    debug_puts("PAGING: PAT4 set to Write-Combining");
+    _debug_puts("PAGING: PAT4 set to Write-Combining");
 }
 
 void paging_init(void)
 {
-    debug_printf("Initializing paging...\n");
+    _debug_printf("Initializing paging...\n");
 
     // Check if paging is already enabled
     if (paging_is_enabled()) {
-        debug_printf("WARNING: Paging is already enabled!\n");
+        _debug_printf("WARNING: Paging is already enabled!\n");
         return;
     }
 
     // Allocate the kernel page directory (returns physical address)
     uint32_t pd_phys = pmm_alloc_page();
     if (pd_phys == 0) {
-        debug_printf("PAGING: Failed to allocate page directory\n");
+        _debug_printf("PAGING: Failed to allocate page directory\n");
         return;
     }
 
@@ -170,13 +173,13 @@ void paging_init(void)
     // Clear the page directory
     memset(kernel_page_directory, 0, sizeof(page_directory_t));
 
-    debug_printf("Kernel page directory at: %#x (physical)\n", pd_phys);
+    _debug_printf("Kernel page directory at: %#x (physical)\n", pd_phys);
 
     // Identity map the first 4MB (kernel space)
     // This covers:
     // - 0x00000000 - 0x000FFFFF : Reserved (BIOS, VGA)
     // - 0x00100000 - 0x003FFFFF : Kernel code, data, PMM bitmap, etc.
-    debug_printf("Identity mapping first 4MB...\n");
+    _debug_printf("Identity mapping first 4MB...\n");
 
     uint32_t identity_map_end = 0x400000;  // 4MB
     #if KERNEL_DEBUG_ANY
@@ -185,7 +188,7 @@ void paging_init(void)
 
     for (uint32_t addr = 0; addr < identity_map_end; addr += PAGE_SIZE) {
         if (!paging_map_page(addr, addr, PAGE_FLAGS_KERNEL)) {
-            debug_printf("PAGING: Failed to map page at %#x\n", addr);
+            _debug_printf("PAGING: Failed to map page at %#x\n", addr);
             return;
         }
         #if KERNEL_DEBUG_ANY
@@ -193,12 +196,12 @@ void paging_init(void)
         #endif
     }
 
-    debug_printf("Identity mapped %u pages (0x0 - %#x)\n",
+    _debug_printf("Identity mapped %u pages (0x0 - %#x)\n",
            pages_mapped, identity_map_end - 1);
 
     // Map physical memory to PHYS_MAP_BASE for kernel access
     // This allows us to access any physical address safely after paging is enabled
-    debug_printf("Mapping physical memory to %#x...\n", PHYS_MAP_BASE);
+    _debug_printf("Mapping physical memory to %#x...\n", PHYS_MAP_BASE);
 
     // We'll map up to 1GB of physical RAM (or whatever PMM tells us exists)
     uint32_t phys_mem_size = pmm_get_total_memory();
@@ -208,11 +211,11 @@ void paging_init(void)
     uint32_t module_count = multiboot2_get_modules_count();
 
     if (module_count > 0) {
-        debug_printf("Checking %u boot module(s) for memory mapping:\n", module_count);
+        _debug_printf("Checking %u boot module(s) for memory mapping:\n", module_count);
         for (uint32_t i = 0; i < module_count; i++) {
             multiboot_tag_boot_module_t* module = multiboot2_get_boot_module_entry(i);
             if (module) {
-                debug_printf("  Module %u: %#x - %#x\n", i,
+                _debug_printf("  Module %u: %#x - %#x\n", i,
                        module->module_phys_addr_start,
                        module->module_phys_addr_end);
                 if (module->module_phys_addr_end > max_module_addr) {
@@ -220,22 +223,22 @@ void paging_init(void)
                 }
             }
         }
-        debug_printf("Max module address: %#x\n", max_module_addr);
+        _debug_printf("Max module address: %#x\n", max_module_addr);
     }
 
     // Ensure we map at least up to the last boot module
     if (max_module_addr > phys_mem_size) {
         // Align max_module_addr up to page boundary
         max_module_addr = paging_align_up(max_module_addr);
-        debug_printf("Boot modules extend beyond reported memory (%#x > %#x)\n",
+        _debug_printf("Boot modules extend beyond reported memory (%#x > %#x)\n",
                max_module_addr, phys_mem_size);
-        debug_printf("Adjusting mapping size from %#x to %#x\n",
+        _debug_printf("Adjusting mapping size from %#x to %#x\n",
                phys_mem_size, max_module_addr);
         phys_mem_size = max_module_addr;
     }
 
     if (phys_mem_size > PHYS_MAP_SIZE) {
-        debug_printf("WARNING: Physical memory (%u MB) exceeds mapping size (%u MB)\n",
+        _debug_printf("WARNING: Physical memory (%u MB) exceeds mapping size (%u MB)\n",
                phys_mem_size / (1024 * 1024),
                PHYS_MAP_SIZE / (1024 * 1024));
         phys_mem_size = PHYS_MAP_SIZE;
@@ -248,7 +251,7 @@ void paging_init(void)
     for (uint32_t phys = 0; phys < phys_mem_size; phys += PAGE_SIZE) {
         uint32_t virt = PHYS_MAP_BASE + phys;
         if (!paging_map_page(virt, phys, PAGE_FLAGS_KERNEL)) {
-            debug_printf("PAGING: Failed to map physical page %#x to virtual %#x\n", phys, virt);
+            _debug_printf("PAGING: Failed to map physical page %#x to virtual %#x\n", phys, virt);
             return;
         }
         #if KERNEL_DEBUG_ANY
@@ -256,7 +259,7 @@ void paging_init(void)
         #endif
     }
 
-    debug_printf("Mapped %u pages of physical memory (%u MB)\n",
+    _debug_printf("Mapped %u pages of physical memory (%u MB)\n",
            phys_map_pages, (phys_map_pages * 4096) / (1024 * 1024));
 
     // Program PAT4 to write-combining before mapping the framebuffer
@@ -271,14 +274,14 @@ void paging_init(void)
         uint32_t fb_phys_base = paging_align_down(fb_phys);
         uint32_t fb_map_size = paging_align_up(fb_size + (fb_phys - fb_phys_base));
 
-        debug_printf("Mapping framebuffer: phys %#x, size %u bytes -> virt %#x (write-combining)\n",
+        _debug_printf("Mapping framebuffer: phys %#x, size %u bytes -> virt %#x (write-combining)\n",
                fb_phys, fb_size, FRAMEBUFFER_VIRT_BASE);
 
         for (uint32_t off = 0; off < fb_map_size; off += PAGE_SIZE) {
             uint32_t virt = FRAMEBUFFER_VIRT_BASE + off;
             uint32_t phys = fb_phys_base + off;
             if (!paging_map_page(virt, phys, PAGE_FLAGS_KERNEL | PAGE_WRITECOMBINE)) {
-                debug_printf("PAGING: Failed to map framebuffer page phys %#x -> virt %#x\n",
+                _debug_printf("PAGING: Failed to map framebuffer page phys %#x -> virt %#x\n",
                        phys, virt);
                 return;
             }
@@ -287,11 +290,11 @@ void paging_init(void)
 
     // Load the page directory into CR3 (use physical address)
     paging_load_directory((uint32_t*)pd_phys);
-    debug_printf("Page directory loaded into CR3\n");
+    _debug_printf("Page directory loaded into CR3\n");
 
     // Enable paging
     paging_enable();
-    debug_printf("Paging enabled!\n");
+    _debug_printf("Paging enabled!\n");
 
     // Now that paging is enabled AND physical memory is mapped,
     // update our pointers to use virtual addresses from the PHYS_MAP_BASE region
@@ -301,13 +304,13 @@ void paging_init(void)
     // Mark that we're fully initialized
     paging_fully_initialized = true;
 
-    debug_printf("Switched to virtual addressing (PD at %#x)\n", (uint32_t)kernel_page_directory);
+    _debug_printf("Switched to virtual addressing (PD at %#x)\n", (uint32_t)kernel_page_directory);
 
     // Verify paging is enabled
     if (paging_is_enabled()) {
-        debug_printf("Paging status: ENABLED\n");
+        _debug_printf("Paging status: ENABLED\n");
     } else {
-        debug_printf("ERROR: Paging failed to enable!\n");
+        _debug_printf("ERROR: Paging failed to enable!\n");
     }
 }
 
@@ -332,7 +335,7 @@ bool paging_map_page(uint32_t virt, uint32_t phys, uint32_t flags)
         // For now, allow remapping (needed during initialization)
         // In production, you might want to return false or explicitly unmap first
         if (paging_fully_initialized) {
-            debug_printf("PAGING: Warning - page %#x already mapped to %#x, remapping to %#x\n",
+            _debug_printf("PAGING: Warning - page %#x already mapped to %#x, remapping to %#x\n",
                    virt, pte->frame << 12, phys);
         }
     }
@@ -421,7 +424,7 @@ void paging_switch_directory(void* page_dir_addr)
     page_directory_t* page_directory = (page_directory_t*)page_dir_addr;
 
     if (page_directory == NULL) {
-        debug_printf("PAGING: Cannot switch to NULL page directory\n");
+        _debug_printf("PAGING: Cannot switch to NULL page directory\n");
         return;
     }
 
@@ -459,7 +462,7 @@ page_directory_t* paging_create_directory(void)
     // Allocate a new page directory (returns physical address)
     uint32_t pd_phys = pmm_alloc_page();
     if (pd_phys == 0) {
-        debug_printf("PAGING: Failed to allocate page directory\n");
+        _debug_printf("PAGING: Failed to allocate page directory\n");
         return NULL;
     }
 
@@ -473,7 +476,7 @@ page_directory_t* paging_create_directory(void)
 page_directory_t* paging_clone_kernel_directory(void)
 {
     if (kernel_page_directory == NULL) {
-        debug_printf("PAGING: Kernel page directory not initialized\n");
+        _debug_printf("PAGING: Kernel page directory not initialized\n");
         return NULL;
     }
 
@@ -497,7 +500,7 @@ page_directory_t* paging_clone_kernel_directory(void)
         }
     }
 
-    debug_printf("PAGING: Cloned kernel directory (identity map + phys map)\n");
+    _debug_printf("PAGING: Cloned kernel directory (identity map + phys map)\n");
 
     return pd;
 }
@@ -508,15 +511,15 @@ page_directory_t* paging_clone_kernel_directory(void)
 void paging_dump_page_directory(void)
 {
     if (current_page_directory == NULL) {
-        debug_printf("No page directory loaded\n");
+        _debug_printf("No page directory loaded\n");
         return;
     }
 
-    debug_printf("=== Page Directory Dump ===\n");
-    debug_printf("Page Directory Virtual Address: %#x\n", (uint32_t)current_page_directory);
-    debug_printf("CR3 (Physical): %#x\n", paging_get_cr3());
-    debug_printf("Paging Enabled: %s\n", paging_is_enabled() ? "Yes" : "No");
-    debug_printf("\nPresent Page Directory Entries:\n");
+    _debug_printf("=== Page Directory Dump ===\n");
+    _debug_printf("Page Directory Virtual Address: %#x\n", (uint32_t)current_page_directory);
+    _debug_printf("CR3 (Physical): %#x\n", paging_get_cr3());
+    _debug_printf("Paging Enabled: %s\n", paging_is_enabled() ? "Yes" : "No");
+    _debug_printf("\nPresent Page Directory Entries:\n");
 
     #if KERNEL_DEBUG_ANY
         uint32_t present_count = 0;
@@ -524,7 +527,7 @@ void paging_dump_page_directory(void)
     for (uint32_t i = 0; i < PAGE_DIRECTORY_SIZE; i++) {
         page_directory_entry_t* pde = &current_page_directory->entries[i];
         if (pde->present) {
-            debug_printf("  PDE[%u]: phys=%#x, %s, %s\n",
+            _debug_printf("  PDE[%u]: phys=%#x, %s, %s\n",
                    i,
                    pde->frame << 12,
                    pde->rw ? "RW" : "RO",
@@ -535,8 +538,8 @@ void paging_dump_page_directory(void)
         }
     }
 
-    debug_printf("Total present PDEs: %u / %u\n", present_count, PAGE_DIRECTORY_SIZE);
-    debug_printf("===========================\n");
+    _debug_printf("Total present PDEs: %u / %u\n", present_count, PAGE_DIRECTORY_SIZE);
+    _debug_printf("===========================\n");
 }
 
 /**
@@ -545,31 +548,31 @@ void paging_dump_page_directory(void)
 void paging_dump_page_table(uint32_t pd_index)
 {
     if (current_page_directory == NULL) {
-        debug_printf("No page directory loaded\n");
+        _debug_printf("No page directory loaded\n");
         return;
     }
 
     if (pd_index >= PAGE_DIRECTORY_SIZE) {
-        debug_printf("Invalid page directory index: %u\n", pd_index);
+        _debug_printf("Invalid page directory index: %u\n", pd_index);
         return;
     }
 
     page_directory_entry_t* pde = &current_page_directory->entries[pd_index];
     if (!pde->present) {
-        debug_printf("Page directory entry %u is not present\n", pd_index);
+        _debug_printf("Page directory entry %u is not present\n", pd_index);
         return;
     }
 
     uint32_t pt_phys = pde->frame << 12;
     page_table_t* pt = (page_table_t*)phys_to_virt_internal(pt_phys);
 
-    debug_printf("=== Page Table Dump (PD Index %u) ===\n", pd_index);
-    debug_printf("Page Table Physical Address: %#x\n", pt_phys);
-    debug_printf("Page Table Virtual Address: %#x\n", (uint32_t)pt);
-    debug_printf("Virtual Address Range: %#x - %#x\n",
+    _debug_printf("=== Page Table Dump (PD Index %u) ===\n", pd_index);
+    _debug_printf("Page Table Physical Address: %#x\n", pt_phys);
+    _debug_printf("Page Table Virtual Address: %#x\n", (uint32_t)pt);
+    _debug_printf("Virtual Address Range: %#x - %#x\n",
            pd_index * 4 * 1024 * 1024,
            (pd_index + 1) * 4 * 1024 * 1024 - 1);
-    debug_printf("\nPresent Page Table Entries:\n");
+    _debug_printf("\nPresent Page Table Entries:\n");
 
     uint32_t present_count = 0;
     for (uint32_t i = 0; i < PAGE_TABLE_SIZE; i++) {
@@ -578,7 +581,7 @@ void paging_dump_page_table(uint32_t pd_index)
             #if KERNEL_DEBUG_ANY
                 uint32_t virt = (pd_index << 22) | (i << 12);
             #endif
-            debug_printf("  PTE[%u]: virt=%#x -> phys=%#x, %s, %s%s%s\n",
+            _debug_printf("  PTE[%u]: virt=%#x -> phys=%#x, %s, %s%s%s\n",
                    i,
                    virt,
                    pte->frame << 12,
@@ -595,7 +598,7 @@ void paging_dump_page_table(uint32_t pd_index)
                     if (pt->entries[j].present) remaining++;
                 }
                 if (remaining > 0) {
-                    debug_printf("  ... (%u more entries)\n", remaining);
+                    _debug_printf("  ... (%u more entries)\n", remaining);
                 }
                 break;
             }
@@ -603,9 +606,9 @@ void paging_dump_page_table(uint32_t pd_index)
     }
 
     if (present_count <= 20) {
-        debug_printf("Total present PTEs: %u / %u\n", present_count, PAGE_TABLE_SIZE);
+        _debug_printf("Total present PTEs: %u / %u\n", present_count, PAGE_TABLE_SIZE);
     }
-    debug_printf("======================================\n");
+    _debug_printf("======================================\n");
 }
 
 /**
@@ -613,7 +616,7 @@ void paging_dump_page_table(uint32_t pd_index)
  */
 bool paging_validate_identity_mapping(void)
 {
-    debug_printf("=== Validating Identity Mapping ===\n");
+    _debug_printf("=== Validating Identity Mapping ===\n");
 
     bool all_valid = true;
 
@@ -635,7 +638,7 @@ bool paging_validate_identity_mapping(void)
         bool mapped = paging_is_mapped(virt);
         bool identity = (phys == virt);
 
-        debug_printf("  %#010x (%s): %s%s\n",
+        _debug_printf("  %#010x (%s): %s%s\n",
                virt,
                test_addresses[i].description,
                mapped ? (identity ? "MAPPED (identity)" : "MAPPED (not identity!)") : "NOT MAPPED!",
@@ -647,17 +650,17 @@ bool paging_validate_identity_mapping(void)
     }
 
     if (all_valid) {
-        debug_printf("Result: All critical regions are identity-mapped correctly\n");
+        _debug_printf("Result: All critical regions are identity-mapped correctly\n");
     } else {
-        debug_printf("Result: VALIDATION FAILED - some regions are not properly mapped!\n");
+        _debug_printf("Result: VALIDATION FAILED - some regions are not properly mapped!\n");
     }
 
-    debug_printf("===================================\n");
+    _debug_printf("===================================\n");
     return all_valid;
 }
 
-#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
-#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : _debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : _debug_puts(s))
 /**
  * Print statistics about current paging state
  */
@@ -744,7 +747,7 @@ static page_table_t* paging_clone_page_table(
     // Allocate new page table
     uint32_t dst_pt_phys = pmm_alloc_page();
     if (dst_pt_phys == 0) {
-        debug_printf("PAGING: failed to allocate page table for cloning\n");
+        _debug_printf("PAGING: failed to allocate page table for cloning\n");
         abort(); // TODO: is abort() needed here?
         return NULL;
     }
@@ -771,7 +774,7 @@ static page_table_t* paging_clone_page_table(
             // Stack pages are always physically copied
             uint32_t new_phys = pmm_alloc_page();
             if (new_phys == 0) {
-                debug_printf(
+                _debug_printf(
                     "Failed to allocate page table for stack clone at %#x\n",
                     virt
                 );
@@ -781,7 +784,7 @@ static page_table_t* paging_clone_page_table(
                 return NULL;
             }
 
-            debug_printf(
+            _debug_printf(
                 "PAGING: Allocating stack page at vaddr=%#x, phys=%#x\n",
                 virt,
                 new_phys
@@ -800,7 +803,7 @@ static page_table_t* paging_clone_page_table(
             dst_pte->user = 1;
             dst_pte->frame = new_phys >> 12;
 
-            debug_printf(
+            _debug_printf(
                 "PAGING: Stack page created - present=%d, user=%d, rw=%d\n",
                 dst_pte->present,
                 dst_pte->user,
@@ -812,7 +815,7 @@ static page_table_t* paging_clone_page_table(
             uint32_t phys = src_pte->frame << 12; // shared phys address
             uint16_t refcount = pmm_inc_refcount(phys);
             if (refcount == 0) {
-                debug_printf("Failed to increment refcount for page %#x\n", phys);
+                _debug_printf("Failed to increment refcount for page %#x\n", phys);
                 // Cleanup and retrun NULL
                 for (uint32_t j = 0; j < i; j++) {
                     if (dst_pt->entries[j].present) {
@@ -838,7 +841,7 @@ static page_table_t* paging_clone_page_table(
 
             if (refcount == 2) {
                 // For debugging. TODO: remove it.
-                debug_printf("PAGING: Page %#x now shared\n", phys);
+                _debug_printf("PAGING: Page %#x now shared\n", phys);
             }
         }
         // else: paging is not present in source and not a stack page
@@ -859,7 +862,7 @@ static page_table_t* paging_create_stack_page_table(
     // Allocate new page table
     uint32_t pt_phys = pmm_alloc_page();
     if (pt_phys == 0) {
-        debug_puts("PAGING: failed to allocate page table for stack");
+        _debug_puts("PAGING: failed to allocate page table for stack");
         return NULL;
     }
     page_table_t* pt = (page_table_t*)phys_to_virt_internal(pt_phys);
@@ -875,13 +878,13 @@ static page_table_t* paging_create_stack_page_table(
         if (virt >= user_stack_base && virt < stack_end) {
             uint32_t phys = pmm_alloc_page();
             if (phys == 0) {
-                debug_printf("PAGING: failed to alloc stack page at %#x\n", virt);
+                _debug_printf("PAGING: failed to alloc stack page at %#x\n", virt);
                 // TODO: cleanup
                 pmm_free_page(pt_phys);
                 return NULL;
             }
 
-            debug_printf(
+            _debug_printf(
                 "PAGING: creating stack page at vaddr=%#x, phys=%#x\n",
                 virt,
                 phys
@@ -908,14 +911,14 @@ void* paging_clone_directory(
 ) {
     page_directory_t* src = _src;
     if (src == NULL) {
-        debug_puts("PAGING: cannot clone NULL page directory");
+        _debug_puts("PAGING: cannot clone NULL page directory");
         abort(); // TODO: is the abort() needed here?
         return NULL;
     }
 
     page_directory_t* dst = paging_create_directory();
     if (dst == NULL) {
-        debug_puts("PAGING: failed to clone page directory");
+        _debug_puts("PAGING: failed to clone page directory");
         abort(); // TODO: is the abort() needed here?
         return NULL;
     }
@@ -947,7 +950,7 @@ void* paging_clone_directory(
         // Clone user space
         uint32_t user_start_pd = paging_get_pd_index(VMM_USER_START);
         uint32_t user_end_pd = paging_get_pd_index(VMM_USER_END);
-        debug_printf(
+        _debug_printf(
             "PAGING: Cloning user space (PD entries %u-%u)\n",
             user_start_pd,
             user_end_pd - 1
@@ -969,7 +972,7 @@ void* paging_clone_directory(
             if (!src_pde->present) {
                 if (contains_stack) {
                     // Need to create a new page table for the stack
-                    debug_printf(
+                    _debug_printf(
                         "PAGING: creating new page table for stack at PD[%u]\n",
                         pd_idx
                     );
@@ -979,7 +982,7 @@ void* paging_clone_directory(
                         user_stack_size
                     );
                     if (stack_pt == NULL) {
-                        debug_puts("PAGING: Failed to create stack page table");
+                        _debug_puts("PAGING: Failed to create stack page table");
                         pmm_free_page(VIRT_TO_PHYS(dst));
                         abort();
                         return NULL;
@@ -998,7 +1001,7 @@ void* paging_clone_directory(
             }
             page_table_t* src_pt = paging_get_page_table_from_pde(src_pde);
             if (src_pt == NULL) {
-                debug_printf(
+                _debug_printf(
                     "PAGING: Failed to access source page table at PD[%u]\n",
                     pd_idx
                 );
@@ -1033,7 +1036,7 @@ void* paging_clone_directory(
                 user_stack_size
             );
             if (dst_pt == NULL) {
-                debug_printf("PAGING: Failed to clone PT at PD[%u]\n", pd_idx);
+                _debug_printf("PAGING: Failed to clone PT at PD[%u]\n", pd_idx);
                 // Cleanup already cloned tables
                 for (
                     uint32_t cleanup_idx = user_start_pd;
@@ -1066,7 +1069,7 @@ void* paging_clone_directory(
             #endif
         }
 
-        debug_printf(
+        _debug_printf(
             "PAGING: Cloned %u userspace page tables\n",
             cloned_tables
         );
@@ -1074,7 +1077,7 @@ void* paging_clone_directory(
         paging_flush_tlb();
     }
 
-    debug_printf(
+    _debug_printf(
         "PAGING: cloned page directory (kernel=%s, user=%s)\n",
         "yes",
         usermode ? "yes" : "no"
@@ -1104,13 +1107,13 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr)
     }
 
     // This is a COW page - handle it
-    debug_printf("PAGING: COW fault at %#x (phys: %#x)\n",
+    _debug_printf("PAGING: COW fault at %#x (phys: %#x)\n",
            page_addr, pte->frame << 12);
 
     // Allocate new physical page
     uint32_t new_phys = pmm_alloc_page();
     if (new_phys == 0) {
-        debug_printf("PAGING: Failed to allocate page for COW at %#x\n", page_addr);
+        _debug_printf("PAGING: Failed to allocate page for COW at %#x\n", page_addr);
         return false;
     }
 
@@ -1129,12 +1132,12 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr)
     uint16_t old_refcount = pmm_dec_refcount(old_phys);
     if (old_refcount == 0) {
         pmm_free_page(old_phys);
-        debug_printf(
+        _debug_printf(
             "PAGING: old COW page %#x freed (last ref. removed)\n",
             old_phys
         );
     } else {
-        debug_printf(
+        _debug_printf(
             "PAGING: old COW page %#x still has %u references\n",
             old_phys,
             old_refcount
@@ -1144,7 +1147,7 @@ bool paging_handle_page_fault_cow(uint32_t faulting_addr)
     // Flush TLB for this page
     paging_flush_tlb_entry(page_addr);
 
-    debug_printf("PAGING: COW resolved - new phys page %#x\n", new_phys);
+    _debug_printf("PAGING: COW resolved - new phys page %#x\n", new_phys);
     pages_saved_by_cow++;
     return true;
 }
@@ -1213,7 +1216,7 @@ void paging_free_user_pages(void* _pd)
     }
 
     if (freed_tables > 0) {
-        debug_printf(
+        _debug_printf(
             "PAGING: Freed %u user page tables and %u private pages\n",
             freed_tables,
             freed_pages

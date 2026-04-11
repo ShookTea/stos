@@ -8,6 +8,9 @@
 #include <kernel/spinlock.h>
 #include <kernel/task/task.h>
 
+#define _debug_puts(...) debug_puts_c("Scheduler", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("Scheduler", __VA_ARGS__)
+
 static spinlock_t scheduler_lock = SPINLOCK_INIT;
 
 static uint8_t scheduler_tick_count = 0;
@@ -165,7 +168,7 @@ static void cleanup_dead_tasks()
         task_t* next = zombie->next;
         if (zombie->state == TASK_DEAD) {
             remove_from_queue(zombie);
-            debug_printf(
+            _debug_printf(
                 "Cleaning up dead task [%u] '%s'\n",
                 zombie->pid,
                 zombie->name
@@ -303,7 +306,7 @@ static void scheduler_reschedule()
         }
         if (next_task == NULL) {
             // This should never happen - idle task should always exist
-            debug_puts("FATAL: No task to switch to from zombie/dead task");
+            _debug_puts("FATAL: No task to switch to from zombie/dead task");
             abort();
         }
     } else if (next_task == NULL) {
@@ -367,7 +370,7 @@ void scheduler_remove_task(task_t* task)
         case TASK_DEAD: return;
         case TASK_RUNNING:
             // TODO: what should we really do here?
-            debug_puts("Attempted to remove running task");
+            _debug_puts("Attempted to remove running task");
             abort();
             break;
         default: break;

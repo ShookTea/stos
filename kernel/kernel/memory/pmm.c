@@ -8,6 +8,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define _debug_puts(...) debug_puts_c("PMM", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("PMM", __VA_ARGS__)
+
 static spinlock_t pmm_lock = SPINLOCK_INIT;
 
 // External symbols from linker script
@@ -193,7 +196,7 @@ static inline uint16_t buddy_dec_refcount(uint32_t page)
     }
     uint16_t current = buddy_refcount_map[page];
     if (current == 0) {
-        debug_printf(
+        _debug_printf(
             "ERR: attemted to decrement refcount for free page %u\n", page
         );
         abort(); // TODO: is abort needed here?
@@ -379,7 +382,7 @@ static uint32_t buddy_coalesce(uint32_t addr, uint8_t order)
 static uint32_t buddy_alloc_order(uint8_t order)
 {
     if (order > BUDDY_MAX_ORDER) {
-        debug_printf("PMM: Order %u exceeds maximum %u\n", order, BUDDY_MAX_ORDER);
+        _debug_printf("Order %u exceeds maximum %u\n", order, BUDDY_MAX_ORDER);
         return 0;
     }
 
@@ -391,10 +394,10 @@ static uint32_t buddy_alloc_order(uint8_t order)
 
     // No block found
     if (current_order > BUDDY_MAX_ORDER) {
-        debug_printf("PMM: Out of memory for order %u (no free blocks)\n", order);
+        _debug_printf("Out of memory for order %u (no free blocks)\n", order);
         for (int i = 0; i <= BUDDY_MAX_ORDER; i++) {
             if (buddy_free_lists[i] != 0) {
-                debug_printf("  Order %d has free blocks\n", i);
+                _debug_printf("  Order %d has free blocks\n", i);
             }
         }
         return 0;
@@ -433,19 +436,19 @@ static uint32_t buddy_alloc_order(uint8_t order)
 static void buddy_free_order(uint32_t addr, uint8_t order)
 {
     if (!pmm_is_aligned(addr)) {
-        debug_printf("PMM: Warning - freeing unaligned address %#x\n", addr);
+        _debug_printf("Warning - freeing unaligned address %#x\n", addr);
         addr = pmm_align_down(addr);
     }
 
     uint32_t page = pmm_addr_to_page(addr);
 
     if (page >= pmm_total_pages) {
-        debug_printf("PMM: Error - invalid page %u\n", page);
+        _debug_printf("Error - invalid page %u\n", page);
         return;
     }
 
     if (!buddy_is_allocated(page)) {
-        debug_printf("PMM: Warning - freeing already free block at %#x\n", addr);
+        _debug_printf("Warning - freeing already free block at %#x\n", addr);
         return;
     }
 
@@ -455,12 +458,12 @@ static void buddy_free_order(uint32_t addr, uint8_t order)
     for (uint32_t i = 0; i < pages_in_block; i++) {
         uint16_t refcount = buddy_get_refcount(page + i);
         if (refcount > 1) {
-            debug_printf(
+            _debug_printf(
                 "ERR: cannot free block at %#x (order %u): ",
                 addr,
                 order
             );
-            debug_printf(
+            _debug_printf(
                 "page %u still has %u references\n",
                 page + i,
                 refcount
@@ -483,7 +486,7 @@ static void buddy_free_order(uint32_t addr, uint8_t order)
     if (buddy_alloc_count[order] > 0) {
         buddy_alloc_count[order]--;
     } else {
-        debug_printf("PMM: Warning - tried to decrement buddy_alloc_count[%u] when already 0\n", order);
+        _debug_printf("Warning - tried to decrement buddy_alloc_count[%u] when already 0\n", order);
     }
 
     // Coalesce with buddies
@@ -606,7 +609,7 @@ static void buddy_reserve_region(uint32_t start_addr, uint32_t end_addr)
             #endif
         }
     }
-    debug_printf("  Reserved %u pages from %#x to %#x\n", count, start_addr, end_addr);
+    _debug_printf("  Reserved %u pages from %#x to %#x\n", count, start_addr, end_addr);
 }
 
 // ============================================================================
@@ -782,8 +785,8 @@ uint32_t pmm_get_free_memory(void)
     return (pmm_total_pages - pmm_used_pages) * PMM_PAGE_SIZE;
 }
 
-#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
-#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : _debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : _debug_puts(s))
 
 void pmm_print_stats(bool force_terminal_output)
 {
@@ -873,7 +876,7 @@ uint16_t pmm_get_refcount(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        debug_printf("ERR: get_refcount called with unaligned addr %#x\n", phys_addr);
+        _debug_printf("ERR: get_refcount called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return 0;
     }
@@ -888,14 +891,14 @@ uint16_t pmm_inc_refcount(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        debug_printf("ERR: inc_refcount called with unaligned addr %#x\n", phys_addr);
+        _debug_printf("ERR: inc_refcount called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return 0;
     }
 
     uint32_t page = pmm_addr_to_page(phys_addr);
     if (!buddy_is_allocated(page)) {
-        debug_printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
+        _debug_printf("ERR: inc_refcount called on free page %#x\n", phys_addr);
         abort(); // TODO: is abort() needed here?
         spinlock_release(&pmm_lock);
         return 0;
@@ -910,14 +913,14 @@ uint16_t pmm_dec_refcount(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        debug_printf("ERR: dec_refcount called with unaligned addr %#x\n", phys_addr);
+        _debug_printf("ERR: dec_refcount called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return 0;
     }
 
     uint32_t page = pmm_addr_to_page(phys_addr);
     if (!buddy_is_allocated(page)) {
-        debug_printf("ERR: dec_refcount called on free page %#x\n", phys_addr);
+        _debug_printf("ERR: dec_refcount called on free page %#x\n", phys_addr);
         abort(); // TODO: is abort() needed here?
         spinlock_release(&pmm_lock);
         return 0;
@@ -932,7 +935,7 @@ bool pmm_is_shared(uint32_t phys_addr)
 {
     spinlock_acquire(&pmm_lock);
     if (!pmm_is_aligned(phys_addr)) {
-        debug_printf("ERR: is_shared called with unaligned addr %#x\n", phys_addr);
+        _debug_printf("ERR: is_shared called with unaligned addr %#x\n", phys_addr);
         spinlock_release(&pmm_lock);
         return false;
     }

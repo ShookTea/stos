@@ -6,6 +6,9 @@
 #include "stdlib.h"
 #include "./common.h"
 
+#define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
+
 /**
  * Because of ATA quirks, there can be a long delay for the process of selecting
  * a drive, and they technically suggest that if we want to read a status, we
@@ -36,7 +39,7 @@ static void ata_handle_timeout(void* data)
     } else if (mode[0] == 'b' && mode[1] == 's') {
         bsy_secondary_hang_timeout = true;
     } else {
-        debug_printf("Invalid ATA timeout code: >%s<\n", data);
+        _debug_printf("Invalid ATA timeout code: >%s<\n", data);
         abort();
     }
 }
@@ -106,7 +109,7 @@ uint8_t _ata_wait_for_bsy_clear(uint16_t bus_base)
     }
     if (primary ? bsy_primary_hang_timeout : bsy_secondary_hang_timeout) {
         // TODO: software reset is required
-        debug_puts(primary ? "ATA BSY hang primary" : "ATA BSY hang secondary");
+        _debug_puts(primary ? "BSY hang primary" : "BSY hang secondary");
         abort();
     }
 

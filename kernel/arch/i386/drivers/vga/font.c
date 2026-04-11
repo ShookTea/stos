@@ -8,6 +8,9 @@
 #include <string.h>
 #include "kernel/debug.h"
 
+#define _debug_puts(...) debug_puts_c("VGA", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("VGA", __VA_ARGS__)
+
 // Glyph bitmaps copied out of the font file. Each row is one byte; bit 7 is
 // the leftmost pixel.
 static uint8_t font_glyphs[PSF1_GLYPH_COUNT][PSF1_GLYPH_HEIGHT];
@@ -42,7 +45,7 @@ static void parse_unicode_table(uint16_t* table, size_t u16_count)
 
     unicode_map = kmalloc(count * sizeof(unicode_entry_t));
     if (!unicode_map) {
-        debug_printf(
+        _debug_printf(
             "font: failed to allocate unicode map (%u entries)\n",
             (uint32_t)count
         );
@@ -84,7 +87,7 @@ static void parse_unicode_table(uint16_t* table, size_t u16_count)
         unicode_map[j] = key;
     }
 
-    debug_printf("font: %u unicode mappings loaded\n", (uint32_t)unicode_map_size);
+    _debug_printf("font: %u unicode mappings loaded\n", (uint32_t)unicode_map_size);
 }
 
 /**
@@ -93,7 +96,7 @@ static void parse_unicode_table(uint16_t* table, size_t u16_count)
 static void parse_psf(uint8_t* file, size_t file_size)
 {
     if (file[0] != 0x36 || file[1] != 0x04) {
-        debug_puts("font: not a valid PSF1 file");
+        _debug_puts("font: not a valid PSF1 file");
         return;
     }
     uint8_t mode       = file[2];
@@ -102,7 +105,7 @@ static void parse_psf(uint8_t* file, size_t file_size)
     bool has_unicode   = (mode & 0x02) || (mode & 0x04);
 
     if (glyph_size != PSF1_GLYPH_HEIGHT) {
-        debug_printf(
+        _debug_printf(
             "font: glyph_size=%u, only %u supported\n",
             glyph_size,
             PSF1_GLYPH_HEIGHT
@@ -110,11 +113,11 @@ static void parse_psf(uint8_t* file, size_t file_size)
         return;
     }
     if (!mode512) {
-        debug_puts("font: only 512-glyph PSF1 fonts supported");
+        _debug_puts("font: only 512-glyph PSF1 fonts supported");
         return;
     }
     if (!has_unicode) {
-        debug_puts("font: only PSF1 fonts with unicode table supported");
+        _debug_puts("font: only PSF1 fonts with unicode table supported");
         return;
     }
 
@@ -136,7 +139,7 @@ static void parse_psf(uint8_t* file, size_t file_size)
     }
 
     font_loaded = true;
-    debug_printf(
+    _debug_printf(
         "font: PSF1 font loaded (%u glyphs, %ux%u)\n",
         PSF1_GLYPH_COUNT,
         PSF1_GLYPH_WIDTH,
@@ -148,7 +151,7 @@ void font_load_psf(char* path)
 {
     vfs_node_t* node = vfs_resolve(path);
     if (node == NULL) {
-        debug_printf("font: path %s not found\n", path);
+        _debug_printf("font: path %s not found\n", path);
         return;
     }
     vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);

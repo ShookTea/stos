@@ -6,6 +6,9 @@
 #include "stdlib.h"
 #include "kernel/debug.h"
 
+#define _debug_puts(...) debug_puts_c("PS/2", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("PS/2", __VA_ARGS__)
+
 static bool initialized = false;
 static bool dual_channel = false;
 static bool port1_online = false;
@@ -50,7 +53,7 @@ static void ps2_handle_timeout(void *data)
     } else if (mode[0] == 'B') {
         read_byte_timeout = true;
     } else {
-        debug_printf("Invalid timeout: %s\n", mode);
+        _debug_printf("Invalid timeout: %s\n", mode);
         abort();
     }
 }
@@ -72,7 +75,7 @@ static void ps2_send_com(uint8_t command)
     }
     if (send_com_timeout) {
         // TODO: some more safe handling
-        debug_puts("!!! ps2_send_com timeout");
+        _debug_puts("!!! ps2_send_com timeout");
         abort();
     } else {
         pit_cancel_timeout(timeout_id);
@@ -93,7 +96,7 @@ static void ps2_send_data(uint8_t command)
     }
     if (send_data_timeout) {
         // TODO: some more safe handling
-        debug_puts("!!! ps2_send_data timeout");
+        _debug_puts("!!! ps2_send_data timeout");
         abort();
     } else {
         pit_cancel_timeout(timeout_id);
@@ -114,7 +117,7 @@ static uint8_t ps2_read_data()
     }
     if (read_data_timeout) {
         // TODO: some more safe handling
-        debug_puts("!!! ps2_read_data timeout");
+        _debug_puts("!!! ps2_read_data timeout");
         abort();
     } else {
         pit_cancel_timeout(timeout_id);
@@ -138,18 +141,18 @@ static uint16_t ps2_identify_device(bool port2)
     }
     uint8_t response = 0;
 
-    debug_printf("Identifying PS/2 device at port %d\n", port2 ? 2 : 1);
+    _debug_printf("Identifying PS/2 device at port %d\n", port2 ? 2 : 1);
 
     // First, disable scanning of the device
     port2
         ? ps2_send_byte_port2(PS2_DEVCOM_DISABLE_SCANNING)
         : ps2_send_byte_port1(PS2_DEVCOM_DISABLE_SCANNING);
     if (ps2_read_byte_to_result(&response) != PS2_RESPONSE_OK) {
-        debug_puts("Disable scanning failed");
+        _debug_puts("Disable scanning failed");
         abort();
     }
     if (response != PS2_DEVCOM_RESPONSE_ACK) {
-        debug_printf("Non-ack response: %#02x\n", response);
+        _debug_printf("Non-ack response: %#02x\n", response);
         abort();
     }
 
@@ -158,11 +161,11 @@ static uint16_t ps2_identify_device(bool port2)
         ? ps2_send_byte_port2(PS2_DEVCOM_IDENTIFY)
         : ps2_send_byte_port1(PS2_DEVCOM_IDENTIFY);
     if (ps2_read_byte_to_result(&response) != PS2_RESPONSE_OK) {
-        debug_puts("Identification failed");
+        _debug_puts("Identification failed");
         abort();
     }
     if (response != PS2_DEVCOM_RESPONSE_ACK) {
-        debug_printf("Non-ack response: %#02x\n", response);
+        _debug_printf("Non-ack response: %#02x\n", response);
         abort();
     }
 
@@ -239,10 +242,10 @@ void ps2_init()
     ps2_send_com(PS2_COM_TEST_CONTROLLER);
     if (ps2_read_data() != 0x55) {
         // TODO: what should we really do now?
-        debug_puts("Warning! PS/2 controller self-test failed");
+        _debug_puts("Warning! PS/2 controller self-test failed");
         return;
     } else {
-        debug_puts("PS/2 controller self-test completed");
+        _debug_puts("PS/2 controller self-test completed");
     }
 
     // Checking if PS/2 is a dual channel: we try to enable port 2, then we
@@ -255,9 +258,9 @@ void ps2_init()
     ps2_send_com(PS2_COM_READ_CCB);
     ccb = ps2_read_data();
     if (ccb & 0b00010000) {
-        debug_puts("Single-channel PS/2 controller detected");
+        _debug_puts("Single-channel PS/2 controller detected");
     } else {
-        debug_puts("Dual-channel PS/2 controller detected");
+        _debug_puts("Dual-channel PS/2 controller detected");
         dual_channel = true;
         ps2_send_com(PS2_COM_DISABLE_PORT_2);
         ccb &= ~0b00100010;
@@ -268,24 +271,24 @@ void ps2_init()
     // Run self-test of port 1
     ps2_send_com(PS2_COM_TEST_PORT_1);
     if (ps2_read_data() == 0x00) {
-        debug_puts("PS/2 port 1 test completed");
+        _debug_puts("PS/2 port 1 test completed");
         port1_online = true;
     } else {
-        debug_puts("Warning! PS/2 port 1 test failed");
+        _debug_puts("Warning! PS/2 port 1 test failed");
     }
 
     // If port 2 is present, run test for port 2 as well
     ps2_send_com(PS2_COM_TEST_PORT_2);
     if (ps2_read_data() == 0x00) {
-        debug_puts("PS/2 port 2 test completed");
+        _debug_puts("PS/2 port 2 test completed");
         port2_online = true;
     } else {
-        debug_puts("Warning! PS/2 port 2 test failed");
+        _debug_puts("Warning! PS/2 port 2 test failed");
     }
 
     if (!port1_online && !port2_online) {
         // TODO: what should we really do now?
-        debug_puts("Warning! No PS/2 port available.");
+        _debug_puts("Warning! No PS/2 port available.");
         return;
     }
 
@@ -303,12 +306,12 @@ void ps2_init()
     ps2_send_com(PS2_COM_SET_CCB);
     ps2_send_data(ccb);
 
-    debug_puts("PS/2 port(s) enabled");
+    _debug_puts("PS/2 port(s) enabled");
 
     port1_device = ps2_identify_device(false);
     port2_device = ps2_identify_device(true);
-    debug_printf("PS/2 port 1 device type: %#02x\n", port1_device);
-    debug_printf("PS/2 port 2 device type: %#02x\n", port2_device);
+    _debug_printf("PS/2 port 1 device type: %#02x\n", port1_device);
+    _debug_printf("PS/2 port 2 device type: %#02x\n", port2_device);
 }
 
 /**

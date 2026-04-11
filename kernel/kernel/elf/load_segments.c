@@ -5,6 +5,9 @@
 #include "kernel/debug.h"
 #include <string.h>
 
+#define _debug_puts(...) debug_puts_c("ELF", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ELF", __VA_ARGS__)
+
 static inline bool in_userspace(uint32_t addr)
 {
     return addr < VMM_USER_END;
@@ -13,8 +16,8 @@ static inline bool in_userspace(uint32_t addr)
 bool elf_load_segments(void* elf_data, elf_t* parsed)
 {
     if (!in_userspace(parsed->entry_point)) {
-        debug_printf(
-            "ELF invalid: entrypoint outside of user space (%#x)\n",
+        _debug_printf(
+            "invalid: entrypoint outside of user space (%#x)\n",
             parsed->entry_point
         );
         return false;
@@ -24,8 +27,8 @@ bool elf_load_segments(void* elf_data, elf_t* parsed)
         uint32_t start = parsed->segments[i].vaddr;
         uint32_t end = start + parsed->segments[i].memsz;
         if (!in_userspace(start) || !in_userspace(end)) {
-            debug_printf(
-                "ELF invalid: segment %u outside of user space\n",
+            _debug_printf(
+                "invalid: segment %u outside of user space\n",
                 (unsigned)i
             );
             return false;
@@ -43,14 +46,14 @@ bool elf_load_segments(void* elf_data, elf_t* parsed)
             uint32_t vaddr = vaddr_start + (p * PAGE_SIZE);
 
             if (paging_is_mapped(vaddr)) {
-                debug_printf("ELF error: vaddr %#x is already mapped\n", vaddr);
+                _debug_printf("error: vaddr %#x is already mapped\n", vaddr);
                 return false;
             }
 
             uint32_t phys = pmm_alloc_page();
             if (phys == 0) {
-                debug_printf(
-                    "ELF: Failed to allocate page for segment %u\n",
+                _debug_printf(
+                    "Failed to allocate page for segment %u\n",
                     (unsigned)i
                 );
                 return false;
@@ -58,7 +61,7 @@ bool elf_load_segments(void* elf_data, elf_t* parsed)
 
             uint32_t load_flags = segment.page_flags | PAGE_WRITE;
             if (!paging_map_page(vaddr, phys, load_flags)) {
-                debug_printf("ELF: Failed to map page at %#x\n", vaddr);
+                _debug_printf("Failed to map page at %#x\n", vaddr);
                 pmm_free_page(phys);
                 return false;
             }

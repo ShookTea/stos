@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define _debug_puts(...) debug_puts_c("VFS/Initrd", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("VFS/Initrd", __VA_ARGS__)
+
 typedef struct {
     void* address;
 } initrd_file_data_t;
@@ -211,7 +214,7 @@ vfs_node_t* initrd_mount()
         return initrd;
     }
     mounted = true;
-    debug_puts("Loading initrd from memory");
+    _debug_puts("Loading initrd from memory");
     memset(empty_name, 0, 100);
 
     multiboot_tag_boot_module_t* initrd_module = NULL;
@@ -223,7 +226,7 @@ vfs_node_t* initrd_mount()
     }
 
     if (!initrd_module) {
-        debug_puts("There is no initrd module present.");
+        _debug_puts("There is no initrd module present.");
         return NULL;
     }
 

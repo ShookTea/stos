@@ -9,11 +9,14 @@
 #include <libds/libds.h>
 #include <libds/ringbuf.h>
 
+#define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
+
 static uint16_t* buffer = NULL;
 
 void _test_read_callback(void* data __attribute__((unused)))
 {
-    debug_puts("Read completed, data:");
+    _debug_puts("Read completed, data:");
     for (size_t i = 0; i < 512; i++) {
         if (i % 16 == 0) {
             debug_puts("");
@@ -29,7 +32,7 @@ void _test_read_callback(void* data __attribute__((unused)))
 
 void _test_write_callback(void* data __attribute__((unused)))
 {
-    debug_puts("Writing completed.");
+    _debug_puts("Writing completed.");
     kfree(buffer);
 }
 
@@ -53,7 +56,7 @@ void _test_write()
 
 void ata_init()
 {
-    debug_puts("Initializing ATA");
+    _debug_puts("Initializing ATA");
     _ata_identify_devices();
     uint8_t drive = ata_get_selected_drive();
     if (drive == ATA_DRIVE_NONE) {
@@ -66,7 +69,7 @@ void ata_init()
         idt_register_irq_handler(PIC_LINE_SECONDARY_ATA, &_ata_irq_handler);
         pic_enable(PIC_LINE_SECONDARY_ATA);
     }
-    debug_puts("ATA IRQ enabled");
+    _debug_puts("IRQ enabled");
 
     // _test_read();
     // _test_write();

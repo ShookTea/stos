@@ -27,6 +27,8 @@
 #include "kernel/debug.h"
 #include <kernel/terminal.h>
 
+#define _debug_puts(...) debug_puts_c("main", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("main", __VA_ARGS__)
 
 #if !defined(__i386__)
 #error "This kernel needs to be compiled with a ix86-elf compiler"
@@ -36,20 +38,20 @@ void kernel_main()
 {
     terminal_init();
     terminal_disable_cursor();
-    debug_puts("\n\n=== kernel_main() ===");
+    _debug_puts("\n\n=== kernel_main() ===");
 
     if (serial_init() != 0) {
-        debug_puts("COM1 faulty");
+        _debug_puts("COM1 faulty");
     } else {
-        debug_puts("COM1 initialized correctly");
+        _debug_puts("COM1 initialized correctly");
     }
 
-    debug_puts("\n=== Boot Sequence Status ===");
-    debug_puts("PMM: Already initialized by early_init()");
-    debug_puts("Paging: Already enabled by early_init()");
-    debug_puts("VMM: Already initialized by early_init()");
-    debug_puts("Slab allocator: Already initialized by early_init()");
-    debug_puts("kmalloc/kfree: Already initialized by early_init()");
+    _debug_puts("\n=== Boot Sequence Status ===");
+    _debug_puts("PMM: Already initialized by early_init()");
+    _debug_puts("Paging: Already enabled by early_init()");
+    _debug_puts("VMM: Already initialized by early_init()");
+    _debug_puts("Slab allocator: Already initialized by early_init()");
+    _debug_puts("kmalloc/kfree: Already initialized by early_init()");
 
     // Set allocators for libds library
     libds_set_allocators(kmalloc, krealloc, kfree);
@@ -83,9 +85,9 @@ void kernel_main()
     scheduler_init();
     syscall_init();
 
-    debug_puts("\n=== Kernel Initialization Complete ===");
-    debug_puts("All subsystems initialized and tested successfully");
-    debug_puts("Entering idle loop...\n");
+    _debug_puts("\n=== Kernel Initialization Complete ===");
+    _debug_puts("All subsystems initialized and tested successfully");
+    _debug_puts("Entering idle loop...\n");
 
     if (in_debug_mode) {
         task_t* debugger = task_create("debugger", debugger_init, true);

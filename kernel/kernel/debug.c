@@ -62,13 +62,4 @@ void debug_printf_c(const char* cat, const char* format, ...)
     #endif
 }
 
-void debug_newline()
-{
-    #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
-        serial_put_c('\n');
-    #elif KERNEL_DEBUG_TERMINAL
-        puts("");
-    #endif
-}
-
 #endif

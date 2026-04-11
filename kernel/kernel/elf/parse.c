@@ -5,11 +5,14 @@
 #include "kernel/debug.h"
 #include <string.h>
 
+#define _debug_puts(...) debug_puts_c("ELF", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ELF", __VA_ARGS__)
+
 void elf_parse(void* addr, elf_t* store)
 {
     memset(store, 0, sizeof(elf_t));
     if (!elf_validate(addr)) {
-        debug_puts("Invalid ELF file.");
+        _debug_puts("Invalid ELF file.");
         store->success = false;
         return;
     }
@@ -46,7 +49,7 @@ void elf_parse(void* addr, elf_t* store)
         idx++;
     }
 
-    debug_printf("min=%#x, max=%#x\n", min_vaddr, max_vaddr);
+    _debug_printf("min=%#x, max=%#x\n", min_vaddr, max_vaddr);
 
     store->success = true;
     store->segment_count = idx;

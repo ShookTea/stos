@@ -8,6 +8,9 @@
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
 
+#define _debug_puts(...) debug_puts_c("GRUB-MB2", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("GRUB-MB2", __VA_ARGS__)
+
 static multiboot_info_t* mbi;
 static char boot_command_line[64];
 static char boot_loader_name[64];
@@ -35,11 +38,11 @@ static uint32_t framebuffer_pitch = 0;
 static void multiboot2_process_memory_map()
 {
     if (saved_mmap_count == 0) {
-        debug_printf("WARNING: No memory map entries found\n");
+        _debug_printf("WARNING: No memory map entries found\n");
         return;
     }
 
-    debug_printf("Memory map entries: %u\n", saved_mmap_count);
+    _debug_printf("Memory map entries: %u\n", saved_mmap_count);
 
     // Find the maximum usable memory address
     pmm_max_memory = 0;
@@ -66,7 +69,7 @@ static void multiboot2_process_memory_map()
         }
     }
 
-    debug_printf("Maximum memory address: %#x (%u MB)\n",
+    _debug_printf("Maximum memory address: %#x (%u MB)\n",
            pmm_max_memory, pmm_max_memory / (1024 * 1024));
 }
 
@@ -113,7 +116,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 uint32_t entries_count = (mmap->size - 16) / mmap->entry_size;
 
                 if (entries_count > MAX_MMAP_ENTRIES) {
-                    debug_printf("WARNING: Too many memory map entries, truncating to %d\n",
+                    _debug_printf("WARNING: Too many memory map entries, truncating to %d\n",
                            MAX_MMAP_ENTRIES);
                     entries_count = MAX_MMAP_ENTRIES;
                 }
@@ -162,7 +165,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
             case MULTIBOOT2_TAG_TYPE_FRAMEBUFFER_INFO: {
                 multiboot_tag_framebuffer_info_t* fb_inf =
                     (multiboot_tag_framebuffer_info_t*)tag;
-                debug_printf(
+                _debug_printf(
                     "  framebuffer size: %u x %u, color mode %u, addr: %x %x\n",
                     fb_inf->width,
                     fb_inf->height,
@@ -183,7 +186,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 // }
                 if (fb_inf->color_type == 1) {
                     if (fb_inf->framebuffer_addr_high != 0) {
-                        debug_printf("WARNING: Framebuffer above 4GB, not supported in 32-bit mode\n");
+                        _debug_printf("WARNING: Framebuffer above 4GB, not supported in 32-bit mode\n");
                     } else {
                         rgb_mode = true;
                         framebuffer_addr_phys = fb_inf->framebuffer_addr_low;
@@ -195,7 +198,7 @@ void multiboot2_init(multiboot_info_t* multiboot_info)
                 break;
             }
             default:
-                debug_printf("  unsupported mb2 tag type: %d\n", tag->type);
+                _debug_printf("  unsupported mb2 tag type: %d\n", tag->type);
                 break;
         }
 
@@ -226,8 +229,8 @@ const saved_mmap_entry_t* multiboot2_get_mmap_entry(uint32_t index)
     return &saved_mmap[index];
 }
 
-#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
-#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : _debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : _debug_puts(s))
 
 void multiboot2_print_data(bool force_terminal_output)
 {

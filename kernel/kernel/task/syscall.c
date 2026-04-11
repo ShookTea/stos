@@ -8,6 +8,9 @@
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
 
+#define _debug_puts(...) debug_puts_c("Syscall", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("Syscall", __VA_ARGS__)
+
 
 #define ptr_valid(ptr) \
     ((uint32_t)ptr >= VMM_USER_START && (uint32_t)ptr <= VMM_USER_END)
@@ -64,7 +67,7 @@ static uint32_t syscall_int_handler(
             return sys_read((int)arg1, buf, (size_t)arg3);
         }
         default:
-            debug_printf("Unknown syscall: %d\n", syscall_num);
+            _debug_printf("Unknown syscall: %d\n", syscall_num);
             return SYSCALL_ERROR;
     }
 }

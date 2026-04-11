@@ -2,20 +2,23 @@
 #include <stdbool.h>
 #include "kernel/debug.h"
 
+#define _debug_puts(...) debug_puts_c("ELF", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ELF", __VA_ARGS__)
+
 bool elf_validate(void* addr)
 {
     elf_header_32bit_t* header = addr;
     #if KERNEL_DEBUG_ANY
-        debug_printf("=== ELF Header Debug ===\n");
-        debug_printf("Entry point:      %#x\n", header->entrypoint);
-        debug_printf("PHT pointer:      %#x\n", header->pht_pointer);
-        debug_printf("PHT entry count:  %u\n", header->pht_num);
-        debug_printf("PHT entry size:   %u\n", header->pht_entry_size);
-        debug_printf("SHT pointer:      %#x\n", header->sht_pointer);
-        debug_printf("SHT entry count:  %u\n", header->sht_num);
-        debug_printf("SHT entry size:   %u\n", header->sht_entry_size);
-        debug_printf("SHT string index: %u\n", header->sht_str_index);
-        debug_printf("========================\n");
+        _debug_printf("=== ELF Header Debug ===\n");
+        _debug_printf("Entry point:      %#x\n", header->entrypoint);
+        _debug_printf("PHT pointer:      %#x\n", header->pht_pointer);
+        _debug_printf("PHT entry count:  %u\n", header->pht_num);
+        _debug_printf("PHT entry size:   %u\n", header->pht_entry_size);
+        _debug_printf("SHT pointer:      %#x\n", header->sht_pointer);
+        _debug_printf("SHT entry count:  %u\n", header->sht_num);
+        _debug_printf("SHT entry size:   %u\n", header->sht_entry_size);
+        _debug_printf("SHT string index: %u\n", header->sht_str_index);
+        _debug_printf("========================\n");
     #endif
     // 0x7F454C46
     if (header->magic[0] != 0x7F
@@ -23,7 +26,7 @@ bool elf_validate(void* addr)
         || header->magic[2] != 'L'
         || header->magic[3] != 'F'
     ) {
-        debug_printf(
+        _debug_printf(
             "Invalid ELF: wrong magic value (%#2x%2x%2x%2x)\n",
             header->magic[0],
             header->magic[1],
@@ -34,38 +37,38 @@ bool elf_validate(void* addr)
     }
 
     if (header->class != 1) {
-        debug_puts("Invalid ELF: only 32-bit apps are supported.");
+        _debug_puts("Invalid ELF: only 32-bit apps are supported.");
         return false;
     }
     if (header->endianness != 1) {
-        debug_puts("Invalid ELF: only little endian apps are supported.");
+        _debug_puts("Invalid ELF: only little endian apps are supported.");
         return false;
     }
     if (header->version != 1) {
-        debug_puts("Invalid ELF: only version 1 supported");
+        _debug_puts("Invalid ELF: only version 1 supported");
         return false;
     }
     if (header->machine != ELF_OBJ_MACHINE_X86) {
-        debug_puts("Invalid ELF: requires x86 architecture");
+        _debug_puts("Invalid ELF: requires x86 architecture");
         return false;
     }
 
-    debug_puts("ELF header validation completed successfully.");
+    _debug_puts("ELF header validation completed successfully.");
 
     switch (header->obj_type) {
         case ELF_OBJ_TYPE_EXEC:
-            debug_puts("Type: executable file");
+            _debug_puts("Type: executable file");
             break;
         case ELF_OBJ_TYPE_DYN:
-            debug_puts("Type: shared object");
+            _debug_puts("Type: shared object");
             return false; // Not supported yet
         default:
-            debug_printf("Type: unknown (%#4x)\n", header->obj_type);
+            _debug_printf("Type: unknown (%#4x)\n", header->obj_type);
             return false;
     }
 
     #if KERNEL_DEBUG_ANY
-        debug_puts("PHT table:");
+        _debug_puts("PHT table:");
     #endif
     bool pht_invalid = false;
     for (uint32_t phti = 0; phti < header->pht_num; phti++) {
@@ -92,18 +95,18 @@ bool elf_validate(void* addr)
         flags[1] = pht->flags & ELF_SEGMENT_FLAGS_WRITE ? 'W' : ' ';
         flags[2] = pht->flags & ELF_SEGMENT_FLAGS_READ ? 'R' : ' ';
         #if KERNEL_DEBUG_ANY
-            debug_printf("[%02u] Type: [%s]%s (%#x)\n", phti, flags, type, pht->type);
-            debug_printf("    offset: %#x\n", pht->offset);
-            debug_printf("    vaddr:  %#x\n", pht->vaddr);
-            debug_printf("    paddr:  %#x\n", pht->paddr);
-            debug_printf("    filesz: %#x\n", pht->filesz);
-            debug_printf("    memsz:  %#x\n", pht->memsz);
-            debug_printf("    align:  %#x\n", pht->align);
+            _debug_printf("[%02u] Type: [%s]%s (%#x)\n", phti, flags, type, pht->type);
+            _debug_printf("    offset: %#x\n", pht->offset);
+            _debug_printf("    vaddr:  %#x\n", pht->vaddr);
+            _debug_printf("    paddr:  %#x\n", pht->paddr);
+            _debug_printf("    filesz: %#x\n", pht->filesz);
+            _debug_printf("    memsz:  %#x\n", pht->memsz);
+            _debug_printf("    align:  %#x\n", pht->align);
         #endif
     }
 
     #if KERNEL_DEBUG_ANY
-        debug_puts("SHT table:");
+        _debug_puts("SHT table:");
     #endif
     bool sht_invalid = false;
     for (uint32_t shti = 0; shti < header->sht_num; shti++) {
@@ -151,14 +154,14 @@ bool elf_validate(void* addr)
         flags[9] = sht->flags & ELF_SECTION_FLAGS_TLS ? 'T' : ' ';
 
         #if KERNEL_DEBUG_ANY
-            debug_printf("[%02u] Type: [%s]%s (%#x)\n", shti, flags, type, sht->type);
-            debug_printf("    addr:      %#x\n", sht->addr);
-            debug_printf("    offset:    %#x\n", sht->offset);
-            debug_printf("    size:      %#x\n", sht->size);
-            debug_printf("    link:      %#x\n", sht->link);
-            debug_printf("    info:      %#x\n", sht->info);
-            debug_printf("    align:     %#x\n", sht->addr_align);
-            debug_printf("    ent. size: %#x\n", sht->ent_size);
+            _debug_printf("[%02u] Type: [%s]%s (%#x)\n", shti, flags, type, sht->type);
+            _debug_printf("    addr:      %#x\n", sht->addr);
+            _debug_printf("    offset:    %#x\n", sht->offset);
+            _debug_printf("    size:      %#x\n", sht->size);
+            _debug_printf("    link:      %#x\n", sht->link);
+            _debug_printf("    info:      %#x\n", sht->info);
+            _debug_printf("    align:     %#x\n", sht->addr_align);
+            _debug_printf("    ent. size: %#x\n", sht->ent_size);
         #endif
     }
 

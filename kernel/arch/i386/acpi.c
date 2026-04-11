@@ -6,6 +6,9 @@
 #include <string.h>
 #include "io.h"
 
+#define _debug_puts(...) debug_puts_c("ACPI", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ACPI", __VA_ARGS__)
+
 // Global ACPI state - store values, not pointers
 static bool acpi_available = false;
 static bool acpi_enabled = false;
@@ -42,7 +45,7 @@ static bool validate_checksum(void* table, uint32_t length)
 static bool parse_s5_from_dsdt(void)
 {
     if (!fadt_dsdt) {
-        debug_puts("ACPI: No DSDT pointer in FADT");
+        _debug_puts("No DSDT pointer in FADT");
         return false;
     }
 
@@ -51,17 +54,17 @@ static bool parse_s5_from_dsdt(void)
 
     // Verify DSDT signature
     if (strncmp(dsdt->signature, "DSDT", 4) != 0) {
-        debug_puts("ACPI: Invalid DSDT signature");
+        _debug_puts("Invalid DSDT signature");
         return false;
     }
 
     // Validate DSDT checksum
     if (!validate_checksum(dsdt, dsdt->length)) {
-        debug_puts("ACPI: DSDT checksum validation failed");
+        _debug_puts("DSDT checksum validation failed");
         return false;
     }
 
-    debug_printf("ACPI: Searching for _S5 in DSDT (length=%u)\n", dsdt->length);
+    _debug_printf("Searching for _S5 in DSDT (length=%u)\n", dsdt->length);
 
     // Search for "_S5_" in DSDT
     uint8_t* start = (uint8_t*)dsdt + sizeof(acpi_sdt_header_t);
@@ -69,7 +72,7 @@ static bool parse_s5_from_dsdt(void)
 
     for (uint8_t* ptr = start; ptr < end - 4; ptr++) {
         if (ptr[0] == '_' && ptr[1] == 'S' && ptr[2] == '5' && ptr[3] == '_') {
-            debug_printf("ACPI: Found _S5 at offset %u\n", (uint32_t)(ptr - (uint8_t*)dsdt));
+            _debug_printf("Found _S5 at offset %u\n", (uint32_t)(ptr - (uint8_t*)dsdt));
 
             // This is a simplified AML parser - it may not work on all systems
             // A proper implementation would parse the full AML bytecode
@@ -87,7 +90,7 @@ static bool parse_s5_from_dsdt(void)
             }
 
             if (package_ptr >= end || *package_ptr != 0x12) {
-                debug_puts("ACPI: Could not find package op after _S5");
+                _debug_puts("Could not find package op after _S5");
                 continue;
             }
 
@@ -105,7 +108,7 @@ static bool parse_s5_from_dsdt(void)
             uint8_t num_elements = *package_ptr++;
 
             if (num_elements < 2) {
-                debug_puts("ACPI: _S5 package has too few elements");
+                _debug_puts("_S5 package has too few elements");
                 continue;
             }
 
@@ -137,14 +140,14 @@ static bool parse_s5_from_dsdt(void)
             s5_slp_typa &= 0x07;
             s5_slp_typb &= 0x07;
 
-            debug_printf("ACPI: _S5 found - SLP_TYPa=%u, SLP_TYPb=%u\n",
+            _debug_printf("_S5 found - SLP_TYPa=%u, SLP_TYPb=%u\n",
                    s5_slp_typa, s5_slp_typb);
             s5_found = true;
             return true;
         }
     }
 
-    debug_puts("ACPI: _S5 not found in DSDT");
+    _debug_puts("_S5 not found in DSDT");
     return false;
 }
 
@@ -161,19 +164,19 @@ static bool acpi_enable(void)
 
     // If SMI_CMD is zero, ACPI is already enabled (or not supported)
     if (fadt_smi_command_port == 0) {
-        debug_printf("ACPI: SMI_CMD is 0, assuming ACPI already enabled\n");
+        _debug_printf("SMI_CMD is 0, assuming ACPI already enabled\n");
         acpi_enabled = true;
         return true;
     }
 
     // Check if already in ACPI mode by checking SCI_EN bit
     if (inw(fadt_pm1a_control_block) & 0x0001) {
-        debug_printf("ACPI: SCI_EN already set\n");
+        _debug_printf("SCI_EN already set\n");
         acpi_enabled = true;
         return true;
     }
 
-    debug_printf("ACPI: Enabling ACPI mode (SMI_CMD=%x, ACPI_ENABLE=%x)\n",
+    _debug_printf("Enabling ACPI mode (SMI_CMD=%x, ACPI_ENABLE=%x)\n",
            fadt_smi_command_port, fadt_acpi_enable);
 
     // Write ACPI_ENABLE to SMI_CMD port
@@ -183,7 +186,7 @@ static bool acpi_enable(void)
     int timeout = 300; // 300 iterations
     while (timeout-- > 0) {
         if (inw(fadt_pm1a_control_block) & 0x0001) {
-            debug_printf("ACPI: ACPI mode enabled\n");
+            _debug_printf("ACPI mode enabled\n");
             acpi_enabled = true;
             return true;
         }
@@ -192,7 +195,7 @@ static bool acpi_enable(void)
         for (volatile int i = 0; i < 10000; i++);
     }
 
-    debug_puts("ACPI: Failed to enable ACPI mode (timeout)");
+    _debug_puts("Failed to enable ACPI mode (timeout)");
     return false;
 }
 
@@ -201,11 +204,11 @@ static void load_fadt(acpi_fadt_t* fadt)
 {
     // Validate checksum
     if (!validate_checksum(fadt, fadt->header.length)) {
-        debug_puts("ACPI: Invalid FADT checksum");
+        _debug_puts("Invalid FADT checksum");
         return;
     }
 
-    debug_printf("ACPI: FADT loaded (revision=%u, length=%u)\n",
+    _debug_printf("FADT loaded (revision=%u, length=%u)\n",
            fadt->header.revision, fadt->header.length);
 
     // Store FADT values (not pointers)
@@ -223,17 +226,17 @@ static void load_fadt(acpi_fadt_t* fadt)
     acpi_available = true;
 
     // Print important FADT fields for debugging
-    debug_printf("ACPI: DSDT at 0x%x\n", fadt_dsdt);
-    debug_printf("ACPI: PM1a_CNT_BLK at 0x%x\n", fadt_pm1a_control_block);
-    debug_printf("ACPI: PM1b_CNT_BLK at 0x%x\n", fadt_pm1b_control_block);
-    debug_printf("ACPI: SMI_CMD at 0x%x\n", fadt_smi_command_port);
-    debug_printf("ACPI: ACPI_ENABLE=0x%x, ACPI_DISABLE=0x%x\n",
+    _debug_printf("DSDT at 0x%x\n", fadt_dsdt);
+    _debug_printf("PM1a_CNT_BLK at 0x%x\n", fadt_pm1a_control_block);
+    _debug_printf("PM1b_CNT_BLK at 0x%x\n", fadt_pm1b_control_block);
+    _debug_printf("SMI_CMD at 0x%x\n", fadt_smi_command_port);
+    _debug_printf("ACPI_ENABLE=0x%x, ACPI_DISABLE=0x%x\n",
            fadt_acpi_enable, fadt_acpi_disable);
-    debug_printf("ACPI: Flags=0x%x\n", fadt_flags);
+    _debug_printf("Flags=0x%x\n", fadt_flags);
 
     // Check reset register support
     if (fadt_flags & (1 << 10)) {
-        debug_printf("ACPI: Reset register supported (space=%u, addr=0x%llx, val=0x%x)\n",
+        _debug_printf("Reset register supported (space=%u, addr=0x%llx, val=0x%x)\n",
                fadt_reset_reg_address_space,
                fadt_reset_reg_address,
                fadt_reset_value);
@@ -248,29 +251,29 @@ static void load_rsdt_pointer(uint32_t pointer)
     // Access physical address directly (during early init, identity mapped)
     acpi_sdt_header_t* header = (acpi_sdt_header_t*)pointer;
     if (strncmp(header->signature, "RSDT", 4) != 0) {
-        debug_puts("ACPI: Invalid RSDT signature");
+        _debug_puts("Invalid RSDT signature");
         return;
     }
 
     // Validate RSDT checksum
     if (!validate_checksum(header, header->length)) {
-        debug_puts("ACPI: Invalid RSDT checksum");
+        _debug_puts("Invalid RSDT checksum");
         return;
     }
 
-    debug_printf("ACPI: RSDT valid (length=%u)\n", header->length);
+    _debug_printf("RSDT valid (length=%u)\n", header->length);
 
     acpi_rsdt_t* rsdt = (acpi_rsdt_t*)header;
     uint32_t entries = (rsdt->header.length - sizeof(acpi_sdt_header_t)) / 4;
 
-    debug_printf("ACPI: RSDT contains %u entries\n", entries);
+    _debug_printf("RSDT contains %u entries\n", entries);
 
     for (uint32_t i = 0; i < entries; i++) {
         uint32_t sdt_pointer = rsdt->pointers_to_ther_sdt[i];
         // Access physical address directly (during early init, identity mapped)
         acpi_sdt_header_t* sdt_header = (acpi_sdt_header_t*)sdt_pointer;
 
-        debug_printf("ACPI: Found table '%.4s' at 0x%x\n", sdt_header->signature, sdt_pointer);
+        _debug_printf("Found table '%.4s' at 0x%x\n", sdt_header->signature, sdt_pointer);
 
         if (strncmp(sdt_header->signature, "FACP", 4) == 0) {
             load_fadt((acpi_fadt_t*)sdt_header);
@@ -283,7 +286,7 @@ void acpi_init_old(rsdp_old_t rsdp)
     // Validating RSDP signature
     if (memcmp(rsdp.signature, "RSD PTR ", 8) != 0)
     {
-        debug_puts("ACPI: Invalid RSDPv1 signature");
+        _debug_puts("Invalid RSDPv1 signature");
         return;
     }
 
@@ -301,11 +304,11 @@ void acpi_init_old(rsdp_old_t rsdp)
     checksum += (uint8_t)((rsdp.rsdt_address >> 24) & 0xFF);
 
     if (checksum != 0) {
-        debug_puts("ACPI: Invalid RSDPv1 checksum");
+        _debug_puts("Invalid RSDPv1 checksum");
         return;
     }
 
-    debug_printf("ACPI: RSDPv1 valid (RSDT at 0x%x)\n", rsdp.rsdt_address);
+    _debug_printf("RSDPv1 valid (RSDT at 0x%x)\n", rsdp.rsdt_address);
     load_rsdt_pointer(rsdp.rsdt_address);
 }
 
@@ -314,7 +317,7 @@ void acpi_init_new(rsdp_new_t rsdp)
     // Validating RSDP signature
     if (memcmp(rsdp.signature, "RSD PTR ", 8) != 0)
     {
-        debug_puts("ACPI: Invalid RSDPv2 signature");
+        _debug_puts("Invalid RSDPv2 signature");
         return;
     }
 
@@ -332,7 +335,7 @@ void acpi_init_new(rsdp_new_t rsdp)
     checksum += (uint8_t)((rsdp.__deprecated >> 24) & 0xFF);
 
     if (checksum != 0) {
-        debug_puts("ACPI: Invalid RSDPv2 checksum");
+        _debug_puts("Invalid RSDPv2 checksum");
         return;
     }
 
@@ -357,12 +360,12 @@ void acpi_init_new(rsdp_new_t rsdp)
     checksum += (uint8_t)((rsdp.rsdt_address >> 56) & 0xFF);
 
     if (checksum != 0) {
-        debug_puts("ACPI: Invalid RSDPv2 extended checksum");
+        _debug_puts("Invalid RSDPv2 extended checksum");
         return;
     }
 
-    debug_puts("ACPI: RSDPv2 valid, but 64-bit mode not implemented yet.");
-    debug_puts("ACPI: Using deprecated 32-bit RSDT address for now");
+    _debug_puts("RSDPv2 valid, but 64-bit mode not implemented yet.");
+    _debug_puts("Using deprecated 32-bit RSDT address for now");
 
     if (rsdp.__deprecated != 0) {
         load_rsdt_pointer(rsdp.__deprecated);
@@ -372,7 +375,7 @@ void acpi_init_new(rsdp_new_t rsdp)
 // Keyboard controller reboot (fallback method)
 static void keyboard_controller_reboot(void)
 {
-    debug_puts("ACPI: Attempting keyboard controller reboot");
+    _debug_puts("Attempting keyboard controller reboot");
 
     // Disable interrupts
     asm volatile("cli");
@@ -396,13 +399,13 @@ static void keyboard_controller_reboot(void)
     // Wait a bit
     for (volatile int i = 0; i < 1000000; i++);
 
-    debug_puts("ACPI: Keyboard controller reboot failed");
+    _debug_puts("Keyboard controller reboot failed");
 }
 
 // Triple fault reboot (last resort)
 static void triple_fault_reboot(void)
 {
-    debug_puts("ACPI: Attempting triple fault");
+    _debug_puts("Attempting triple fault");
 
     // Load invalid IDT and cause interrupt
     struct {
@@ -414,46 +417,46 @@ static void triple_fault_reboot(void)
     asm volatile("int $0x00");
 
     // Should never reach here
-    debug_puts("ACPI: Triple fault failed");
+    _debug_puts("Triple fault failed");
 }
 
 // Public API: Reboot the system
 void acpi_reboot(void)
 {
-    debug_puts("ACPI: Attempting system reboot");
+    _debug_puts("Attempting system reboot");
 
     // Method 1: ACPI Reset Register (ACPI 2.0+)
     if (acpi_available && (fadt_flags & (1 << 10))) {
-        debug_puts("ACPI: Using ACPI reset register");
+        _debug_puts("Using ACPI reset register");
 
         switch (fadt_reset_reg_address_space) {
             case 0: // System Memory
-                debug_printf("ACPI: Writing 0x%x to memory address 0x%llx\n",
+                _debug_printf("Writing 0x%x to memory address 0x%llx\n",
                        fadt_reset_value, fadt_reset_reg_address);
                 *((volatile uint8_t*)(uint32_t)fadt_reset_reg_address) = fadt_reset_value;
                 break;
 
             case 1: // System I/O
-                debug_printf("ACPI: Writing 0x%x to I/O port 0x%llx\n",
+                _debug_printf("Writing 0x%x to I/O port 0x%llx\n",
                        fadt_reset_value, fadt_reset_reg_address);
                 outb((uint16_t)fadt_reset_reg_address, fadt_reset_value);
                 break;
 
             case 2: // PCI Configuration Space
-                debug_puts("ACPI: PCI reset not implemented");
+                _debug_puts("PCI reset not implemented");
                 break;
 
             default:
-                debug_printf("ACPI: Unknown reset address space: %u\n",
+                _debug_printf("Unknown reset address space: %u\n",
                        fadt_reset_reg_address_space);
                 break;
         }
 
         // Wait for reset to take effect
-        debug_puts("ACPI: Waiting for reset...");
+        _debug_puts("Waiting for reset...");
         for (volatile int i = 0; i < 10000000; i++);
 
-        debug_puts("ACPI: Reset register method failed");
+        _debug_puts("Reset register method failed");
     }
 
     // Method 2: Keyboard Controller Reset
@@ -466,7 +469,7 @@ void acpi_reboot(void)
     triple_fault_reboot();
 
     // If we get here, everything failed - just halt
-    debug_puts("ACPI: All reboot methods failed, halting");
+    _debug_puts("All reboot methods failed, halting");
     for(;;) {
         asm volatile("hlt");
     }
@@ -475,11 +478,11 @@ void acpi_reboot(void)
 // Public API: Shutdown the system
 void acpi_shutdown(void)
 {
-    debug_puts("ACPI: Attempting system shutdown");
+    _debug_puts("Attempting system shutdown");
 
     if (!acpi_available) {
-        debug_puts("ACPI: FADT not available, cannot shutdown");
-        debug_puts("ACPI: System halted (power off manually)");
+        _debug_puts("FADT not available, cannot shutdown");
+        _debug_puts("System halted (power off manually)");
         asm volatile("cli");
         for(;;) {
             asm volatile("hlt");
@@ -488,8 +491,8 @@ void acpi_shutdown(void)
 
     // Enable ACPI mode if not already enabled
     if (!acpi_enable()) {
-        debug_puts("ACPI: Failed to enable ACPI mode");
-        debug_puts("ACPI: System halted (power off manually)");
+        _debug_puts("Failed to enable ACPI mode");
+        _debug_puts("System halted (power off manually)");
         asm volatile("cli");
         for(;;) {
             asm volatile("hlt");
@@ -499,8 +502,8 @@ void acpi_shutdown(void)
     // Find _S5 sleep state if we haven't already
     if (!s5_found) {
         if (!parse_s5_from_dsdt()) {
-            debug_puts("ACPI: Cannot find _S5 sleep state");
-            debug_puts("ACPI: System halted (power off manually)");
+            _debug_puts("Cannot find _S5 sleep state");
+            _debug_puts("System halted (power off manually)");
             asm volatile("cli");
             for(;;) {
                 asm volatile("hlt");
@@ -508,8 +511,8 @@ void acpi_shutdown(void)
         }
     }
 
-    debug_printf("ACPI: Entering S5 sleep state (shutdown)\n");
-    debug_printf("ACPI: PM1a_CNT=0x%x, PM1b_CNT=0x%x\n",
+    _debug_printf("Entering S5 sleep state (shutdown)\n");
+    _debug_printf("PM1a_CNT=0x%x, PM1b_CNT=0x%x\n",
            fadt_pm1a_control_block, fadt_pm1b_control_block);
 
     // Disable interrupts
@@ -524,7 +527,7 @@ void acpi_shutdown(void)
     pm1a_value |= (s5_slp_typa << 10);  // Set SLP_TYP
     pm1a_value |= (1 << 13);  // Set SLP_EN
 
-    debug_printf("ACPI: Writing 0x%x to PM1a_CNT\n", pm1a_value);
+    _debug_printf("Writing 0x%x to PM1a_CNT\n", pm1a_value);
     outw(fadt_pm1a_control_block, pm1a_value);
 
     // If PM1b exists, write to it as well
@@ -534,16 +537,16 @@ void acpi_shutdown(void)
         pm1b_value |= (s5_slp_typb << 10);
         pm1b_value |= (1 << 13);
 
-        debug_printf("ACPI: Writing 0x%x to PM1b_CNT\n", pm1b_value);
+        _debug_printf("Writing 0x%x to PM1b_CNT\n", pm1b_value);
         outw(fadt_pm1b_control_block, pm1b_value);
     }
 
     // System should power off now
     // If it doesn't, wait a bit and halt
-    debug_puts("ACPI: Waiting for shutdown...");
+    _debug_puts("Waiting for shutdown...");
     for (volatile int i = 0; i < 10000000; i++);
 
-    debug_puts("ACPI: Shutdown failed, system halted");
+    _debug_puts("Shutdown failed, system halted");
     for(;;) {
         asm volatile("hlt");
     }

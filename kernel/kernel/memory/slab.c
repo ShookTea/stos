@@ -6,6 +6,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define _debug_puts(...) debug_puts_c("Slab", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("Slab", __VA_ARGS__)
+
 // Size classes: 8, 16, 32, 64, 128, 256, 512, 1024 bytes
 const size_t SLAB_SIZE_CLASSES[SLAB_NUM_CACHES] = {
     8, 16, 32, 64, 128, 256, 512, 1024
@@ -83,7 +86,7 @@ void slab_init(void) {
 
     slab_initialized = true;
 
-    debug_printf("Slab allocator initialized with size classes:");
+    _debug_printf("Slab allocator initialized with size classes:");
     for (size_t i = 0; i < SLAB_NUM_CACHES; i++) {
         debug_printf(" %zu", SLAB_SIZE_CLASSES[i]);
     }
@@ -245,7 +248,7 @@ void slab_update_lists(slab_t* slab) {
             break;
         default:
             // Should never happen, but satisfy compiler
-            debug_printf("SLAB: ERROR - slab has invalid current_list value\n");
+            _debug_printf("ERROR - slab has invalid current_list value\n");
             return;
     }
     remove_from_list(slab, current_head);
@@ -264,7 +267,7 @@ void slab_update_lists(slab_t* slab) {
             break;
         default:
             // Should never happen, but satisfy compiler
-            debug_printf("SLAB: ERROR - target_list has invalid value\n");
+            _debug_printf("ERROR - target_list has invalid value\n");
             return;
     }
     add_to_list(slab, target_head);
@@ -300,7 +303,7 @@ bool slab_free_to_slab(slab_t* slab, void* ptr) {
     slab_free_object_t* current = slab->free_list;
     while (current) {
         if (current == ptr) {
-            debug_printf("ERROR: Double-free detected at %p (slab: %p, cache: %zu bytes)\n",
+            _debug_printf("ERROR: Double-free detected at %p (slab: %p, cache: %zu bytes)\n",
                    ptr, slab, slab->object_size);
             return false;  // Already in free list!
         }
@@ -317,7 +320,7 @@ bool slab_free_to_slab(slab_t* slab, void* ptr) {
 
 void* slab_alloc(size_t size) {
     if (!slab_initialized) {
-        debug_printf("ERROR: slab_alloc called before slab_init\n");
+        _debug_printf("ERROR: slab_alloc called before slab_init\n");
         return NULL;
     }
 
@@ -410,7 +413,7 @@ bool slab_free(void* ptr) {
     slab_t* slab = slab_get_slab(ptr);
 
     if (!slab) {
-        debug_printf("ERROR: slab_free called with invalid pointer: %#x\n", (uint32_t)ptr);
+        _debug_printf("ERROR: slab_free called with invalid pointer: %#x\n", (uint32_t)ptr);
         return false;
     }
 
@@ -457,8 +460,8 @@ void slab_get_stats(slab_stats_t* stats) {
     *stats = global_stats;
 }
 
-#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : debug_printf(__VA_ARGS__))
-#define _puts(s) (force_terminal_output ? puts(s) : debug_puts(s))
+#define _printf(...) (force_terminal_output ? printf(__VA_ARGS__) : _debug_printf(__VA_ARGS__))
+#define _puts(s) (force_terminal_output ? puts(s) : _debug_puts(s))
 
 void slab_print_stats(bool force_terminal_output) {
     _puts("\n=== Slab Allocator Statistics ===");
@@ -518,7 +521,7 @@ void slab_print_caches(bool force_terminal_output) {
 
 bool slab_validate(void) {
     if (!slab_initialized) {
-        debug_printf("ERROR: Slab allocator not initialized\n");
+        _debug_printf("ERROR: Slab allocator not initialized\n");
         return false;
     }
 
@@ -538,20 +541,20 @@ bool slab_validate(void) {
             while (slab) {
                 // Check magic number
                 if (slab->magic != SLAB_MAGIC) {
-                    debug_printf("ERROR: Invalid magic in %s slab of cache %zu\n",
+                    _debug_printf("ERROR: Invalid magic in %s slab of cache %zu\n",
                            list_names[list_idx], cache->object_size);
                     valid = false;
                 }
 
                 // Check cache pointer
                 if (slab->cache != cache) {
-                    debug_printf("ERROR: Invalid cache pointer in slab\n");
+                    _debug_printf("ERROR: Invalid cache pointer in slab\n");
                     valid = false;
                 }
 
                 // Check free count is reasonable
                 if (slab->num_free > slab->num_objects) {
-                    debug_printf("ERROR: num_free > num_objects in slab\n");
+                    _debug_printf("ERROR: num_free > num_objects in slab\n");
                     valid = false;
                 }
 
@@ -561,7 +564,7 @@ bool slab_validate(void) {
     }
 
     if (valid) {
-        debug_printf("Slab allocator validation: OK\n");
+        _debug_printf("Slab allocator validation: OK\n");
     }
 
     return valid;

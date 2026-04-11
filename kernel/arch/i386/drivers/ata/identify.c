@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
+
 static uint32_t lba28_sec_count_primary_master = 0;
 static uint32_t lba28_sec_count_primary_slave = 0;
 static uint32_t lba28_sec_count_secondary_master = 0;
@@ -20,7 +23,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
     _ata_drive_select(bus_base, target_drive);
     uint8_t status = _ata_read_status(bus_base);
     if (status == 0) {
-        debug_puts("Drive doesn't exist.");
+        _debug_puts("Drive doesn't exist.");
         return;
     }
 
@@ -35,7 +38,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
     // Read status
     status = _ata_read_status(bus_base);
     if (status == 0) {
-        debug_puts("Drive doesn't exist.");
+        _debug_puts("Drive doesn't exist.");
         return;
     }
 
@@ -44,12 +47,12 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
 
     // Check ATA_BUS_OFFSET_CYLINDER_LOW and _HIGH - they should be clear now
     if (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW) != 0) {
-        debug_puts("Invalid device: cylinder_low set");
+        _debug_puts("Invalid device: cylinder_low set");
         return;
     }
 
     if (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH) != 0) {
-        debug_puts("Invalid device: cylinder_high set");
+        _debug_puts("Invalid device: cylinder_high set");
         return;
     }
 
@@ -61,7 +64,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
     }
 
     if (status & ATA_STATUS_ERR) {
-        debug_puts("Invalid device: disk reports an error.");
+        _debug_puts("Invalid device: disk reports an error.");
         return;
     }
 
@@ -77,7 +80,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
             #if KERNEL_DEBUG_ANY
                 uint8_t udma_sup = data & 0xFF;
                 uint8_t udma_act = (data >> 8) & 0xFF;
-                debug_printf("UDMA sup=%#02x act=%#02x\n", udma_sup, udma_act);
+                _debug_printf("UDMA sup=%#02x act=%#02x\n", udma_sup, udma_act);
             #endif
         } else if (i == 60) {
             // LBA28 sectors count
@@ -85,9 +88,9 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
         } else if (i == 61) {
             lba28_sectors_count |= ((uint32_t)data << 16);
             if (lba28_sectors_count == 0) {
-                debug_puts("LBA28 not supported");
+                _debug_puts("LBA28 not supported");
             } else {
-                debug_printf("LBA28 sectors count: %u\n", lba28_sectors_count);
+                _debug_printf("LBA28 sectors count: %u\n", lba28_sectors_count);
                 if (primary && master) {
                     lba28_sec_count_primary_master = lba28_sectors_count;
                 } else if (primary && !master) {
@@ -108,46 +111,46 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
         } else if (i == 103) {
             lba48_sectors_count |= (((uint64_t)data) << 48);
             if (lba48_sectors_count == 0) {
-                debug_puts("LBA48 not supported");
+                _debug_puts("LBA48 not supported");
             } else {
-                debug_printf("LBA48 sec count: %llu\n", lba48_sectors_count);
+                _debug_printf("LBA48 sec count: %llu\n", lba48_sectors_count);
             }
         }
     }
 
-    debug_printf("Drive found, status: %#x\n", status);
+    _debug_printf("Drive found, status: %#x\n", status);
 }
 
 void _ata_identify_devices()
 {
-    debug_puts("  Identifying master drive at primary port");
+    _debug_puts("  Identifying master drive at primary port");
     _ata_identify(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
-    debug_puts("  Identifying slave drive at primary port");
+    _debug_puts("  Identifying slave drive at primary port");
     _ata_identify(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_SLAVE);
-    debug_puts("  Identifying master drive at secondary port");
+    _debug_puts("  Identifying master drive at secondary port");
     _ata_identify(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_MASTER);
-    debug_puts("  Identifying slave drive at secondary port");
+    _debug_puts("  Identifying slave drive at secondary port");
     _ata_identify(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
 
     // Selecting first available drive
     if (lba28_sec_count_primary_master > 0) {
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_PRIMARY_MASTER;
-        debug_puts("Primary/master drive selected");
+        _debug_puts("Primary/master drive selected");
     } else if (lba28_sec_count_primary_slave) {
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_PRIMARY_SLAVE;
-        debug_puts("Primary/slave drive selected");
+        _debug_puts("Primary/slave drive selected");
     } else if (lba28_sec_count_secondary_master > 0) {
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_SECONDARY_MASTER;
-        debug_puts("Secondary/master drive selected");
+        _debug_puts("Secondary/master drive selected");
     } else if (lba28_sec_count_secondary_slave) {
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_SECONDARY_SLAVE;
-        debug_puts("Secondary/slave drive selected");
+        _debug_puts("Secondary/slave drive selected");
     } else {
-        debug_puts("No driver selected");
+        _debug_puts("No driver selected");
     }
 }
 

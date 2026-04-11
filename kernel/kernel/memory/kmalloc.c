@@ -6,6 +6,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define _debug_puts(...) debug_puts_c("kmalloc", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("kmalloc", __VA_ARGS__)
+
 static spinlock_t kmalloc_lock = SPINLOCK_INIT;
 
 // Global statistics
@@ -29,12 +32,12 @@ void kmalloc_init(void) {
     memset(&kmalloc_stats, 0, sizeof(kmalloc_stats_t));
 
     kmalloc_initialized = true;
-    debug_printf("kmalloc/kfree initialized (threshold: %d bytes)\n", KMALLOC_SLAB_THRESHOLD);
+    _debug_printf("kmalloc/kfree initialized (threshold: %d bytes)\n", KMALLOC_SLAB_THRESHOLD);
 }
 
 void* kmalloc_flags(size_t size, uint32_t flags) {
     if (!kmalloc_initialized) {
-        debug_printf("ERROR: kmalloc called before kmalloc_init\n");
+        _debug_printf("ERROR: kmalloc called before kmalloc_init\n");
         return NULL;
     }
 
@@ -151,7 +154,7 @@ void kfree(void* ptr) {
 
         // Validate header
         if (header->magic != KMALLOC_MAGIC) {
-            debug_printf(
+            _debug_printf(
                 "ERROR: kfree called with invalid pointer: %#x (bad magic)\n",
                 (uint32_t)ptr
             );
@@ -195,7 +198,7 @@ void* krealloc(void* ptr, size_t new_size) {
     // Get the old size
     size_t old_size = kmalloc_size(ptr);
     if (old_size == 0) {
-        debug_printf("ERROR: krealloc called with invalid pointer\n");
+        _debug_printf("ERROR: krealloc called with invalid pointer\n");
         return NULL;
     }
 
@@ -281,17 +284,17 @@ void kmalloc_get_stats(kmalloc_stats_t* stats) {
 }
 
 void kmalloc_print_stats(void) {
-    debug_printf("\n=== kmalloc/kfree Statistics ===\n");
-    debug_printf("Total allocated:    %zu bytes\n", kmalloc_stats.total_allocated);
-    debug_printf("Total freed:        %zu bytes\n", kmalloc_stats.total_freed);
-    debug_printf("Current usage:      %zu bytes\n", kmalloc_stats.current_usage);
-    debug_printf("Peak usage:         %zu bytes\n", kmalloc_stats.peak_usage);
-    debug_printf("\nSmall allocations:  %zu\n", kmalloc_stats.num_small_allocations);
-    debug_printf("Small frees:        %zu\n", kmalloc_stats.num_small_frees);
-    debug_printf("Large allocations:  %zu\n", kmalloc_stats.num_large_allocations);
-    debug_printf("Large frees:        %zu\n", kmalloc_stats.num_large_frees);
-    debug_printf("Failed allocations: %zu\n", kmalloc_stats.num_failed_allocations);
-    debug_printf("\nActive allocations: %zu\n",
+    _debug_printf("\n=== kmalloc/kfree Statistics ===\n");
+    _debug_printf("Total allocated:    %zu bytes\n", kmalloc_stats.total_allocated);
+    _debug_printf("Total freed:        %zu bytes\n", kmalloc_stats.total_freed);
+    _debug_printf("Current usage:      %zu bytes\n", kmalloc_stats.current_usage);
+    _debug_printf("Peak usage:         %zu bytes\n", kmalloc_stats.peak_usage);
+    _debug_printf("\nSmall allocations:  %zu\n", kmalloc_stats.num_small_allocations);
+    _debug_printf("Small frees:        %zu\n", kmalloc_stats.num_small_frees);
+    _debug_printf("Large allocations:  %zu\n", kmalloc_stats.num_large_allocations);
+    _debug_printf("Large frees:        %zu\n", kmalloc_stats.num_large_frees);
+    _debug_printf("Failed allocations: %zu\n", kmalloc_stats.num_failed_allocations);
+    _debug_printf("\nActive allocations: %zu\n",
         (kmalloc_stats.num_small_allocations + kmalloc_stats.num_large_allocations) -
         (kmalloc_stats.num_small_frees + kmalloc_stats.num_large_frees)
     );
@@ -299,28 +302,28 @@ void kmalloc_print_stats(void) {
 
 bool kmalloc_validate(void) {
     if (!kmalloc_initialized) {
-        debug_printf("ERROR: kmalloc not initialized\n");
+        _debug_printf("ERROR: kmalloc not initialized\n");
         return false;
     }
 
     // Validate slab allocator
     if (!slab_validate()) {
-        debug_printf("ERROR: Slab allocator validation failed\n");
+        _debug_printf("ERROR: Slab allocator validation failed\n");
         return false;
     }
 
     // Check for consistency in statistics
     if (kmalloc_stats.total_freed > kmalloc_stats.total_allocated) {
-        debug_printf("ERROR: More memory freed than allocated\n");
+        _debug_printf("ERROR: More memory freed than allocated\n");
         return false;
     }
 
     if (kmalloc_stats.current_usage > kmalloc_stats.total_allocated) {
-        debug_printf("ERROR: Current usage exceeds total allocated\n");
+        _debug_printf("ERROR: Current usage exceeds total allocated\n");
         return false;
     }
 
-    debug_printf("kmalloc validation: OK\n");
+    _debug_printf("kmalloc validation: OK\n");
     return true;
 }
 

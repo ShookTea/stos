@@ -6,13 +6,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
+
 /**
  * Handle IRQ event when current request is for writing a sector and the IRQ
  * confirms the end of entire writing process.
  */
 static void irq_handler_flush()
 {
-    debug_puts("ATA IRQ for FLUSH - rescheduling");
+    _debug_puts("IRQ for FLUSH - rescheduling");
     _ata_queue_schedule();
 }
 
@@ -30,17 +33,17 @@ static void irq_handler_write(ds_ringbuf_t* queue, ata_request_t req)
     // Decrementing remaining sectors
     req.remaining_sectors--;
 
-    debug_puts("ATA IRQ for WRITE start");
+    _debug_puts("IRQ for WRITE start");
 
     if (req.remaining_sectors == 0) {
         // We finished writing - next IRQ will confirm that flush was completed.
-        debug_puts("  last sector completed");
+        _debug_puts("  last sector completed");
         req.awaiting_flush = true;
 
         // Send FLUSH command
         outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_FLUSH);
     } else {
-        debug_printf("  %d sectors remaining\n", req.remaining_sectors);
+        _debug_printf("  %d sectors remaining\n", req.remaining_sectors);
 
         // Wait for drive to be ready to accept data (DRQ set, BSY clear)
         uint8_t status;
@@ -62,7 +65,7 @@ static void irq_handler_write(ds_ringbuf_t* queue, ata_request_t req)
     }
 
     ds_ringbuf_poke(queue, &req);
-    debug_puts("ATA IRQ for WRITE completed");
+    _debug_puts("IRQ for WRITE completed");
 }
 
 /**
@@ -70,7 +73,7 @@ static void irq_handler_write(ds_ringbuf_t* queue, ata_request_t req)
  */
 static void irq_handler_read(ds_ringbuf_t* queue, ata_request_t req)
 {
-    debug_puts("ATA IRQ for READ start");
+    _debug_puts("IRQ for READ start");
     uint8_t drive = ata_get_selected_drive();
     bool primary = drive == ATA_DRIVE_PRIMARY_MASTER
         || drive == ATA_DRIVE_PRIMARY_SLAVE;
@@ -93,8 +96,8 @@ static void irq_handler_read(ds_ringbuf_t* queue, ata_request_t req)
     bool reschedule_required = req.remaining_sectors == 0;
     ds_ringbuf_poke(queue, &req);
 
-    debug_printf(
-        "ATA IRQ for READ %s\n",
+    _debug_printf(
+        "IRQ for READ %s\n",
         reschedule_required ? "completed with rescheduling" : "completed"
     );
     if (reschedule_required) {

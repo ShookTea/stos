@@ -7,6 +7,9 @@
 #include "kernel/debug.h"
 #include "pic.h"
 
+#define _debug_puts(...) debug_puts_c("IDT", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("IDT", __VA_ARGS__)
+
 // An array of IDT entries
 __attribute__((aligned(0x10)))
 static idt_entry_t idt[IDT_MAX_DESCRIPTORS];
@@ -77,30 +80,30 @@ static void handle_page_fault(registers_t* registers)
     page_fault_print_info(&pf_info);
 
     // Print full register dump
-    debug_printf("\nComplete Register Dump:\n");
-    debug_printf("  EAX=%#010x  EBX=%#010x  ECX=%#010x  EDX=%#010x\n",
+    _debug_printf("\nComplete Register Dump:\n");
+    _debug_printf("  EAX=%#010x  EBX=%#010x  ECX=%#010x  EDX=%#010x\n",
            registers->eax, registers->ebx, registers->ecx, registers->edx);
-    debug_printf("  ESI=%#010x  EDI=%#010x  EBP=%#010x  ESP=%#010x\n",
+    _debug_printf("  ESI=%#010x  EDI=%#010x  EBP=%#010x  ESP=%#010x\n",
            registers->esi, registers->edi, registers->ebp, registers->esp);
-    debug_printf("  EIP=%#010x  EFLAGS=%#010x  CS=%#06x\n",
+    _debug_printf("  EIP=%#010x  EFLAGS=%#010x  CS=%#06x\n",
            registers->eip, registers->eflags, registers->cs);
-    debug_printf("  INT#=%#04x  ERR=%#010x\n",
+    _debug_printf("  INT#=%#04x  ERR=%#010x\n",
            registers->int_no, registers->err_code);
 
     // Print stack trace
     page_fault_print_stack_trace(registers->ebp, 10);
 
     // Try to recover (currently always fails, but framework is in place)
-    debug_printf("\nAttempting recovery...\n");
+    _debug_printf("\nAttempting recovery...\n");
     if (page_fault_try_recover(&pf_info)) {
-        debug_printf("Recovery successful! Continuing execution.\n");
+        _debug_printf("Recovery successful! Continuing execution.\n");
         return;  // Return to faulting code - recovery succeeded
     }
 
-    debug_printf("\n========================================\n");
-    debug_printf("Cannot recover from page fault.\n");
-    debug_printf("System halted.\n");
-    debug_printf("========================================\n");
+    _debug_printf("\n========================================\n");
+    _debug_printf("Cannot recover from page fault.\n");
+    _debug_printf("System halted.\n");
+    _debug_printf("========================================\n");
 
     // Print statistics before halting
     page_fault_print_stats();
@@ -122,7 +125,7 @@ uint32_t syscall_handler_wrapper(
             arg3
         );
     } else {
-        debug_puts("Received unhandled syscall interrupt 0x80");
+        _debug_puts("Received unhandled syscall interrupt 0x80");
         return 0;
     }
 }
@@ -138,7 +141,7 @@ void exception_handler(registers_t* registers)
         if (irq_int_handlers[irq_number] != 0) {
             (irq_int_handlers[irq_number])(registers);
         } else {
-            debug_printf("Received unhandled interrupt at IRQ %u\n", irq_number);
+            _debug_printf("Received unhandled interrupt at IRQ %u\n", irq_number);
         }
         pic_send_eoi(irq_number);
     }
@@ -147,7 +150,7 @@ void exception_handler(registers_t* registers)
         handle_page_fault(registers);
     }
     else {
-        debug_printf(
+        _debug_printf(
             "Halted with exception int %#02X, err code %#X\n",
             registers->int_no,
             registers->err_code
