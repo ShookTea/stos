@@ -177,6 +177,105 @@ static size_t read(
     return size;
 }
 
+static size_t write(
+    vfs_file_t* file,
+    size_t offset,
+    size_t size,
+    void* ptr
+) {
+    if (!file->readable) {
+        return 0;
+    }
+
+    hd_metadata_t* meta = file->node->metadata;
+    if (meta->is_partition) {
+        // TODO: handle reading from specific partition
+        return 0;
+    }
+
+    size_t wait_idx = allocate_rw_wait_pos();
+
+    hd_wakeup_data_t wakeup_data;
+    wakeup_data.wait_idx = wait_idx;
+    wakeup_data.hd_metadata = meta;
+
+    _debug_printf(
+        "Received WRITE call for offset=%u size=%u, wait_idx=%u\n",
+        offset,
+        size,
+        wait_idx
+    );
+
+    // Align offset to sector size
+    size_t lowest_sector_byte = sector_align_down(offset);
+    size_t highest_sector_byte = sector_align_up(offset + size);
+    size_t low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
+    size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
+    size_t sector_count = high_sector_lba - low_sector_lba + 1;
+
+    _debug_printf(
+        "[wait_idx=%u] lba=%u, sector count=%u\n",
+        wait_idx,
+        low_sector_lba,
+        sector_count
+    );
+
+    // Allocate buffer for sector data
+    uint16_t* buffer = kmalloc_flags(
+        sizeof(uint16_t) * 256 * sector_count,
+        KMALLOC_ZERO
+    );
+
+    // If original offset and size was not aligned to sectors, we need to first
+    // load data, so we won't overwrite parts of sectors that are not updated
+    // by the caller.
+    if (offset != lowest_sector_byte || size % SECTOR_SIZE != 0) {
+        _debug_printf(
+            "[wait_idx=%u] not aligned to sectors - reading wait started\n",
+            wait_idx
+        );
+        // Run read command
+        ata_read(
+            low_sector_lba,
+            sector_count,
+            buffer,
+            rw_ready,
+            &wakeup_data
+        );
+        // Wait for reading to be completed
+        wait_on_condition(meta->wait_obj, rw_wait_for_ready, &wakeup_data);
+
+        _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
+        // Re-set wait map back to "waiting"
+        rw_wait_map[wait_idx] = 1;
+    }
+
+    // Copy data from pointer to sectors
+    size_t offset_in_buffer = offset - lowest_sector_byte;
+    memcpy(buffer + offset_in_buffer, ptr, size);
+
+    // Run write command
+    ata_write(
+        low_sector_lba,
+        sector_count,
+        buffer,
+        rw_ready,
+        &wakeup_data
+    );
+
+    _debug_printf("[wait_idx=%u] start for write\n", wait_idx);
+
+    // Wait for reading to be completed
+    wait_on_condition(meta->wait_obj, rw_wait_for_ready, &wakeup_data);
+
+    _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
+
+    // Mark rw_map entry as free to use
+    rw_wait_map[wait_idx] = 0;
+
+    return size;
+}
+
 static vfs_node_t** nodes = NULL;
 
 vfs_node_t** device_hd_mount()
@@ -207,6 +306,7 @@ vfs_node_t** device_hd_mount()
         vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
         vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = read;
+        node->write_node = write;
         node->length = (uint64_t)ata_lba28_sectors_count() * SECTOR_SIZE;
         _debug_printf("size set to %llu\n", node->length);
         hd_metadata_t* metadata = kmalloc_flags(
