@@ -1,43 +1,73 @@
 #include "kernel/debug.h"
 #include "kernel/serial.h"
 #include <stdio.h>
+#include <string.h>
 
 #if (KERNEL_DEBUG_ANY)
 
-int debug_puts(const char* string)
+void debug_puts(const char* string)
 {
     #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
-        int res = 0;
-        for (;*string;string++) { serial_put_c(*string); res++; }
+        for (;*string;string++) serial_put_c(*string);
         serial_put_c('\n');
-        return res + 1;
     #elif KERNEL_DEBUG_TERMINAL
-        return puts(string);
-    #else
-        return 0;
+        puts(string);
     #endif
 }
 
-int debug_printf(const char* format, ...)
+void debug_puts_c(const char* cat, const char* string)
+{
+    debug_printf("\033[32;1m[%s]\033[0m %s", cat, string);
+}
+
+void debug_printf(const char* format, ...)
 {
     #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
-        int res = 0;
         char buffer[200];
         va_list args;
         va_start(args, format);
         vsnprintf(buffer, 200, format, args);
         va_end(args);
         char* string = buffer;
-        for (;*string;string++) { serial_put_c(*string); res++; }
-        return res;
+        for (;*string;string++) serial_put_c(*string);
     #elif KERNEL_DEBUG_TERMINAL
         va_list args;
         va_start(args, format);
         int res = vprintf(format, args);
         va_end(args);
-        return res;
-    #else
-        return 0;
+    #endif
+}
+
+void debug_printf_c(const char* cat, const char* format, ...)
+{
+    #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
+        char buffer[200];
+        snprintf(buffer, 200, "\033[32;1m[%s]\033[0m ", cat);
+        char* string = buffer;
+        for (;*string;string++) serial_put_c(*string);
+        memset(buffer, 0, 200);
+
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buffer, 200, format, args);
+        va_end(args);
+        string = buffer;
+        for (;*string;string++) serial_put_c(*string);
+    #elif KERNEL_DEBUG_TERMINAL
+        printf("\033[32;1m[%s]\033[0m ", cat);
+        va_list args;
+        va_start(args, format);
+        int res = vprintf(format, args);
+        va_end(args);
+    #endif
+}
+
+void debug_newline()
+{
+    #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
+        serial_put_c('\n');
+    #elif KERNEL_DEBUG_TERMINAL
+        puts("");
     #endif
 }
 

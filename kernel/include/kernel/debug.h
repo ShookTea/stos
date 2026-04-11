@@ -17,14 +17,18 @@
 
 
 #if (KERNEL_DEBUG_ANY)
-    int debug_puts(const char* string);
-    int debug_printf(const char* format, ...);
-    #define DEBUG_ONLY(expr) (expr)
+    void debug_puts(const char* string);
+    void debug_puts_c(const char* cat, const char* string);
+    void debug_printf(const char* format, ...);
+    void debug_printf_c(const char* cat, const char* format, ...);
+    void debug_newline();
 #else
     // No-op definitions
     #define debug_puts(...) ((void)0)
+    #define debug_puts_c(...) ((void)0)
     #define debug_printf(...) ((void)0)
-    #define DEBUG_ONLY(expr) ((void)(expr))
+    #define debug_printf_c(...) ((void)0)
+    #define debug_newline(...) ((void)0)
 #endif
 
 #endif
