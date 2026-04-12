@@ -56,6 +56,11 @@ static uint32_t syscall_int_handler(
             assert_range(buf, size);
             return (uint32_t)sys_getcwd(buf, size);
         }
+        case SYS_CHDIR: {
+            const char* path = (const char*)arg1;
+            assert_range(path, VFS_MAX_PATH_LENGTH);
+            return sys_chdir(path);
+        }
         case SYS_OPEN: {
             const char* path = (const char*)arg1;
             assert_range(path, VFS_MAX_PATH_LENGTH);

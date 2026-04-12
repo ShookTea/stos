@@ -87,6 +87,12 @@ char* getcwd(char buf[], size_t size);
 char* get_current_dir_name(void);
 
 /**
+ * Changes the current working directory of the calling task to one specified
+ * in `path`.
+ */
+int chdir(const char* path);
+
+/**
  * Replace the current process image with the ELF executable at [path].
  * On success this function does not return; execution resumes at the new
  * program's entry point. On failure returns -1.

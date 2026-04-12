@@ -32,6 +32,9 @@ int sys_exec(const char* path, const char** argv, const char** envp);
 #define SYS_GETCWD 0x08
 char* sys_getcwd(char* buf, size_t size);
 
+#define SYS_CHDIR 0x09
+int sys_chdir(const char* path);
+
 #define SYS_OPEN 0x10
 uint32_t sys_open(const char* path, uint32_t flags);
 
