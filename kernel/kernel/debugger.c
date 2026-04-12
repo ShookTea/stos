@@ -31,12 +31,13 @@ static void command_ata_dump_drive(uint8_t drive_id)
 {
     uint32_t sectors = ata_get_lba28_sectors_count(drive_id);
     uint32_t mib = (sectors / 2) / 1024;
-    printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
     ata_disk_info_t disk_info;
     if (!ata_load_disk_info(drive_id, &disk_info)) {
         puts("  Failed to load partition info.");
         return;
     }
+    printf("  Firmware: %s\n", disk_info.firmare_name);
+    printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
     printf("  %u partitions present:\n", disk_info.partitions_count);
     puts("  ┌────┬───────┬────────────┬────────────┬────────────┬────────────┐");
     puts("  │ Id │ Boot? │       Type │  LBA start │    Sectors │ Size (MiB) │");

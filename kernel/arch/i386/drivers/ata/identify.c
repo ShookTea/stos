@@ -18,12 +18,16 @@
 static uint8_t selected_drive = ATA_DRIVE_NONE;
 
 static uint32_t* lba28_sec_count = NULL;
+static char** firmware_names = NULL;
 static ata_mbr_t* mbrs = NULL;
 
 static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
 {
     if (lba28_sec_count == NULL) {
         lba28_sec_count = kmalloc_flags(sizeof(uint32_t) * 4, KMALLOC_ZERO);
+    }
+    if (firmware_names == NULL) {
+        firmware_names = kmalloc_flags(sizeof(char*) * 4, KMALLOC_ZERO);
     }
     _debug_puts("Detecting ATA PIO device");
     bool primary = bus_base == ATA_BUS_BASE_PRIMARY;
@@ -96,6 +100,11 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
                     i--;
                 }
                 _debug_printf("Firmware: '%s'\n", firmware_name);
+                firmware_names[disk_id] = kmalloc_flags(
+                    sizeof(char) * 40,
+                    KMALLOC_ZERO
+                );
+                strcpy(firmware_names[disk_id], firmware_name);
             }
         }
     }
@@ -265,8 +274,9 @@ bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr)
     if (!ata_drive_available(disk_id)) {
         return false;
     }
-    ptr->partitions_count = 0;
+    strcpy(ptr->firmare_name, firmware_names[disk_id]);
 
+    ptr->partitions_count = 0;
     ata_mbr_t mbr = mbrs[disk_id];
     _load_partition_info(&mbr.partition_1, ptr);
     _load_partition_info(&mbr.partition_2, ptr);

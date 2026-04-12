@@ -28,6 +28,8 @@ typedef struct {
 } ata_partition_t;
 
 typedef struct {
+    // Null-terminated firmware name
+    char firmare_name[40];
     // Actual number of partitions stored in partitions[] array
     uint8_t partitions_count;
     ata_partition_t partitions[32];
