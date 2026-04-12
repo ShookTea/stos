@@ -14,6 +14,12 @@ int main(void)
         printf("CWD: '%s'\n", cwd);
         free(cwd);
     }
+    chdir("initrd");
+    cwd = get_current_dir_name();
+    if (cwd != NULL) {
+        printf("new CWD: '%s'\n", cwd);
+        free(cwd);
+    }
     int childpid = fork();
     int currpid = getpid();
     printf("[%d] fork res = %d\n", currpid, childpid);
@@ -21,9 +27,9 @@ int main(void)
         printf("\n[%d] running exec\n", currpid);
         puts("running exec");
         // In child task - run forking.c for demo
-        const char* argv[] = { "/initrd/forking", "test arg", NULL };
+        const char* argv[] = { "forking", "test arg", NULL };
         const char* envp[] = { "env=foo", NULL };
-        execve("/initrd/forking", argv, envp);
+        execve("forking", argv, envp);
         printf("\n[%d] ALERT: this line should never be printed.\n", currpid);
         return 1;
     } else {
