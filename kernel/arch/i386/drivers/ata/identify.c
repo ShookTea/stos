@@ -46,6 +46,7 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
     // Data port now contains 256 16-bit values.
     uint32_t lba28_sectors_count = 0;
     uint64_t lba48_sectors_count = 0;
+    char firmware_name[40];
     for (int i = 0; i < 256; i++) {
         uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
         // if i=0 - it's apparently useful if device is not a hard disk.
@@ -89,6 +90,20 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
                 _debug_puts("LBA48 not supported");
             } else {
                 _debug_printf("LBA48 sec count: %llu\n", lba48_sectors_count);
+            }
+        } else if (i >= 27 && i <= 46) {
+            firmware_name[(i - 27) * 2] = (data >> 8) & 0xFF;
+            firmware_name[(i - 27) * 2 + 1] = data & 0xFF;
+            if (i == 46) {
+                // Set last char to NULL
+                firmware_name[39] = 0;
+                // Iterate from back, clearing all whitespaces
+                size_t i = 38;
+                while (firmware_name[i] == ' ') {
+                    firmware_name[i] = 0;
+                    i--;
+                }
+                _debug_printf("Firmware: '%s'\n", firmware_name);
             }
         }
     }
