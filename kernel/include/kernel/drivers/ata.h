@@ -39,6 +39,7 @@ uint32_t ata_lba28_sectors_count();
 
 /**
  * Create a read request for ATA driver, for currently selected drive.
+ * - "ata_drive" is one of ATA_DRIVE_ values
  * - "lba" is the first sector from which reading will take place.
  * - "sectors_count" is the total number of 512-byte sectors to be loaded.
  * - "buffer" is pre-allocated address in the memory where data will be stored.
@@ -51,6 +52,7 @@ uint32_t ata_lba28_sectors_count();
  * Returns "true" when the request was accepted.
  */
 bool ata_read(
+    uint8_t ata_drive,
     uint32_t lba,
     uint8_t sectors_count,
     uint16_t* buffer,
@@ -60,6 +62,7 @@ bool ata_read(
 
 /**
  * Create a write request for ATA driver, for currently selected drive.
+ * - "ata_drive" is one of ATA_DRIVE_ values
  * - "lba" is the first sector to which writing will take place.
  * - "sectors_count" is the total number of 512-byte sectors to be written.
  * - "buffer" is pre-allocated address in the memory from where the data will be
@@ -72,6 +75,7 @@ bool ata_read(
  * Returns "true" when the request was accepted.
  */
 bool ata_write(
+    uint8_t ata_drive,
     uint32_t lba,
     uint8_t sectors_count,
     uint16_t* buffer,

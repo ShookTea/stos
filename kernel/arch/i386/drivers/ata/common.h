@@ -61,6 +61,8 @@
  * Type definition for a read/write request
  */
 typedef struct {
+    // One of ATA_DRIVE_ values from ata.h
+    uint8_t drive;
     // First sector location
     uint32_t lba;
     // Total number of sectors, starting from [lba], to read/write

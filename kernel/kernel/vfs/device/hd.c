@@ -124,7 +124,6 @@ static size_t read(
         return 0;
     }
 
-    ata_select_drive(meta->disk_id);
     size_t wait_idx = allocate_rw_wait_pos();
 
     hd_wakeup_data_t wakeup_data;
@@ -160,6 +159,7 @@ static size_t read(
 
     // Run read command
     ata_read(
+        meta->disk_id,
         low_sector_lba,
         sector_count,
         buffer,
@@ -201,7 +201,6 @@ static size_t write(
         return 0;
     }
 
-    ata_select_drive(meta->disk_id);
     size_t wait_idx = allocate_rw_wait_pos();
 
     hd_wakeup_data_t wakeup_data;
@@ -245,6 +244,7 @@ static size_t write(
         );
         // Run read command
         ata_read(
+            meta->disk_id,
             low_sector_lba,
             sector_count,
             buffer,
@@ -265,6 +265,7 @@ static size_t write(
 
     // Run write command
     ata_write(
+        meta->disk_id,
         low_sector_lba,
         sector_count,
         buffer,

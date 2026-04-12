@@ -82,6 +82,7 @@ void _ata_queue_schedule()
 }
 
 static bool create_and_enqueue(
+    uint8_t ata_drive,
     uint32_t lba,
     uint8_t sectors_count,
     uint16_t* buffer,
@@ -90,6 +91,7 @@ static bool create_and_enqueue(
     bool is_write
 ) {
     ata_request_t req;
+    req.drive = ata_drive;
     req.lba = lba;
     req.total_sectors = sectors_count;
     req.remaining_sectors = sectors_count;
@@ -103,6 +105,7 @@ static bool create_and_enqueue(
 }
 
 bool ata_read(
+    uint8_t ata_drive,
     uint32_t lba,
     uint8_t sectors_count,
     uint16_t* buffer,
@@ -110,6 +113,7 @@ bool ata_read(
     void* callback_data
 ) {
     return create_and_enqueue(
+        ata_drive,
         lba,
         sectors_count,
         buffer,
@@ -120,6 +124,7 @@ bool ata_read(
 }
 
 bool ata_write(
+    uint8_t ata_drive,
     uint32_t lba,
     uint8_t sectors_count,
     uint16_t* buffer,
@@ -127,6 +132,7 @@ bool ata_write(
     void* callback_data
 ) {
     return create_and_enqueue(
+        ata_drive,
         lba,
         sectors_count,
         buffer,
