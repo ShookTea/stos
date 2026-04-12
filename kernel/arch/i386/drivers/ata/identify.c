@@ -262,6 +262,7 @@ bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr)
     if (!ata_drive_available(disk_id)) {
         return false;
     }
+    ptr->partitions_count = 0;
 
     ata_mbr_t mbr = mbrs[disk_id - 1];
     _load_partition_info(&mbr.partition_1, ptr);
