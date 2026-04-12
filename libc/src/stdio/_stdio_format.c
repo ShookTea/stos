@@ -507,6 +507,33 @@ int __stdio_format_core(
                 expo--;
             }
 
+            // Compute integer and fractional parts with rounding before
+            // emitting, so that a carry from the fractional part can propagate
+            // to the integer.
+            intmax_t intPart = (intmax_t)floating;
+            double frac = floating - intPart;
+            if (frac < 0) frac *= -1;
+
+            for (int i = 0; i < precision; i++) {
+                frac *= 10;
+            }
+
+            intmax_t decPlaces = (intmax_t)frac;
+            uint8_t nextDigit = (uint8_t)(
+                (frac * 10) - (decPlaces * 10) + 0.01
+            );
+            if (nextDigit >= 5) {
+                decPlaces++;
+            }
+
+            // Propagate carry into integer part if fractional digits overflow.
+            intmax_t divisor = 1;
+            for (int i = 0; i < precision; i++) divisor *= 10;
+            if (decPlaces >= divisor) {
+                decPlaces -= divisor;
+                intPart += (floating >= 0) ? 1 : -1;
+            }
+
             int form = width - precision - expo -
                 (precision || altMode ? 1 : 0);
 
@@ -518,30 +545,17 @@ int __stdio_format_core(
             }
 
             __int_to_str(
-                floating, intStrBuffer, 10, plusPrepend,
+                intPart, intStrBuffer, 10, plusPrepend,
                 spacePrepend, form, leftAlign, zeroPad
             );
 
             if (!emit_str(out, &chars, intStrBuffer)) return chars;
-            floating -= (int) floating;
 
-            if (floating < 0) {
-                floating *= -1;
-            }
-
-            for (int i = 0; i < precision; i++) {
-                floating *= 10;
-            }
-
-            intmax_t decPlaces = (intmax_t)floating;
-            uint8_t nextDigit = (uint8_t)((floating * 10) - (decPlaces * 10) + 0.01);
-            if (nextDigit >= 5) {
-                decPlaces++;
-            }
             if (precision) {
                 EMIT('.');
                 __int_to_str(
-                    decPlaces, intStrBuffer, 10, false, false, 0, false, false
+                    decPlaces, intStrBuffer, 10, false,
+                    false, precision, false, true
                 );
                 intStrBuffer[precision] = 0;
                 if (!emit_str(out, &chars, intStrBuffer)) return chars;
