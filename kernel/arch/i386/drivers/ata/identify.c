@@ -48,15 +48,13 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
 
     // Wait for BSY flag to clear
     status = _ata_wait_for_bsy_clear(bus_base);
+    uint16_t cylinder = (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH) << 8)
+        | inb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW);
+
 
     // Check ATA_BUS_OFFSET_CYLINDER_LOW and _HIGH - they should be clear now
-    if (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW) != 0) {
-        _debug_puts("Invalid device: cylinder_low set");
-        return;
-    }
-
-    if (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH) != 0) {
-        _debug_puts("Invalid device: cylinder_high set");
+    if (cylinder != 0) {
+        _debug_printf("Invalid device: cylinder set to %4x\n", cylinder);
         return;
     }
 
