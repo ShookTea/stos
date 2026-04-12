@@ -155,4 +155,9 @@ void _ata_write(ata_request_t* req);
  */
 void _ata_irq_handler();
 
+/**
+ * Copies partition data for later use.
+ */
+void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr);
+
 #endif

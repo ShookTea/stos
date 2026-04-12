@@ -19,21 +19,10 @@ static void _ata_identify_partitions_callback(void* data)
 {
     uint8_t* drive_id_ptr = data;
     uint8_t drive_id = *drive_id_ptr;
-    _debug_printf("MBR load completed for drive ID %u\n", drive_id);
-
     ata_mbr_t* mbr = (ata_mbr_t*)partition_buffer[drive_id - 1];
-    if (mbr->signature_bytes != 0xAA55) {
-        _debug_printf(
-            "Invalid MBR signature bytes: %#04X, 0xAA55 expected\n",
-            mbr->signature_bytes
-        );
-    } else {
-        _debug_puts("MBR signature bytes valid.");
-        _debug_printf("part1 type=%02x\n", mbr->partition_1.partition_type);
-        _debug_printf("part2 type=%02x\n", mbr->partition_2.partition_type);
-        _debug_printf("part3 type=%02x\n", mbr->partition_3.partition_type);
-        _debug_printf("part4 type=%02x\n", mbr->partition_4.partition_type);
-    }
+
+    _ata_load_partition_data(drive_id, mbr);
+
     kfree(partition_buffer[drive_id - 1]);
     partition_buffer_used--;
     if (partition_buffer_used == 0) {

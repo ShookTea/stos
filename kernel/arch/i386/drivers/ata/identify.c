@@ -6,8 +6,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c("ATA/id", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("ATA/id", __VA_ARGS__)
 
 static uint32_t lba28_sec_count_primary_master = 0;
 static uint32_t lba28_sec_count_primary_slave = 0;
@@ -213,5 +213,22 @@ bool ata_drive_available(uint8_t drive)
             return lba28_sec_count_secondary_slave > 0;
         default:
             return false;
+    }
+}
+
+void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
+{
+    _debug_printf("MBR load completed for drive ID %u\n", drive_id);
+    if (mbr->signature_bytes != 0xAA55) {
+        _debug_printf(
+            "Invalid MBR signature bytes: %#04X, 0xAA55 expected\n",
+            mbr->signature_bytes
+        );
+    } else {
+        _debug_puts("MBR signature bytes valid.");
+        _debug_printf("part1 type=%02x\n", mbr->partition_1.partition_type);
+        _debug_printf("part2 type=%02x\n", mbr->partition_2.partition_type);
+        _debug_printf("part3 type=%02x\n", mbr->partition_3.partition_type);
+        _debug_printf("part4 type=%02x\n", mbr->partition_4.partition_type);
     }
 }
