@@ -40,13 +40,10 @@ void ata_init()
     if (drive == ATA_DRIVE_NONE) {
         return;
     }
-    if (drive == ATA_DRIVE_PRIMARY_MASTER || drive == ATA_DRIVE_PRIMARY_SLAVE) {
-        idt_register_irq_handler(PIC_LINE_PRIMARY_ATA, &_ata_irq_handler);
-        pic_enable(PIC_LINE_PRIMARY_ATA);
-    } else {
-        idt_register_irq_handler(PIC_LINE_SECONDARY_ATA, &_ata_irq_handler);
-        pic_enable(PIC_LINE_SECONDARY_ATA);
-    }
+    idt_register_irq_handler(PIC_LINE_PRIMARY_ATA, &_ata_irq_handler);
+    idt_register_irq_handler(PIC_LINE_SECONDARY_ATA, &_ata_irq_handler);
+    pic_enable(PIC_LINE_PRIMARY_ATA);
+    pic_enable(PIC_LINE_SECONDARY_ATA);
     _debug_puts("IRQ enabled");
     _ata_load_mbr();
 }

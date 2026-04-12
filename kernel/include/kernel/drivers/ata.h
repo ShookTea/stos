@@ -25,7 +25,7 @@ void ata_get_available_drives(uint8_t*);
 /**
  * Returns one of ATA_DRIVE_ values.
  */
-uint8_t ata_get_selected_drive();
+uint8_t ata_get_selected_drive(void);
 
 /**
  * Select a drive.
@@ -33,9 +33,14 @@ uint8_t ata_get_selected_drive();
 void ata_select_drive(uint8_t);
 
 /**
+ * Checks if given ATA_DRIVE_ drive is available.
+ */
+bool ata_drive_available(uint8_t);
+
+/**
  * Returns sectors count of currently selected drive.
  */
-uint32_t ata_lba28_sectors_count();
+uint32_t ata_lba28_sectors_count(void);
 
 /**
  * Create a read request for ATA driver, for currently selected drive.

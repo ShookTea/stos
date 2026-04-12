@@ -155,7 +155,7 @@ void _ata_identify_devices()
     }
 }
 
-uint8_t ata_get_selected_drive()
+uint8_t ata_get_selected_drive(void)
 {
     return selected_drive;
 }
@@ -184,7 +184,7 @@ void ata_select_drive(uint8_t drive)
     // TODO: implement drive switch?
 }
 
-uint32_t ata_lba28_sectors_count()
+uint32_t ata_lba28_sectors_count(void)
 {
     switch (selected_drive) {
         case ATA_DRIVE_PRIMARY_MASTER:
@@ -197,5 +197,21 @@ uint32_t ata_lba28_sectors_count()
             return lba28_sec_count_secondary_slave;
         default:
             return 0;
+    }
+}
+
+bool ata_drive_available(uint8_t drive)
+{
+    switch (drive) {
+        case ATA_DRIVE_PRIMARY_MASTER:
+            return lba28_sec_count_primary_master > 0;
+        case ATA_DRIVE_PRIMARY_SLAVE:
+            return lba28_sec_count_primary_slave > 0;
+        case ATA_DRIVE_SECONDARY_MASTER:
+            return lba28_sec_count_secondary_master > 0;
+        case ATA_DRIVE_SECONDARY_SLAVE:
+            return lba28_sec_count_secondary_slave > 0;
+        default:
+            return false;
     }
 }

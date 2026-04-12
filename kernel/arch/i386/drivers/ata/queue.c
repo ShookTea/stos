@@ -90,6 +90,10 @@ static bool create_and_enqueue(
     void* callback_data,
     bool is_write
 ) {
+    if (!ata_drive_available(ata_drive)) {
+        return false;
+    }
+
     ata_request_t req;
     req.drive = ata_drive;
     req.lba = lba;
