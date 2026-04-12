@@ -33,7 +33,7 @@ qemu: $(TARGET).iso $(HARD_DRIVE)
 		-drive file=$(HARD_DRIVE),format=raw,media=disk \
 		$(QEMU_FLAGS)
 
-$(TARGET).iso: $(TARGET) kernel/grub.cfg $(INITRD)
+$(TARGET).iso: $(INITRD) $(TARGET) kernel/grub.cfg
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
 	cp kernel/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg

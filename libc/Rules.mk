@@ -17,18 +17,6 @@ LIBK_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBK_BUILD_DIR)/%,$(LIBK_OBJS:.s=.li
 LIBC_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBC_BUILD_DIR)/%,$(LIBC_SRCS:.c=.libc.o))
 LIBC_OBJS := $(patsubst $(LIBC_SRC_DIR)/%,$(LIBC_BUILD_DIR)/%,$(LIBC_OBJS:.s=.libc.o))
 
-$(LIBK_BUILD_DIR)/%.libk.o: $(LIBC_SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(LIBK_CFLAGS) -c $< -o $@
-
-$(LIBK_BUILD_DIR)/%.libk.o: $(LIBC_SRC_DIR)/%.s
-	@mkdir -p $(@D)
-	$(AS) -c $< -o $@
-
-$(LIBK_TARGET): $(LIBK_OBJS)
-	@mkdir -p $(@D)
-	$(AR) rcs $@ $^
-
 $(LIBC_BUILD_DIR)/%.libc.o: $(LIBC_SRC_DIR)/%.c
 	@mkdir -p $(@D)
 	$(CC) $(LIBC_CFLAGS) -c $< -o $@
@@ -38,5 +26,17 @@ $(LIBC_BUILD_DIR)/%.libc.o: $(LIBC_SRC_DIR)/%.s
 	$(AS) -c $< -o $@
 
 $(LIBC_TARGET): $(LIBC_OBJS)
+	@mkdir -p $(@D)
+	$(AR) rcs $@ $^
+
+$(LIBK_BUILD_DIR)/%.libk.o: $(LIBC_SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(LIBK_CFLAGS) -c $< -o $@
+
+$(LIBK_BUILD_DIR)/%.libk.o: $(LIBC_SRC_DIR)/%.s
+	@mkdir -p $(@D)
+	$(AS) -c $< -o $@
+
+$(LIBK_TARGET): $(LIBK_OBJS)
 	@mkdir -p $(@D)
 	$(AR) rcs $@ $^
