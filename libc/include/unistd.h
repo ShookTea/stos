@@ -93,20 +93,71 @@ char* get_current_dir_name(void);
 int chdir(const char* path);
 
 /**
- * Replace the current process image with the ELF executable at [path].
+ * Replace the current process image with the ELF executable at `path`.
  * On success this function does not return; execution resumes at the new
  * program's entry point. On failure returns -1.
  *
- * argv[] is an array of pointers to strings passed to a program as its CLI
+ * `argv[]` is an array of pointers to strings passed to a program as its CLI
  * arguments. By convention the first item in this array should contain the
- * filename associated with the file being executed. The argv array must be
+ * filename associated with the file being executed. The `argv[]` array must be
  * terminated by a null pointer.
  *
- * envp[] is an array of pointers to strings, conventionally of the form
+ * `envp[]` is an array of pointers to strings, conventionally of the form
  * key=value, which are passed as the environment variables of the new program.
- * The envp[] array must be terminated by a null pointer.
+ * The `envp[]` array must be terminated by a null pointer.
  */
 int execve(const char* path, const char* argv[], const char* envp[]);
+
+/**
+ * Replace the current process image with the ELF executable at `path`.
+ * On success this function does not return; execution resumes at the new
+ * program's entry point. On failure returns -1.
+ *
+ * `arg` and subsequent ellipses together describe a list of one or more
+ * pointers to null-terminated strings that represents arguments passed to the
+ * executed program. The first argument, by convention, should point to the
+ * filename associated with the file being executed. It has to be terminated
+ * with a NULL pointer.
+ *
+ * Environment variables are inherited from the current process.
+ */
+int execl(const char* path, const char* arg, ... /*, NULL */);
+
+/**
+ * Replace the current process image with the ELF executable at `path`.
+ * On success this function does not return; execution resumes at the new
+ * program's entry point. On failure returns -1.
+ *
+ * `arg` and subsequent ellipses together describe a list of one or more
+ * pointers to null-terminated strings that represents arguments passed to the
+ * executed program. The first argument, by convention, should point to the
+ * filename associated with the file being executed. It has to be terminated
+ * with a NULL pointer.
+ *
+ * NULL poointer is followed by a `const char* envp[]`. `envp[]` is an array of
+ * pointers to strings, conventionally of the form key=value, which are passed
+ * as the environment variables of the new program. The `envp[]` array must be
+ * terminated by a null pointer.
+ */
+int execle(
+    const char* path,
+    const char* arg,
+    ... /* , NULL, const char* envp[] */
+);
+
+/**
+ * Replace the current process image with the ELF executable at `path`.
+ * On success this function does not return; execution resumes at the new
+ * program's entry point. On failure returns -1.
+ *
+ * `argv[]` is an array of pointers to strings passed to a program as its CLI
+ * arguments. By convention the first item in this array should contain the
+ * filename associated with the file being executed. The `argv[]` array must be
+ * terminated by a null pointer.
+ *
+ * Environment variables are inherited from the current process.
+ */
+int execv(const char* path, const char* argv[]);
 
 #ifdef __cplusplus
 }
