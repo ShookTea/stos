@@ -288,7 +288,24 @@ static size_t write(
     return size;
 }
 
+// NULL-terminated list of nodes
 static vfs_node_t** nodes = NULL;
+// Size of nodes, excluding NULL at the end
+static size_t nodes_count = 0;
+
+static void increase_nodes_size(void)
+{
+    if (nodes == NULL) {
+        nodes = kmalloc_flags(sizeof(vfs_node_t*) * 2, KMALLOC_ZERO);
+        nodes_count = 1;
+    } else {
+        nodes_count++;
+        // +1 here to make sure that we keep NULL at the end
+        nodes = krealloc(nodes, sizeof(vfs_node_t*) * (nodes_count + 1));
+        // Set null termination
+        nodes[nodes_count] = NULL;
+    }
+}
 
 vfs_node_t** device_hd_mount()
 {
@@ -296,16 +313,12 @@ vfs_node_t** device_hd_mount()
         return nodes;
     }
 
-    // 4 pointers + 1 terminating NULL pointer
-    nodes = kmalloc_flags(sizeof(vfs_node_t*) * 5, KMALLOC_ZERO);
-
     _debug_puts("Mounting HD files to VFS");
     uint8_t ata_drives[5];
     ata_get_available_drives(ata_drives);
     uint8_t* ata_drive_ptr = ata_drives;
     char drive_name[] = "hda";
     char drive_letter = 'a';
-    size_t pointer_index = 0;
     while (*ata_drive_ptr != 0) {
         drive_name[2] = drive_letter;
         _debug_printf(
@@ -329,7 +342,8 @@ vfs_node_t** device_hd_mount()
         metadata->disk_id = *ata_drive_ptr;
         metadata->wait_obj = wait_allocate_queue();
         metadata->is_partition = false;
-        nodes[pointer_index] = node;
+        increase_nodes_size();
+        nodes[nodes_count - 1] = node;
 
         ata_disk_info_t disk_info;
         ata_load_disk_info(*ata_drive_ptr, &disk_info);
@@ -348,7 +362,6 @@ vfs_node_t** device_hd_mount()
 
         drive_letter++;
         ata_drive_ptr++;
-        pointer_index++;
     }
 
     return nodes;
@@ -373,5 +386,6 @@ void device_hd_unmount()
         ptr++;
     }
     kfree(nodes);
+    nodes_count = 0;
     nodes = NULL;
 }
