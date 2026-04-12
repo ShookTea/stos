@@ -605,6 +605,10 @@ task_t* task_fork(void)
     child->heap_end = parent->heap_end;
     child->heap_max = parent->heap_max;
 
+    // Inherit VFS context from parent
+    child->root_node = parent->root_node;
+    child->working_directory = parent->working_directory;
+
     // Duplicate memory-region list
     task_memory_region_t* tmr = parent->memory_regions;
     while (tmr != NULL) {
