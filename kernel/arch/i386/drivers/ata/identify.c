@@ -187,9 +187,9 @@ void ata_select_drive(uint8_t drive)
     // TODO: implement drive switch?
 }
 
-uint32_t ata_lba28_sectors_count(void)
+uint32_t ata_get_lba28_sectors_count(uint8_t drive)
 {
-    switch (selected_drive) {
+    switch (drive) {
         case ATA_DRIVE_PRIMARY_MASTER:
             return lba28_sec_count_primary_master;
         case ATA_DRIVE_PRIMARY_SLAVE:

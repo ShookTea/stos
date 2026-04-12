@@ -29,8 +29,7 @@ static uint8_t command_length = 0;
 
 static void command_ata_dump_drive(uint8_t drive_id)
 {
-    ata_select_drive(drive_id);
-    uint32_t sectors = ata_lba28_sectors_count();
+    uint32_t sectors = ata_get_lba28_sectors_count(drive_id);
     uint32_t mib = (sectors / 2) / 1024;
     printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
     ata_disk_info_t disk_info;

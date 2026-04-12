@@ -58,9 +58,9 @@ void ata_select_drive(uint8_t);
 bool ata_drive_available(uint8_t);
 
 /**
- * Returns sectors count of currently selected drive.
+ * Returns number of LBA28 sectors in given ATA_DRIVE_ drive.
  */
-uint32_t ata_lba28_sectors_count(void);
+uint32_t ata_get_lba28_sectors_count(uint8_t);
 
 /**
  * Loads disk information about selected disk to the pointer, or returns false

@@ -63,8 +63,7 @@ static void load_sector_location(
     loc->lowest_sector_byte = lowest_sector_byte;
 
     if (!meta->is_partition) {
-        ata_select_drive(meta->disk_id);
-        size_t disk_sectors = ata_lba28_sectors_count();
+        size_t disk_sectors = ata_get_lba28_sectors_count(meta->disk_id);
         loc->low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
         size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
 
@@ -393,13 +392,13 @@ vfs_node_t** device_hd_mount()
             *ata_drive_ptr,
             drive_name
         );
-        ata_select_drive(*ata_drive_ptr);
 
         vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
         vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = read;
         node->write_node = write;
-        node->length = (uint64_t)ata_lba28_sectors_count() * SECTOR_SIZE;
+        uint32_t sectors_count = ata_get_lba28_sectors_count(*ata_drive_ptr);
+        node->length = (uint64_t)sectors_count * SECTOR_SIZE;
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),
             KMALLOC_ZERO
