@@ -10,6 +10,10 @@
 #define _debug_puts(...) debug_puts_c("ATA/id", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATA/id", __VA_ARGS__)
 
+#define ATA_CYLINDER_PIO 0x0000
+#define ATA_CYLINDER_SATA 0xC33C
+#define ATA_CYLINDER_ATAPI 0xEB14
+
 static uint32_t lba28_sec_count_primary_master = 0;
 static uint32_t lba28_sec_count_primary_slave = 0;
 static uint32_t lba28_sec_count_secondary_master = 0;
@@ -19,45 +23,13 @@ static uint8_t selected_drive = ATA_DRIVE_NONE;
 
 static ata_mbr_t* mbrs = NULL;
 
-static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
+static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
 {
+    _debug_puts("Detecting ATA PIO device");
     bool primary = bus_base == ATA_BUS_BASE_PRIMARY;
     bool master = target_drive == ATA_COM_TARGET_DRIVE_MASTER;
 
-    _ata_drive_select(bus_base, target_drive);
     uint8_t status = _ata_read_status(bus_base);
-    if (status == 0) {
-        _debug_puts("Drive doesn't exist.");
-        return;
-    }
-
-    // Clear values on ports
-    outb(bus_base | ATA_BUS_OFFSET_SECTOR_COUNT, 0);
-    outb(bus_base | ATA_BUS_OFFSET_SECTOR_NUMBER, 0);
-    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW, 0);
-    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH, 0);
-    // Send IDENTIFY command
-    outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_IDENTIFY);
-
-    // Read status
-    status = _ata_read_status(bus_base);
-    if (status == 0) {
-        _debug_puts("Drive doesn't exist.");
-        return;
-    }
-
-    // Wait for BSY flag to clear
-    status = _ata_wait_for_bsy_clear(bus_base);
-    uint16_t cylinder = (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH) << 8)
-        | inb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW);
-
-
-    // Check ATA_BUS_OFFSET_CYLINDER_LOW and _HIGH - they should be clear now
-    if (cylinder != 0) {
-        _debug_printf("Invalid device: cylinder set to %4x\n", cylinder);
-        return;
-    }
-
     // Continue polling until bit DRQ or ERR sets.
     while ((status & (ATA_STATUS_ERR | ATA_STATUS_DRQ)) == 0) {
         io_wait();
@@ -121,6 +93,54 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
     }
 
     _debug_printf("Drive found, status: %#x\n", status);
+}
+
+static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
+{
+    _ata_drive_select(bus_base, target_drive);
+    uint8_t status = _ata_read_status(bus_base);
+    if (status == 0) {
+        _debug_puts("Drive doesn't exist.");
+        return;
+    }
+
+    // Clear values on ports
+    outb(bus_base | ATA_BUS_OFFSET_SECTOR_COUNT, 0);
+    outb(bus_base | ATA_BUS_OFFSET_SECTOR_NUMBER, 0);
+    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW, 0);
+    outb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH, 0);
+    // Send IDENTIFY command
+    outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_IDENTIFY);
+
+    // Read status
+    status = _ata_read_status(bus_base);
+    if (status == 0) {
+        _debug_puts("Drive doesn't exist.");
+        return;
+    }
+
+    // Wait for BSY flag to clear
+    status = _ata_wait_for_bsy_clear(bus_base);
+    uint16_t cylinder = (inb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH) << 8)
+        | inb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW);
+
+
+    if (cylinder == ATA_CYLINDER_PIO) {
+        _ata_pio_identify(bus_base, target_drive);
+        return;
+    }
+    if (cylinder == ATA_CYLINDER_SATA) {
+        _debug_puts("SATA device detected but not supported yet");
+        return;
+    }
+    if (cylinder == ATA_CYLINDER_ATAPI) {
+        _debug_puts("ATAPI device detected but not supported yet");
+        return;
+    }
+    _debug_printf("Invalid device: cylinder set to %4x\n", cylinder);
+    return;
+
+
 }
 
 void _ata_identify_devices()
