@@ -120,13 +120,8 @@ static size_t read(
     }
 
     hd_metadata_t* meta = file->dentry->inode->metadata;
-    if (meta->is_partition) {
-        // TODO: handle reading from specific partition
-        return 0;
-    }
 
     size_t wait_idx = allocate_rw_wait_pos();
-
     hd_wakeup_data_t wakeup_data;
     wakeup_data.wait_idx = wait_idx;
     wakeup_data.hd_metadata = meta;
@@ -141,9 +136,48 @@ static size_t read(
     // Align offset to sector size
     size_t lowest_sector_byte = sector_align_down(offset);
     size_t highest_sector_byte = sector_align_up(offset + size);
-    size_t low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
-    size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
-    size_t sector_count = high_sector_lba - low_sector_lba;
+
+    // Sectors on disk to be loaded
+    size_t low_sector_lba, high_sector_lba, sector_count;
+    if (meta->is_partition) {
+        // Load partition info
+        ata_partition_t part_info;
+        ata_disk_info_t disk_info;
+        ata_load_disk_info(meta->disk_id, &disk_info);
+        if (meta->partition_id >= disk_info.partitions_count) {
+            _debug_puts("Err on read: partition doesn't exist.");
+            // Partition with given ID doesn't exist
+            rw_wait_map[wait_idx] = 0;
+            return 0;
+        }
+        part_info = disk_info.partitions[meta->partition_id];
+
+        // Calculate LBA position inside partition
+        size_t low_sector_lba_in_part = lowest_sector_byte / SECTOR_SIZE;
+        size_t high_sector_lba_in_part = highest_sector_byte / SECTOR_SIZE;
+        sector_count = high_sector_lba_in_part - low_sector_lba_in_part;
+
+        // If low sector is beyond partition limits, no read is possible.
+        if (low_sector_lba_in_part >= part_info.sectors_count) {
+            _debug_puts("Err on read: read start beyond partition border");
+            rw_wait_map[wait_idx] = 0;
+            return 0;
+        }
+
+        // If high sector is beyond partition limits, reduce it
+        if (high_sector_lba_in_part >= part_info.sectors_count) {
+            size_t diff = part_info.sectors_count - high_sector_lba_in_part;
+            high_sector_lba_in_part -= diff;
+            sector_count -= diff;
+        }
+
+        low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
+        high_sector_lba = high_sector_lba_in_part + part_info.lba_start;
+    } else {
+        low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
+        high_sector_lba = highest_sector_byte / SECTOR_SIZE;
+        sector_count = high_sector_lba - low_sector_lba;
+    }
 
     _debug_printf(
         "[wait_idx=%u] lba=%u, sector count=%u\n",
