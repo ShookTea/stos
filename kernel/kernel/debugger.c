@@ -1,4 +1,5 @@
 #include "debugger.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <kernel/terminal.h>
 #include <stdlib.h>
@@ -14,6 +15,7 @@
 #include <kernel/elf.h>
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
+#include "kernel/drivers/ata.h"
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -24,6 +26,68 @@
 
 static char command_buffer[MAX_COMMAND_LENGTH];
 static uint8_t command_length = 0;
+
+static void command_ata_dump_drive(uint8_t drive_id)
+{
+    ata_select_drive(drive_id);
+    uint32_t sectors = ata_lba28_sectors_count();
+    uint32_t mib = (sectors / 2) / 1024;
+    printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
+    ata_disk_info_t disk_info;
+    if (!ata_load_disk_info(drive_id, &disk_info)) {
+        puts("  Failed to load partition info.");
+        return;
+    }
+    printf("  %u partitions present:\n", disk_info.partitions_count);
+    puts("  ┌────┬───────┬────────────┬────────────┬────────────┬────────────┐");
+    puts("  │ Id │ Boot? │       Type │  LBA start │    Sectors │ Size (MiB) │");
+    puts("  ├────┼───────┼────────────┼────────────┼────────────┼────────────┤");
+    for (size_t i = 0; i < disk_info.partitions_count; i++) {
+        ata_partition_t part = disk_info.partitions[i];
+        char* type
+            = part.type == ATA_PARTITION_TYPE_FAT32 ? "FAT-32"
+            : part.type == ATA_PARTITION_TYPE_LINUX_NATIVE ? "Linux"
+            : "unknown";
+        printf(
+            "  │ %2u │ %5s │ %10s │ %10d │ %10d | %10d |\n",
+            i,
+            part.bootable ? " yes " : "",
+            type,
+            part.lba_start,
+            part.sectors_count,
+            part.sectors_count / 2048
+        );
+    }
+    puts("  └────┴───────┴────────────┴────────────┴────────────┴────────────┘");
+}
+
+static void command_ata_dump()
+{
+    if (ata_drive_available(ATA_DRIVE_PRIMARY_MASTER)) {
+        puts("ATA drive primary/master available");
+        command_ata_dump_drive(ATA_DRIVE_PRIMARY_MASTER);
+    } else {
+        puts("ATA drive primary/master not present");
+    }
+    if (ata_drive_available(ATA_DRIVE_PRIMARY_SLAVE)) {
+        puts("ATA drive primary/slave available");
+        command_ata_dump_drive(ATA_DRIVE_PRIMARY_SLAVE);
+    } else {
+        puts("ATA drive primary/slave not present");
+    }
+    if (ata_drive_available(ATA_DRIVE_SECONDARY_MASTER)) {
+        puts("ATA drive secondary/master available");
+        command_ata_dump_drive(ATA_DRIVE_SECONDARY_MASTER);
+    } else {
+        puts("ATA drive secondary/master not present");
+    }
+    if (ata_drive_available(ATA_DRIVE_SECONDARY_SLAVE)) {
+        puts("ATA drive secondary/slave available");
+        command_ata_dump_drive(ATA_DRIVE_SECONDARY_SLAVE);
+    } else {
+        puts("ATA drive secondary/slave not present");
+    }
+}
 
 static void handle_command_sent()
 {
@@ -48,6 +112,7 @@ static void handle_command_sent()
     }
     if (strcmp(command, "help") == 0) {
         puts("Available commands:");
+        puts("  ata_dump       - Dumps information from ATA driver");
         puts("  elf_dump [F]   - Dumps info about ELF file at path [F]");
         puts("  exec [F]       - Runs executable ELF file at path [F]");
         puts("  kmalloc_a [N]  - allocates [N] bytes with kmalloc");
@@ -72,6 +137,9 @@ static void handle_command_sent()
         puts("  vmm_memory_map - Prints detailed memory map");
         puts("  vmm_stats      - Prints virtual memory statistics");
         puts("  vmm_test       - Runs virtual memory test suite");
+    }
+    else if (strcmp(command, "ata_dump") == 0) {
+        command_ata_dump();
     }
     else if (strcmp(command, "elf_dump") == 0) {
         if (argcount != 1) {
@@ -415,8 +483,6 @@ static void print_prompt_and_read_command()
 
 void debugger_init()
 {
-    puts("");
-    puts("");
     puts("Kernel debugger. Write \"help\" to get list of available commands.");
 
     // Entering I/O loop with reading command from /dev/tty and analyzing it.
