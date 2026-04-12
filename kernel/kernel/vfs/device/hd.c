@@ -89,14 +89,14 @@ static void load_sector_location(
     // If low sector is beyond partition limits, no read is possible.
     if (low_sector_lba_in_part >= part_info.sectors_count) {
         _debug_puts("Err on read: read start beyond partition border");
+        loc->size = 0;
         return;
     }
 
     // If high sector is beyond partition limits, reduce it
-    if (high_sector_lba_in_part >= part_info.sectors_count) {
-        size_t diff = part_info.sectors_count - high_sector_lba_in_part;
-        high_sector_lba_in_part -= diff;
-        sector_count -= diff;
+    if (high_sector_lba_in_part > part_info.sectors_count) {
+        sector_count -= high_sector_lba_in_part - part_info.sectors_count;
+        high_sector_lba_in_part = part_info.sectors_count;
     }
 
     loc->low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
@@ -408,7 +408,7 @@ vfs_node_t** device_hd_mount()
             ata_partition_t part_info = disk_info.partitions[i];
             char partition_name[] = "hda1";
             partition_name[2] = drive_letter;
-            partition_name[3] += i;
+            partition_name[3] = '1' + i;
             _debug_printf("Loading partition /dev/%s\n", partition_name);
             vfs_node_t* part_node = kmalloc_flags(
                 sizeof(vfs_node_t),
