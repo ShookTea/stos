@@ -63,8 +63,21 @@ static void load_sector_location(
     loc->lowest_sector_byte = lowest_sector_byte;
 
     if (!meta->is_partition) {
+        ata_select_drive(meta->disk_id);
+        size_t disk_sectors = ata_lba28_sectors_count();
         loc->low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
         size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
+
+        if (loc->low_sector_lba >= disk_sectors) {
+            loc->size = 0;
+            return;
+        }
+
+        if (high_sector_lba > disk_sectors) {
+            high_sector_lba = disk_sectors;
+            loc->size = disk_sectors * SECTOR_SIZE - offset;
+        }
+
         loc->sector_count = high_sector_lba - loc->low_sector_lba;
         return;
     }
@@ -97,6 +110,7 @@ static void load_sector_location(
     if (high_sector_lba_in_part > part_info.sectors_count) {
         sector_count -= high_sector_lba_in_part - part_info.sectors_count;
         high_sector_lba_in_part = part_info.sectors_count;
+        loc->size = part_info.sectors_count * SECTOR_SIZE - offset;
     }
 
     loc->low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
