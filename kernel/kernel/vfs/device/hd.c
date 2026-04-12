@@ -333,7 +333,6 @@ vfs_node_t** device_hd_mount()
         node->read_node = read;
         node->write_node = write;
         node->length = (uint64_t)ata_lba28_sectors_count() * SECTOR_SIZE;
-        _debug_printf("size set to %llu\n", node->length);
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),
             KMALLOC_ZERO
@@ -353,11 +352,30 @@ vfs_node_t** device_hd_mount()
             disk_info.partitions_count
         );
         for (size_t i = 0; i < disk_info.partitions_count; i++) {
+            ata_partition_t part_info = disk_info.partitions[i];
             char partition_name[] = "hda1";
             partition_name[2] = drive_letter;
             partition_name[3] += i;
             _debug_printf("Loading partition /dev/%s\n", partition_name);
-            // TODO: load partitions to /dev/hda1, /dev/hda2 etc.
+            vfs_node_t* part_node = kmalloc_flags(
+                sizeof(vfs_node_t),
+                KMALLOC_ZERO
+            );
+            vfs_populate_node(part_node, partition_name, VFS_TYPE_BLOCK_DEVICE);
+            part_node->read_node = read;
+            part_node->write_node = write;
+            part_node->length = (uint64_t)part_info.sectors_count * SECTOR_SIZE;
+            hd_metadata_t* metadata = kmalloc_flags(
+                sizeof(hd_metadata_t),
+                KMALLOC_ZERO
+            );
+            part_node->metadata = metadata;
+            metadata->disk_id = *ata_drive_ptr;
+            metadata->wait_obj = wait_allocate_queue();
+            metadata->is_partition = true;
+            metadata->partition_id = i;
+            increase_nodes_size();
+            nodes[nodes_count - 1] = part_node;
         }
 
         drive_letter++;
