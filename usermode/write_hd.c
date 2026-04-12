@@ -14,10 +14,10 @@ int main(void)
     printf("FD = %d\n", fd);
     uint8_t* data = malloc(SIZE_BYTES);
     memset(data, 0, SIZE_BYTES);
-    data[0] = 0xCA;
-    data[1] = 0xFE;
-    data[2] = 0xBA;
-    data[3] = 0xBE;
+    data[0] = 0xDE;
+    data[1] = 0xAD;
+    data[2] = 0xBE;
+    data[3] = 0xEF;
     size_t res = write(fd, data, SIZE_BYTES);
     printf("Writing completed - %u bytes written\n", res);
     close(fd);

@@ -12,18 +12,6 @@
 #define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/dev/hd", __VA_ARGS__)
 
-#define SECTOR_SIZE 512
-
-static inline size_t sector_align_down(size_t addr)
-{
-    return addr & ~(SECTOR_SIZE - 1);
-}
-
-static inline size_t sector_align_up(size_t addr)
-{
-    return (addr + SECTOR_SIZE - 1) & ~(SECTOR_SIZE - 1);
-}
-
 typedef struct {
     // one of ATA_DRIVE_ values
     uint8_t disk_id;
@@ -39,6 +27,81 @@ typedef struct {
     hd_metadata_t* hd_metadata;
     size_t wait_idx;
 } hd_wakeup_data_t;
+
+// Calculation around sector locations
+
+#define SECTOR_SIZE 512
+
+typedef struct {
+    size_t size;
+    size_t low_sector_lba;
+    size_t sector_count;
+    size_t lowest_sector_byte;
+} hd_sector_location_t;
+
+static inline size_t sector_align_down(size_t addr)
+{
+    return addr & ~(SECTOR_SIZE - 1);
+}
+
+static inline size_t sector_align_up(size_t addr)
+{
+    return (addr + SECTOR_SIZE - 1) & ~(SECTOR_SIZE - 1);
+}
+
+static void load_sector_location(
+    hd_sector_location_t* loc,
+    size_t offset,
+    size_t size,
+    hd_metadata_t* meta
+) {
+    // Align offset to sector size
+    size_t lowest_sector_byte = sector_align_down(offset);
+    size_t highest_sector_byte = sector_align_up(offset + size);
+
+    loc->size = size;
+    loc->lowest_sector_byte = lowest_sector_byte;
+
+    if (!meta->is_partition) {
+        loc->low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
+        size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
+        loc->sector_count = high_sector_lba - loc->low_sector_lba;
+        return;
+    }
+
+    // Load partition info
+    ata_partition_t part_info;
+    ata_disk_info_t disk_info;
+    ata_load_disk_info(meta->disk_id, &disk_info);
+    if (meta->partition_id >= disk_info.partitions_count) {
+        _debug_puts("Err on read: partition doesn't exist.");
+        // Partition with given ID doesn't exist
+        loc->size = 0;
+        return;
+    }
+    part_info = disk_info.partitions[meta->partition_id];
+
+    // Calculate LBA position inside partition
+    size_t low_sector_lba_in_part = lowest_sector_byte / SECTOR_SIZE;
+    size_t high_sector_lba_in_part = highest_sector_byte / SECTOR_SIZE;
+    size_t sector_count = high_sector_lba_in_part - low_sector_lba_in_part;
+
+    // If low sector is beyond partition limits, no read is possible.
+    if (low_sector_lba_in_part >= part_info.sectors_count) {
+        _debug_puts("Err on read: read start beyond partition border");
+        return;
+    }
+
+    // If high sector is beyond partition limits, reduce it
+    if (high_sector_lba_in_part >= part_info.sectors_count) {
+        size_t diff = part_info.sectors_count - high_sector_lba_in_part;
+        high_sector_lba_in_part -= diff;
+        sector_count -= diff;
+    }
+
+    loc->low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
+    loc->sector_count = sector_count;
+}
 
 /**
  * Set of values for the is_ready function.
@@ -133,70 +196,31 @@ static size_t read(
         wait_idx
     );
 
-    // Align offset to sector size
-    size_t lowest_sector_byte = sector_align_down(offset);
-    size_t highest_sector_byte = sector_align_up(offset + size);
-
-    // Sectors on disk to be loaded
-    size_t low_sector_lba, high_sector_lba, sector_count;
-    if (meta->is_partition) {
-        // Load partition info
-        ata_partition_t part_info;
-        ata_disk_info_t disk_info;
-        ata_load_disk_info(meta->disk_id, &disk_info);
-        if (meta->partition_id >= disk_info.partitions_count) {
-            _debug_puts("Err on read: partition doesn't exist.");
-            // Partition with given ID doesn't exist
-            rw_wait_map[wait_idx] = 0;
-            return 0;
-        }
-        part_info = disk_info.partitions[meta->partition_id];
-
-        // Calculate LBA position inside partition
-        size_t low_sector_lba_in_part = lowest_sector_byte / SECTOR_SIZE;
-        size_t high_sector_lba_in_part = highest_sector_byte / SECTOR_SIZE;
-        sector_count = high_sector_lba_in_part - low_sector_lba_in_part;
-
-        // If low sector is beyond partition limits, no read is possible.
-        if (low_sector_lba_in_part >= part_info.sectors_count) {
-            _debug_puts("Err on read: read start beyond partition border");
-            rw_wait_map[wait_idx] = 0;
-            return 0;
-        }
-
-        // If high sector is beyond partition limits, reduce it
-        if (high_sector_lba_in_part >= part_info.sectors_count) {
-            size_t diff = part_info.sectors_count - high_sector_lba_in_part;
-            high_sector_lba_in_part -= diff;
-            sector_count -= diff;
-        }
-
-        low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
-        high_sector_lba = high_sector_lba_in_part + part_info.lba_start;
-    } else {
-        low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
-        high_sector_lba = highest_sector_byte / SECTOR_SIZE;
-        sector_count = high_sector_lba - low_sector_lba;
+    hd_sector_location_t loc;
+    load_sector_location(&loc, offset, size, meta);
+    if (loc.size == 0) {
+        rw_wait_map[wait_idx] = 0;
+        return 0;
     }
 
     _debug_printf(
         "[wait_idx=%u] lba=%u, sector count=%u\n",
         wait_idx,
-        low_sector_lba,
-        sector_count
+        loc.low_sector_lba,
+        loc.sector_count
     );
 
     // Allocate buffer for sector data
     uint16_t* buffer = kmalloc_flags(
-        sizeof(uint16_t) * 256 * sector_count,
+        sizeof(uint16_t) * 256 * loc.sector_count,
         KMALLOC_ZERO
     );
 
     // Run read command
     ata_read(
         meta->disk_id,
-        low_sector_lba,
-        sector_count,
+        loc.low_sector_lba,
+        loc.sector_count,
         buffer,
         rw_ready,
         &wakeup_data
@@ -210,7 +234,7 @@ static size_t read(
     _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
 
     // Reading was completed - copy data to output pointer
-    size_t offset_in_buffer = offset - lowest_sector_byte;
+    size_t offset_in_buffer = offset - loc.lowest_sector_byte;
     memcpy(ptr, ((uint8_t*)buffer) + offset_in_buffer, size);
 
     // Mark rw_map entry as free to use
@@ -244,69 +268,30 @@ static size_t write(
         wait_idx
     );
 
-    // Align offset to sector size
-    size_t lowest_sector_byte = sector_align_down(offset);
-    size_t highest_sector_byte = sector_align_up(offset + size);
-
-    // Sectors on disk to be loaded
-    size_t low_sector_lba, high_sector_lba, sector_count;
-    if (meta->is_partition) {
-        // Load partition info
-        ata_partition_t part_info;
-        ata_disk_info_t disk_info;
-        ata_load_disk_info(meta->disk_id, &disk_info);
-        if (meta->partition_id >= disk_info.partitions_count) {
-            _debug_puts("Err on read: partition doesn't exist.");
-            // Partition with given ID doesn't exist
-            rw_wait_map[wait_idx] = 0;
-            return 0;
-        }
-        part_info = disk_info.partitions[meta->partition_id];
-
-        // Calculate LBA position inside partition
-        size_t low_sector_lba_in_part = lowest_sector_byte / SECTOR_SIZE;
-        size_t high_sector_lba_in_part = highest_sector_byte / SECTOR_SIZE;
-        sector_count = high_sector_lba_in_part - low_sector_lba_in_part;
-
-        // If low sector is beyond partition limits, no read is possible.
-        if (low_sector_lba_in_part >= part_info.sectors_count) {
-            _debug_puts("Err on read: read start beyond partition border");
-            rw_wait_map[wait_idx] = 0;
-            return 0;
-        }
-
-        // If high sector is beyond partition limits, reduce it
-        if (high_sector_lba_in_part >= part_info.sectors_count) {
-            size_t diff = part_info.sectors_count - high_sector_lba_in_part;
-            high_sector_lba_in_part -= diff;
-            sector_count -= diff;
-        }
-
-        low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
-        high_sector_lba = high_sector_lba_in_part + part_info.lba_start;
-    } else {
-        low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
-        high_sector_lba = highest_sector_byte / SECTOR_SIZE;
-        sector_count = high_sector_lba - low_sector_lba;
+    hd_sector_location_t loc;
+    load_sector_location(&loc, offset, size, meta);
+    if (loc.size == 0) {
+        rw_wait_map[wait_idx] = 0;
+        return 0;
     }
 
     _debug_printf(
         "[wait_idx=%u] lba=%u, sector count=%u\n",
         wait_idx,
-        low_sector_lba,
-        sector_count
+        loc.low_sector_lba,
+        loc.sector_count
     );
 
     // Allocate buffer for sector data
     uint16_t* buffer = kmalloc_flags(
-        sizeof(uint16_t) * 256 * sector_count,
+        sizeof(uint16_t) * 256 * loc.sector_count,
         KMALLOC_ZERO
     );
 
     // If original offset and size was not aligned to sectors, we need to first
     // load data, so we won't overwrite parts of sectors that are not updated
     // by the caller.
-    if (offset != lowest_sector_byte || size % SECTOR_SIZE != 0) {
+    if (offset != loc.lowest_sector_byte || size % SECTOR_SIZE != 0) {
         _debug_printf(
             "[wait_idx=%u] not aligned to sectors - reading wait started\n",
             wait_idx
@@ -314,8 +299,8 @@ static size_t write(
         // Run read command
         ata_read(
             meta->disk_id,
-            low_sector_lba,
-            sector_count,
+            loc.low_sector_lba,
+            loc.sector_count,
             buffer,
             rw_ready,
             &wakeup_data
@@ -329,14 +314,14 @@ static size_t write(
     }
 
     // Copy data from pointer to sectors
-    size_t offset_in_buffer = offset - lowest_sector_byte;
+    size_t offset_in_buffer = offset - loc.lowest_sector_byte;
     memcpy(((uint8_t*)buffer) + offset_in_buffer, ptr, size);
 
     // Run write command
     ata_write(
         meta->disk_id,
-        low_sector_lba,
-        sector_count,
+        loc.low_sector_lba,
+        loc.sector_count,
         buffer,
         rw_ready,
         &wakeup_data
