@@ -50,6 +50,12 @@ static uint32_t syscall_int_handler(
             assert_range(path, VFS_MAX_PATH_LENGTH);
             return sys_exec(path, argv, envp);
         }
+        case SYS_GETCWD: {
+            char* buf = (char*)arg1;
+            size_t size = (size_t)arg2;
+            assert_range(buf, size);
+            return (uint32_t)sys_getcwd(buf, size);
+        }
         case SYS_OPEN: {
             const char* path = (const char*)arg1;
             assert_range(path, VFS_MAX_PATH_LENGTH);

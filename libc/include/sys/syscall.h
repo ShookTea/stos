@@ -12,6 +12,7 @@
 #define SYS_FORK 0x05 // int fork()
 #define SYS_WAIT 0x06 // int waitpid(int pid, int* status, int options)
 #define SYS_EXEC 0x07 // int execve(const char*, const char*[], const char*[])
+#define SYS_GETCWD 0x08 // char* getcwd(char buf[], size_t size)
 #define SYS_OPEN 0x10 // int open(const char* path, int flags)
 #define SYS_CLOSE 0x11 // int close(int fd);
 #define SYS_WRITE 0x12 // int write(int fd, const void* buf, size_t count)

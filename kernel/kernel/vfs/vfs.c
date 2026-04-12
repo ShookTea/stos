@@ -386,6 +386,48 @@ dentry_t* vfs_resolve_relative(
     return node;
 }
 
+char* vfs_build_absolute_path(
+    dentry_t* root,
+    dentry_t* current,
+    char* buff,
+    size_t size
+) {
+    char** parts = NULL;
+    size_t parts_count = 0;
+    size_t total_length = 0; // excluding file separators
+    _debug_puts("Building absolute path started");
+    while (current != root) {
+        _debug_printf("Adding part %u '%s'\n", parts_count, current->name);
+        parts_count++;
+        total_length += sizeof(current->name);
+        parts = krealloc(parts, sizeof(char*) * parts_count);
+        parts[parts_count - 1] = current->name;
+        current = current->parent;
+    }
+    size_t sep_count = parts_count == 0 ? 1 : parts_count;
+    if ((sep_count + total_length + 1) > size) {
+        if (parts != NULL) kfree(parts);
+        return NULL;
+    }
+
+    if (parts_count == 0) {
+        buff[0] = '/';
+        buff[1] = 0;
+        // No need for kfree if parts_count == 0
+        return buff;
+    }
+
+    size_t buff_index = 0;
+    for (int i = parts_count - 1; i >= 0; i--) {
+        buff[buff_index] = '/';
+        buff_index++;
+        strcpy(buff + buff_index, parts[i]);
+        buff_index += strlen(parts[i]);
+    }
+    kfree(parts);
+    return buff;
+}
+
 void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
 {
     strcpy(node->filename, filename);

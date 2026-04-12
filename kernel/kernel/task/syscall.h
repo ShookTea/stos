@@ -29,6 +29,9 @@ int sys_wait(int pid, int* status_code, int options);
 #define SYS_EXEC 0x07
 int sys_exec(const char* path, const char** argv, const char** envp);
 
+#define SYS_GETCWD 0x08
+char* sys_getcwd(char* buf, size_t size);
+
 #define SYS_OPEN 0x10
 uint32_t sys_open(const char* path, uint32_t flags);
 

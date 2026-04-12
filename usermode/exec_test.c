@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sched.h>
 #include <sys/wait.h>
@@ -8,6 +9,11 @@
 int main(void)
 {
     printf("Testing exec\n");
+    char* cwd = malloc(sizeof(char) * 100);
+    if (getcwd(cwd, 100)) {
+        printf("CWD: '%s'\n", cwd);
+    }
+    free(cwd);
     int childpid = fork();
     int currpid = getpid();
     printf("[%d] fork res = %d\n", currpid, childpid);

@@ -191,6 +191,18 @@ dentry_t* vfs_resolve_relative(
 );
 
 /**
+ * Builds an absolute path of [current] dentry, starting from [root], stores it
+ * as a null-terminated string in [buff], and returns pointer to [buff]. If the
+ * path, including null byte, is longer than [size], then it returns null.
+ */
+char* vfs_build_absolute_path(
+    dentry_t* root,
+    dentry_t* current,
+    char* buff,
+    size_t size
+);
+
+/**
  * Populates the new node with the filename and type, and sets the rest of
  * properties to NULL/zero.
  */

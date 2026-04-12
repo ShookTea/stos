@@ -72,6 +72,14 @@ void* sbrk(intptr_t increment);
 int fork();
 
 /**
+ * Stores current working directory in the buffer, and returns the pointer to
+ * that buffer. If the absolute pathname of the current working directory,
+ * including the terminating NULL character, exceeds `size` bytes, then NULL
+ * is returned.
+ */
+char* getcwd(char buf[], size_t size);
+
+/**
  * Replace the current process image with the ELF executable at [path].
  * On success this function does not return; execution resumes at the new
  * program's entry point. On failure returns -1.
