@@ -42,7 +42,7 @@ typedef enum {
     /** Failed to write - item already exists */
     DS_ERR_DUPLICATE = 4,
     /** Failed to read - item not found */
-    DS_ERR_NOT_FOUND = 5
+    DS_ERR_NOT_FOUND = 5,
 } ds_result_t;
 
 #endif

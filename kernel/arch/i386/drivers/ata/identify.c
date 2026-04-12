@@ -2,6 +2,7 @@
 #include "kernel/debug.h"
 #include "./common.h"
 #include "../../io.h"
+#include "kernel/memory/kmalloc.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -15,6 +16,8 @@ static uint32_t lba28_sec_count_secondary_master = 0;
 static uint32_t lba28_sec_count_secondary_slave = 0;
 
 static uint8_t selected_drive = ATA_DRIVE_NONE;
+
+static ata_mbr_t* mbrs = NULL;
 
 static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
 {
@@ -224,11 +227,47 @@ void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
             "Invalid MBR signature bytes: %#04X, 0xAA55 expected\n",
             mbr->signature_bytes
         );
-    } else {
-        _debug_puts("MBR signature bytes valid.");
-        _debug_printf("part1 type=%02x\n", mbr->partition_1.partition_type);
-        _debug_printf("part2 type=%02x\n", mbr->partition_2.partition_type);
-        _debug_printf("part3 type=%02x\n", mbr->partition_3.partition_type);
-        _debug_printf("part4 type=%02x\n", mbr->partition_4.partition_type);
+        return;
     }
+    _debug_puts("MBR signature bytes valid.");
+    _debug_printf("part1 type=%02x\n", mbr->partition_1.partition_type);
+    _debug_printf("part2 type=%02x\n", mbr->partition_2.partition_type);
+    _debug_printf("part3 type=%02x\n", mbr->partition_3.partition_type);
+    _debug_printf("part4 type=%02x\n", mbr->partition_4.partition_type);
+
+    if (mbrs == NULL) {
+        mbrs = kmalloc_flags(sizeof(ata_mbr_t) * 4, KMALLOC_ZERO);
+    }
+    memcpy(mbrs + drive_id - 1, mbr, sizeof(ata_mbr_t));
+}
+
+static void _load_partition_info(
+    ata_mbr_partition_table_entry_t* pte,
+    ata_disk_info_t* dest
+) {
+    if (pte->partition_type == 0) {
+        return;
+    }
+
+    ata_partition_t* part = &dest->partitions[dest->partitions_count];
+    part->type = pte->partition_type;
+    part->lba_start = pte->partition_start_lba;
+    part->sectors_count = pte->partition_sectors_count;
+    part->bootable = pte->drive_attributes & 0x80;
+    dest->partitions_count++;
+}
+
+bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr)
+{
+    if (!ata_drive_available(disk_id)) {
+        return false;
+    }
+
+    ata_mbr_t mbr = mbrs[disk_id - 1];
+    _load_partition_info(&mbr.partition_1, ptr);
+    _load_partition_info(&mbr.partition_2, ptr);
+    _load_partition_info(&mbr.partition_3, ptr);
+    _load_partition_info(&mbr.partition_4, ptr);
+
+    return true;
 }

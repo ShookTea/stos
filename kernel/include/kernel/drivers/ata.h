@@ -10,6 +10,26 @@
 #define ATA_DRIVE_SECONDARY_MASTER 3
 #define ATA_DRIVE_SECONDARY_SLAVE 4
 
+#define ATA_PARTITION_TYPE_FAT32 0x0C
+#define ATA_PARTITION_TYPE_LINUX_NATIVE 0x83
+
+typedef struct {
+    // One of ATA_PARTITION_TYPE_ values
+    uint8_t type;
+    // LBA of the start of the partition
+    uint32_t lba_start;
+    // Total number of sectors
+    uint32_t sectors_count;
+    // Is partition marked as bootable?
+    bool bootable;
+} ata_partition_t;
+
+typedef struct {
+    // Actual number of partitions stored in partitions[] array
+    uint8_t partitions_count;
+    ata_partition_t partitions[32];
+} ata_disk_info_t;
+
 /**
  * Attempts to initialize ATA driver.
  */
@@ -41,6 +61,12 @@ bool ata_drive_available(uint8_t);
  * Returns sectors count of currently selected drive.
  */
 uint32_t ata_lba28_sectors_count(void);
+
+/**
+ * Loads disk information about selected disk to the pointer, or returns false
+ * if disk doesn't exist.
+ */
+bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr);
 
 /**
  * Create a read request for ATA driver, for currently selected drive.

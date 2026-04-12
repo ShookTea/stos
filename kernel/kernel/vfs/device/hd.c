@@ -6,6 +6,7 @@
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include "stdlib.h"
+#include <stddef.h>
 #include <string.h>
 
 #define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
@@ -330,7 +331,20 @@ vfs_node_t** device_hd_mount()
         metadata->is_partition = false;
         nodes[pointer_index] = node;
 
-        // TODO: load partitions to /dev/hda1, /dev/hda2 etc.
+        ata_disk_info_t disk_info;
+        ata_load_disk_info(*ata_drive_ptr, &disk_info);
+        _debug_printf(
+            "Partitions count in /dev/%s: %u\n",
+            drive_name,
+            disk_info.partitions_count
+        );
+        for (size_t i = 0; i < disk_info.partitions_count; i++) {
+            char partition_name[] = "hda1";
+            partition_name[2] = drive_letter;
+            partition_name[3] += i;
+            _debug_printf("Loading partition /dev/%s\n", partition_name);
+            // TODO: load partitions to /dev/hda1, /dev/hda2 etc.
+        }
 
         drive_letter++;
         ata_drive_ptr++;
