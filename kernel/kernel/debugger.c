@@ -303,10 +303,31 @@ static void handle_command_sent()
                     if (child->inode->type & VFS_TYPE_DIRECTORY) {
                         printf(" - %s (dir)\n", child->name);
                     } else {
+                        double length = child->inode->length;
+                        const char* unit;
+                        bool use_byte = false;
+                        if (length < 2048) {
+                            unit = "B";
+                            use_byte = true;
+                        } else {
+                            length /= 1024;
+                            if (length < 2048) {
+                                unit = "KiB";
+                            } else {
+                                length /= 1024;
+                                if (length < 2048) {
+                                    unit = "MiB";
+                                } else {
+                                    length /= 1024;
+                                    unit = "GiB";
+                                }
+                            }
+                        }
                         printf(
-                            " - %s (%llu B)\n",
+                            use_byte ? " - %s (%d %s)\n" : " - %s (%.1f %s)\n",
                             child->name,
-                            child->inode->length
+                            use_byte ? child->inode->length : length,
+                            unit
                         );
                     }
                 }
