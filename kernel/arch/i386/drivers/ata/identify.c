@@ -205,18 +205,7 @@ uint32_t ata_get_lba28_sectors_count(uint8_t drive)
 
 bool ata_drive_available(uint8_t drive)
 {
-    switch (drive) {
-        case ATA_DRIVE_PRIMARY_MASTER:
-            return lba28_sec_count_primary_master > 0;
-        case ATA_DRIVE_PRIMARY_SLAVE:
-            return lba28_sec_count_primary_slave > 0;
-        case ATA_DRIVE_SECONDARY_MASTER:
-            return lba28_sec_count_secondary_master > 0;
-        case ATA_DRIVE_SECONDARY_SLAVE:
-            return lba28_sec_count_secondary_slave > 0;
-        default:
-            return false;
-    }
+    return ata_get_lba28_sectors_count(drive) > 0;
 }
 
 void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
