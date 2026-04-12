@@ -12,10 +12,8 @@ void _ata_write(ata_request_t* req)
 
     // TODO: checking ATA status when reading needed
     uint8_t drive = ata_get_selected_drive();
-    bool primary = drive == ATA_DRIVE_PRIMARY_MASTER
-        || drive == ATA_DRIVE_PRIMARY_SLAVE;
-    bool master = drive == ATA_DRIVE_PRIMARY_MASTER
-        || drive == ATA_DRIVE_SECONDARY_MASTER;
+    bool primary = ata_drive_is_primary(drive);
+    bool master = ata_drive_is_master(drive);
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
 
     // Select drive + top 4 bits of LBA

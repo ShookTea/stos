@@ -385,7 +385,7 @@ vfs_node_t** device_hd_mount()
     uint8_t* ata_drive_ptr = ata_drives;
     char drive_name[] = "hda";
     char drive_letter = 'a';
-    while (*ata_drive_ptr != 0) {
+    while (*ata_drive_ptr != ATA_DRIVE_NONE) {
         drive_name[2] = drive_letter;
         _debug_printf(
             "drive with type %d found, mounting to /dev/%s\n",

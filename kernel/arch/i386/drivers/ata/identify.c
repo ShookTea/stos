@@ -15,20 +15,20 @@
 #define ATA_CYLINDER_SATA 0xC33C
 #define ATA_CYLINDER_ATAPI 0xEB14
 
-static uint32_t lba28_sec_count_primary_master = 0;
-static uint32_t lba28_sec_count_primary_slave = 0;
-static uint32_t lba28_sec_count_secondary_master = 0;
-static uint32_t lba28_sec_count_secondary_slave = 0;
-
 static uint8_t selected_drive = ATA_DRIVE_NONE;
 
+static uint32_t* lba28_sec_count = NULL;
 static ata_mbr_t* mbrs = NULL;
 
 static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
 {
+    if (lba28_sec_count == NULL) {
+        lba28_sec_count = kmalloc_flags(sizeof(uint32_t) * 4, KMALLOC_ZERO);
+    }
     _debug_puts("Detecting ATA PIO device");
     bool primary = bus_base == ATA_BUS_BASE_PRIMARY;
     bool master = target_drive == ATA_COM_TARGET_DRIVE_MASTER;
+    uint8_t disk_id = (primary ? 0b00 : 0b10) | (master ? 0b00 : 0b01);
 
     uint8_t status = _ata_read_status(bus_base);
     // Continue polling until bit DRQ or ERR sets.
@@ -67,15 +67,7 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
                 _debug_puts("LBA28 not supported");
             } else {
                 _debug_printf("LBA28 sectors count: %u\n", lba28_sectors_count);
-                if (primary && master) {
-                    lba28_sec_count_primary_master = lba28_sectors_count;
-                } else if (primary && !master) {
-                    lba28_sec_count_primary_slave = lba28_sectors_count;
-                } else if (!primary && master) {
-                    lba28_sec_count_secondary_master = lba28_sectors_count;
-                } else if (!primary && !master) {
-                    lba28_sec_count_secondary_slave = lba28_sectors_count;
-                }
+                lba28_sec_count[disk_id] = lba28_sectors_count;
             }
         } else if (i == 100) {
             // LBA48 sectors count
@@ -164,19 +156,19 @@ void _ata_identify_devices()
     _ata_identify(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
 
     // Selecting first available drive
-    if (lba28_sec_count_primary_master > 0) {
+    if (lba28_sec_count[ATA_DRIVE_PRIMARY_MASTER] > 0) {
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_PRIMARY_MASTER;
         _debug_puts("Primary/master drive selected");
-    } else if (lba28_sec_count_primary_slave > 0) {
+    } else if (lba28_sec_count[ATA_DRIVE_PRIMARY_SLAVE] > 0) {
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_PRIMARY_SLAVE;
         _debug_puts("Primary/slave drive selected");
-    } else if (lba28_sec_count_secondary_master > 0) {
+    } else if (lba28_sec_count[ATA_DRIVE_SECONDARY_MASTER] > 0) {
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_SECONDARY_MASTER;
         _debug_puts("Secondary/master drive selected");
-    } else if (lba28_sec_count_secondary_slave > 0) {
+    } else if (lba28_sec_count[ATA_DRIVE_SECONDARY_SLAVE] > 0) {
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_SECONDARY_SLAVE;
         _debug_puts("Secondary/slave drive selected");
@@ -192,18 +184,21 @@ uint8_t ata_get_selected_drive(void)
 
 void ata_get_available_drives(uint8_t* res)
 {
-    memset(res, 0, sizeof(uint8_t) * 5);
+    memset(res, ATA_DRIVE_NONE, sizeof(uint8_t) * 5);
     size_t idx = 0;
-    if (lba28_sec_count_primary_master) {
+    if (lba28_sec_count == NULL) {
+        return;
+    }
+    if (lba28_sec_count[ATA_DRIVE_PRIMARY_MASTER]) {
         res[idx++] = ATA_DRIVE_PRIMARY_MASTER;
     }
-    if (lba28_sec_count_primary_slave) {
+    if (lba28_sec_count[ATA_DRIVE_PRIMARY_SLAVE]) {
         res[idx++] = ATA_DRIVE_PRIMARY_SLAVE;
     }
-    if (lba28_sec_count_secondary_master) {
+    if (lba28_sec_count[ATA_DRIVE_SECONDARY_MASTER]) {
         res[idx++] = ATA_DRIVE_SECONDARY_MASTER;
     }
-    if (lba28_sec_count_secondary_slave) {
+    if (lba28_sec_count[ATA_DRIVE_SECONDARY_SLAVE]) {
         res[idx++] = ATA_DRIVE_SECONDARY_SLAVE;
     }
 }
@@ -216,18 +211,10 @@ void ata_select_drive(uint8_t drive)
 
 uint32_t ata_get_lba28_sectors_count(uint8_t drive)
 {
-    switch (drive) {
-        case ATA_DRIVE_PRIMARY_MASTER:
-            return lba28_sec_count_primary_master;
-        case ATA_DRIVE_PRIMARY_SLAVE:
-            return lba28_sec_count_primary_slave;
-        case ATA_DRIVE_SECONDARY_MASTER:
-            return lba28_sec_count_secondary_master;
-        case ATA_DRIVE_SECONDARY_SLAVE:
-            return lba28_sec_count_secondary_slave;
-        default:
-            return 0;
+    if (lba28_sec_count == NULL || drive > 3) {
+        return 0;
     }
+    return lba28_sec_count[drive];
 }
 
 bool ata_drive_available(uint8_t drive)
@@ -254,7 +241,7 @@ void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
     if (mbrs == NULL) {
         mbrs = kmalloc_flags(sizeof(ata_mbr_t) * 4, KMALLOC_ZERO);
     }
-    memcpy(mbrs + drive_id - 1, mbr, sizeof(ata_mbr_t));
+    memcpy(mbrs + drive_id, mbr, sizeof(ata_mbr_t));
 }
 
 static void _load_partition_info(
@@ -280,7 +267,7 @@ bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr)
     }
     ptr->partitions_count = 0;
 
-    ata_mbr_t mbr = mbrs[disk_id - 1];
+    ata_mbr_t mbr = mbrs[disk_id];
     _load_partition_info(&mbr.partition_1, ptr);
     _load_partition_info(&mbr.partition_2, ptr);
     _load_partition_info(&mbr.partition_3, ptr);

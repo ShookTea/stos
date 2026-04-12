@@ -26,8 +26,7 @@ static void irq_handler_flush()
 static void irq_handler_write(ds_ringbuf_t* queue, ata_request_t req)
 {
     uint8_t drive = ata_get_selected_drive();
-    bool primary = drive == ATA_DRIVE_PRIMARY_MASTER
-        || drive == ATA_DRIVE_PRIMARY_SLAVE;
+    bool primary = ata_drive_is_primary(drive);
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
 
     // Decrementing remaining sectors
@@ -75,8 +74,7 @@ static void irq_handler_read(ds_ringbuf_t* queue, ata_request_t req)
 {
     _debug_puts("IRQ for READ start");
     uint8_t drive = ata_get_selected_drive();
-    bool primary = drive == ATA_DRIVE_PRIMARY_MASTER
-        || drive == ATA_DRIVE_PRIMARY_SLAVE;
+    bool primary = ata_drive_is_primary(drive);
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
 
     // The current sector offset for given request

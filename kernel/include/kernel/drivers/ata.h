@@ -4,11 +4,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define ATA_DRIVE_NONE 0
-#define ATA_DRIVE_PRIMARY_MASTER 1
-#define ATA_DRIVE_PRIMARY_SLAVE 2
-#define ATA_DRIVE_SECONDARY_MASTER 3
-#define ATA_DRIVE_SECONDARY_SLAVE 4
+#define ATA_DRIVE_PRIMARY_MASTER 0b00
+#define ATA_DRIVE_PRIMARY_SLAVE 0b01
+#define ATA_DRIVE_SECONDARY_MASTER 0b10
+#define ATA_DRIVE_SECONDARY_SLAVE 0b11
+#define ATA_DRIVE_NONE 5
+
+#define ata_drive_is_primary(b) ((b & 0b10) == 0)
+#define ata_drive_is_master(b) ((b & 0b01) == 0)
 
 #define ATA_PARTITION_TYPE_FAT32 0x0C
 #define ATA_PARTITION_TYPE_LINUX_NATIVE 0x83
