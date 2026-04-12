@@ -3,6 +3,7 @@
 #include "./common.h"
 #include "../../io.h"
 #include "kernel/memory/kmalloc.h"
+#include "../atapi/common.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -127,20 +128,13 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
 
     if (cylinder == ATA_CYLINDER_PIO) {
         _ata_pio_identify(bus_base, target_drive);
-        return;
-    }
-    if (cylinder == ATA_CYLINDER_SATA) {
+    } else if (cylinder == ATA_CYLINDER_ATAPI) {
+        _atapi_identify(bus_base, target_drive);
+    } else if (cylinder == ATA_CYLINDER_SATA) {
         _debug_puts("SATA device detected but not supported yet");
-        return;
+    } else {
+        _debug_printf("Invalid device: cylinder set to %4x\n", cylinder);
     }
-    if (cylinder == ATA_CYLINDER_ATAPI) {
-        _debug_puts("ATAPI device detected but not supported yet");
-        return;
-    }
-    _debug_printf("Invalid device: cylinder set to %4x\n", cylinder);
-    return;
-
-
 }
 
 void _ata_identify_devices()
