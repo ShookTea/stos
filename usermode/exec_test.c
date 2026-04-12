@@ -9,11 +9,11 @@
 int main(void)
 {
     printf("Testing exec\n");
-    char* cwd = malloc(sizeof(char) * 100);
-    if (getcwd(cwd, 100)) {
+    char* cwd = get_current_dir_name();
+    if (cwd != NULL) {
         printf("CWD: '%s'\n", cwd);
+        free(cwd);
     }
-    free(cwd);
     int childpid = fork();
     int currpid = getpid();
     printf("[%d] fork res = %d\n", currpid, childpid);

@@ -80,6 +80,13 @@ int fork();
 char* getcwd(char buf[], size_t size);
 
 /**
+ * Allocates enough memory to fit an absolute path of current working directory,
+ * stores that working directory as a null-terminated string, and returns it
+ * as a pointer. Caller is responsible for freeing that memory.
+ */
+char* get_current_dir_name(void);
+
+/**
  * Replace the current process image with the ELF executable at [path].
  * On success this function does not return; execution resumes at the new
  * program's entry point. On failure returns -1.
