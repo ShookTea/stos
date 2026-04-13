@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "kernel/drivers/ata.h"
+#include "../../idt/idt.h"
 
 // Two ports, for primary and secondary channel. Use that + ATA_BUS_OFFSET_.
 #define ATA_BUS_BASE_PRIMARY 0x1F0
@@ -135,12 +136,12 @@ bool _ata_enqueue_request(ata_request_t*);
  * 1. When there is something new added to the queue
  * 2. When the current item in the queue was finalized
  */
-void _ata_queue_schedule();
+void _ata_queue_schedule(bool primary);
 
 /**
  * Returns pointer to the request queue.
  */
-ds_ringbuf_t* _ata_queue();
+ds_ringbuf_t* _ata_queue(bool primary);
 
 /**
  * Run read command based on the request.
@@ -155,7 +156,7 @@ void _ata_write(ata_request_t* req);
 /**
  * Callback function for IRQ
  */
-void _ata_irq_handler();
+void _ata_irq_handler(registers_t*);
 
 /**
  * Copies partition data for later use.

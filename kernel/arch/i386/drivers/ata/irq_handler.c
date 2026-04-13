@@ -5,6 +5,7 @@
 #include <libds/ringbuf.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "../../idt/idt.h"
 
 #define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
@@ -13,10 +14,10 @@
  * Handle IRQ event when current request is for writing a sector and the IRQ
  * confirms the end of entire writing process.
  */
-static void irq_handler_flush()
+static void irq_handler_flush(bool primary)
 {
     _debug_puts("IRQ for FLUSH - rescheduling");
-    _ata_queue_schedule();
+    _ata_queue_schedule(primary);
 }
 
 /**
@@ -99,14 +100,15 @@ static void irq_handler_read(ds_ringbuf_t* queue, ata_request_t req)
         reschedule_required ? "completed with rescheduling" : "completed"
     );
     if (reschedule_required) {
-        _ata_queue_schedule();
+        _ata_queue_schedule(primary);
     }
 }
 
-void _ata_irq_handler()
+void _ata_irq_handler(registers_t* reg)
 {
+    bool primary = reg->int_no == 0x2E;
     // Get current task, if any exist
-    ds_ringbuf_t* queue = _ata_queue();
+    ds_ringbuf_t* queue = _ata_queue(primary);
     ata_request_t req;
     bool req_loaded = false;
     if (queue != NULL) {
@@ -119,7 +121,7 @@ void _ata_irq_handler()
 
     if (req.is_write && req.awaiting_flush) {
         // IRQ confirming end of writing
-        irq_handler_flush();
+        irq_handler_flush(primary);
     } else if (req.is_write) {
         // IRQ on write sector completed
         irq_handler_write(queue, req);

@@ -12,36 +12,49 @@
 /**
  * Buffer containing all read/write requests, working as a queue.
  */
-static ds_ringbuf_t* queue = NULL;
+static ds_ringbuf_t* primary_queue = NULL;
+static ds_ringbuf_t* secondary_queue = NULL;
 
 /**
  * Set to true when there's a request currently being handled.
  */
-static bool req_in_progress = false;
+static bool primary_req_in_progress = false;
+static bool secondary_req_in_progress = false;
 
 bool _ata_enqueue_request(ata_request_t* request)
 {
-    if (queue == NULL) {
-        queue = ds_ringbuf_create(
+    bool primary = ata_drive_is_primary(request->drive);
+    if (primary && primary_queue == NULL) {
+        primary_queue = ds_ringbuf_create(
             QUEUE_SIZE,
             sizeof(ata_request_t),
             true
         );
     }
+    if (!primary && secondary_queue == NULL) {
+        secondary_queue = ds_ringbuf_create(
+            QUEUE_SIZE,
+            sizeof(ata_request_t),
+            true
+        );
+    }
+    ds_ringbuf_t* queue = primary ? primary_queue : secondary_queue;
 
     bool result = ds_ringbuf_push(queue, request) == DS_SUCCESS;
     if (result) {
         _debug_printf(
-            "%s task enqueued\n",
-            request->is_write ? "write" : "read"
+            "%s task enqueued at %s\n",
+            request->is_write ? "write" : "read",
+            primary ? "primary" : "secondary"
         );
-        _ata_queue_schedule();
+        _ata_queue_schedule(primary);
     }
     return result;
 }
 
-void _ata_queue_schedule()
+void _ata_queue_schedule(bool primary)
 {
+    ds_ringbuf_t* queue = primary ? primary_queue : secondary_queue;
     if (queue == NULL || ds_ringbuf_is_empty(queue)) {
         _debug_puts("no tasks");
         return;
@@ -49,16 +62,20 @@ void _ata_queue_schedule()
     ata_request_t req;
     ds_ringbuf_peek(queue, &req);
 
-    if (req_in_progress) {
+    if (primary ? primary_req_in_progress : secondary_req_in_progress) {
         // the current request is already in progress
         if (req.remaining_sectors == 0) {
             // ...but it has been completed. We should dequeue it and re-run
             // the schedule.
             _debug_puts("top task completed.");
-            req_in_progress = false;
+            if (primary) {
+                primary_req_in_progress = false;
+            } else {
+                secondary_req_in_progress = false;
+            }
             req.callback(req.callback_data);
             ds_ringbuf_pop(queue, &req);
-            _ata_queue_schedule();
+            _ata_queue_schedule(primary);
         } else {
             _debug_puts("current task still in progress");
         }
@@ -69,7 +86,11 @@ void _ata_queue_schedule()
     }
 
     // Current request is a new request that should be handled appropriately.
-    req_in_progress = true;
+    if (primary) {
+        primary_req_in_progress = true;
+    } else {
+        secondary_req_in_progress = true;
+    }
     if (req.is_write) {
         _debug_puts("running write command");
         _ata_write(&req);
@@ -147,7 +168,7 @@ bool ata_write(
     );
 }
 
-ds_ringbuf_t* _ata_queue()
+ds_ringbuf_t* _ata_queue(bool primary)
 {
-    return queue;
+    return primary ? primary_queue : secondary_queue;
 }
