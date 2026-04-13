@@ -29,15 +29,31 @@ static uint8_t command_length = 0;
 
 static void command_ata_dump_drive(uint8_t drive_id)
 {
-    uint32_t sectors = ata_get_lba28_sectors_count(drive_id);
-    uint32_t mib = (sectors / 2) / 1024;
+    bool master = ata_drive_is_master(drive_id);
+    bool primary = ata_drive_is_primary(drive_id);
     ata_disk_info_t disk_info;
-    if (!ata_load_disk_info(drive_id, &disk_info)) {
-        puts("  Failed to load partition info.");
+    if (!ata_load_disk_info(drive_id, &disk_info)
+        || disk_info.type == NOT_PRESENT) {
+        printf(
+            "ATA drive %s/%s not present\n",
+            primary ? "primary" : "secondary",
+            master ? "master" : "slave"
+        );
         return;
     }
-    printf("  Firmware: %s\n", disk_info.firmare_name);
-    printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
+
+    if (disk_info.type == PIO) {
+        printf(
+            "ATA drive %s/%s detected\n",
+            primary ? "primary" : "secondary",
+            master ? "master" : "slave"
+        );
+        printf("  Firmware: %s\n", disk_info.firmare_name);
+        uint32_t sectors = disk_info.lba28_sec_count;
+        uint32_t mib = (sectors / 2) / 1024;
+        printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
+    }
+
     printf("  %u partitions present:\n", disk_info.partitions_count);
     puts("  ┌────┬───────┬────────────┬────────────┬────────────┬────────────┐");
     puts("  │ Id │ Boot? │       Type │  LBA start │    Sectors │ Size (MiB) │");
@@ -59,34 +75,6 @@ static void command_ata_dump_drive(uint8_t drive_id)
         );
     }
     puts("  └────┴───────┴────────────┴────────────┴────────────┴────────────┘");
-}
-
-static void command_ata_dump()
-{
-    if (ata_drive_available(ATA_DRIVE_PRIMARY_MASTER)) {
-        puts("ATA drive primary/master available");
-        command_ata_dump_drive(ATA_DRIVE_PRIMARY_MASTER);
-    } else {
-        puts("ATA drive primary/master not present");
-    }
-    if (ata_drive_available(ATA_DRIVE_PRIMARY_SLAVE)) {
-        puts("ATA drive primary/slave available");
-        command_ata_dump_drive(ATA_DRIVE_PRIMARY_SLAVE);
-    } else {
-        puts("ATA drive primary/slave not present");
-    }
-    if (ata_drive_available(ATA_DRIVE_SECONDARY_MASTER)) {
-        puts("ATA drive secondary/master available");
-        command_ata_dump_drive(ATA_DRIVE_SECONDARY_MASTER);
-    } else {
-        puts("ATA drive secondary/master not present");
-    }
-    if (ata_drive_available(ATA_DRIVE_SECONDARY_SLAVE)) {
-        puts("ATA drive secondary/slave available");
-        command_ata_dump_drive(ATA_DRIVE_SECONDARY_SLAVE);
-    } else {
-        puts("ATA drive secondary/slave not present");
-    }
 }
 
 static void handle_command_sent()
@@ -139,7 +127,10 @@ static void handle_command_sent()
         puts("  vmm_test       - Runs virtual memory test suite");
     }
     else if (strcmp(command, "ata_dump") == 0) {
-        command_ata_dump();
+        command_ata_dump_drive(ATA_DRIVE_PRIMARY_MASTER);
+        command_ata_dump_drive(ATA_DRIVE_PRIMARY_SLAVE);
+        command_ata_dump_drive(ATA_DRIVE_SECONDARY_MASTER);
+        command_ata_dump_drive(ATA_DRIVE_SECONDARY_SLAVE);
     }
     else if (strcmp(command, "elf_dump") == 0) {
         if (argcount != 1) {
