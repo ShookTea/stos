@@ -29,6 +29,7 @@ static uint8_t command_length = 0;
 
 static void command_ata_dump_drive(uint8_t drive_id)
 {
+    puts("");
     bool master = ata_drive_is_master(drive_id);
     bool primary = ata_drive_is_primary(drive_id);
     ata_disk_info_t disk_info;
@@ -93,8 +94,6 @@ static void command_ata_dump_drive(uint8_t drive_id)
 
 static void handle_command_sent()
 {
-    puts("");
-
     if (command_length == 0 || command_buffer[0] == '\0') {
         return;
     }

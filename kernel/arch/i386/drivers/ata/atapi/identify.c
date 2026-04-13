@@ -33,6 +33,9 @@ static void _callback(void* _data)
     uint16_t* buf = callback_buffers[callback_data->disk_id];
 
     if (callback_data->command == ATAPI_COM_READ_CAPACITY) {
+        ata_disk_info_t di;
+        ata_load_disk_info(callback_data->disk_id, &di);
+
         // Last logical address block address
         uint16_t last_lba_high = swipe_endian(buf[0]);
         uint16_t last_lba_low = swipe_endian(buf[1]);
@@ -51,6 +54,10 @@ static void _callback(void* _data)
             block_size,
             ((uint64_t)last_lba) * block_size
         );
+
+        di.sector_size = block_size;
+        di.sectors_count = last_lba;
+        _ata_save_disk_info(callback_data->disk_id, &di);
     }
 
     kfree(callback_buffers[callback_data->disk_id]);
