@@ -387,20 +387,46 @@ vfs_node_t** device_hd_mount()
     uint8_t* ata_drive_ptr = ata_drives;
     char drive_name[] = "hda";
     char drive_letter = 'a';
+    char sr_name[] = "sr0";
+    char sr_index = '0';
     while (*ata_drive_ptr != ATA_DRIVE_NONE) {
         ata_disk_info_t disk_info;
         ata_load_disk_info(*ata_drive_ptr, &disk_info);
         size_t sector_size = disk_info.sector_size;
+
+        if (disk_info.type == ATAPI) {
+            sr_name[2] = sr_index;
+            _debug_printf("ATAPI drive found, mounting to /dev/%s\n", sr_name);
+
+            vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
+            vfs_populate_node(node, sr_name, VFS_TYPE_BLOCK_DEVICE);
+            node->read_node = read;
+            node->write_node = NULL; // CD-ROM drives are read-only
+            node->length = (uint64_t)disk_info.sectors_count * sector_size;
+            hd_metadata_t* metadata = kmalloc_flags(
+                sizeof(hd_metadata_t),
+                KMALLOC_ZERO
+            );
+            node->metadata = metadata;
+            metadata->disk_id = *ata_drive_ptr;
+            metadata->wait_obj = wait_allocate_queue();
+            metadata->is_partition = false;
+            increase_nodes_size();
+            nodes[nodes_count - 1] = node;
+
+            sr_index++;
+            ata_drive_ptr++;
+            continue;
+        }
+
         if (disk_info.type != PIO) {
-            // Only PIO drives are supported - skip
             ata_drive_ptr++;
             continue;
         }
 
         drive_name[2] = drive_letter;
         _debug_printf(
-            "drive with type %d found, mounting to /dev/%s\n",
-            *ata_drive_ptr,
+            "PIO drive found, mounting to /dev/%s\n",
             drive_name
         );
 

@@ -4,6 +4,7 @@
 #include "kernel/debug.h"
 #include <libds/libds.h>
 #include <libds/ringbuf.h>
+#include <string.h>
 
 #define _debug_puts(...) debug_puts_c("ATA/queue", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATA/queue", __VA_ARGS__)
@@ -99,6 +100,10 @@ void _ata_queue_schedule(bool primary)
     if (req.atapi_phase == ATAPI_PHASE_AWAITING_PACKET) {
         _debug_puts("running ATAPI packet command");
         _atapi_send_packet(&req);
+        // CDB was sent synchronously; advance phase so the next IRQ is treated
+        // as a data transfer rather than a CDB handshake.
+        req.atapi_phase = ATAPI_PHASE_AWAITING_DATA;
+        ds_ringbuf_poke(queue, &req);
         _debug_puts("ATAPI packet command completed");
     } else if (req.is_write) {
         _debug_puts("running write command");
@@ -135,7 +140,21 @@ static bool create_and_enqueue(
     req.callback_data = callback_data;
     req.is_write = is_write;
     req.awaiting_flush = false;
-    req.atapi_phase = ATAPI_PHASE_NONE;
+
+    if (info.type == ATAPI) {
+        memset(req.atapi_packet, 0, sizeof(req.atapi_packet));
+        req.atapi_packet[0] = ATAPI_COM_READ10;
+        req.atapi_packet[2] = (lba >> 24) & 0xFF;
+        req.atapi_packet[3] = (lba >> 16) & 0xFF;
+        req.atapi_packet[4] = (lba >> 8)  & 0xFF;
+        req.atapi_packet[5] = lba         & 0xFF;
+        req.atapi_packet[7] = 0;
+        req.atapi_packet[8] = sectors_count;
+        req.atapi_byte_count = info.sector_size;
+        req.atapi_phase = ATAPI_PHASE_AWAITING_PACKET;
+    } else {
+        req.atapi_phase = ATAPI_PHASE_NONE;
+    }
 
     return _ata_enqueue_request(&req);
 }

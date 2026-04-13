@@ -5,6 +5,7 @@
 #include "../common.h"
 
 #define ATAPI_COM_READ_CAPACITY 0x25
+#define ATAPI_COM_READ10 0x28
 
 void _atapi_identify(uint16_t bus_base, uint8_t target_drive);
 

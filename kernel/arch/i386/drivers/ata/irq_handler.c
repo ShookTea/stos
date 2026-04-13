@@ -13,32 +13,7 @@
 #define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
 
 /**
- * IRQ confirms that it received the PACKET command. Send the actual data to
- * the drive.
- */
-static void irq_handler_atapi_awaiting_packet(
-    ds_ringbuf_t* queue,
-    ata_request_t req
-) {
-    _debug_puts("IRQ for ATAPI AWAITING PACKET");
-    bool primary = ata_drive_is_primary(req.drive);
-    uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
-
-    // Send command
-    for (size_t i = 0; i < 6; i++) {
-        uint16_t w = req.atapi_packet[i * 2 + 1];
-        w <<= 8;
-        w |= req.atapi_packet[i * 2];
-        outw(bus_base | ATA_BUS_OFFSET_DATA, w);
-    }
-
-    req.atapi_phase = ATAPI_PHASE_AWAITING_DATA;
-    ds_ringbuf_poke(queue, &req);
-    _debug_puts("ATAPI PACKET command sent");
-}
-
-/**
- * IRQ confirms that it received the data from PACKET command.
+ * IRQ confirms that the drive has data ready after a PACKET command.
  */
 static void irq_handler_atapi_awaiting_data(
     ds_ringbuf_t* queue,
@@ -65,15 +40,25 @@ static void irq_handler_atapi_awaiting_data(
     uint16_t bytes_count = (byte_high << 8) | byte_low;
     uint16_t word_count = bytes_count / 2;
 
-    _debug_printf("Words received: %u\n", word_count);
+    // Load sector size to compute buffer offset for multi-sector reads
+    ata_disk_info_t di;
+    ata_load_disk_info(req.drive, &di);
+    uint16_t sector_size_words = di.sector_size / 2;
+
+    size_t sector_offset = req.total_sectors - req.remaining_sectors;
+    uint16_t* read_buf = req.buffer + sector_offset * sector_size_words;
+
+    _debug_printf("Words received: %u (sector %u of %u)\n",
+        word_count, (unsigned)sector_offset + 1, req.total_sectors);
     for (uint16_t i = 0; i < word_count; i++) {
-        req.buffer[i] = inw(bus_base | ATA_BUS_OFFSET_DATA);
+        read_buf[i] = inw(bus_base | ATA_BUS_OFFSET_DATA);
     }
 
-    // Set remaining_sectors = 0 to force reschedule
-    req.remaining_sectors = 0;
+    req.remaining_sectors--;
     ds_ringbuf_poke(queue, &req);
-    _ata_queue_schedule(primary);
+    if (req.remaining_sectors == 0) {
+        _ata_queue_schedule(primary);
+    }
 }
 
 /**
@@ -181,6 +166,7 @@ static void irq_handler_read(ds_ringbuf_t* queue, ata_request_t req)
 void _ata_irq_handler(registers_t* reg)
 {
     bool primary = reg->int_no == 0x2E;
+
     // Get current task, if any exist
     ds_ringbuf_t* queue = _ata_queue(primary);
     ata_request_t req;
@@ -190,13 +176,16 @@ void _ata_irq_handler(registers_t* reg)
     }
 
     if (!req_loaded) {
+        // Spurious or end-of-command IRQ with no pending request. Read status
+        // to deassert INTRQ so the next command's rising edge is detected.
+        uint16_t bus_base = primary
+            ? ATA_BUS_BASE_PRIMARY
+            : ATA_BUS_BASE_SECONDARY;
+        _ata_read_status(bus_base);
         return;
     }
 
-    if (req.atapi_phase == ATAPI_PHASE_AWAITING_PACKET) {
-        // IRQ confirming it received PACKET command
-        irq_handler_atapi_awaiting_packet(queue, req);
-    } else if (req.atapi_phase == ATAPI_PHASE_AWAITING_DATA) {
+    if (req.atapi_phase == ATAPI_PHASE_AWAITING_DATA) {
         // IRQ confirming it data after PACKET command
         irq_handler_atapi_awaiting_data(queue, req);
     } else if (req.is_write && req.awaiting_flush) {
