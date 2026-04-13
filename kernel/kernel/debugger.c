@@ -51,7 +51,7 @@ static void command_ata_dump_drive(uint8_t drive_id)
         primary ? "primary" : "secondary",
         master ? "master" : "slave"
     );
-    printf("  Firmware: %s\n", disk_info.firmare_name);
+    printf("  Firmware: %s\n", disk_info.firmware_name);
     uint32_t sectors = disk_info.sectors_count;
     uint16_t sector_size = disk_info.sector_size;
     uint64_t mib = (((uint64_t)sectors) * sector_size) / (1024 * 1024);

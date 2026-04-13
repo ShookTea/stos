@@ -124,7 +124,7 @@ static void load_sector_location(
  * 1 = not ready
  * 2 = ready
  */
-static uint8_t* rw_wait_map = NULL;
+static volatile uint8_t* rw_wait_map = NULL;
 static size_t rw_wait_map_count = 0;
 static size_t rw_wait_map_capacity = 0;
 static spinlock_t rw_wait_spinlock = SPINLOCK_INIT;
@@ -138,11 +138,11 @@ static size_t allocate_rw_wait_pos()
     spinlock_acquire(&rw_wait_spinlock);
     if (rw_wait_map_capacity == rw_wait_map_count) {
         rw_wait_map_capacity += 10;
-        rw_wait_map = krealloc(
-            rw_wait_map,
+        rw_wait_map = (volatile uint8_t*)krealloc(
+            (void*)rw_wait_map,
             sizeof(uint8_t) * rw_wait_map_capacity
         );
-        memset(rw_wait_map + rw_wait_map_count, 0, 10);
+        memset((void*)(rw_wait_map + rw_wait_map_count), 0, 10);
         rw_wait_map[rw_wait_map_count] = 1;
         rw_wait_map_count++;
         spinlock_release(&rw_wait_spinlock);
@@ -227,7 +227,7 @@ static size_t read(
 
     // Allocate buffer for sector data
     uint16_t* buffer = kmalloc_flags(
-        sizeof(uint16_t) * 256 * loc.sector_count,
+        loc.sector_size * loc.sector_count,
         KMALLOC_ZERO
     );
 
@@ -250,13 +250,13 @@ static size_t read(
 
     // Reading was completed - copy data to output pointer
     size_t offset_in_buffer = offset - loc.lowest_sector_byte;
-    memcpy(ptr, ((uint8_t*)buffer) + offset_in_buffer, size);
+    memcpy(ptr, ((uint8_t*)buffer) + offset_in_buffer, loc.size);
 
     // Mark rw_map entry as free to use
     rw_wait_map[wait_idx] = 0;
 
     kfree(buffer);
-    return size;
+    return loc.size;
 }
 
 static size_t write(
@@ -299,7 +299,7 @@ static size_t write(
 
     // Allocate buffer for sector data
     uint16_t* buffer = kmalloc_flags(
-        sizeof(uint16_t) * 256 * loc.sector_count,
+        loc.sector_size * loc.sector_count,
         KMALLOC_ZERO
     );
 
@@ -330,7 +330,7 @@ static size_t write(
 
     // Copy data from pointer to sectors
     size_t offset_in_buffer = offset - loc.lowest_sector_byte;
-    memcpy(((uint8_t*)buffer) + offset_in_buffer, ptr, size);
+    memcpy(((uint8_t*)buffer) + offset_in_buffer, ptr, loc.size);
 
     // Run write command
     ata_write(
@@ -344,7 +344,7 @@ static size_t write(
 
     _debug_printf("[wait_idx=%u] start for write\n", wait_idx);
 
-    // Wait for reading to be completed
+    // Wait for writing to be completed
     wait_on_condition(meta->wait_obj, rw_wait_for_ready, &wakeup_data);
 
     _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
@@ -353,7 +353,7 @@ static size_t write(
     rw_wait_map[wait_idx] = 0;
 
     kfree(buffer);
-    return size;
+    return loc.size;
 }
 
 // NULL-terminated list of nodes

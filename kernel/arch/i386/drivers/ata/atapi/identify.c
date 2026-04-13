@@ -56,7 +56,7 @@ static void _callback(void* _data)
         );
 
         di.sector_size = block_size;
-        di.sectors_count = last_lba;
+        di.sectors_count = last_lba + 1;
         _ata_save_disk_info(callback_data->disk_id, &di);
     }
 
@@ -138,7 +138,7 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
     di.sector_size = 0;
     di.sectors_count = 0;
 
-    strcpy(di.firmare_name, firmware_name);
+    strcpy(di.firmware_name, firmware_name);
     _ata_save_disk_info(disk_id, &di);
 
     _debug_puts("Drive found - sending READ CAPACITY command");

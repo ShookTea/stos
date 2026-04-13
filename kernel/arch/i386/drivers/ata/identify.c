@@ -98,7 +98,7 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
     di.type = PIO;
     di.sectors_count = lba28_sectors_count;
     di.sector_size = 512; // It's standard for ATA disks
-    strcpy(di.firmare_name, firmware_name);
+    strcpy(di.firmware_name, firmware_name);
     _ata_save_disk_info(disk_id, &di);
 
     _debug_printf("Drive found, status: %#x\n", status);
@@ -212,7 +212,13 @@ void ata_get_available_drives(uint8_t* res)
 void ata_select_drive(uint8_t drive)
 {
     selected_drive = drive;
-    // TODO: implement drive switch?
+    bool primary = ata_drive_is_primary(drive);
+    bool master = ata_drive_is_master(drive);
+    uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
+    _ata_drive_select(
+        bus_base,
+        master ? ATA_COM_TARGET_DRIVE_MASTER : ATA_COM_TARGET_DRIVE_SLAVE
+    );
 }
 
 static void _load_partition_info_to_disk_data(

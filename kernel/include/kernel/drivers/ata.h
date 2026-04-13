@@ -36,7 +36,7 @@ typedef struct {
 typedef struct {
     ata_disk_type_t type;
     // Null-terminated firmware name
-    char firmare_name[40];
+    char firmware_name[40];
     // Total count of sectors
     uint32_t sectors_count;
     // Size of a single sector in bytes
@@ -78,11 +78,11 @@ bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr);
  * Create a read request for ATA driver, for currently selected drive.
  * - "ata_drive" is one of ATA_DRIVE_ values
  * - "lba" is the first sector from which reading will take place.
- * - "sectors_count" is the total number of 512-byte sectors to be loaded.
+ * - "sectors_count" is the total number of sectors to be loaded.
  * - "buffer" is pre-allocated address in the memory where data will be stored.
- *   each sector is loaded as 256 16-bit integers; thus the required memory is
- *   256 * sizeof(uint16_t) * sectors_count. It is the responsibility of the
- *   caller to make sure that there's enough memory to store data.
+ *   each sector is loaded as (sector_size / 2) 16-bit integers; thus the
+ *   required memory is sector_size * sectors_count. It is the responsibility
+ *   of the caller to make sure that there's enough memory to store data.
  * - "callback" is a function that will be called once the read operation is
  *   completed. "callback_data" will be passed as an argument.
  *
@@ -101,11 +101,12 @@ bool ata_read(
  * Create a write request for ATA driver, for currently selected drive.
  * - "ata_drive" is one of ATA_DRIVE_ values
  * - "lba" is the first sector to which writing will take place.
- * - "sectors_count" is the total number of 512-byte sectors to be written.
+ * - "sectors_count" is the total number of sectors to be written.
  * - "buffer" is pre-allocated address in the memory from where the data will be
- *   loaded. each sector is loaded as 256 16-bit integers; thus the required
- *   memory is 256 * sizeof(uint16_t) * sectors_count. It is the responsibility
- *   of the caller to make sure that there's enough memory to store data.
+ *   loaded. each sector is loaded as (sector_size / 2) 16-bit integers; thus
+ *   the required memory is sector_size * sectors_count. It is the
+ *   responsibility of the caller to make sure that there's enough memory to
+ *   store data.
  * - "callback" is a function that will be called once the write operation is
  *   completed. "callback_data" will be passed as an argument.
  *

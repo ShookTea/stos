@@ -11,9 +11,8 @@ void _ata_write(ata_request_t* req)
     }
 
     // TODO: checking ATA status when reading needed
-    uint8_t drive = ata_get_selected_drive();
-    bool primary = ata_drive_is_primary(drive);
-    bool master = ata_drive_is_master(drive);
+    bool primary = ata_drive_is_primary(req->drive);
+    bool master = ata_drive_is_master(req->drive);
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
 
     // Select drive + top 4 bits of LBA
@@ -37,7 +36,10 @@ void _ata_write(ata_request_t* req)
 
     // Sending only first sector - remaining sectors have to be written after
     // confirmation IRQ has been received
-    for (int i = 0; i < 256; i++) {
+    ata_disk_info_t di;
+    ata_load_disk_info(req->drive, &di);
+    uint16_t sector_size_words = di.sector_size / 2;
+    for (int i = 0; i < sector_size_words; i++) {
         outw(bus_base | ATA_BUS_OFFSET_DATA, req->buffer[i]);
         io_wait();
     }

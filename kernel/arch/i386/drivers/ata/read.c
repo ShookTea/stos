@@ -11,9 +11,8 @@ void _ata_read(ata_request_t* req)
     }
 
     // TODO: checking ATA status when reading needed
-    uint8_t drive = ata_get_selected_drive();
-    bool primary = ata_drive_is_primary(drive);
-    bool master = ata_drive_is_master(drive);
+    bool primary = ata_drive_is_primary(req->drive);
+    bool master = ata_drive_is_master(req->drive);
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
 
     // Select drive + top 4 bits of LBA
@@ -32,6 +31,6 @@ void _ata_read(ata_request_t* req)
     // Acknowledge status
     _ata_read_status(bus_base);
 
-    // Now we'll one IRQ for each sector_count. Each such interrupt will give us
-    // 256 16-bit values on port bus_base | ATA_BUS_OFFSET_DATA.
+    // Now we'll get one IRQ for each sector. Each such interrupt will give us
+    // (sector_size / 2) 16-bit values on port bus_base | ATA_BUS_OFFSET_DATA.
 }
