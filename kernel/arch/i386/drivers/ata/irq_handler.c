@@ -100,6 +100,11 @@ static void irq_handler_write(ds_ringbuf_t* queue, ata_request_t req)
 
     _debug_puts("IRQ for WRITE start");
 
+    // Load sector size in words
+    ata_disk_info_t di;
+    ata_load_disk_info(req.drive, &di);
+    uint16_t sector_size_words = di.sector_size / 2;
+
     if (req.remaining_sectors == 0) {
         // We finished writing - next IRQ will confirm that flush was completed.
         _debug_puts("  last sector completed");
@@ -119,9 +124,9 @@ static void irq_handler_write(ds_ringbuf_t* queue, ata_request_t req)
         // Get current sector offset
         size_t sector_offset = req.total_sectors - req.remaining_sectors;
         // For write op: location on the buffer from where we should read data
-        uint16_t* write_buff = req.buffer + (sector_offset * 256);
+        uint16_t* write_buff = req.buffer + (sector_offset * sector_size_words);
         // Sending bytes
-        for (int i = 0; i < 256; i++) {
+        for (int i = 0; i < sector_size_words; i++) {
             outw(bus_base | ATA_BUS_OFFSET_DATA, write_buff[i]);
             io_wait();
         }
@@ -142,11 +147,16 @@ static void irq_handler_read(ds_ringbuf_t* queue, ata_request_t req)
     bool primary = ata_drive_is_primary(req.drive);
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
 
+    // Load sector size in words
+    ata_disk_info_t di;
+    ata_load_disk_info(req.drive, &di);
+    uint16_t sector_size_words = di.sector_size / 2;
+
     // The current sector offset for given request
     size_t sector_offset = req.total_sectors - req.remaining_sectors;
     // For read op: location on the buffer to where we should read data
-    uint16_t* read_buff = req.buffer + (sector_offset * 256);
-    for (int i = 0; i < 256; i++) {
+    uint16_t* read_buff = req.buffer + (sector_offset * sector_size_words);
+    for (int i = 0; i < sector_size_words; i++) {
         uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
         read_buff[i] = data;
     }
