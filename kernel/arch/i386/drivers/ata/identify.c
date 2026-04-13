@@ -227,14 +227,6 @@ void ata_select_drive(uint8_t drive)
     // TODO: implement drive switch?
 }
 
-uint32_t ata_get_lba28_sectors_count(uint8_t drive)
-{
-    if (lba28_sec_count == NULL || drive > 3) {
-        return 0;
-    }
-    return lba28_sec_count[drive];
-}
-
 static void _load_partition_info_to_disk_data(
     ata_mbr_partition_table_entry_t* pte,
     ata_disk_info_t* dest

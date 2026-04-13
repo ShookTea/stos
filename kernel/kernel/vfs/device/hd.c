@@ -55,6 +55,9 @@ static void load_sector_location(
     size_t size,
     hd_metadata_t* meta
 ) {
+    ata_disk_info_t disk_info;
+    ata_load_disk_info(meta->disk_id, &disk_info);
+
     // Align offset to sector size
     size_t lowest_sector_byte = sector_align_down(offset);
     size_t highest_sector_byte = sector_align_up(offset + size);
@@ -63,7 +66,7 @@ static void load_sector_location(
     loc->lowest_sector_byte = lowest_sector_byte;
 
     if (!meta->is_partition) {
-        size_t disk_sectors = ata_get_lba28_sectors_count(meta->disk_id);
+        size_t disk_sectors = disk_info.lba28_sec_count;
         loc->low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
         size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
 
@@ -83,8 +86,6 @@ static void load_sector_location(
 
     // Load partition info
     ata_partition_t part_info;
-    ata_disk_info_t disk_info;
-    ata_load_disk_info(meta->disk_id, &disk_info);
     if (meta->partition_id >= disk_info.partitions_count) {
         _debug_puts("Err on read: partition doesn't exist.");
         // Partition with given ID doesn't exist
@@ -386,6 +387,9 @@ vfs_node_t** device_hd_mount()
     char drive_name[] = "hda";
     char drive_letter = 'a';
     while (*ata_drive_ptr != ATA_DRIVE_NONE) {
+        ata_disk_info_t disk_info;
+        ata_load_disk_info(*ata_drive_ptr, &disk_info);
+
         drive_name[2] = drive_letter;
         _debug_printf(
             "drive with type %d found, mounting to /dev/%s\n",
@@ -397,7 +401,7 @@ vfs_node_t** device_hd_mount()
         vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = read;
         node->write_node = write;
-        uint32_t sectors_count = ata_get_lba28_sectors_count(*ata_drive_ptr);
+        uint32_t sectors_count = disk_info.lba28_sec_count;
         node->length = (uint64_t)sectors_count * SECTOR_SIZE;
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),
@@ -410,8 +414,6 @@ vfs_node_t** device_hd_mount()
         increase_nodes_size();
         nodes[nodes_count - 1] = node;
 
-        ata_disk_info_t disk_info;
-        ata_load_disk_info(*ata_drive_ptr, &disk_info);
         _debug_printf(
             "Partitions count in /dev/%s: %u\n",
             drive_name,
