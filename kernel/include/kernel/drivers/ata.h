@@ -16,6 +16,12 @@
 #define ATA_PARTITION_TYPE_FAT32 0x0C
 #define ATA_PARTITION_TYPE_LINUX_NATIVE 0x83
 
+typedef enum {
+    NOT_PRESENT = 0,
+    PIO = 1,
+    ATAPI = 2,
+} ata_disk_type_t;
+
 typedef struct {
     // One of ATA_PARTITION_TYPE_ values
     uint8_t type;
@@ -28,8 +34,11 @@ typedef struct {
 } ata_partition_t;
 
 typedef struct {
+    ata_disk_type_t type;
     // Null-terminated firmware name
     char firmare_name[40];
+    // For type=PIO only: total count of LBA28 sectors
+    uint32_t lba28_sec_count;
     // Actual number of partitions stored in partitions[] array
     uint8_t partitions_count;
     ata_partition_t partitions[32];

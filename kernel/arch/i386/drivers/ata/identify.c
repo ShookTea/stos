@@ -20,6 +20,7 @@ static uint8_t selected_drive = ATA_DRIVE_NONE;
 static uint32_t* lba28_sec_count = NULL;
 static char** firmware_names = NULL;
 static ata_mbr_t* mbrs = NULL;
+static ata_disk_info_t* disk_info = NULL;
 
 static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
 {
@@ -109,6 +110,9 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
         }
     }
 
+    disk_info[disk_id].type = PIO;
+    disk_info[disk_id].lba28_sec_count = lba28_sectors_count;
+    strcpy(disk_info[disk_id].firmare_name, firmware_name);
     _debug_printf("Drive found, status: %#x\n", status);
 }
 
@@ -155,6 +159,11 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
 
 void _ata_identify_devices()
 {
+    if (disk_info != NULL) {
+        _debug_puts("ATA devices were identified already - skipping");
+        return;
+    }
+    disk_info = kmalloc_flags(sizeof(ata_disk_info_t) * 4, KMALLOC_ZERO);
     _debug_puts("  Identifying master drive at primary port");
     _ata_identify(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
     _debug_puts("  Identifying slave drive at primary port");
@@ -231,6 +240,22 @@ bool ata_drive_available(uint8_t drive)
     return ata_get_lba28_sectors_count(drive) > 0;
 }
 
+static void _load_partition_info_to_disk_data(
+    ata_mbr_partition_table_entry_t* pte,
+    ata_disk_info_t* dest
+) {
+    if (pte->partition_type == 0) {
+        return;
+    }
+
+    ata_partition_t* part = &dest->partitions[dest->partitions_count];
+    part->type = pte->partition_type;
+    part->lba_start = pte->partition_start_lba;
+    part->sectors_count = pte->partition_sectors_count;
+    part->bootable = pte->drive_attributes & 0x80;
+    dest->partitions_count++;
+}
+
 void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
 {
     _debug_printf("MBR load completed for drive ID %u\n", drive_id);
@@ -251,37 +276,23 @@ void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
         mbrs = kmalloc_flags(sizeof(ata_mbr_t) * 4, KMALLOC_ZERO);
     }
     memcpy(mbrs + drive_id, mbr, sizeof(ata_mbr_t));
-}
 
-static void _load_partition_info(
-    ata_mbr_partition_table_entry_t* pte,
-    ata_disk_info_t* dest
-) {
-    if (pte->partition_type == 0) {
-        return;
-    }
-
-    ata_partition_t* part = &dest->partitions[dest->partitions_count];
-    part->type = pte->partition_type;
-    part->lba_start = pte->partition_start_lba;
-    part->sectors_count = pte->partition_sectors_count;
-    part->bootable = pte->drive_attributes & 0x80;
-    dest->partitions_count++;
+    _load_partition_info_to_disk_data(&mbr->partition_1, &disk_info[drive_id]);
+    _load_partition_info_to_disk_data(&mbr->partition_2, &disk_info[drive_id]);
+    _load_partition_info_to_disk_data(&mbr->partition_3, &disk_info[drive_id]);
+    _load_partition_info_to_disk_data(&mbr->partition_4, &disk_info[drive_id]);
 }
 
 bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr)
 {
-    if (!ata_drive_available(disk_id)) {
+    if (disk_id >= ATA_DRIVE_NONE) {
         return false;
     }
-    strcpy(ptr->firmare_name, firmware_names[disk_id]);
+    if (disk_info[disk_id].type == NOT_PRESENT) {
+        return false;
+    }
 
-    ptr->partitions_count = 0;
-    ata_mbr_t mbr = mbrs[disk_id];
-    _load_partition_info(&mbr.partition_1, ptr);
-    _load_partition_info(&mbr.partition_2, ptr);
-    _load_partition_info(&mbr.partition_3, ptr);
-    _load_partition_info(&mbr.partition_4, ptr);
+    memcpy(ptr, &disk_info[disk_id], sizeof(ata_disk_info_t));
 
     return true;
 }
