@@ -10,6 +10,11 @@
 #define _debug_puts(...) debug_puts_c("ATAPI/id", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATAPI/id", __VA_ARGS__)
 
+static void _callback(void* data __attribute__((unused)))
+{
+    _debug_printf("Callback received\n");
+}
+
 void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
 {
     _debug_puts("Detecting ATAPI device");
@@ -35,19 +40,20 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
 
     // Data port now contains 256 16-bit values.
     char firmware_name[40];
+    uint8_t packet_size = 0;
     for (int i = 0; i < 256; i++) {
         uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
         if (i == 0) {
             // word 0 contains some more details
             // size of packet - 16 bytes if true, 12 bytes if false
-            bool packet_size_16 = (data & 0x0003) == 1;
+            packet_size = ((data & 0x0003) == 1) ? 16 : 12;
             bool is_atapi = (data & 0xC000) == 0x8000;
             uint8_t dev_type = (data & 0x0700) >> 8;
             if (!is_atapi) {
                 _debug_puts("Not ATAPI according to first bit");
                 return;
             }
-            _debug_printf("Packet size: %u B\n", packet_size_16 ? 16 : 12);
+            _debug_printf("Packet size: %u B\n", packet_size);
             switch (dev_type) {
                 case 0x05:
                     _debug_puts("Device type: CD-ROM");
@@ -81,4 +87,28 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
     _ata_save_disk_info(disk_id, &di);
 
     _debug_puts("Drive found");
+
+    ata_request_t req;
+    req.callback_data = NULL;
+    req.callback = _callback;
+    req.atapi_phase = ATAPI_PHASE_AWAITING_PACKET;
+    req.atapi_byte_count = 512;
+    req.total_sectors = 1;
+    req.remaining_sectors = 1;
+    req.awaiting_flush = false;
+    req.is_write = false;
+    req.atapi_packet[0] = 0x25;
+    req.atapi_packet[1] = 0;
+    req.atapi_packet[2] = 0;
+    req.atapi_packet[3] = 0;
+    req.atapi_packet[4] = 0;
+    req.atapi_packet[5] = 0;
+    req.atapi_packet[6] = 0;
+    req.atapi_packet[7] = 0;
+    req.atapi_packet[8] = 0;
+    req.atapi_packet[9] = 0;
+    req.atapi_packet[10] = 0;
+    req.atapi_packet[11] = 0;
+    req.drive = disk_id;
+    _ata_enqueue_request(&req);
 }

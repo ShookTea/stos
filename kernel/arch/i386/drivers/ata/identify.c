@@ -140,7 +140,7 @@ static void _ata_identify(uint16_t bus_base, uint8_t target_drive)
     } else if (cylinder == ATA_CYLINDER_SATA) {
         _debug_puts("SATA device detected but not supported yet");
     } else {
-        _debug_printf("Invalid device: cylinder set to %4x\n", cylinder);
+        _debug_printf("Invalid device: cylinder set to %04x\n", cylinder);
     }
 }
 

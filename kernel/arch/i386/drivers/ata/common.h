@@ -34,6 +34,7 @@
 
 // Commands:
 #define ATA_COM_IDENTIFY 0xEC
+#define ATA_COM_ATAPI_PACKET 0xA0
 #define ATA_COM_IDENTIFY_PACKET 0xA1
 #define ATA_COM_READ_SECTORS 0x20
 #define ATA_COM_WRITE_SECTORS 0x30
@@ -60,6 +61,12 @@
 // If set, drive is preparing and we need to wait. In case of hang needs reset
 #define ATA_STATUS_BSY 0x80
 
+typedef enum {
+    ATAPI_PHASE_NONE = 0, // not an ATAPI request
+    ATAPI_PHASE_AWAITING_PACKET, // Sent ATA_COM_ATAPI_PACKET, waiting for IRQ
+    ATAPI_PHASE_AWAITING_DATA, // Sent packet, awaiting for IRQ with data
+} atapi_phase_t;
+
 /**
  * Type definition for a read/write request
  */
@@ -79,6 +86,10 @@ typedef struct {
     // For write requests, to distinguish between "IRQ after write" and "IRQ
     // after flush".
     bool awaiting_flush;
+    // Variables related to ATAPI driver
+    atapi_phase_t atapi_phase;
+    uint8_t atapi_packet[12];
+    uint16_t atapi_byte_count;
     // Callback run when read/write is completed
     void (*callback)(void* data);
     // Data passed to [callback]

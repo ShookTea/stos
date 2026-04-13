@@ -1,4 +1,5 @@
 #include "./common.h"
+#include "atapi/atapi.h"
 #include "kernel/drivers/ata.h"
 #include "kernel/debug.h"
 #include <libds/libds.h>
@@ -44,7 +45,8 @@ bool _ata_enqueue_request(ata_request_t* request)
     if (result) {
         _debug_printf(
             "%s task enqueued at %s\n",
-            request->is_write ? "write" : "read",
+            request->atapi_phase != ATAPI_PHASE_NONE
+                ? "ATAPI" : request->is_write ? "write" : "read",
             primary ? "primary" : "secondary"
         );
         _ata_queue_schedule(primary);
@@ -56,7 +58,10 @@ void _ata_queue_schedule(bool primary)
 {
     ds_ringbuf_t* queue = primary ? primary_queue : secondary_queue;
     if (queue == NULL || ds_ringbuf_is_empty(queue)) {
-        _debug_puts("no tasks");
+        _debug_printf(
+            "no tasks at %s queue\n",
+            primary ? "primary" : "secondary"
+        );
         return;
     }
     ata_request_t req;
@@ -91,7 +96,11 @@ void _ata_queue_schedule(bool primary)
     } else {
         secondary_req_in_progress = true;
     }
-    if (req.is_write) {
+    if (req.atapi_phase == ATAPI_PHASE_AWAITING_PACKET) {
+        _debug_puts("running ATAPI packet command");
+        _atapi_send_packet(&req);
+        _debug_puts("ATAPI packet command completed");
+    } else if (req.is_write) {
         _debug_puts("running write command");
         _ata_write(&req);
         _debug_puts("write command completed");
@@ -126,6 +135,7 @@ static bool create_and_enqueue(
     req.callback_data = callback_data;
     req.is_write = is_write;
     req.awaiting_flush = false;
+    req.atapi_phase = ATAPI_PHASE_NONE;
 
     return _ata_enqueue_request(&req);
 }

@@ -6,7 +6,7 @@
 
 void _ata_read(ata_request_t* req)
 {
-    if (req == NULL || req->is_write) {
+    if (req == NULL || req->is_write || req->atapi_phase != ATAPI_PHASE_NONE) {
         return;
     }
 
