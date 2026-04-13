@@ -11,6 +11,8 @@
 #define _debug_puts(...) debug_puts_c("ATAPI/id", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATAPI/id", __VA_ARGS__)
 
+#define swipe_endian(w) ((uint16_t)((w >> 8) | (w << 8)))
+
 typedef struct {
     uint8_t disk_id;
     uint8_t command;
@@ -28,11 +30,27 @@ static void _callback(void* _data)
         callback_data->command
     );
 
+    uint16_t* buf = callback_buffers[callback_data->disk_id];
+
     if (callback_data->command == ATAPI_COM_READ_CAPACITY) {
-        _debug_printf("Word 0: 0x%04X\n", callback_buffers[callback_data->disk_id][0]);
-        _debug_printf("Word 1: 0x%04X\n", callback_buffers[callback_data->disk_id][1]);
-        _debug_printf("Word 2: 0x%04X\n", callback_buffers[callback_data->disk_id][2]);
-        _debug_printf("Word 3: 0x%04X\n", callback_buffers[callback_data->disk_id][3]);
+        // Last logical address block address
+        uint16_t last_lba_high = swipe_endian(buf[0]);
+        uint16_t last_lba_low = swipe_endian(buf[1]);
+        uint32_t last_lba = ((uint32_t)last_lba_high) << 16;
+        last_lba |= last_lba_low;
+
+        // Size of single logical block in bytes
+        uint16_t block_size_high = swipe_endian(buf[2]);
+        uint16_t block_size_low = swipe_endian(buf[3]);
+        uint32_t block_size = ((uint32_t)block_size_high) << 16;
+        block_size |= block_size_low;
+
+        _debug_printf(
+            "Last LBA=%lu, block size = %lu B, total size = %llu B\n",
+            last_lba,
+            block_size,
+            ((uint64_t)last_lba) * block_size
+        );
     }
 
     kfree(callback_buffers[callback_data->disk_id]);
