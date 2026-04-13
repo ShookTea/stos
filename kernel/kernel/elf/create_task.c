@@ -18,7 +18,9 @@ task_t* elf_create_task(
     const char* name,
     void* elf_data,
     dentry_t* root_dir,
-    dentry_t* working_dir
+    dentry_t* working_dir,
+    int argc,
+    const char** argv
 ) {
     elf_t* parsed = kmalloc(sizeof(elf_t));
     elf_parse(elf_data, parsed);
@@ -107,9 +109,8 @@ task_t* elf_create_task(
 #define TASK_INITIAL_USER_ESP_OFFSET 22
 
     uint32_t user_esp = task->user_stack_base + task->user_stack_size;
-    const char* default_argv[] = { name };
     const char* default_envp[] = { "foo=bar", NULL };
-    task_push_args(&user_esp, 1, default_argv, 1, default_envp);
+    task_push_args(&user_esp, argc, argv, 1, default_envp);
     ((uint32_t*)task->context.esp)[TASK_INITIAL_USER_ESP_OFFSET] = user_esp;
 
     paging_switch_directory(old_dir);

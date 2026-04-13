@@ -167,7 +167,9 @@ task_t* elf_create_task(
     const char* name,
     void* elf_data,
     dentry_t* root_dir,
-    dentry_t* working_dir
+    dentry_t* working_dir,
+    int argc,
+    const char** argv
 );
 
 #endif

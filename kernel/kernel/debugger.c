@@ -115,7 +115,7 @@ static void handle_command_sent()
         puts("Available commands:");
         puts("  ata_dump       - Dumps information from ATA driver");
         puts("  elf_dump [F]   - Dumps info about ELF file at path [F]");
-        puts("  exec [F]       - Runs executable ELF file at path [F]");
+        puts("  exec [F] [A..] - Runs executable ELF file at path [F] with optional args [A..]");
         puts("  kmalloc_a [N]  - allocates [N] bytes with kmalloc");
         puts("  kmalloc_f [AD] - frees address [AD] with kfree");
         puts("  kmalloc_stats  - Prints kmalloc statistics");
@@ -161,8 +161,8 @@ static void handle_command_sent()
         }
     }
     else if (strcmp(command, "exec") == 0) {
-        if (argcount != 1) {
-            puts("exec requires 1 argument");
+        if (argcount < 1) {
+            puts("exec requires at least 1 argument");
         } else {
             dentry_t* node = vfs_resolve(args[0]);
             if (node == NULL) {
@@ -178,11 +178,20 @@ static void handle_command_sent()
                 );
                 vfs_read(handle, handle->dentry->inode->length, file);
                 vfs_close(handle);
+                // argv[0] = program name, followed by remaining debugger args
+                const char* task_argv[4];
+                task_argv[0] = node->name;
+                int task_argc = 1;
+                for (int i = 1; i < argcount; i++) {
+                    task_argv[task_argc++] = args[i];
+                }
                 task_t* task = elf_create_task(
                     node->name,
                     file,
                     root_dir,
-                    root_dir
+                    root_dir,
+                    task_argc,
+                    task_argv
                 );
                 kfree(file);
                 scheduler_add_task(task);
