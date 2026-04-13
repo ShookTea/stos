@@ -66,7 +66,7 @@ static void load_sector_location(
     loc->lowest_sector_byte = lowest_sector_byte;
 
     if (!meta->is_partition) {
-        size_t disk_sectors = disk_info.lba28_sec_count;
+        size_t disk_sectors = disk_info.sectors_count;
         loc->low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
         size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
 
@@ -406,7 +406,7 @@ vfs_node_t** device_hd_mount()
         vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = read;
         node->write_node = write;
-        uint32_t sectors_count = disk_info.lba28_sec_count;
+        uint32_t sectors_count = disk_info.sectors_count;
         node->length = (uint64_t)sectors_count * SECTOR_SIZE;
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),

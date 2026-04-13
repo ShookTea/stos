@@ -49,7 +49,7 @@ static void command_ata_dump_drive(uint8_t drive_id)
             master ? "master" : "slave"
         );
         printf("  Firmware: %s\n", disk_info.firmare_name);
-        uint32_t sectors = disk_info.lba28_sec_count;
+        uint32_t sectors = disk_info.sectors_count;
         uint32_t mib = (sectors / 2) / 1024;
         printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
     } else if (disk_info.type == ATAPI) {

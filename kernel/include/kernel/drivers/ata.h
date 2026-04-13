@@ -37,8 +37,8 @@ typedef struct {
     ata_disk_type_t type;
     // Null-terminated firmware name
     char firmare_name[40];
-    // For type=PIO only: total count of LBA28 sectors
-    uint32_t lba28_sec_count;
+    // Total count of sectors
+    uint32_t sectors_count;
     // Actual number of partitions stored in partitions[] array
     uint8_t partitions_count;
     ata_partition_t partitions[32];
