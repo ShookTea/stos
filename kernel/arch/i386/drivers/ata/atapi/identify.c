@@ -6,13 +6,41 @@
 #include "../common.h"
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
+#include "kernel/memory/kmalloc.h"
 
 #define _debug_puts(...) debug_puts_c("ATAPI/id", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATAPI/id", __VA_ARGS__)
 
-static void _callback(void* data __attribute__((unused)))
+typedef struct {
+    uint8_t disk_id;
+    uint8_t command;
+} atapi_callback_t;
+
+static uint16_t** callback_buffers;
+static uint8_t callback_buffers_used = 0;
+
+static void _callback(void* _data)
 {
-    _debug_printf("Callback received\n");
+    atapi_callback_t* callback_data = _data;
+    _debug_printf(
+        "Callback received for DID=%u COM=0x%02X\n",
+        callback_data->disk_id,
+        callback_data->command
+    );
+
+    if (callback_data->command == ATAPI_COM_READ_CAPACITY) {
+        _debug_printf("Word 0: 0x%04X\n", callback_buffers[callback_data->disk_id][0]);
+        _debug_printf("Word 1: 0x%04X\n", callback_buffers[callback_data->disk_id][1]);
+        _debug_printf("Word 2: 0x%04X\n", callback_buffers[callback_data->disk_id][2]);
+        _debug_printf("Word 3: 0x%04X\n", callback_buffers[callback_data->disk_id][3]);
+    }
+
+    kfree(callback_buffers[callback_data->disk_id]);
+    callback_buffers_used--;
+    if (callback_buffers_used == 0) {
+        kfree(callback_buffers);
+    }
+    kfree(callback_data);
 }
 
 void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
@@ -86,29 +114,24 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
     strcpy(di.firmare_name, firmware_name);
     _ata_save_disk_info(disk_id, &di);
 
-    _debug_puts("Drive found");
+    _debug_puts("Drive found - sending READ CAPACITY command");
 
-    ata_request_t req;
-    req.callback_data = NULL;
-    req.callback = _callback;
-    req.atapi_phase = ATAPI_PHASE_AWAITING_PACKET;
-    req.atapi_byte_count = 512;
-    req.total_sectors = 1;
-    req.remaining_sectors = 1;
-    req.awaiting_flush = false;
-    req.is_write = false;
-    req.atapi_packet[0] = 0x25;
-    req.atapi_packet[1] = 0;
-    req.atapi_packet[2] = 0;
-    req.atapi_packet[3] = 0;
-    req.atapi_packet[4] = 0;
-    req.atapi_packet[5] = 0;
-    req.atapi_packet[6] = 0;
-    req.atapi_packet[7] = 0;
-    req.atapi_packet[8] = 0;
-    req.atapi_packet[9] = 0;
-    req.atapi_packet[10] = 0;
-    req.atapi_packet[11] = 0;
-    req.drive = disk_id;
-    _ata_enqueue_request(&req);
+    if (callback_buffers == NULL) {
+        callback_buffers = kmalloc_flags(sizeof(uint16_t*) * 4, KMALLOC_ZERO);
+    }
+    callback_buffers[disk_id] = kmalloc(sizeof(uint16_t) * 4); // 8 bytes return
+    callback_buffers_used++;
+
+    atapi_callback_t* data = kmalloc(sizeof(atapi_callback_t));
+    data->disk_id = disk_id;
+    data->command = ATAPI_COM_READ_CAPACITY;
+    uint8_t packet[12] = { ATAPI_COM_READ_CAPACITY };
+    _atapi_send_command(
+        disk_id,
+        8,
+        packet,
+        callback_buffers[disk_id],
+        _callback,
+        data
+    );
 }

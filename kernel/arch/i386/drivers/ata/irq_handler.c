@@ -5,7 +5,9 @@
 #include <libds/ringbuf.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "../../idt/idt.h"
+#include "stdlib.h"
 
 #define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
@@ -45,17 +47,27 @@ static void irq_handler_atapi_awaiting_data(
     _debug_puts("IRQ for ATAPI AWAITING DATA");
     bool primary = ata_drive_is_primary(req.drive);
     uint16_t bus_base = primary ? ATA_BUS_BASE_PRIMARY : ATA_BUS_BASE_SECONDARY;
+    uint8_t status = _ata_read_status(bus_base);
 
     // Read cylinder low/high for actual byte count
     uint16_t byte_low = inb(bus_base | ATA_BUS_OFFSET_CYLINDER_LOW);
     uint16_t byte_high = inb(bus_base | ATA_BUS_OFFSET_CYLINDER_HIGH);
+    if (status & ATA_STATUS_ERR) {
+        // TODO: handle error
+        _debug_printf("Error with codes 0x%02X 0x%02X\n", byte_high, byte_low);
+        req.remaining_sectors = 0;
+        ds_ringbuf_poke(queue, &req);
+        _ata_queue_schedule(primary);
+        abort();
+        return;
+    }
+
     uint16_t bytes_count = (byte_high << 8) | byte_low;
     uint16_t word_count = bytes_count / 2;
 
     _debug_printf("Words received: %u\n", word_count);
     for (uint16_t i = 0; i < word_count; i++) {
-        uint16_t data = inw(bus_base | ATA_BUS_OFFSET_DATA);
-        _debug_printf("[%03u] = 0x%04X\n", i, data);
+        req.buffer[i] = inw(bus_base | ATA_BUS_OFFSET_DATA);
     }
 
     // Set remaining_sectors = 0 to force reschedule
