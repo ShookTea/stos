@@ -21,7 +21,7 @@ static void _ata_identify_partitions_callback(void* data)
     uint8_t drive_id = *drive_id_ptr;
     ata_mbr_t* mbr = (ata_mbr_t*)partition_buffer[drive_id];
 
-    _ata_load_partition_data(drive_id, mbr);
+    _ata_save_partition_data(drive_id, mbr);
 
     kfree(partition_buffer[drive_id]);
     partition_buffer_used--;
@@ -34,21 +34,25 @@ static void _ata_identify_partitions_callback(void* data)
 
 static void _ata_identify_partitions(uint8_t drive_id)
 {
-    partition_buffer[drive_id] = kmalloc_flags(
-        sizeof(uint16_t) * 256,
-        KMALLOC_ZERO
-    );
-    partition_buffer_used++;
-    uint8_t* drive_id_ptr = kmalloc(sizeof(uint8_t));
-    *drive_id_ptr = drive_id;
-    ata_read(
-        drive_id,
-        0,
-        1,
-        partition_buffer[drive_id],
-        _ata_identify_partitions_callback,
-        drive_id_ptr
-    );
+    ata_disk_info_t di;
+    ata_load_disk_info(drive_id, &di);
+    if (di.type == PIO) {
+        partition_buffer[drive_id] = kmalloc_flags(
+            sizeof(uint16_t) * 256,
+            KMALLOC_ZERO
+        );
+        partition_buffer_used++;
+        uint8_t* drive_id_ptr = kmalloc(sizeof(uint8_t));
+        *drive_id_ptr = drive_id;
+        ata_read(
+            drive_id,
+            0,
+            1,
+            partition_buffer[drive_id],
+            _ata_identify_partitions_callback,
+            drive_id_ptr
+        );
+    }
 }
 
 void ata_init()

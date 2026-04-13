@@ -160,11 +160,11 @@ void _ata_irq_handler();
 /**
  * Copies partition data for later use.
  */
-void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr);
+void _ata_save_partition_data(uint8_t drive_id, ata_mbr_t* mbr);
 
 /**
  * Copies disk information for later uses.
  */
-void _ata_load_disk_info(const uint8_t drive_id, const ata_disk_info_t* src);
+void _ata_save_disk_info(const uint8_t drive_id, const ata_disk_info_t* src);
 
 #endif

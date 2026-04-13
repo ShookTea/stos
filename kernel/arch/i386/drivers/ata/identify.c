@@ -98,7 +98,7 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
     di.type = PIO;
     di.lba28_sec_count = lba28_sectors_count;
     strcpy(di.firmare_name, firmware_name);
-    _ata_load_disk_info(disk_id, &di);
+    _ata_save_disk_info(disk_id, &di);
 
     _debug_printf("Drive found, status: %#x\n", status);
 }
@@ -230,7 +230,7 @@ static void _load_partition_info_to_disk_data(
     dest->partitions_count++;
 }
 
-void _ata_load_disk_info(const uint8_t drive_id, const ata_disk_info_t* src)
+void _ata_save_disk_info(const uint8_t drive_id, const ata_disk_info_t* src)
 {
     if (drive_id >= ATA_DRIVE_NONE) {
         return;
@@ -238,7 +238,7 @@ void _ata_load_disk_info(const uint8_t drive_id, const ata_disk_info_t* src)
     memcpy(&disk_info[drive_id], src, sizeof(ata_disk_info_t));
 }
 
-void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
+void _ata_save_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
 {
     _debug_printf("MBR load completed for drive ID %u\n", drive_id);
     if (mbr->signature_bytes != 0xAA55) {

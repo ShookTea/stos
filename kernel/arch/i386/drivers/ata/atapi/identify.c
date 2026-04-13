@@ -78,7 +78,7 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
     di.type = ATAPI;
 
     strcpy(di.firmare_name, firmware_name);
-    _ata_load_disk_info(disk_id, &di);
+    _ata_save_disk_info(disk_id, &di);
 
     _debug_puts("Drive found");
 }

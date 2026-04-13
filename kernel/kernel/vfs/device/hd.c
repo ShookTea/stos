@@ -389,6 +389,11 @@ vfs_node_t** device_hd_mount()
     while (*ata_drive_ptr != ATA_DRIVE_NONE) {
         ata_disk_info_t disk_info;
         ata_load_disk_info(*ata_drive_ptr, &disk_info);
+        if (disk_info.type != PIO) {
+            // Only PIO drives are supported - skip
+            ata_drive_ptr++;
+            continue;
+        }
 
         drive_name[2] = drive_letter;
         _debug_printf(

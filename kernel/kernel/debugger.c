@@ -61,27 +61,31 @@ static void command_ata_dump_drive(uint8_t drive_id)
         printf("  Firmware: %s\n", disk_info.firmare_name);
     }
 
-    printf("  %u partitions present:\n", disk_info.partitions_count);
-    puts("  ┌────┬───────┬────────────┬────────────┬────────────┬────────────┐");
-    puts("  │ Id │ Boot? │       Type │  LBA start │    Sectors │ Size (MiB) │");
-    puts("  ├────┼───────┼────────────┼────────────┼────────────┼────────────┤");
-    for (size_t i = 0; i < disk_info.partitions_count; i++) {
-        ata_partition_t part = disk_info.partitions[i];
-        char* type
-            = part.type == ATA_PARTITION_TYPE_FAT32 ? "FAT-32"
-            : part.type == ATA_PARTITION_TYPE_LINUX_NATIVE ? "Linux"
-            : "unknown";
-        printf(
-            "  │ %2u │ %5s │ %10s │ %10d │ %10d | %10d |\n",
-            i,
-            part.bootable ? " yes " : "",
-            type,
-            part.lba_start,
-            part.sectors_count,
-            part.sectors_count / 2048
-        );
+    if (disk_info.partitions_count == 0) {
+        puts("  No partitions present.");
+    } else {
+        printf("  %u partitions present:\n", disk_info.partitions_count);
+        puts("  ┌────┬───────┬────────────┬────────────┬────────────┬────────────┐");
+        puts("  │ Id │ Boot? │       Type │  LBA start │    Sectors │ Size (MiB) │");
+        puts("  ├────┼───────┼────────────┼────────────┼────────────┼────────────┤");
+        for (size_t i = 0; i < disk_info.partitions_count; i++) {
+            ata_partition_t part = disk_info.partitions[i];
+            char* type
+                = part.type == ATA_PARTITION_TYPE_FAT32 ? "FAT-32"
+                : part.type == ATA_PARTITION_TYPE_LINUX_NATIVE ? "Linux"
+                : "unknown";
+            printf(
+                "  │ %2u │ %5s │ %10s │ %10d │ %10d | %10d |\n",
+                i,
+                part.bootable ? " yes " : "",
+                type,
+                part.lba_start,
+                part.sectors_count,
+                part.sectors_count / 2048
+            );
+        }
+        puts("  └────┴───────┴────────────┴────────────┴────────────┴────────────┘");
     }
-    puts("  └────┴───────┴────────────┴────────────┴────────────┴────────────┘");
 }
 
 static void handle_command_sent()
