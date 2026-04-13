@@ -1,19 +1,21 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include "../../../io.h"
 #include "./atapi.h"
 #include "../common.h"
 #include "kernel/debug.h"
+#include "kernel/drivers/ata.h"
 
 #define _debug_puts(...) debug_puts_c("ATAPI/id", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("ATAPI/id", __VA_ARGS__)
 
-void _atapi_identify(uint16_t bus_base, uint8_t target_drive __attribute__((unused)))
+void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
 {
     _debug_puts("Detecting ATAPI device");
-
-    // bool primary = bus_base == ATA_BUS_BASE_PRIMARY;
-    // bool master = target_drive == ATA_COM_TARGET_DRIVE_MASTER;
+    bool primary = bus_base == ATA_BUS_BASE_PRIMARY;
+    bool master = target_drive == ATA_COM_TARGET_DRIVE_MASTER;
+    uint8_t disk_id = (primary ? 0b00 : 0b10) | (master ? 0b00 : 0b01);
 
     // Send identify packet device command
     outb(bus_base | ATA_BUS_OFFSET_COMMAND, ATA_COM_IDENTIFY_PACKET);
@@ -71,4 +73,12 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive __attribute__((unus
             }
         }
     }
+
+    ata_disk_info_t di;
+    di.type = ATAPI;
+
+    strcpy(di.firmare_name, firmware_name);
+    _ata_load_disk_info(disk_id, &di);
+
+    _debug_puts("Drive found");
 }
