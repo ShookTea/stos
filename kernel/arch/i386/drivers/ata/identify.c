@@ -3,7 +3,7 @@
 #include "./common.h"
 #include "../../io.h"
 #include "kernel/memory/kmalloc.h"
-#include "../atapi/common.h"
+#include "./atapi/atapi.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>

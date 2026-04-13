@@ -1,8 +1,8 @@
 #include <stdbool.h>
 #include <stdint.h>
-#include "../../io.h"
-#include "./common.h"
-#include "../ata/common.h"
+#include "../../../io.h"
+#include "./atapi.h"
+#include "../common.h"
 #include "kernel/debug.h"
 
 #define _debug_puts(...) debug_puts_c("ATAPI/id", __VA_ARGS__)
