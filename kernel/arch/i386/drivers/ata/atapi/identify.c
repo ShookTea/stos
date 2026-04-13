@@ -128,6 +128,8 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
 
     ata_disk_info_t di;
     di.type = ATAPI;
+    di.sector_size = 0;
+    di.sectors_count = 0;
 
     strcpy(di.firmare_name, firmware_name);
     _ata_save_disk_info(disk_id, &di);

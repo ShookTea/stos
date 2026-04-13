@@ -39,6 +39,8 @@ typedef struct {
     char firmare_name[40];
     // Total count of sectors
     uint32_t sectors_count;
+    // Size of a single sector in bytes
+    uint16_t sector_size;
     // Actual number of partitions stored in partitions[] array
     uint8_t partitions_count;
     ata_partition_t partitions[32];

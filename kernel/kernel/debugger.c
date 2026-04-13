@@ -42,24 +42,25 @@ static void command_ata_dump_drive(uint8_t drive_id)
         return;
     }
 
-    if (disk_info.type == PIO) {
-        printf(
-            "ATA drive %s/%s detected\n",
-            primary ? "primary" : "secondary",
-            master ? "master" : "slave"
-        );
-        printf("  Firmware: %s\n", disk_info.firmare_name);
-        uint32_t sectors = disk_info.sectors_count;
-        uint32_t mib = (sectors / 2) / 1024;
-        printf("  Sectors count: %u (%u MiB)\n", sectors, mib);
-    } else if (disk_info.type == ATAPI) {
-        printf(
-            "ATAPI drive %s/%s detected\n",
-            primary ? "primary" : "secondary",
-            master ? "master" : "slave"
-        );
-        printf("  Firmware: %s\n", disk_info.firmare_name);
-    }
+    printf(
+        "%s drive %s/%s detected\n",
+        disk_info.type == PIO ? "ATA"
+        : disk_info.type == ATAPI ? "ATAPI"
+        : "invalid",
+        primary ? "primary" : "secondary",
+        master ? "master" : "slave"
+    );
+    printf("  Firmware: %s\n", disk_info.firmare_name);
+    uint32_t sectors = disk_info.sectors_count;
+    uint16_t sector_size = disk_info.sector_size;
+    uint64_t mib = (((uint64_t)sectors) * sector_size) / (1024 * 1024);
+
+    printf(
+        "  Sector size: %u B, sectors count: %u (%u MiB)\n",
+        sector_size,
+        sectors,
+        mib
+    );
 
     if (disk_info.partitions_count == 0) {
         puts("  No partitions present.");
@@ -74,14 +75,16 @@ static void command_ata_dump_drive(uint8_t drive_id)
                 = part.type == ATA_PARTITION_TYPE_FAT32 ? "FAT-32"
                 : part.type == ATA_PARTITION_TYPE_LINUX_NATIVE ? "Linux"
                 : "unknown";
+            uint32_t part_sectors = part.sectors_count;
+            uint64_t part_mib = (((uint64_t)part_sectors) * sector_size) / (1024 * 1024);
             printf(
                 "  │ %2u │ %5s │ %10s │ %10d │ %10d | %10d |\n",
                 i,
                 part.bootable ? " yes " : "",
                 type,
                 part.lba_start,
-                part.sectors_count,
-                part.sectors_count / 2048
+                part_sectors,
+                part_mib
             );
         }
         puts("  └────┴───────┴────────────┴────────────┴────────────┴────────────┘");

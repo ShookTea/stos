@@ -97,6 +97,7 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
     ata_disk_info_t di;
     di.type = PIO;
     di.sectors_count = lba28_sectors_count;
+    di.sector_size = 512; // It's standard for ATA disks
     strcpy(di.firmare_name, firmware_name);
     _ata_save_disk_info(disk_id, &di);
 
