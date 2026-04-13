@@ -30,23 +30,22 @@ typedef struct {
 
 // Calculation around sector locations
 
-#define SECTOR_SIZE 512
-
 typedef struct {
     size_t size;
     size_t low_sector_lba;
     size_t sector_count;
     size_t lowest_sector_byte;
+    size_t sector_size;
 } hd_sector_location_t;
 
-static inline size_t sector_align_down(size_t addr)
+static inline size_t sector_align_down(size_t addr, size_t sector_size)
 {
-    return addr & ~(SECTOR_SIZE - 1);
+    return addr & ~(sector_size - 1);
 }
 
-static inline size_t sector_align_up(size_t addr)
+static inline size_t sector_align_up(size_t addr, size_t sector_size)
 {
-    return (addr + SECTOR_SIZE - 1) & ~(SECTOR_SIZE - 1);
+    return (addr + sector_size - 1) & ~(sector_size - 1);
 }
 
 static void load_sector_location(
@@ -57,18 +56,20 @@ static void load_sector_location(
 ) {
     ata_disk_info_t disk_info;
     ata_load_disk_info(meta->disk_id, &disk_info);
+    size_t sector_size = disk_info.sector_size;
 
     // Align offset to sector size
-    size_t lowest_sector_byte = sector_align_down(offset);
-    size_t highest_sector_byte = sector_align_up(offset + size);
+    size_t lowest_sector_byte = sector_align_down(offset, sector_size);
+    size_t highest_sector_byte = sector_align_up(offset + size, sector_size);
 
     loc->size = size;
     loc->lowest_sector_byte = lowest_sector_byte;
+    loc->sector_size = sector_size;
 
     if (!meta->is_partition) {
         size_t disk_sectors = disk_info.sectors_count;
-        loc->low_sector_lba = lowest_sector_byte / SECTOR_SIZE;
-        size_t high_sector_lba = highest_sector_byte / SECTOR_SIZE;
+        loc->low_sector_lba = lowest_sector_byte / sector_size;
+        size_t high_sector_lba = highest_sector_byte / sector_size;
 
         if (loc->low_sector_lba >= disk_sectors) {
             loc->size = 0;
@@ -77,7 +78,7 @@ static void load_sector_location(
 
         if (high_sector_lba > disk_sectors) {
             high_sector_lba = disk_sectors;
-            loc->size = disk_sectors * SECTOR_SIZE - offset;
+            loc->size = disk_sectors * sector_size - offset;
         }
 
         loc->sector_count = high_sector_lba - loc->low_sector_lba;
@@ -95,8 +96,8 @@ static void load_sector_location(
     part_info = disk_info.partitions[meta->partition_id];
 
     // Calculate LBA position inside partition
-    size_t low_sector_lba_in_part = lowest_sector_byte / SECTOR_SIZE;
-    size_t high_sector_lba_in_part = highest_sector_byte / SECTOR_SIZE;
+    size_t low_sector_lba_in_part = lowest_sector_byte / sector_size;
+    size_t high_sector_lba_in_part = highest_sector_byte / sector_size;
     size_t sector_count = high_sector_lba_in_part - low_sector_lba_in_part;
 
     // If low sector is beyond partition limits, no read is possible.
@@ -110,7 +111,7 @@ static void load_sector_location(
     if (high_sector_lba_in_part > part_info.sectors_count) {
         sector_count -= high_sector_lba_in_part - part_info.sectors_count;
         high_sector_lba_in_part = part_info.sectors_count;
-        loc->size = part_info.sectors_count * SECTOR_SIZE - offset;
+        loc->size = part_info.sectors_count * sector_size - offset;
     }
 
     loc->low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
@@ -305,7 +306,7 @@ static size_t write(
     // If original offset and size was not aligned to sectors, we need to first
     // load data, so we won't overwrite parts of sectors that are not updated
     // by the caller.
-    if (offset != loc.lowest_sector_byte || size % SECTOR_SIZE != 0) {
+    if (offset != loc.lowest_sector_byte || size % loc.sector_size != 0) {
         _debug_printf(
             "[wait_idx=%u] not aligned to sectors - reading wait started\n",
             wait_idx
@@ -389,6 +390,7 @@ vfs_node_t** device_hd_mount()
     while (*ata_drive_ptr != ATA_DRIVE_NONE) {
         ata_disk_info_t disk_info;
         ata_load_disk_info(*ata_drive_ptr, &disk_info);
+        size_t sector_size = disk_info.sector_size;
         if (disk_info.type != PIO) {
             // Only PIO drives are supported - skip
             ata_drive_ptr++;
@@ -407,7 +409,7 @@ vfs_node_t** device_hd_mount()
         node->read_node = read;
         node->write_node = write;
         uint32_t sectors_count = disk_info.sectors_count;
-        node->length = (uint64_t)sectors_count * SECTOR_SIZE;
+        node->length = (uint64_t)sectors_count * sector_size;
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),
             KMALLOC_ZERO
@@ -437,7 +439,7 @@ vfs_node_t** device_hd_mount()
             vfs_populate_node(part_node, partition_name, VFS_TYPE_BLOCK_DEVICE);
             part_node->read_node = read;
             part_node->write_node = write;
-            part_node->length = (uint64_t)part_info.sectors_count * SECTOR_SIZE;
+            part_node->length = (uint64_t)part_info.sectors_count * sector_size;
             hd_metadata_t* metadata = kmalloc_flags(
                 sizeof(hd_metadata_t),
                 KMALLOC_ZERO
