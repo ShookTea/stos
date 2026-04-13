@@ -4,6 +4,7 @@
 #include <libds/ringbuf.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "kernel/drivers/ata.h"
 
 // Two ports, for primary and secondary channel. Use that + ATA_BUS_OFFSET_.
 #define ATA_BUS_BASE_PRIMARY 0x1F0
@@ -160,5 +161,10 @@ void _ata_irq_handler();
  * Copies partition data for later use.
  */
 void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr);
+
+/**
+ * Copies disk information for later uses.
+ */
+void _ata_load_disk_info(const uint8_t drive_id, const ata_disk_info_t* src);
 
 #endif

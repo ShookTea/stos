@@ -110,9 +110,12 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
         }
     }
 
-    disk_info[disk_id].type = PIO;
-    disk_info[disk_id].lba28_sec_count = lba28_sectors_count;
-    strcpy(disk_info[disk_id].firmare_name, firmware_name);
+    ata_disk_info_t di;
+    di.type = PIO;
+    di.lba28_sec_count = lba28_sectors_count;
+    strcpy(di.firmare_name, firmware_name);
+    _ata_load_disk_info(disk_id, &di);
+
     _debug_printf("Drive found, status: %#x\n", status);
 }
 
@@ -241,6 +244,14 @@ static void _load_partition_info_to_disk_data(
     part->sectors_count = pte->partition_sectors_count;
     part->bootable = pte->drive_attributes & 0x80;
     dest->partitions_count++;
+}
+
+void _ata_load_disk_info(const uint8_t drive_id, const ata_disk_info_t* src)
+{
+    if (drive_id >= ATA_DRIVE_NONE) {
+        return;
+    }
+    memcpy(&disk_info[drive_id], src, sizeof(ata_disk_info_t));
 }
 
 void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
