@@ -90,7 +90,8 @@ static bool create_and_enqueue(
     void* callback_data,
     bool is_write
 ) {
-    if (!ata_drive_available(ata_drive)) {
+    ata_disk_info_t info;
+    if (!ata_load_disk_info(ata_drive, &info) || info.type == NOT_PRESENT) {
         return false;
     }
 

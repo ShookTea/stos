@@ -235,11 +235,6 @@ uint32_t ata_get_lba28_sectors_count(uint8_t drive)
     return lba28_sec_count[drive];
 }
 
-bool ata_drive_available(uint8_t drive)
-{
-    return ata_get_lba28_sectors_count(drive) > 0;
-}
-
 static void _load_partition_info_to_disk_data(
     ata_mbr_partition_table_entry_t* pte,
     ata_disk_info_t* dest
