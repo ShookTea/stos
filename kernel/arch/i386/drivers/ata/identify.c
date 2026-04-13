@@ -16,20 +16,10 @@
 #define ATA_CYLINDER_ATAPI 0xEB14
 
 static uint8_t selected_drive = ATA_DRIVE_NONE;
-
-static uint32_t* lba28_sec_count = NULL;
-static char** firmware_names = NULL;
-static ata_mbr_t* mbrs = NULL;
 static ata_disk_info_t* disk_info = NULL;
 
 static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
 {
-    if (lba28_sec_count == NULL) {
-        lba28_sec_count = kmalloc_flags(sizeof(uint32_t) * 4, KMALLOC_ZERO);
-    }
-    if (firmware_names == NULL) {
-        firmware_names = kmalloc_flags(sizeof(char*) * 4, KMALLOC_ZERO);
-    }
     _debug_puts("Detecting ATA PIO device");
     bool primary = bus_base == ATA_BUS_BASE_PRIMARY;
     bool master = target_drive == ATA_COM_TARGET_DRIVE_MASTER;
@@ -72,7 +62,6 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
                 _debug_puts("LBA28 not supported");
             } else {
                 _debug_printf("LBA28 sectors count: %u\n", lba28_sectors_count);
-                lba28_sec_count[disk_id] = lba28_sectors_count;
             }
         } else if (i == 100) {
             // LBA48 sectors count
@@ -101,11 +90,6 @@ static void _ata_pio_identify(uint16_t bus_base, uint8_t target_drive)
                     i--;
                 }
                 _debug_printf("Firmware: '%s'\n", firmware_name);
-                firmware_names[disk_id] = kmalloc_flags(
-                    sizeof(char) * 40,
-                    KMALLOC_ZERO
-                );
-                strcpy(firmware_names[disk_id], firmware_name);
             }
         }
     }
@@ -177,19 +161,19 @@ void _ata_identify_devices()
     _ata_identify(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
 
     // Selecting first available drive
-    if (lba28_sec_count[ATA_DRIVE_PRIMARY_MASTER] > 0) {
+    if (disk_info[ATA_DRIVE_PRIMARY_MASTER].type != NOT_PRESENT) {
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_PRIMARY_MASTER;
         _debug_puts("Primary/master drive selected");
-    } else if (lba28_sec_count[ATA_DRIVE_PRIMARY_SLAVE] > 0) {
+    } else if (disk_info[ATA_DRIVE_PRIMARY_SLAVE].type != NOT_PRESENT) {
         _ata_drive_select(ATA_BUS_BASE_PRIMARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_PRIMARY_SLAVE;
         _debug_puts("Primary/slave drive selected");
-    } else if (lba28_sec_count[ATA_DRIVE_SECONDARY_MASTER] > 0) {
+    } else if (disk_info[ATA_DRIVE_SECONDARY_MASTER].type != NOT_PRESENT) {
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_MASTER);
         selected_drive = ATA_DRIVE_SECONDARY_MASTER;
         _debug_puts("Secondary/master drive selected");
-    } else if (lba28_sec_count[ATA_DRIVE_SECONDARY_SLAVE] > 0) {
+    } else if (disk_info[ATA_DRIVE_SECONDARY_SLAVE].type != NOT_PRESENT) {
         _ata_drive_select(ATA_BUS_BASE_SECONDARY, ATA_COM_TARGET_DRIVE_SLAVE);
         selected_drive = ATA_DRIVE_SECONDARY_SLAVE;
         _debug_puts("Secondary/slave drive selected");
@@ -207,19 +191,19 @@ void ata_get_available_drives(uint8_t* res)
 {
     memset(res, ATA_DRIVE_NONE, sizeof(uint8_t) * 5);
     size_t idx = 0;
-    if (lba28_sec_count == NULL) {
+    if (disk_info == NULL) {
         return;
     }
-    if (lba28_sec_count[ATA_DRIVE_PRIMARY_MASTER]) {
+    if (disk_info[ATA_DRIVE_PRIMARY_MASTER].type != NOT_PRESENT) {
         res[idx++] = ATA_DRIVE_PRIMARY_MASTER;
     }
-    if (lba28_sec_count[ATA_DRIVE_PRIMARY_SLAVE]) {
+    if (disk_info[ATA_DRIVE_PRIMARY_SLAVE].type != NOT_PRESENT) {
         res[idx++] = ATA_DRIVE_PRIMARY_SLAVE;
     }
-    if (lba28_sec_count[ATA_DRIVE_SECONDARY_MASTER]) {
+    if (disk_info[ATA_DRIVE_SECONDARY_MASTER].type != NOT_PRESENT) {
         res[idx++] = ATA_DRIVE_SECONDARY_MASTER;
     }
-    if (lba28_sec_count[ATA_DRIVE_SECONDARY_SLAVE]) {
+    if (disk_info[ATA_DRIVE_SECONDARY_SLAVE].type != NOT_PRESENT) {
         res[idx++] = ATA_DRIVE_SECONDARY_SLAVE;
     }
 }
@@ -269,11 +253,6 @@ void _ata_load_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
     _debug_printf("part2 type=%02x\n", mbr->partition_2.partition_type);
     _debug_printf("part3 type=%02x\n", mbr->partition_3.partition_type);
     _debug_printf("part4 type=%02x\n", mbr->partition_4.partition_type);
-
-    if (mbrs == NULL) {
-        mbrs = kmalloc_flags(sizeof(ata_mbr_t) * 4, KMALLOC_ZERO);
-    }
-    memcpy(mbrs + drive_id, mbr, sizeof(ata_mbr_t));
 
     _load_partition_info_to_disk_data(&mbr->partition_1, &disk_info[drive_id]);
     _load_partition_info_to_disk_data(&mbr->partition_2, &disk_info[drive_id]);
