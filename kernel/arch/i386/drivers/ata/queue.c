@@ -79,8 +79,8 @@ void _ata_queue_schedule(bool primary)
             } else {
                 secondary_req_in_progress = false;
             }
-            req.callback(req.callback_data);
             ds_ringbuf_pop(queue, &req);
+            req.callback(req.callback_data);
             _ata_queue_schedule(primary);
         } else {
             _debug_puts("current task still in progress");

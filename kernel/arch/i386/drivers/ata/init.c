@@ -38,7 +38,7 @@ static void _ata_identify_partitions(uint8_t drive_id)
     ata_load_disk_info(drive_id, &di);
     if (di.type == PIO) {
         partition_buffer[drive_id] = kmalloc_flags(
-            sizeof(uint16_t) * 256,
+            sizeof(uint16_t) * (di.sector_size / 2),
             KMALLOC_ZERO
         );
         partition_buffer_used++;

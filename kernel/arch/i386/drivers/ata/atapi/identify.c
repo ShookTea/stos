@@ -13,9 +13,14 @@
 
 #define swipe_endian(w) ((uint16_t)((w >> 8) | (w << 8)))
 
+typedef enum {
+    READ_CAPACITY,
+    READ_VOLUME_DESCRIPTOR
+} atapi_callback_command_t;
+
 typedef struct {
     uint8_t disk_id;
-    uint8_t command;
+    atapi_callback_command_t command;
 } atapi_callback_t;
 
 static uint16_t** callback_buffers;
@@ -30,12 +35,11 @@ static void _callback(void* _data)
         callback_data->command
     );
 
+    ata_disk_info_t di;
+    ata_load_disk_info(callback_data->disk_id, &di);
     uint16_t* buf = callback_buffers[callback_data->disk_id];
 
-    if (callback_data->command == ATAPI_COM_READ_CAPACITY) {
-        ata_disk_info_t di;
-        ata_load_disk_info(callback_data->disk_id, &di);
-
+    if (callback_data->command == READ_CAPACITY) {
         // Last logical address block address
         uint16_t last_lba_high = swipe_endian(buf[0]);
         uint16_t last_lba_low = swipe_endian(buf[1]);
@@ -58,6 +62,55 @@ static void _callback(void* _data)
         di.sector_size = block_size;
         di.sectors_count = last_lba + 1;
         _ata_save_disk_info(callback_data->disk_id, &di);
+
+        // Send READ command for sector 0x10 - where volume descriptors start
+        callback_buffers[callback_data->disk_id] = krealloc(
+            callback_buffers[callback_data->disk_id],
+            sizeof(uint16_t) * (di.sector_size / 2)
+        );
+        callback_data->command = READ_VOLUME_DESCRIPTOR;
+        ata_read(
+            callback_data->disk_id,
+            0x10,
+            1,
+            callback_buffers[callback_data->disk_id],
+            _callback,
+            callback_data
+        );
+        return;
+    } else if (callback_data->command == READ_VOLUME_DESCRIPTOR) {
+        // Reading volume descriptor
+        _debug_puts("Volume descriptors, sector 0:");
+        uint8_t* buf2 = (uint8_t*)buf;
+        uint8_t vol_descr_code = buf2[0];
+        if (buf2[1] != 'C' || buf2[2] != 'D' || buf2[3] != '0'
+            || buf2[4] != '0' || buf2[5] != '1'
+        ) {
+            _debug_puts("Invalid volume descriptor header - missing 'CD001'");
+        } else if (buf2[6] != 0x01) {
+            _debug_puts("Invalid volume descriptor header - wrong version");
+        } else {
+            switch (vol_descr_code) {
+                case 0:
+                    _debug_puts("Type: boot record");
+                    break;
+                case 1:
+                    _debug_puts("Type: primary volume descriptor");
+                    break;
+                case 2:
+                    _debug_puts("Type: supplementary volume descriptor");
+                    break;
+                case 3:
+                    _debug_puts("Type: volume partition descriptor");
+                    break;
+                case 255:
+                    _debug_puts("Type: volume descriptor set terminator");
+                    break;
+                default:
+                    _debug_printf("Type: other (0x%02X)\n", vol_descr_code);
+                    break;
+            }
+        }
     }
 
     kfree(callback_buffers[callback_data->disk_id]);
@@ -151,7 +204,7 @@ void _atapi_identify(uint16_t bus_base, uint8_t target_drive)
 
     atapi_callback_t* data = kmalloc(sizeof(atapi_callback_t));
     data->disk_id = disk_id;
-    data->command = ATAPI_COM_READ_CAPACITY;
+    data->command = READ_CAPACITY;
     uint8_t packet[12] = { ATAPI_COM_READ_CAPACITY };
     _atapi_send_command(
         disk_id,
