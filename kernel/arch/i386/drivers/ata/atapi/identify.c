@@ -64,8 +64,9 @@ static void _parse_primary_volume_descriptor(uint8_t disk_id __attribute__((unus
     int timezone = (int)buf[829];
     bool minus = timezone < 0;
     if (minus) timezone *= -1;
-    _debug_printf(
-        "  Volume creation time: %c%c%c%c-%c%c-%c%c %c%c:%c%c:%c%c.%c%c %c%02u:%02u\n",
+    _debug_printf("  Volume creation time: ");
+    debug_printf(
+        "%c%c%c%c-%c%c-%c%c %c%c:%c%c:%c%c.%c%c %c%02u:%02u\n",
         buf[813], buf[814], buf[815], buf[816],
         buf[817], buf[818],
         buf[819], buf[820],
