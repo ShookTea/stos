@@ -27,6 +27,62 @@ typedef struct {
 static uint16_t** callback_buffers;
 static uint8_t callback_buffers_used = 0;
 
+static inline uint32_t buf_loc_to_uint32(uint8_t* buf, size_t i)
+{
+    return (uint32_t)buf[i]
+        | ((uint32_t)buf[i + 1] << 8)
+        | ((uint32_t)buf[i + 2] << 16)
+        | ((uint32_t)buf[i + 3] << 24);
+}
+
+static inline uint16_t buf_loc_to_uint16(uint8_t* buf, size_t i)
+{
+    return (uint16_t)buf[i]
+        | ((uint16_t)buf[i + 1] << 8);
+}
+
+static void _parse_primary_volume_descriptor(uint8_t disk_id __attribute__((unused)), uint8_t* buf)
+{
+    _debug_puts("  Type: primary volume descriptor");
+    char* c = kmalloc_flags(sizeof(char) * 33, KMALLOC_ZERO);
+    memcpy(c, buf + 40, 32);
+    _debug_printf("  Volume identifier: %s\n", c);
+    uint32_t volume_space_size = buf_loc_to_uint32(buf, 80);
+    _debug_printf("  Number of logical blocks: %u\n", volume_space_size);
+    uint16_t logical_block_size = buf_loc_to_uint16(buf, 128);
+    _debug_printf("  Logical block size: %u B\n", logical_block_size);
+    uint32_t path_table_size = buf_loc_to_uint32(buf, 132);
+    _debug_printf("  Path table size: %u B\n", path_table_size);
+    uint32_t path_table_lba = buf_loc_to_uint32(buf, 140);
+    uint32_t path_table_lba_optional = buf_loc_to_uint32(buf, 144);
+    _debug_printf(
+        "  LBA of path table: 0x%X (optional: 0x%X)\n",
+        path_table_lba,
+        path_table_lba_optional
+    );
+
+    int timezone = (int)buf[829];
+    bool minus = timezone < 0;
+    if (minus) timezone *= -1;
+    _debug_printf(
+        "  Volume creation time: %c%c%c%c-%c%c-%c%c %c%c:%c%c:%c%c.%c%c %c%02u:%02u\n",
+        buf[813], buf[814], buf[815], buf[816],
+        buf[817], buf[818],
+        buf[819], buf[820],
+
+        buf[821], buf[822],
+        buf[823], buf[824],
+        buf[825], buf[826],
+        buf[827], buf[828],
+
+        minus ? '-' : '+',
+        timezone / 4,
+        (timezone % 4) * 15
+    );
+
+    kfree(c);
+}
+
 static void _callback(void* _data)
 {
     atapi_callback_t* callback_data = _data;
@@ -102,19 +158,22 @@ static void _callback(void* _data)
             else {
                 switch (vol_descr_code) {
                     case 0:
-                        _debug_puts("Type: boot record");
+                        _debug_puts("  Type: boot record");
                         break;
                     case 1:
-                        _debug_puts("Type: primary volume descriptor");
+                        _parse_primary_volume_descriptor(
+                            callback_data->disk_id,
+                            buf2
+                        );
                         break;
                     case 2:
-                        _debug_puts("Type: supplementary volume descriptor");
+                        _debug_puts("  Type: supplementary volume descriptor");
                         break;
                     case 3:
-                        _debug_puts("Type: volume partition descriptor");
+                        _debug_puts("  Type: volume partition descriptor");
                         break;
                     default:
-                        _debug_printf("Type: other (0x%02X)\n", vol_descr_code);
+                        _debug_printf("  Type: ??? (0x%02X)\n", vol_descr_code);
                         break;
                 }
                 // There will be more entries coming after that one - schedule
