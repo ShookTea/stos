@@ -254,7 +254,7 @@ dentry_t* initrd_mount()
     } while (tar_header != NULL);
 
     if (initrd) {
-        return vfs_mount("initrd", initrd);
+        return vfs_add_node("initrd", initrd);
     }
 
     return NULL;

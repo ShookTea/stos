@@ -136,7 +136,7 @@ dentry_t* vfs_dentry_create(
     return d;
 }
 
-dentry_t* vfs_mount(const char* name, vfs_node_t* inode)
+dentry_t* vfs_add_node(const char* name, vfs_node_t* inode)
 {
     if (vfs_root == NULL) {
         return NULL;

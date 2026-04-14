@@ -162,7 +162,7 @@ void vfs_init();
  * Mounts an inode under the VFS root with the given name. Returns the created
  * dentry, or NULL if the root is not yet initialized.
  */
-dentry_t* vfs_mount(const char* name, vfs_node_t* inode);
+dentry_t* vfs_add_node(const char* name, vfs_node_t* inode);
 
 /**
  * Creates a new dentry as a child of `parent`, wrapping `inode`. Used by
