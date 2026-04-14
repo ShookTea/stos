@@ -21,6 +21,7 @@ typedef enum {
 typedef struct {
     uint8_t disk_id;
     atapi_callback_command_t command;
+    uint8_t volume_descriptor_index;
 } atapi_callback_t;
 
 static uint16_t** callback_buffers;
@@ -69,6 +70,7 @@ static void _callback(void* _data)
             sizeof(uint16_t) * (di.sector_size / 2)
         );
         callback_data->command = READ_VOLUME_DESCRIPTOR;
+        callback_data->volume_descriptor_index = 0;
         ata_read(
             callback_data->disk_id,
             0x10,
@@ -77,10 +79,13 @@ static void _callback(void* _data)
             _callback,
             callback_data
         );
-        return;
+        return; // Call return to prevent freeing memory
     } else if (callback_data->command == READ_VOLUME_DESCRIPTOR) {
         // Reading volume descriptor
-        _debug_puts("Volume descriptors, sector 0:");
+        _debug_printf(
+            "Volume descriptors, sector %u:\n",
+            callback_data->volume_descriptor_index
+        );
         uint8_t* buf2 = (uint8_t*)buf;
         uint8_t vol_descr_code = buf2[0];
         if (buf2[1] != 'C' || buf2[2] != 'D' || buf2[3] != '0'
@@ -90,25 +95,40 @@ static void _callback(void* _data)
         } else if (buf2[6] != 0x01) {
             _debug_puts("Invalid volume descriptor header - wrong version");
         } else {
-            switch (vol_descr_code) {
-                case 0:
-                    _debug_puts("Type: boot record");
-                    break;
-                case 1:
-                    _debug_puts("Type: primary volume descriptor");
-                    break;
-                case 2:
-                    _debug_puts("Type: supplementary volume descriptor");
-                    break;
-                case 3:
-                    _debug_puts("Type: volume partition descriptor");
-                    break;
-                case 255:
-                    _debug_puts("Type: volume descriptor set terminator");
-                    break;
-                default:
-                    _debug_printf("Type: other (0x%02X)\n", vol_descr_code);
-                    break;
+            if (vol_descr_code == 255) {
+                // This is the terminator - there's no more entries after that
+                _debug_puts("Type: volume descriptor set terminator");
+            }
+            else {
+                switch (vol_descr_code) {
+                    case 0:
+                        _debug_puts("Type: boot record");
+                        break;
+                    case 1:
+                        _debug_puts("Type: primary volume descriptor");
+                        break;
+                    case 2:
+                        _debug_puts("Type: supplementary volume descriptor");
+                        break;
+                    case 3:
+                        _debug_puts("Type: volume partition descriptor");
+                        break;
+                    default:
+                        _debug_printf("Type: other (0x%02X)\n", vol_descr_code);
+                        break;
+                }
+                // There will be more entries coming after that one - schedule
+                // reading of the next entry
+                callback_data->volume_descriptor_index++;
+                ata_read(
+                    callback_data->disk_id,
+                    0x10 + callback_data->volume_descriptor_index,
+                    1,
+                    callback_buffers[callback_data->disk_id],
+                    _callback,
+                    callback_data
+                );
+                return; // Call return to prevent freeing memory
             }
         }
     }
