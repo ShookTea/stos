@@ -5,6 +5,7 @@
 #include "../mount.h"
 #include "stdlib.h"
 #include <stdint.h>
+#include <string.h>
 #include "kernel/debug.h"
 #include "./iso9660.h"
 
@@ -93,6 +94,27 @@ static bool validate_volume_descriptor(mount_task_t* task)
     return true;
 }
 
+static void dump_dirrec(iso_dir_record_t* dirrec)
+{
+    char* filename = kmalloc(sizeof(char) * dirrec->file_name_length + 1);
+    memcpy(filename, dirrec->file_name, dirrec->file_name_length);
+    filename[dirrec->file_name_length] = '\0';
+
+    _debug_printf("Dirrec '%s', flags=%x\n", filename, dirrec->file_flags);
+    _debug_printf(
+        "  rec length=%u, EAR length=%u\n",
+        dirrec->directory_record_length,
+        dirrec->extended_attribute_record_length
+    );
+    _debug_printf(
+        "  Extent LBA=0x%08X, size=%u\n",
+        dirrec->extent_lba,
+        dirrec->extent_size
+    );
+
+    kfree(filename);
+}
+
 static void run_mounting_task(mount_task_t* task)
 {
     vfs_file_t* file = vfs_open(task->device_file, VFS_MODE_READONLY);
@@ -115,7 +137,10 @@ static void run_mounting_task(mount_task_t* task)
         }
         if (typecode == 1) {
             _debug_puts("Primary volume descriptor found");
-            // TODO: read file data here
+
+            iso_dir_record_t dirrec;
+            memcpy(&dirrec, task->buffer + 156, 34);
+            dump_dirrec(&dirrec);
         }
     }
 }
