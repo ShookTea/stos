@@ -66,7 +66,9 @@ static void dealloc_task(size_t id)
     kfree(tasks[id]->buffer);
     wait_deallocate(tasks[id]->wait_obj);
     kfree(tasks[id]);
+    tasks[id] = NULL;
     tasks_count--;
+    spinlock_release(&tasks_spinlock);
 }
 
 static bool is_task_completed(void* arg)
@@ -115,11 +117,86 @@ static void dump_dirrec(iso_dir_record_t* dirrec)
     kfree(filename);
 }
 
+static bool iso_readdir(
+    struct vfs_node* node,
+    size_t index,
+    struct dirent* out
+) {
+    iso9660_node_t* meta = node->metadata;
+    _debug_printf(
+        "iso_readdir called for node='%s' index='%u'\n",
+        node->filename,
+        index
+    );
+
+    vfs_file_t* dev = vfs_open(meta->device_file, VFS_MODE_READONLY);
+    if (dev == NULL) {
+        _debug_puts("Device file doesn't exist anymore.");
+        return false;
+    }
+    vfs_seek(dev, meta->extent_lba * ISO_SECTOR_SIZE);
+    uint8_t* buffer = kmalloc_flags(ISO_SECTOR_SIZE, KMALLOC_ZERO);
+    vfs_read(dev, ISO_SECTOR_SIZE, buffer);
+    iso_dir_record_t dirrec;
+
+    size_t buffer_start_index = 0;
+    bool found = false;
+
+    // TODO: in case entry spans multiple sectors, we need to load other sectors
+    for (size_t i = 0; i <= index; i++) {
+        uint8_t entrysize = buffer[buffer_start_index];
+        if (entrysize == 0) {
+            break;
+        }
+        if ((buffer_start_index + entrysize) > ISO_SECTOR_SIZE) {
+            // TODO: that probably means that there's a continuation in the
+            // next sector.
+            break;
+        }
+        memcpy(&dirrec, buffer + buffer_start_index, entrysize);
+        buffer_start_index += entrysize;
+
+        if (!(dirrec.file_flags & ISO_DIR_FLAG_NOT_FINAL) && i != index) {
+            break;
+        }
+
+        if (i == index) {
+            _debug_printf("Index %u found\n", i);
+            dump_dirrec(&dirrec);
+            out->ino = i;
+            // Copy filename to out
+            char* filename = kmalloc_flags(
+                sizeof(char) * (dirrec.file_name_length + 1),
+                KMALLOC_ZERO
+            );
+            memcpy(filename, dirrec.file_name, dirrec.file_name_length);
+            // Search for first semicolon and replace it with null character
+            for (size_t i = 0; i < dirrec.file_name_length; i++) {
+                if (filename[i] == ';') {
+                    filename[i] = '\0';
+                    break;
+                }
+            }
+            strcpy(out->name, filename);
+            kfree(filename);
+            found = true;
+        }
+    }
+
+    if (!found) {
+        _debug_puts("Index not found.");
+    }
+
+    kfree(buffer);
+    vfs_close(dev);
+    return found;
+}
+
 static void run_mounting_task(mount_task_t* task)
 {
     vfs_file_t* file = vfs_open(task->device_file, VFS_MODE_READONLY);
     if (file == NULL) {
-        _debug_printf("File doesn't exit!");
+        _debug_puts("File doesn't exit!");
         task->result = MOUNT_ERR_NULL_POINTER;
         task->completed = true;
         return;
@@ -152,6 +229,7 @@ static void run_mounting_task(mount_task_t* task)
             meta->extent_lba = dirrec.extent_lba;
             meta->extent_size = dirrec.extent_size;
             inode->metadata = meta;
+            inode->readdir_node = iso_readdir;
             dump_dirrec(&dirrec);
         }
     }

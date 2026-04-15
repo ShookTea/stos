@@ -34,7 +34,8 @@ typedef struct {
 #define ISO_DIR_FLAG_EAR_FORMAT 0x08
 // EAR contains owner and group permissions
 #define ISO_DIR_FLAG_EAR_PERMISSIONS 0x10
-#define ISO_DIR_FLAG_FINAL_DIRECTORY 0x80
+// This is not the final record
+#define ISO_DIR_FLAG_NOT_FINAL 0x80
 
 typedef struct __attribute__((packed)) {
     uint8_t directory_record_length;
