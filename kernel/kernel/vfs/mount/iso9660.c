@@ -5,6 +5,7 @@
 #include "./mount.h"
 #include "stdlib.h"
 #include <stdint.h>
+#include "kernel/debug.h"
 
 #define _debug_puts(...) debug_puts_c("VFS/mount/iso9660", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/mount/iso9660", __VA_ARGS__)
@@ -17,6 +18,8 @@ typedef struct {
     dentry_t* target;
     uint16_t* buffer;
     wait_obj_t* wait_obj;
+    bool completed;
+    vfs_mount_result_t result;
 } mount_task_t;
 
 static mount_task_t** tasks = NULL;
@@ -31,6 +34,8 @@ static size_t alloc_task(dentry_t* device_file, dentry_t* target)
     task->target = target;
     task->wait_obj = wait_allocate_queue();
     task->buffer = kmalloc(sizeof(uint16_t) * (ISO_SECTOR_SIZE / 2));
+    task->completed = false;
+    task->result = MOUNT_SUCCESS;
 
     spinlock_acquire(&tasks_spinlock);
     if (tasks_count == tasks_capacity) {
@@ -74,20 +79,60 @@ static void dealloc_task(size_t id)
     tasks_count--;
 }
 
+static bool is_task_completed(void* arg)
+{
+    mount_task_t* task = arg;
+    return task->completed;
+}
+
 vfs_mount_result_t vfs_mount_iso9660(
     dentry_t* device_file,
     dentry_t* target __attribute__((unused)),
     uint16_t flags __attribute__((unused)),
     const void* data __attribute__((unused))
 ) {
+    char* device_path = kmalloc_flags(VFS_MAX_PATH_LENGTH, KMALLOC_ZERO);
+    char* target_path = kmalloc_flags(VFS_MAX_PATH_LENGTH, KMALLOC_ZERO);
+    vfs_build_absolute_path(
+        vfs_get_real_root(),
+        device_file,
+        device_path,
+        VFS_MAX_PATH_LENGTH
+    );
+    vfs_build_absolute_path(
+        vfs_get_real_root(),
+        target,
+        target_path,
+        VFS_MAX_PATH_LENGTH
+    );
+    _debug_printf(
+        "Attempting to mount device %s at target %s\n",
+        device_path,
+        target_path
+    );
+    kfree(device_path);
+    kfree(target_path);
+
     // First check: all ISO9660 files must have a size of at least 0x11 * 2 KiB:
     // - sector size in ISO9660 is 2 KiB
     // - sector 0x10 contains first volume descriptor
     if (device_file->inode->length < (0x11 * ISO_SECTOR_SIZE)) {
+        _debug_printf(
+            "Device file is too small: %u B\n",
+            device_file->inode->length
+        );
         return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
     }
 
+    // Create task entry
     size_t mount_task_id = alloc_task(device_file, target);
+    mount_task_t* task = tasks[mount_task_id];
 
-    return MOUNT_ERR_UNKNOWN_FILESYSTEM;
+    // Wait for task to be marked as completed
+    wait_on_condition(task->wait_obj, is_task_completed, task);
+
+    // Store result, deallocate memory, and return
+    vfs_mount_result_t result = task->result;
+    dealloc_task(mount_task_id);
+    return result;
 }
