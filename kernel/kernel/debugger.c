@@ -411,7 +411,7 @@ static void handle_command_sent()
                             }
                         }
                         printf(
-                            use_byte ? "  %s (%llu %s)\n" : "  %s (%.1f %s)\n",
+                            use_byte ? " - %s (%llu %s)\n" : " - %s (%.1f %s)\n",
                             child->name,
                             use_byte ? child->inode->length : length,
                             unit
