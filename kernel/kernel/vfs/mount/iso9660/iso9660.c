@@ -2,7 +2,7 @@
 #include "kernel/spinlock.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
-#include "./mount.h"
+#include "../mount.h"
 #include "stdlib.h"
 #include <stdint.h>
 #include "kernel/debug.h"
