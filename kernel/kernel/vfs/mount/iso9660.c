@@ -10,13 +10,12 @@
 #define _debug_puts(...) debug_puts_c("VFS/mount/iso9660", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/mount/iso9660", __VA_ARGS__)
 
-#define swipe_endian(w) ((uint16_t)((w >> 8) | (w << 8)))
 #define ISO_SECTOR_SIZE 2048
 
 typedef struct {
     dentry_t* device_file;
     dentry_t* target;
-    uint16_t* buffer;
+    uint8_t* buffer;
     wait_obj_t* wait_obj;
     bool completed;
     vfs_mount_result_t result;
@@ -33,7 +32,7 @@ static size_t alloc_task(dentry_t* device_file, dentry_t* target)
     task->device_file = device_file;
     task->target = target;
     task->wait_obj = wait_allocate_queue();
-    task->buffer = kmalloc(sizeof(uint16_t) * (ISO_SECTOR_SIZE / 2));
+    task->buffer = kmalloc(sizeof(uint8_t) * ISO_SECTOR_SIZE);
     task->completed = false;
     task->result = MOUNT_SUCCESS;
 
@@ -85,6 +84,22 @@ static bool is_task_completed(void* arg)
     return task->completed;
 }
 
+static void run_mounting_task(mount_task_t* task)
+{
+    vfs_file_t* file = vfs_open(task->device_file, VFS_MODE_READONLY);
+    for (size_t skip_sector = 0; skip_sector < 0x10; skip_sector++) {
+        vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
+    }
+    vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
+    _debug_printf(
+        "First bytes: %02x %02x %02x %02x\n",
+        task->buffer[0],
+        task->buffer[1],
+        task->buffer[2],
+        task->buffer[3]
+    );
+}
+
 vfs_mount_result_t vfs_mount_iso9660(
     dentry_t* device_file,
     dentry_t* target __attribute__((unused)),
@@ -128,7 +143,8 @@ vfs_mount_result_t vfs_mount_iso9660(
     size_t mount_task_id = alloc_task(device_file, target);
     mount_task_t* task = tasks[mount_task_id];
 
-    // Wait for task to be marked as completed
+    // Run task, then wait for task to be marked as completed
+    run_mounting_task(task);
     wait_on_condition(task->wait_obj, is_task_completed, task);
 
     // Store result, deallocate memory, and return
