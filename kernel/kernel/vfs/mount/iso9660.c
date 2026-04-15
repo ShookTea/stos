@@ -169,6 +169,8 @@ vfs_mount_result_t vfs_mount_iso9660(
 
     // Run task, then wait for task to be marked as completed
     run_mounting_task(task);
+    // TODO: is that waiting queue really needed? In current approach with
+    // reading from file via VFS the process is halted anyway.
     wait_on_condition(task->wait_obj, is_task_completed, task);
 
     // Store result, deallocate memory, and return
