@@ -213,4 +213,32 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type);
  */
 dentry_t* vfs_get_real_root();
 
+typedef enum {
+    MOUNT_SUCCESS = 0,
+    /** One of required parameters is NULL */
+    MOUNT_ERR_NULL_POINTER,
+    /** Unrecognized filesystem name */
+    MOUNT_ERR_UNKNOWN_FILESYSTEM,
+    /** Target is not a directory */
+    MOUNT_ERR_TARGET_NOT_DIR,
+    /** Device is not in chosen filesystem format */
+    MOUNT_ERR_DEVICE_NOT_IN_FORMAT,
+} vfs_mount_result_t;
+
+#define MOUNT_FILESYSTEM_ISO9660 "iso9660"
+
+/**
+ * Attempts to mount given device under a target, using a filesystem with given
+ * name.
+ * Flags are currently unused and should be set to 0.
+ * Data is dependent on the used filesystem.
+ */
+vfs_mount_result_t vfs_mount(
+    dentry_t* device_file,
+    dentry_t* target,
+    const char* filesystem,
+    uint16_t flags,
+    const void* data
+);
+
 #endif
