@@ -113,31 +113,32 @@ static void handle_command_sent()
     }
     if (strcmp(command, "help") == 0) {
         puts("Available commands:");
-        puts("  ata_dump       - Dumps information from ATA driver");
-        puts("  elf_dump [F]   - Dumps info about ELF file at path [F]");
-        puts("  exec [F] [A..] - Runs executable ELF file at path [F] with optional args [A..]");
-        puts("  kmalloc_a [N]  - allocates [N] bytes with kmalloc");
-        puts("  kmalloc_f [AD] - frees address [AD] with kfree");
-        puts("  kmalloc_stats  - Prints kmalloc statistics");
-        puts("  kmalloc_test   - Prints kmalloc statistics");
-        puts("  libc_test      - Runs libc test suite");
-        puts("  mb2_data       - Prints GRUB multiboot2 data");
-        puts("  memleak_test   - Runs memleak test");
-        puts("  pag_stats      - Prints paging stats");
-        puts("  pmm_stats      - Prints physical memory statistics");
-        puts("  pmm_test       - Runs physical memory test suite");
-        puts("  ps             - Lists all currently registered tasks");
-        puts("  reboot         - Reboot the system via ACPI");
-        puts("  shutdown       - Shutdown the system via ACPI");
-        puts("  slab_cache     - Prints slab allocator cache info");
-        puts("  slab_stats     - Prints slab allocator statistics");
-        puts("  vfs_cat [F]    - Prints content of a file at abs. path");
-        puts("  vfs_ls [F]     - Prints info about file at abs. path [F]");
-        puts("  vga_colors     - Prints VGA colors map");
-        puts("  vga_utf8 [N]   - Dumps Nth page of UTF-8, starting from 0");
-        puts("  vmm_memory_map - Prints detailed memory map");
-        puts("  vmm_stats      - Prints virtual memory statistics");
-        puts("  vmm_test       - Runs virtual memory test suite");
+        puts("  ata_dump          - Dumps information from ATA driver");
+        puts("  elf_dump [F]      - Dumps info about ELF file at path [F]");
+        puts("  exec [F] [A...]   - Runs executable ELF file at path [F] with optional args [A..]");
+        puts("  kmalloc_a [N]     - allocates [N] bytes with kmalloc");
+        puts("  kmalloc_f [AD]    - frees address [AD] with kfree");
+        puts("  kmalloc_stats     - Prints kmalloc statistics");
+        puts("  kmalloc_test      - Prints kmalloc statistics");
+        puts("  libc_test         - Runs libc test suite");
+        puts("  mb2_data          - Prints GRUB multiboot2 data");
+        puts("  memleak_test      - Runs memleak test");
+        puts("  mount [D] [T] [F] - Mounts device [D] in target [T] with filesystem [F]");
+        puts("  pag_stats         - Prints paging stats");
+        puts("  pmm_stats         - Prints physical memory statistics");
+        puts("  pmm_test          - Runs physical memory test suite");
+        puts("  ps                - Lists all currently registered tasks");
+        puts("  reboot            - Reboot the system via ACPI");
+        puts("  shutdown          - Shutdown the system via ACPI");
+        puts("  slab_cache        - Prints slab allocator cache info");
+        puts("  slab_stats        - Prints slab allocator statistics");
+        puts("  vfs_cat [F]       - Prints content of a file at abs. path");
+        puts("  vfs_ls [F]        - Prints info about file at abs. path [F]");
+        puts("  vga_colors        - Prints VGA colors map");
+        puts("  vga_utf8 [N]      - Dumps Nth page of UTF-8, starting from 0");
+        puts("  vmm_memory_map    - Prints detailed memory map");
+        puts("  vmm_stats         - Prints virtual memory statistics");
+        puts("  vmm_test          - Runs virtual memory test suite");
     }
     else if (strcmp(command, "ata_dump") == 0) {
         command_ata_dump_drive(ATA_DRIVE_PRIMARY_MASTER);
@@ -235,6 +236,27 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "memleak_test") == 0) {
         memory_leak_run_test();
+    }
+    else if (strcmp(command, "mount") == 0) {
+        if (argcount != 3) {
+            puts("mount requires 3 arguments");
+        } else {
+            dentry_t* device = vfs_resolve(args[0]);
+            dentry_t* target = vfs_resolve(args[1]);
+            if (device == NULL) {
+                puts("Device file not found");
+            } else if (target == NULL) {
+                puts("Target file not found");
+            } else {
+                vfs_mount_result_t result =
+                    vfs_mount(device, target, args[2], 0, NULL);
+                if (result == MOUNT_SUCCESS) {
+                    puts("Device mounted successfully");
+                } else {
+                    printf("Mounting failed with code: %d\n", result);
+                }
+            }
+        }
     }
     else if (strcmp(command, "pag_stats") == 0) {
         paging_print_stats(true);
