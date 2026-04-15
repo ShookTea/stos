@@ -109,19 +109,25 @@ static void run_mounting_task(mount_task_t* task)
     for (size_t skip_sector = 0; skip_sector < 0x10; skip_sector++) {
         vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
     }
-    vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
-    if (!validate_volume_descriptor(task)) {
-        task->result = MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
-        task->completed = true;
-        return;
+    bool terminator_found = false;
+    while (!terminator_found) {
+        vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
+        if (!validate_volume_descriptor(task)) {
+            task->result = MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
+            task->completed = true;
+            return;
+        }
+        uint8_t typecode = task->buffer[0];
+        _debug_printf("Volume type code: %u\n", typecode);
+        if (typecode == 255) {
+            _debug_puts("Terminator found");
+            terminator_found = true;
+        }
+        if (typecode == 1) {
+            _debug_puts("Primary volume descriptor found");
+            // TODO: read file data here
+        }
     }
-    _debug_printf(
-        "First bytes: %02x %02x %02x %02x\n",
-        task->buffer[0],
-        task->buffer[1],
-        task->buffer[2],
-        task->buffer[3]
-    );
 }
 
 vfs_mount_result_t vfs_mount_iso9660(
