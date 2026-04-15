@@ -257,6 +257,7 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
             node_meta->extent_lba = dirrec->extent_lba;
             node_meta->extent_size = dirrec->extent_size;
             found_node->metadata = node_meta;
+            found_node->length = dirrec->extent_size;
 
             if (is_subdir) {
                 found_node->readdir_node = iso_readdir;
