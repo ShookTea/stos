@@ -7,6 +7,17 @@
 
 #define ISO_SECTOR_SIZE 2048
 
+/**
+ * Metadata used for nodes in ISO-9660 format
+ */
+typedef struct {
+    // ISO device file
+    dentry_t* device_file;
+    uint32_t extent_lba;
+    uint32_t extent_size;
+} iso9660_node_t;
+
+// Structure for the mounting queue
 typedef struct {
     dentry_t* device_file;
     dentry_t* target;

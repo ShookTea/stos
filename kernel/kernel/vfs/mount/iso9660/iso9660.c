@@ -118,6 +118,12 @@ static void dump_dirrec(iso_dir_record_t* dirrec)
 static void run_mounting_task(mount_task_t* task)
 {
     vfs_file_t* file = vfs_open(task->device_file, VFS_MODE_READONLY);
+    if (file == NULL) {
+        _debug_printf("File doesn't exit!");
+        task->result = MOUNT_ERR_NULL_POINTER;
+        task->completed = true;
+        return;
+    }
     vfs_seek(file, 0x10 * ISO_SECTOR_SIZE);
     bool terminator_found = false;
     while (!terminator_found) {
@@ -125,6 +131,7 @@ static void run_mounting_task(mount_task_t* task)
         if (!validate_volume_descriptor(task)) {
             task->result = MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
             task->completed = true;
+            vfs_close(file);
             return;
         }
         uint8_t typecode = task->buffer[0];
@@ -138,9 +145,19 @@ static void run_mounting_task(mount_task_t* task)
 
             iso_dir_record_t dirrec;
             memcpy(&dirrec, task->buffer + 156, 34);
+            vfs_node_t* inode = task->target->inode;
+            inode->type |= VFS_TYPE_MOUNTPOINT;
+            iso9660_node_t* meta = kmalloc(sizeof(iso9660_node_t));
+            meta->device_file = task->device_file;
+            meta->extent_lba = dirrec.extent_lba;
+            meta->extent_size = dirrec.extent_size;
+            inode->metadata = meta;
             dump_dirrec(&dirrec);
         }
     }
+
+    task->completed = true;
+    vfs_close(file);
 }
 
 vfs_mount_result_t vfs_mount_iso9660(
