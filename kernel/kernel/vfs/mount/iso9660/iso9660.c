@@ -137,7 +137,7 @@ static bool iso_readdir(
     vfs_seek(dev, meta->extent_lba * ISO_SECTOR_SIZE);
     uint8_t* buffer = kmalloc_flags(ISO_SECTOR_SIZE, KMALLOC_ZERO);
     vfs_read(dev, ISO_SECTOR_SIZE, buffer);
-    iso_dir_record_t dirrec;
+    iso_dir_record_t* dirrec;
 
     size_t buffer_start_index = 0;
     bool found = false;
@@ -153,25 +153,25 @@ static bool iso_readdir(
             // next sector.
             break;
         }
-        memcpy(&dirrec, buffer + buffer_start_index, entrysize);
+        dirrec = (iso_dir_record_t*)buffer + buffer_start_index;
         buffer_start_index += entrysize;
 
-        if (!(dirrec.file_flags & ISO_DIR_FLAG_NOT_FINAL) && i != index) {
+        if (!(dirrec->file_flags & ISO_DIR_FLAG_NOT_FINAL) && i != index) {
             break;
         }
 
         if (i == index) {
             _debug_printf("Index %u found\n", i);
-            dump_dirrec(&dirrec);
+            dump_dirrec(dirrec);
             out->ino = i;
             // Copy filename to out
             char* filename = kmalloc_flags(
-                sizeof(char) * (dirrec.file_name_length + 1),
+                sizeof(char) * (dirrec->file_name_length + 1),
                 KMALLOC_ZERO
             );
-            memcpy(filename, dirrec.file_name, dirrec.file_name_length);
+            memcpy(filename, dirrec->file_name, dirrec->file_name_length);
             // Search for first semicolon and replace it with null character
-            for (size_t i = 0; i < dirrec.file_name_length; i++) {
+            for (size_t i = 0; i < dirrec->file_name_length; i++) {
                 if (filename[i] == ';') {
                     filename[i] = '\0';
                     break;
