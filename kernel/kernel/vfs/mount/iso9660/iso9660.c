@@ -128,6 +128,7 @@ static bool iso_readdir(
         node->filename,
         index
     );
+    index += 2; // Skip "." and ".." entries
 
     vfs_file_t* dev = vfs_open(meta->device_file, VFS_MODE_READONLY);
     if (dev == NULL) {
@@ -153,12 +154,8 @@ static bool iso_readdir(
             // next sector.
             break;
         }
-        dirrec = (iso_dir_record_t*)buffer + buffer_start_index;
+        dirrec = (iso_dir_record_t*)(buffer + buffer_start_index);
         buffer_start_index += entrysize;
-
-        if (!(dirrec->file_flags & ISO_DIR_FLAG_NOT_FINAL) && i != index) {
-            break;
-        }
 
         if (i == index) {
             _debug_printf("Index %u found\n", i);
@@ -204,7 +201,7 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
     vfs_file_t* dev = vfs_open(meta->device_file, VFS_MODE_READONLY);
     if (dev == NULL) {
         _debug_puts("Device file doesn't exist anymore.");
-        return false;
+        return NULL;
     }
     vfs_seek(dev, meta->extent_lba * ISO_SECTOR_SIZE);
     uint8_t* buffer = kmalloc_flags(ISO_SECTOR_SIZE, KMALLOC_ZERO);
@@ -225,7 +222,7 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
             // next sector.
             break;
         }
-        dirrec = (iso_dir_record_t*)buffer + buffer_start_index;
+        dirrec = (iso_dir_record_t*)(buffer + buffer_start_index);
         buffer_start_index += entrysize;
 
         // Copy filename
@@ -259,6 +256,7 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
             node_meta->device_file = meta->device_file;
             node_meta->extent_lba = dirrec->extent_lba;
             node_meta->extent_size = dirrec->extent_size;
+            found_node->metadata = node_meta;
 
             if (is_subdir) {
                 found_node->readdir_node = iso_readdir;
@@ -267,10 +265,6 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
         }
 
         kfree(filename);
-        if (!(dirrec->file_flags & ISO_DIR_FLAG_NOT_FINAL)) {
-            // This was the last entry - stop with failure
-            break;
-        }
     }
 
     if (found_node == NULL) {
