@@ -84,6 +84,25 @@ static bool is_task_completed(void* arg)
     return task->completed;
 }
 
+/**
+ * Returns false if data stored currently in buffer is not a valid descriptor
+ */
+static bool validate_volume_descriptor(mount_task_t* task)
+{
+    if (task->buffer[1] != 'C' || task->buffer[2] != 'D'
+        || task->buffer[3] != '0' || task->buffer[4] != '0'
+        || task->buffer[5] != '1'
+    ) {
+        _debug_puts("Invalid volume descriptor header - missing 'CD001'");
+        return false;
+    }
+    if (task->buffer[6] != 0x01) {
+        _debug_puts("Invalid volume descriptor header - wrong version");
+        return false;
+    }
+    return true;
+}
+
 static void run_mounting_task(mount_task_t* task)
 {
     vfs_file_t* file = vfs_open(task->device_file, VFS_MODE_READONLY);
@@ -91,6 +110,11 @@ static void run_mounting_task(mount_task_t* task)
         vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
     }
     vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
+    if (!validate_volume_descriptor(task)) {
+        task->result = MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
+        task->completed = true;
+        return;
+    }
     _debug_printf(
         "First bytes: %02x %02x %02x %02x\n",
         task->buffer[0],
