@@ -117,6 +117,11 @@ typedef bool (*readdir_node_t)(
 // child's `name`. Returns the inode, or NULL if not found. The dentry layer
 // wraps the returned inode in a new dentry and caches it.
 typedef struct vfs_node* (*finddir_node_t)(struct vfs_node* node, char* name);
+// Handler for creating a subdirectory named `name` inside directory `node`.
+// Called by vfs_mkdir after the in-memory dentry/inode are created, so the
+// filesystem backend can persist the new directory entry on disk.
+// Returns true on success, false on failure.
+typedef bool (*mkdir_node_t)(struct vfs_node* node, const char* name);
 
 /*
  * Basic definition of a single inode in the VFS. Contains file data and
@@ -136,6 +141,7 @@ typedef struct vfs_node {
     write_node_t write_node;
     readdir_node_t readdir_node;
     finddir_node_t finddir_node;
+    mkdir_node_t mkdir_node;
     void* metadata; // Data that can be used by filesystem
 } vfs_node_t;
 
@@ -207,6 +213,14 @@ char* vfs_build_absolute_path(
  * properties to NULL/zero.
  */
 void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type);
+
+/**
+ * Creates a new directory named `name` as a child of `parent`. The in-memory
+ * dentry and inode are always created. If the parent inode has a `mkdir_node`
+ * callback set, it is also called so a filesystem backend can persist the entry.
+ * Returns the new dentry, or NULL if `parent` is NULL or not a directory.
+ */
+dentry_t* vfs_mkdir(dentry_t* parent, const char* name);
 
 /**
  * Returns the real root dentry of the VFS.

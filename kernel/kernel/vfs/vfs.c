@@ -395,9 +395,7 @@ char* vfs_build_absolute_path(
     char** parts = NULL;
     size_t parts_count = 0;
     size_t total_length = 0; // excluding file separators
-    _debug_puts("Building absolute path started");
     while (current != root) {
-        _debug_printf("Adding part %u '%s'\n", parts_count, current->name);
         parts_count++;
         total_length += sizeof(current->name);
         parts = krealloc(parts, sizeof(char*) * parts_count);
@@ -441,7 +439,31 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     node->write_node = NULL;
     node->readdir_node = NULL;
     node->finddir_node = NULL;
+    node->mkdir_node = NULL;
     node->metadata = NULL;
+}
+
+dentry_t* vfs_mkdir(dentry_t* parent, const char* name)
+{
+    if (parent == NULL) {
+        return NULL;
+    }
+    if ((parent->inode->type & VFS_TYPE_DIRECTORY) == 0) {
+        return NULL;
+    }
+
+    vfs_node_t* inode = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
+    vfs_populate_node(inode, (char*)name, VFS_TYPE_DIRECTORY);
+
+    dentry_t* dentry = vfs_dentry_create(parent, name, inode);
+
+    // If the parent filesystem provides a mkdir hook, call it so the directory
+    // can be persisted on disk once a real filesystem is implemented.
+    if (parent->inode->mkdir_node != NULL) {
+        parent->inode->mkdir_node(parent->inode, name);
+    }
+
+    return dentry;
 }
 
 dentry_t* vfs_get_real_root()
