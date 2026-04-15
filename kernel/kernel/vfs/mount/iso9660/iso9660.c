@@ -118,9 +118,7 @@ static void dump_dirrec(iso_dir_record_t* dirrec)
 static void run_mounting_task(mount_task_t* task)
 {
     vfs_file_t* file = vfs_open(task->device_file, VFS_MODE_READONLY);
-    for (size_t skip_sector = 0; skip_sector < 0x10; skip_sector++) {
-        vfs_read(file, ISO_SECTOR_SIZE, task->buffer);
-    }
+    vfs_seek(file, 0x10 * ISO_SECTOR_SIZE);
     bool terminator_found = false;
     while (!terminator_found) {
         vfs_read(file, ISO_SECTOR_SIZE, task->buffer);

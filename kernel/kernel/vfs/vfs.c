@@ -157,6 +157,11 @@ size_t vfs_read(vfs_file_t* file, size_t size, void* ptr)
     return 0;
 }
 
+void vfs_seek(vfs_file_t* file, uint64_t offset)
+{
+    file->offset = offset;
+}
+
 size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr)
 {
     vfs_node_t* node = file->dentry->inode;

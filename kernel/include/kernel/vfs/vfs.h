@@ -156,6 +156,7 @@ struct dirent
 extern dentry_t* vfs_root;
 
 size_t vfs_read(vfs_file_t* file, size_t size, void* ptr);
+void vfs_seek(vfs_file_t* file, uint64_t offset);
 size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr);
 vfs_file_t* vfs_open(dentry_t* dentry, uint8_t open_mode);
 void vfs_close(vfs_file_t* file);
