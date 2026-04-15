@@ -12,6 +12,7 @@
 
 // Max length of a full path.
 #define VFS_MAX_PATH_LENGTH 4096
+#define VFS_MAX_FILENAME 256
 
 // A normal file
 #define VFS_TYPE_FILE 0x01
@@ -61,7 +62,7 @@ struct dentry;
  * dentry cache that avoids repeated filesystem lookups.
  */
 typedef struct dentry {
-    char name[128];
+    char name[VFS_MAX_FILENAME];
     struct dentry* parent;
     struct vfs_node* inode;
     struct dentry** children; // Cached child dentries
@@ -130,7 +131,7 @@ typedef bool (*mkdir_node_t)(struct vfs_node* node, const char* name);
  * read/write/execute flags)
  */
 typedef struct vfs_node {
-    char filename[128]; // Filesystem-internal name (used by filesystem callbacks)
+    char filename[VFS_MAX_FILENAME]; // Filesystem-internal name (used by filesystem callbacks)
     uint8_t type; // one of VFS_TYPE_
     uint32_t inode; // File ID, device specific, to identify files (on a disk)
     uint64_t length; // File size in bytes
@@ -148,7 +149,7 @@ typedef struct vfs_node {
 // One of these is returned by the readdir call, according to POSIX.
 struct dirent
 {
-  char name[128]; // Filename.
+  char name[VFS_MAX_FILENAME]; // Filename.
   uint32_t ino; // Inode number. Required by POSIX.
 };
 
