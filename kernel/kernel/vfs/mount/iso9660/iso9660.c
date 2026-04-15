@@ -6,20 +6,10 @@
 #include "stdlib.h"
 #include <stdint.h>
 #include "kernel/debug.h"
+#include "./iso9660.h"
 
 #define _debug_puts(...) debug_puts_c("VFS/mount/iso9660", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/mount/iso9660", __VA_ARGS__)
-
-#define ISO_SECTOR_SIZE 2048
-
-typedef struct {
-    dentry_t* device_file;
-    dentry_t* target;
-    uint8_t* buffer;
-    wait_obj_t* wait_obj;
-    bool completed;
-    vfs_mount_result_t result;
-} mount_task_t;
 
 static mount_task_t** tasks = NULL;
 static size_t tasks_capacity = 0;
