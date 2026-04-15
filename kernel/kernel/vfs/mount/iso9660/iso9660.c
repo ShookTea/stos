@@ -192,6 +192,96 @@ static bool iso_readdir(
     return found;
 }
 
+static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
+{
+    iso9660_node_t* meta = node->metadata;
+    _debug_printf(
+        "iso_finddir called for node='%s' name='%s'\n",
+        node->filename,
+        name
+    );
+
+    vfs_file_t* dev = vfs_open(meta->device_file, VFS_MODE_READONLY);
+    if (dev == NULL) {
+        _debug_puts("Device file doesn't exist anymore.");
+        return false;
+    }
+    vfs_seek(dev, meta->extent_lba * ISO_SECTOR_SIZE);
+    uint8_t* buffer = kmalloc_flags(ISO_SECTOR_SIZE, KMALLOC_ZERO);
+    vfs_read(dev, ISO_SECTOR_SIZE, buffer);
+    iso_dir_record_t* dirrec;
+
+    size_t buffer_start_index = 0;
+    vfs_node_t* found_node = NULL;
+
+    // TODO: in case entry spans multiple sectors, we need to load other sectors
+    while (found_node == NULL) {
+        uint8_t entrysize = buffer[buffer_start_index];
+        if (entrysize == 0) {
+            break;
+        }
+        if ((buffer_start_index + entrysize) > ISO_SECTOR_SIZE) {
+            // TODO: that probably means that there's a continuation in the
+            // next sector.
+            break;
+        }
+        dirrec = (iso_dir_record_t*)buffer + buffer_start_index;
+        buffer_start_index += entrysize;
+
+        // Copy filename
+        char* filename = kmalloc_flags(
+            sizeof(char) * (dirrec->file_name_length + 1),
+            KMALLOC_ZERO
+        );
+        memcpy(filename, dirrec->file_name, dirrec->file_name_length);
+        // Search for first semicolon and replace it with null character
+        for (size_t i = 0; i < dirrec->file_name_length; i++) {
+            if (filename[i] == ';') {
+                filename[i] = '\0';
+                break;
+            }
+        }
+
+        if (!strcmp(filename, name)) {
+            // Found the node!
+            _debug_puts("Found the node");
+            found_node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
+            bool is_subdir = dirrec->file_flags & ISO_DIR_FLAG_SUBDIRECTORY;
+            vfs_populate_node(
+                found_node,
+                filename,
+                is_subdir ? VFS_TYPE_DIRECTORY : VFS_TYPE_FILE
+            );
+            iso9660_node_t* node_meta = kmalloc_flags(
+                sizeof(iso9660_node_t),
+                KMALLOC_ZERO
+            );
+            node_meta->device_file = meta->device_file;
+            node_meta->extent_lba = dirrec->extent_lba;
+            node_meta->extent_size = dirrec->extent_size;
+
+            if (is_subdir) {
+                found_node->readdir_node = iso_readdir;
+                found_node->finddir_node = iso_finddir;
+            }
+        }
+
+        kfree(filename);
+        if (!(dirrec->file_flags & ISO_DIR_FLAG_NOT_FINAL)) {
+            // This was the last entry - stop with failure
+            break;
+        }
+    }
+
+    if (found_node == NULL) {
+        _debug_puts("File not found.");
+    }
+
+    kfree(buffer);
+    vfs_close(dev);
+    return found_node;
+}
+
 static void run_mounting_task(mount_task_t* task)
 {
     vfs_file_t* file = vfs_open(task->device_file, VFS_MODE_READONLY);
@@ -230,6 +320,7 @@ static void run_mounting_task(mount_task_t* task)
             meta->extent_size = dirrec.extent_size;
             inode->metadata = meta;
             inode->readdir_node = iso_readdir;
+            inode->finddir_node = iso_finddir;
             dump_dirrec(&dirrec);
         }
     }
