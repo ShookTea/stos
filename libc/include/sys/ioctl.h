@@ -1,6 +1,7 @@
 #ifndef _SYS_IOCTL_H
 #define _SYS_IOCTL_H 1
 #include <sys/cdefs.h>
+#include <asm/termbits.h>
 
 #if !(defined(__is_libk))
 
@@ -16,6 +17,16 @@ extern "C" {
  * - `arg` is a pointer containing arguments.
  */
 int ioctl(int fd, int op, void* arg);
+
+/**
+ * Run ioctl call for a TTY file. Valid `op` values are TC* operators described
+ * in the `asm/termbits.h` file.
+ */
+inline int ioctl_tty(int fd, int op, struct termios* arg)
+{
+    return ioctl(fd, op, arg);
+}
+
 
 #ifdef __cplusplus
 }
