@@ -123,6 +123,8 @@ typedef struct vfs_node* (*finddir_node_t)(struct vfs_node* node, char* name);
 // filesystem backend can persist the new directory entry on disk.
 // Returns true on success, false on failure.
 typedef bool (*mkdir_node_t)(struct vfs_node* node, const char* name);
+// Handler for ioctl syscall commands.
+typedef int (*ioctl_node_t)(vfs_file_t* file, uint32_t op, void* arg);
 
 /*
  * Basic definition of a single inode in the VFS. Contains file data and
@@ -143,6 +145,7 @@ typedef struct vfs_node {
     readdir_node_t readdir_node;
     finddir_node_t finddir_node;
     mkdir_node_t mkdir_node;
+    ioctl_node_t ioctl_node;
     void* metadata; // Data that can be used by filesystem
 } vfs_node_t;
 

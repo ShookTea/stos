@@ -76,6 +76,11 @@ static uint32_t syscall_int_handler(
             assert_range(buf, arg3);
             return sys_read((int)arg1, buf, (size_t)arg3);
         }
+        case SYS_IOCTL: {
+            void* buf = (void*)arg3;
+            assert_ptr(buf);
+            return sys_ioctl((int)arg1, (int)arg2, buf);
+        }
         case SYS_BRK: return sys_brk(arg1);
         default:
             _debug_printf("Unknown syscall: %d\n", syscall_num);
