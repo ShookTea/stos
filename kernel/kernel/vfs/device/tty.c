@@ -40,7 +40,9 @@ static inline void put_char_to_line_with_val(
     char to_print
 ) {
     if (meta->current_line_pos < TTY_BUFFER_SIZE) {
-        putchar(to_print);
+        if (meta->lflag & TTY_LFLAG_ECHO) {
+            putchar(to_print);
+        }
         meta->current_line[meta->current_line_pos] = line;
         meta->current_line_pos++;
     }

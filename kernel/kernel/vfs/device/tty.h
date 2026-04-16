@@ -8,10 +8,13 @@
 
 #define TTY_BUFFER_SIZE 4096
 
+// Should typed characters be displayed in stdout as well?
+#define TTY_LFLAG_ECHO 0x01
+
 #define TTY_DEFAULT_IFLAG 0
 #define TTY_DEFAULT_OFLAG 0
 #define TTY_DEFAULT_CFLAG 0
-#define TTY_DEFAULT_LFLAG 0
+#define TTY_DEFAULT_LFLAG (TTY_LFLAG_ECHO)
 
 typedef struct {
     // termios input mode flags
