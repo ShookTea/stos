@@ -76,11 +76,11 @@ bool rwq_set_ready(rw_queue_t* queue, size_t idx)
         return false;
     }
 
-    // if (queue->rw_wait_map[idx] == RW_QUEUE_FREE_TO_USE) {
-    //     _debug_puts("ERR: id is free to use");
-    //     spinlock_release(&queue->spinlock);
-    //     return false;
-    // }
+    if (queue->rw_wait_map[idx] == RW_QUEUE_FREE_TO_USE) {
+        _debug_puts("ERR: id is free to use");
+        spinlock_release(&queue->spinlock);
+        return false;
+    }
     queue->rw_wait_map[idx] = RW_QUEUE_READY;
     spinlock_release(&queue->spinlock);
     return true;
@@ -117,11 +117,11 @@ void rwq_reset_to_not_ready(rw_queue_t* queue, size_t idx)
         return;
     }
 
-    // if (queue->rw_wait_map[idx] == RW_QUEUE_FREE_TO_USE) {
-    //     _debug_puts("ERR: id is free to use");
-    //     spinlock_release(&queue->spinlock);
-    //     return;
-    // }
+    if (queue->rw_wait_map[idx] == RW_QUEUE_FREE_TO_USE) {
+        _debug_puts("ERR: id is free to use");
+        spinlock_release(&queue->spinlock);
+        return;
+    }
 
     queue->rw_wait_map[idx] = RW_QUEUE_NOT_READY;
     spinlock_release(&queue->spinlock);
