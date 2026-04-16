@@ -117,6 +117,45 @@ static void dump_dirrec(iso_dir_record_t* dirrec)
     kfree(filename);
 }
 
+static size_t iso_read(
+    vfs_file_t* file,
+    size_t offset,
+    size_t size,
+    void* ptr __attribute__((unused))
+) {
+    if (!file->readable) {
+        return 0;
+    }
+
+    iso9660_node_t* meta = file->dentry->inode->metadata;
+    _debug_printf(
+        "iso_read called for file='%s' offset='%u' size='%u'\n",
+        file->dentry->name,
+        offset,
+        size
+    );
+
+    if (offset >= meta->extent_size) {
+        // Attempting to read outside of the size of the file
+        return 0;
+    }
+
+    if ((offset + size) >= meta->extent_size) {
+        // Limit size to one allowed by the size of the file
+        size_t overhead = offset + size - meta->extent_size;
+        size -= overhead;
+    }
+
+    if (size == 0) {
+        return 0;
+    }
+
+    return 0;
+    // TODO: continue read implementation
+    // size_t offset_in_lba = offset % ISO_SECTOR_SIZE;
+    // size_t lba_index = (offset - offset_in_lba) / ISO_SECTOR_SIZE;
+}
+
 static bool iso_readdir(
     struct vfs_node* node,
     size_t index,
@@ -262,6 +301,8 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
             if (is_subdir) {
                 found_node->readdir_node = iso_readdir;
                 found_node->finddir_node = iso_finddir;
+            } else {
+                found_node->read_node = iso_read;
             }
         }
 
@@ -326,7 +367,7 @@ static void run_mounting_task(mount_task_t* task)
 
 vfs_mount_result_t vfs_mount_iso9660(
     dentry_t* device_file,
-    dentry_t* target __attribute__((unused)),
+    dentry_t* target,
     uint16_t flags __attribute__((unused)),
     const void* data __attribute__((unused))
 ) {
