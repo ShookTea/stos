@@ -1,3 +1,4 @@
+#include "kernel/debug.h"
 #include "kernel/drivers/keyboard.h"
 #include "kernel/task/wait.h"
 #include "../device.h"
@@ -46,10 +47,102 @@ static void push_curr_line_to_buffer()
     ready_lines++;
 }
 
+static inline void put_char_to_line_with_val(char line, char to_print)
+{
+    if (current_line_pos < BUFFER_SIZE) {
+        putchar(to_print);
+        current_line[current_line_pos] = line;
+        current_line_pos++;
+    }
+}
+
+static inline void put_char_to_line(char c)
+{
+    put_char_to_line_with_val(c, c);
+}
+
+static void handle_non_ascii(keyboard_event_t evt)
+{
+    if (evt.key_code == KCODE_LEFT_ALT || evt.key_code == KCODE_RIGHT_ALT
+        || evt.key_code == KCODE_LEFT_CTRL || evt.key_code == KCODE_RIGHT_CTRL
+        || evt.key_code == KCODE_LEFT_SHIFT || evt.key_code == KCODE_RIGHT_SHIFT
+    ) {
+        // The modifier keys themselves are never emitted.
+        return;
+    }
+
+    uint8_t modifier = (0
+        | ((evt.l_shift_pressed || evt.r_shift_pressed) ? 0x01 : 0)
+        | (evt.l_alt_pressed ? 0x02 : 0)
+        | ((evt.l_ctrl_pressed || evt.r_ctrl_pressed) ? 0x04 : 0)
+        | ((evt.l_system_pressed || evt.r_system_pressed) ? 0x08 : 0)
+    ) + 1;
+
+    debug_printf_c("TTY", "keycode = %u, mod = %u\n", evt.key_code, modifier);
+
+    if (evt.key_code == KCODE_ARROW_LEFT
+        || evt.key_code == KCODE_ARROW_RIGHT
+        || evt.key_code == KCODE_ARROW_UP
+        || evt.key_code == KCODE_ARROW_DOWN
+    ) {
+        // Special case for arrow events with no modifiers added
+        put_char_to_line_with_val('\033', '^');
+        put_char_to_line('[');
+
+        if (modifier != 1) {
+            if (modifier >= 10) {
+                put_char_to_line('0' + (modifier / 10));
+                modifier %= 10;
+            }
+            put_char_to_line('0' + modifier);
+        }
+
+        switch (evt.key_code) {
+            case KCODE_ARROW_UP: put_char_to_line('A'); break;
+            case KCODE_ARROW_DOWN: put_char_to_line('B'); break;
+            case KCODE_ARROW_RIGHT: put_char_to_line('C'); break;
+            case KCODE_ARROW_LEFT: put_char_to_line('D'); break;
+        }
+    }
+    else {
+        // Send key in format <esc>[<keycode>;<modifier>~
+        // Or, if <modifier> is 1 (default):
+        // <esc>[<keycode>~
+        put_char_to_line_with_val('\033', '^');
+        put_char_to_line('[');
+        uint8_t keycode = evt.key_code;
+        if (keycode >= 100) {
+            put_char_to_line('0' + (keycode / 100));
+            keycode %= 100;
+        }
+        if (keycode >= 10) {
+            put_char_to_line('0' + (keycode / 10));
+            keycode %= 10;
+        }
+        put_char_to_line('0' + keycode);
+
+        if (modifier != 1) {
+            put_char_to_line(';');
+            if (modifier >= 10) {
+                put_char_to_line('0' + (modifier / 10));
+                modifier %= 10;
+            }
+            put_char_to_line('0' + modifier);
+        }
+
+        put_char_to_line('~');
+    }
+}
+
 static void handle_key_event(keyboard_event_t evt)
 {
-    if (!evt.pressed || !evt.ascii) {
-        // TODO: handle cursor moving left and right
+    if (!evt.pressed) {
+        // We only register pressed keys.
+        return;
+    }
+
+    if (!evt.ascii) {
+        handle_non_ascii(evt);
         return;
     }
 
@@ -63,9 +156,7 @@ static void handle_key_event(keyboard_event_t evt)
     else if (evt.key_code == KCODE_ENTER
         || evt.key_code == KCODE_NUMPAD_ENTER) {
             char nline = '\n';
-            putchar(nline);
-            current_line[current_line_pos] = '\n';
-            current_line_pos++;
+            put_char_to_line(nline);
             // New line was commited - send it to buffer
             // TODO: if last character was non-escaped backslash, that means
             // "don't commit now, instead pass new line to the reading task"
@@ -73,10 +164,8 @@ static void handle_key_event(keyboard_event_t evt)
             if (wait_obj->count > 0) {
                 wait_wake_up(wait_obj);
             }
-    } else if (current_line_pos < BUFFER_SIZE) {
-        putchar(evt.ascii);
-        current_line[current_line_pos] = evt.ascii;
-        current_line_pos++;
+    } else {
+        put_char_to_line(evt.ascii);
     }
 }
 
