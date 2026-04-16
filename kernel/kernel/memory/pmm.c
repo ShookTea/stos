@@ -847,14 +847,19 @@ void pmm_print_stats(bool force_terminal_output)
 
 uint32_t pmm_alloc_order(uint8_t order)
 {
-    return buddy_alloc_order(order);
+    spinlock_acquire(&pmm_lock);
+    uint32_t res = buddy_alloc_order(order);
+    spinlock_release(&pmm_lock);
+    return res;
 }
 
 void pmm_free_order(uint32_t addr)
 {
+    spinlock_acquire(&pmm_lock);
     uint32_t page = pmm_addr_to_page(addr);
     uint8_t order = buddy_get_order(page);
     buddy_free_order(addr, order);
+    spinlock_release(&pmm_lock);
 }
 
 uint8_t pmm_get_order(uint32_t addr)
