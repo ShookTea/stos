@@ -15,6 +15,12 @@ struct termios {
     unsigned char c_cc[10];
 };
 
+/* c_lflag bits */
+// Should typed characters be displayed in stdout as well?
+#define ECHO 0x01
+// Running in canonical (line-buffered) mode
+#define ICANON 0x02
+
 #define TCSANOW 1
 
 #ifdef __cplusplus
