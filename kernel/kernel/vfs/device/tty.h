@@ -12,6 +12,9 @@ typedef struct {
     // Buffer of all "commited" bytes that are ready to read
     ds_ringbuf_t* buffer;
     size_t ready_lines;
+    // Currently read line
+    char current_line[TTY_BUFFER_SIZE];
+    size_t current_line_pos;
 
 } tty_state_t;
 

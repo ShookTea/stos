@@ -12,16 +12,10 @@
 
 static vfs_node_t* node = NULL;
 
-/**
- * Currently read line
- */
-static char current_line[TTY_BUFFER_SIZE];
-static size_t current_line_pos = 0;
-
 static void push_curr_line_to_buffer(tty_state_t* meta)
 {
-    for (size_t i = 0; i < current_line_pos; i++) {
-        ds_result_t res = ds_ringbuf_push(meta->buffer, &current_line[i]);
+    for (size_t i = 0; i < meta->current_line_pos; i++) {
+        ds_result_t res = ds_ringbuf_push(meta->buffer, &meta->current_line[i]);
         if (res == DS_ERR_FULL) {
             // Clear last character and reattempt pushing. We're doing it
             // manually instead of passing fail_on_full=false to the ringbuf
@@ -33,28 +27,31 @@ static void push_curr_line_to_buffer(tty_state_t* meta)
                 meta->ready_lines--;
             }
             // Re-attempt pushing
-            ds_ringbuf_push(meta->buffer, &current_line[i]);
+            ds_ringbuf_push(meta->buffer, &meta->current_line[i]);
         }
     }
-    current_line_pos = 0;
+    meta->current_line_pos = 0;
     meta->ready_lines++;
 }
 
-static inline void put_char_to_line_with_val(char line, char to_print)
-{
-    if (current_line_pos < TTY_BUFFER_SIZE) {
+static inline void put_char_to_line_with_val(
+    tty_state_t* meta,
+    char line,
+    char to_print
+) {
+    if (meta->current_line_pos < TTY_BUFFER_SIZE) {
         putchar(to_print);
-        current_line[current_line_pos] = line;
-        current_line_pos++;
+        meta->current_line[meta->current_line_pos] = line;
+        meta->current_line_pos++;
     }
 }
 
-static inline void put_char_to_line(char c)
+static inline void put_char_to_line(tty_state_t* meta, char c)
 {
-    put_char_to_line_with_val(c, c);
+    put_char_to_line_with_val(meta, c, c);
 }
 
-static void handle_non_ascii(keyboard_event_t evt)
+static void handle_non_ascii(tty_state_t* meta, keyboard_event_t evt)
 {
     if (evt.key_code == KCODE_LEFT_ALT || evt.key_code == KCODE_RIGHT_ALT
         || evt.key_code == KCODE_LEFT_CTRL || evt.key_code == KCODE_RIGHT_CTRL
@@ -79,51 +76,51 @@ static void handle_non_ascii(keyboard_event_t evt)
         || evt.key_code == KCODE_ARROW_DOWN
     ) {
         // Special case for arrow events with no modifiers added
-        put_char_to_line_with_val('\033', '^');
-        put_char_to_line('[');
+        put_char_to_line_with_val(meta, '\033', '^');
+        put_char_to_line(meta, '[');
 
         if (modifier != 1) {
             if (modifier >= 10) {
-                put_char_to_line('0' + (modifier / 10));
+                put_char_to_line(meta, '0' + (modifier / 10));
                 modifier %= 10;
             }
-            put_char_to_line('0' + modifier);
+            put_char_to_line(meta, '0' + modifier);
         }
 
         switch (evt.key_code) {
-            case KCODE_ARROW_UP: put_char_to_line('A'); break;
-            case KCODE_ARROW_DOWN: put_char_to_line('B'); break;
-            case KCODE_ARROW_RIGHT: put_char_to_line('C'); break;
-            case KCODE_ARROW_LEFT: put_char_to_line('D'); break;
+            case KCODE_ARROW_UP: put_char_to_line(meta, 'A'); break;
+            case KCODE_ARROW_DOWN: put_char_to_line(meta, 'B'); break;
+            case KCODE_ARROW_RIGHT: put_char_to_line(meta, 'C'); break;
+            case KCODE_ARROW_LEFT: put_char_to_line(meta, 'D'); break;
         }
     }
     else {
         // Send key in format <esc>[<keycode>;<modifier>~
         // Or, if <modifier> is 1 (default):
         // <esc>[<keycode>~
-        put_char_to_line_with_val('\033', '^');
-        put_char_to_line('[');
+        put_char_to_line_with_val(meta, '\033', '^');
+        put_char_to_line(meta, '[');
         uint8_t keycode = evt.key_code;
         if (keycode >= 100) {
-            put_char_to_line('0' + (keycode / 100));
+            put_char_to_line(meta, '0' + (keycode / 100));
             keycode %= 100;
         }
         if (keycode >= 10) {
-            put_char_to_line('0' + (keycode / 10));
+            put_char_to_line(meta, '0' + (keycode / 10));
             keycode %= 10;
         }
-        put_char_to_line('0' + keycode);
+        put_char_to_line(meta, '0' + keycode);
 
         if (modifier != 1) {
-            put_char_to_line(';');
+            put_char_to_line(meta, ';');
             if (modifier >= 10) {
-                put_char_to_line('0' + (modifier / 10));
+                put_char_to_line(meta, '0' + (modifier / 10));
                 modifier %= 10;
             }
-            put_char_to_line('0' + modifier);
+            put_char_to_line(meta, '0' + modifier);
         }
 
-        put_char_to_line('~');
+        put_char_to_line(meta, '~');
     }
 }
 
@@ -140,21 +137,21 @@ static void handle_key_event(keyboard_event_t evt)
     }
 
     if (!evt.ascii) {
-        handle_non_ascii(evt);
+        handle_non_ascii(meta, evt);
         return;
     }
 
     if (evt.key_code == KCODE_BACKSPACE) {
-        if (current_line_pos > 0) {
-            current_line_pos--;
-            current_line[current_line_pos] = 0;
+        if (meta->current_line_pos > 0) {
+            meta->current_line_pos--;
+            meta->current_line[meta->current_line_pos] = 0;
             putchar('\b');
         }
     }
     else if (evt.key_code == KCODE_ENTER
         || evt.key_code == KCODE_NUMPAD_ENTER) {
             char nline = '\n';
-            put_char_to_line(nline);
+            put_char_to_line(meta, nline);
             // New line was commited - send it to buffer
             // TODO: if last character was non-escaped backslash, that means
             // "don't commit now, instead pass new line to the reading task"
@@ -163,7 +160,7 @@ static void handle_key_event(keyboard_event_t evt)
                 wait_wake_up(meta->wait_obj);
             }
     } else {
-        put_char_to_line(evt.ascii);
+        put_char_to_line(meta, evt.ascii);
     }
 }
 
@@ -211,8 +208,8 @@ static void open(
     // Flush current content of TTY when opened
     ds_ringbuf_clear(meta->buffer);
     meta->ready_lines = 0;
-    current_line_pos = 0;
-    memset(current_line, 0, sizeof(current_line));
+    meta->current_line_pos = 0;
+    memset(meta->current_line, 0, sizeof(meta->current_line));
 }
 
 vfs_node_t* device_tty_mount()
