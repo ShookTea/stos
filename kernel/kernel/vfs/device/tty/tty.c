@@ -210,6 +210,7 @@ vfs_node_t* device_tty_mount()
     vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);
     node->read_node = tty_read;
     node->open_node = open;
+    node->ioctl_node = tty_ioctl;
     node->metadata = tty_state;
 
     keyboard_register_listener(handle_key_event);
