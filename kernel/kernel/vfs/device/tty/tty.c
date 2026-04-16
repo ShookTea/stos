@@ -1,7 +1,7 @@
 #include "kernel/debug.h"
 #include "kernel/drivers/keyboard.h"
 #include "kernel/task/wait.h"
-#include "../device.h"
+#include "../../device.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include <libds/libds.h>
@@ -178,45 +178,6 @@ static void handle_key_event(keyboard_event_t evt)
     }
 }
 
-static bool is_buffer_ready(void* arg)
-{
-    tty_state_t* meta = arg;
-    if (meta->lflag & TTY_LFLAG_ICANON) {
-        return meta->ready_lines > 0;
-    } else {
-        return ds_ringbuf_size(meta->buffer) > 0;
-    }
-}
-
-static size_t read(
-    vfs_file_t* file,
-    size_t offset __attribute__((unused)),
-    size_t size,
-    void* ptr
-) {
-    tty_state_t* meta = file->dentry->inode->metadata;
-    wait_on_condition(meta->wait_obj, is_buffer_ready, meta);
-    size_t read_bytes = 0;
-    size_t buffer_size = ds_ringbuf_size(meta->buffer);
-    if (buffer_size < size) {
-        size = buffer_size;
-    }
-
-    for (size_t i = 0; i < size; i++) {
-        char c;
-        ds_ringbuf_pop(meta->buffer, &c);
-        *((uint8_t*)ptr + i) = c;
-        read_bytes++;
-        if ((meta->lflag & TTY_LFLAG_ICANON) && c == '\n') {
-            // TODO: if previous character was non-escaped backslash, that means
-            // the new line character is a part of line
-            meta->ready_lines--;
-            break;
-        }
-    }
-    return read_bytes;
-}
-
 static void open(
     struct vfs_node* node,
     vfs_file_t* file __attribute__((unused)),
@@ -247,7 +208,7 @@ vfs_node_t* device_tty_mount()
 
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);
-    node->read_node = read;
+    node->read_node = tty_read;
     node->open_node = open;
     node->metadata = tty_state;
 

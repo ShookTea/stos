@@ -48,4 +48,9 @@ int tty_update_termios_flags(
     uint32_t lflag
 );
 
+/**
+ * Implementation of read_node_t from `vfs.h``
+ */
+size_t tty_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
+
 #endif
