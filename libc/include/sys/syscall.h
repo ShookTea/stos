@@ -18,6 +18,7 @@
 #define SYS_CLOSE   0x11 // int close(int fd);
 #define SYS_WRITE   0x12 // int write(int fd, const void* buf, size_t count)
 #define SYS_READ    0x13 // int read(int fd, void* buf, size_t count)
+#define SYS_IOCTL   0x14 // int ioctl(int fd, int op, void* arg)
 
 #define SYS_BRK     0x20 // uint32_t brk(void* addr)
 

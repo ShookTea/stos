@@ -32,7 +32,6 @@ static uint32_t syscall_int_handler(
         case SYS_YIELD: return sys_yield();
         case SYS_GETPID: return sys_getpid();
         case SYS_GETPPID: return sys_getppid();
-        case SYS_BRK: return sys_brk(arg1);
         case SYS_FORK: return sys_fork();
         case SYS_WAIT: {
             int pid = (int)arg1;
@@ -77,6 +76,7 @@ static uint32_t syscall_int_handler(
             assert_range(buf, arg3);
             return sys_read((int)arg1, buf, (size_t)arg3);
         }
+        case SYS_BRK: return sys_brk(arg1);
         default:
             _debug_printf("Unknown syscall: %d\n", syscall_num);
             return SYSCALL_ERROR;

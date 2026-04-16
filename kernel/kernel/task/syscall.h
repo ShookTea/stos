@@ -44,6 +44,9 @@ int sys_write(int fd, const void* buf, size_t count);
 #define SYS_READ 0x13
 int sys_read(int fd, void* buf, size_t count);
 
+#define SYS_IOCTL   0x14
+int ioctl(int fd, int op, void* arg);
+
 #define SYS_BRK 0x20
 uint32_t sys_brk(uint32_t addr);
 
