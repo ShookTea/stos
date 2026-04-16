@@ -2,6 +2,7 @@
 #define INCLUDE_KERNEL_SRC_VFS_DEVICE_TTY_H
 
 #include "kernel/task/wait.h"
+#include "kernel/vfs/vfs.h"
 #include <libds/ringbuf.h>
 #include <stdint.h>
 
@@ -30,5 +31,16 @@ typedef struct {
     char current_line[TTY_BUFFER_SIZE];
     size_t current_line_pos;
 } tty_state_t;
+
+/**
+ * Update selected TTY file with termios flags. Returns 0 on success.
+ */
+int tty_update_termios_flags(
+    vfs_file_t* tty,
+    uint32_t iflag,
+    uint32_t oflag,
+    uint32_t cflag,
+    uint32_t lflag
+);
 
 #endif
