@@ -5,6 +5,10 @@
 #include <stddef.h>
 #include <string.h>
 
+// TODO: we shouldn't persist information about partitions, since they can
+// change as we run formatting commands. Instead, partition files should be
+// generated on request. Same with calling "ata_dump" actually.
+
 static vfs_node_t* node = NULL;
 static vfs_node_t** device_files = NULL;
 static size_t device_files_count = 0;
