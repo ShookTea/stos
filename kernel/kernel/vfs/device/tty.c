@@ -8,11 +8,9 @@
 #include "libds/ringbuf.h"
 #include <stdio.h>
 #include <string.h>
-
-#define BUFFER_SIZE 4096
+#include "./tty.h"
 
 static vfs_node_t* node = NULL;
-static wait_obj_t* wait_obj;
 
 /**
  * Buffer containing all "committed" bytes (after pressing Enter)
@@ -22,7 +20,7 @@ static size_t ready_lines = 0;
 /**
  * Currently read line
  */
-static char current_line[BUFFER_SIZE];
+static char current_line[TTY_BUFFER_SIZE];
 static size_t current_line_pos = 0;
 
 static void push_curr_line_to_buffer()
@@ -49,7 +47,7 @@ static void push_curr_line_to_buffer()
 
 static inline void put_char_to_line_with_val(char line, char to_print)
 {
-    if (current_line_pos < BUFFER_SIZE) {
+    if (current_line_pos < TTY_BUFFER_SIZE) {
         putchar(to_print);
         current_line[current_line_pos] = line;
         current_line_pos++;
@@ -161,8 +159,11 @@ static void handle_key_event(keyboard_event_t evt)
             // TODO: if last character was non-escaped backslash, that means
             // "don't commit now, instead pass new line to the reading task"
             push_curr_line_to_buffer();
-            if (wait_obj->count > 0) {
-                wait_wake_up(wait_obj);
+            if (node != NULL && node->metadata != NULL) {
+                tty_state_t* meta = node->metadata;
+                if (meta->wait_obj != NULL && meta->wait_obj->count > 0) {
+                    wait_wake_up(meta->wait_obj);
+                }
             }
     } else {
         put_char_to_line(evt.ascii);
@@ -175,12 +176,13 @@ static bool is_buffer_ready()
 }
 
 static size_t read(
-    vfs_file_t* file __attribute__((unused)),
+    vfs_file_t* file,
     size_t offset __attribute__((unused)),
     size_t size,
     void* ptr
 ) {
-    wait_on_condition(wait_obj, is_buffer_ready, NULL);
+    tty_state_t* meta = file->dentry->inode->metadata;
+    wait_on_condition(meta->wait_obj, is_buffer_ready, NULL);
     size_t read_bytes = 0;
     size_t buffer_size = ds_ringbuf_size(buffer);
     if (buffer_size < size) {
@@ -220,26 +222,38 @@ vfs_node_t* device_tty_mount()
         return node;
     }
 
-    buffer = ds_ringbuf_create(BUFFER_SIZE, sizeof(char), true);
+    buffer = ds_ringbuf_create(TTY_BUFFER_SIZE, sizeof(char), true);
+
+    tty_state_t* tty_state = kmalloc(sizeof(tty_state_t));
+    tty_state->wait_obj = wait_allocate_queue();
+
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);
     node->read_node = read;
     node->open_node = open;
+    node->metadata = tty_state;
 
-    wait_obj = wait_allocate_queue();
     keyboard_register_listener(handle_key_event);
     return node;
 }
 
 void device_tty_unmount()
 {
+    if (node == NULL) {
+        return;
+    }
+
+    if (node->metadata != NULL) {
+        tty_state_t* state = node->metadata;
+        wait_deallocate(state->wait_obj);
+        kfree(node->metadata);
+    }
+    kfree(node);
+    node = NULL;
+
     if (node != NULL) {
         kfree(node);
         node = NULL;
-    }
-    if (wait_obj != NULL) {
-        wait_deallocate(wait_obj);
-        wait_obj = NULL;
     }
     if (buffer != NULL) {
         ds_ringbuf_destroy(buffer);
