@@ -6,15 +6,6 @@
 
 #if !(defined(__is_libk))
 
-struct termios {
-    uint32_t c_iflag;
-    uint32_t c_oflag;
-    uint32_t c_cflag;
-    uint32_t c_lflag;
-    unsigned char c_line;
-    unsigned char c_cc[10];
-};
-
 /* c_lflag bits */
 // Should typed characters be displayed in stdout as well?
 #define ECHO 0x01
