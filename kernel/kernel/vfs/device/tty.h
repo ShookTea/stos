@@ -3,10 +3,24 @@
 
 #include "kernel/task/wait.h"
 #include <libds/ringbuf.h>
+#include <stdint.h>
 
 #define TTY_BUFFER_SIZE 4096
 
+#define TTY_DEFAULT_IFLAG 0
+#define TTY_DEFAULT_OFLAG 0
+#define TTY_DEFAULT_CFLAG 0
+#define TTY_DEFAULT_LFLAG 0
+
 typedef struct {
+    // termios input mode flags
+    uint32_t iflag;
+    // termios output mode flags
+    uint32_t oflag;
+    // termios control mode flags
+    uint32_t cflag;
+    // termios local mode flags
+    uint32_t lflag;
     // Queue of processes waiting for read from the TTY
     wait_obj_t* wait_obj;
     // Buffer of all "commited" bytes that are ready to read
@@ -15,7 +29,6 @@ typedef struct {
     // Currently read line
     char current_line[TTY_BUFFER_SIZE];
     size_t current_line_pos;
-
 } tty_state_t;
 
 #endif
