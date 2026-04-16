@@ -17,22 +17,19 @@ uint32_t sys_getpid();
 #define SYS_GETPPID 0x03
 uint32_t sys_getppid();
 
-#define SYS_BRK 0x04
-uint32_t sys_brk(uint32_t addr);
-
-#define SYS_FORK 0x05
+#define SYS_FORK 0x04
 int sys_fork();
 
-#define SYS_WAIT 0x06
+#define SYS_WAIT 0x05
 int sys_wait(int pid, int* status_code, int options);
 
-#define SYS_EXEC 0x07
+#define SYS_EXEC 0x06
 int sys_exec(const char* path, const char** argv, const char** envp);
 
-#define SYS_GETCWD 0x08
+#define SYS_GETCWD 0x07
 char* sys_getcwd(char* buf, size_t size);
 
-#define SYS_CHDIR 0x09
+#define SYS_CHDIR 0x08
 int sys_chdir(const char* path);
 
 #define SYS_OPEN 0x10
@@ -46,6 +43,9 @@ int sys_write(int fd, const void* buf, size_t count);
 
 #define SYS_READ 0x13
 int sys_read(int fd, void* buf, size_t count);
+
+#define SYS_BRK 0x20
+uint32_t sys_brk(uint32_t addr);
 
 // Syscall return values
 #define SYSCALL_SUCCESS 0

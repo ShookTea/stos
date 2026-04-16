@@ -21,23 +21,23 @@ The libc library contains wrappers for all implemented syscalls.
 
 | Syscall name | ID | libc file | libc function | Description |
 |---|---|---|---|---|
-| _process management_ |   |   |   |   |
+| _process management (`0x0n`)_ |   |   |   |   |
 | `EXIT` | `0x00` | [`<stdlib.h>`](libc/include/stdlib.h) | `void exit(int status)` | Causes task termination, with given status code |
 | `YIELD` | `0x01` | [`<sched.h>`](libc/include/sched.h) | `int sched_yield()` | Yield the processor, moving current task to the end of the queue |
 | `GETPID` | `0x02` | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getpid()` | Returns the process ID of the current process |
 | `GETPPID` | `0x03` | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getppid()` | Returns the process ID of the parent of the current process |
-| `BRK` | `0x04` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
-| `FORK` | `0x05` | [`<unistd.h>`](libc/include/unistd.h) | `int fork()` | Creates a fork of a current process |
-| `WAIT` | `0x06` | [`<sys/wait.h>`](libc/include/sys/wait.h) | `int waitpid(int pid, int* status_code, int options)` | Waits for a selected child process to exit |
-| `EXEC` | `0x07` | [`<unistd.h>`](libc/include/unistd.h) | `int execve(const char* path, const char* argv[], const char* envp[])` | Replace the current process with ELF executable |
-| `GETCWD` | `0x08` | [`<unistd.h>`](libc/include/unistd.h) | `char* getcwd(char buf[], size_t size)` | Returns current working directory |
-| `CHDIR` | `0x09` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
-| _file management_ |   |   |   |   |
+| `FORK` | `0x04` | [`<unistd.h>`](libc/include/unistd.h) | `int fork()` | Creates a fork of a current process |
+| `WAIT` | `0x05` | [`<sys/wait.h>`](libc/include/sys/wait.h) | `int waitpid(int pid, int* status_code, int options)` | Waits for a selected child process to exit |
+| `EXEC` | `0x06` | [`<unistd.h>`](libc/include/unistd.h) | `int execve(const char* path, const char* argv[], const char* envp[])` | Replace the current process with ELF executable |
+| `GETCWD` | `0x07` | [`<unistd.h>`](libc/include/unistd.h) | `char* getcwd(char buf[], size_t size)` | Returns current working directory |
+| `CHDIR` | `0x08` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
+| _file management (`0x1n`)_ |   |   |   |   |
 | `OPEN` | `0x10` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
 | `CLOSE`| `0x11` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |
 | `WRITE` | `0x12` | [`<unistd.h>`](libc/include/unistd.h) | `int write(int fd, const void* buffer, size_t count)` | Writes up to _count_ bytes from _buffer_ to file descriptor _fd_ |
 | `READ` | `0x13` | [`<unistd.h>`](libc/include/unistd.h) | `int read(int fd, void* buf, size_t count)` | Reads up to _count_ bytes from file descriptor _fd_ to _buffer_ |
-
+| _memory operations (`0x2n`)_ |   |   |   |   |
+| `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 
 ## Development
 
