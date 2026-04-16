@@ -410,12 +410,11 @@ static void handle_command_sent()
                                 }
                             }
                         }
-                        printf(
-                            use_byte ? " - %s (%llu %s)\n" : " - %s (%.1f %s)\n",
-                            child->name,
-                            use_byte ? child->inode->length : length,
-                            unit
-                        );
+                        if (use_byte) {
+                            printf(" - %s (%llu %s)\n", child->name, child->inode->length, unit);
+                        } else {
+                            printf(" - %s (%.1f %s)\n", child->name, length, unit);
+                        }
                     }
                 }
             } else if (node->inode->type & VFS_TYPE_FILE) {
