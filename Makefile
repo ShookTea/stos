@@ -33,7 +33,7 @@ qemu: $(TARGET).iso $(HARD_DRIVE)
 		-drive file=$(HARD_DRIVE),format=raw,media=disk \
 		$(QEMU_FLAGS)
 
-$(TARGET).iso: $(INITRD) $(TARGET) kernel/grub.cfg $(BUILD_DIR)/isodir/core.img
+$(TARGET).iso: $(INITRD) $(TARGET) kernel/grub.cfg $(BUILD_DIR)/isodir/core.img $(BUILD_DIR)/isodir/boot.img
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
 	cp $(TARGET) $(BUILD_DIR)/isodir/boot/stos
 	cp kernel/grub.cfg $(BUILD_DIR)/isodir/boot/grub/grub.cfg
@@ -42,6 +42,10 @@ $(TARGET).iso: $(INITRD) $(TARGET) kernel/grub.cfg $(BUILD_DIR)/isodir/core.img
 $(BUILD_DIR)/isodir/core.img:
 	@mkdir -p $(@D)
 	grub-mkimage -O i386-pc -o $@ -p /boot/grub biosdisk part_msdos ext2
+
+$(BUILD_DIR)/isodir/boot.img:
+	@mkdir -p $(@D)
+	cp /usr/lib/grub/i386-pc/boot.img $@
 
 test: $(LIBDS_TEST_TARGET)
 	$(LIBDS_TEST_TARGET)
