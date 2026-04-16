@@ -4,6 +4,7 @@
 #include "kernel/vfs/vfs.h"
 #include "../mount.h"
 #include "stdlib.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include "kernel/debug.h"
@@ -121,7 +122,7 @@ static size_t iso_read(
     vfs_file_t* file,
     size_t offset,
     size_t size,
-    void* ptr __attribute__((unused))
+    void* ptr
 ) {
     if (!file->readable) {
         return 0;
@@ -136,24 +137,27 @@ static size_t iso_read(
     );
 
     if (offset >= meta->extent_size) {
-        // Attempting to read outside of the size of the file
         return 0;
     }
 
-    if ((offset + size) >= meta->extent_size) {
-        // Limit size to one allowed by the size of the file
-        size_t overhead = offset + size - meta->extent_size;
-        size -= overhead;
+    if ((offset + size) > meta->extent_size) {
+        size = meta->extent_size - offset;
     }
 
     if (size == 0) {
         return 0;
     }
 
-    return 0;
-    // TODO: continue read implementation
-    // size_t offset_in_lba = offset % ISO_SECTOR_SIZE;
-    // size_t lba_index = (offset - offset_in_lba) / ISO_SECTOR_SIZE;
+    vfs_file_t* dev = vfs_open(meta->device_file, VFS_MODE_READONLY);
+    if (dev == NULL) {
+        _debug_puts("Device file doesn't exist anymore.");
+        return 0;
+    }
+
+    vfs_seek(dev, (uint64_t)meta->extent_lba * ISO_SECTOR_SIZE + offset);
+    size_t bytes_read = vfs_read(dev, size, ptr);
+    vfs_close(dev);
+    return bytes_read;
 }
 
 static bool iso_readdir(
@@ -175,22 +179,19 @@ static bool iso_readdir(
         return false;
     }
     vfs_seek(dev, meta->extent_lba * ISO_SECTOR_SIZE);
-    uint8_t* buffer = kmalloc_flags(ISO_SECTOR_SIZE, KMALLOC_ZERO);
-    vfs_read(dev, ISO_SECTOR_SIZE, buffer);
+    uint8_t* buffer = kmalloc_flags(meta->extent_size, KMALLOC_ZERO);
+    vfs_read(dev, meta->extent_size, buffer);
     iso_dir_record_t* dirrec;
 
     size_t buffer_start_index = 0;
     bool found = false;
 
-    // TODO: in case entry spans multiple sectors, we need to load other sectors
     for (size_t i = 0; i <= index; i++) {
         uint8_t entrysize = buffer[buffer_start_index];
         if (entrysize == 0) {
             break;
         }
-        if ((buffer_start_index + entrysize) > ISO_SECTOR_SIZE) {
-            // TODO: that probably means that there's a continuation in the
-            // next sector.
+        if ((buffer_start_index + entrysize) > meta->extent_size) {
             break;
         }
         dirrec = (iso_dir_record_t*)(buffer + buffer_start_index);
@@ -243,22 +244,19 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
         return NULL;
     }
     vfs_seek(dev, meta->extent_lba * ISO_SECTOR_SIZE);
-    uint8_t* buffer = kmalloc_flags(ISO_SECTOR_SIZE, KMALLOC_ZERO);
-    vfs_read(dev, ISO_SECTOR_SIZE, buffer);
+    uint8_t* buffer = kmalloc_flags(meta->extent_size, KMALLOC_ZERO);
+    vfs_read(dev, meta->extent_size, buffer);
     iso_dir_record_t* dirrec;
 
     size_t buffer_start_index = 0;
     vfs_node_t* found_node = NULL;
 
-    // TODO: in case entry spans multiple sectors, we need to load other sectors
     while (found_node == NULL) {
         uint8_t entrysize = buffer[buffer_start_index];
         if (entrysize == 0) {
             break;
         }
-        if ((buffer_start_index + entrysize) > ISO_SECTOR_SIZE) {
-            // TODO: that probably means that there's a continuation in the
-            // next sector.
+        if ((buffer_start_index + entrysize) > meta->extent_size) {
             break;
         }
         dirrec = (iso_dir_record_t*)(buffer + buffer_start_index);
