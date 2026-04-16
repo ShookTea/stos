@@ -49,8 +49,25 @@ int tty_update_termios_flags(
 );
 
 /**
- * Implementation of read_node_t from `vfs.h``
+ * Loads termios flags from given TTY file. Returns 0 on success. Ignores NULL
+ * pointers.
+ */
+int tty_load_termios_flags(
+    vfs_file_t* tty,
+    uint32_t* iflag,
+    uint32_t* oflag,
+    uint32_t* cflag,
+    uint32_t* lflag
+);
+
+/**
+ * Implementation of read_node_t from `vfs.h`
  */
 size_t tty_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
+
+/**
+ * Implementation of ioctl_node_t from `vfs.h`
+ */
+int tty_ioctl(vfs_file_t* file, uint32_t op, void* arg);
 
 #endif

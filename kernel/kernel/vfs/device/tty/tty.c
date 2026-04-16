@@ -231,23 +231,3 @@ void device_tty_unmount()
     kfree(node);
     node = NULL;
 }
-
-int tty_update_termios_flags(
-    vfs_file_t* tty,
-    uint32_t iflag,
-    uint32_t oflag,
-    uint32_t cflag,
-    uint32_t lflag
-) {
-    if (tty == NULL) {
-        return -1;
-    }
-
-    tty_state_t* meta = tty->dentry->inode->metadata;
-    meta->iflag = iflag;
-    meta->oflag = oflag;
-    meta->cflag = cflag;
-    meta->lflag = lflag;
-
-    return 0;
-}
