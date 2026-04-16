@@ -39,12 +39,23 @@ static inline void put_char_to_line_with_val(
     char line,
     char to_print
 ) {
-    if (meta->current_line_pos < TTY_BUFFER_SIZE) {
+    if (meta->lflag & TTY_LFLAG_ICANON) {
+        if (meta->current_line_pos < TTY_BUFFER_SIZE) {
+            if (meta->lflag & TTY_LFLAG_ECHO) {
+                putchar(to_print);
+            }
+            meta->current_line[meta->current_line_pos] = line;
+            meta->current_line_pos++;
+        }
+    }
+    else {
         if (meta->lflag & TTY_LFLAG_ECHO) {
             putchar(to_print);
         }
-        meta->current_line[meta->current_line_pos] = line;
-        meta->current_line_pos++;
+        ds_ringbuf_push(meta->buffer, &line);
+        if (meta->wait_obj != NULL && meta->wait_obj->count > 0) {
+            wait_wake_up(meta->wait_obj);
+        }
     }
 }
 
@@ -143,15 +154,16 @@ static void handle_key_event(keyboard_event_t evt)
         return;
     }
 
-    if (evt.key_code == KCODE_BACKSPACE) {
+    if (evt.key_code == KCODE_BACKSPACE && (meta->lflag & TTY_LFLAG_ICANON)) {
         if (meta->current_line_pos > 0) {
             meta->current_line_pos--;
             meta->current_line[meta->current_line_pos] = 0;
             putchar('\b');
         }
     }
-    else if (evt.key_code == KCODE_ENTER
-        || evt.key_code == KCODE_NUMPAD_ENTER) {
+    else if ((evt.key_code == KCODE_ENTER
+        || evt.key_code == KCODE_NUMPAD_ENTER)
+        && meta->lflag & TTY_LFLAG_ICANON) {
             char nline = '\n';
             put_char_to_line(meta, nline);
             // New line was commited - send it to buffer
@@ -169,7 +181,11 @@ static void handle_key_event(keyboard_event_t evt)
 static bool is_buffer_ready(void* arg)
 {
     tty_state_t* meta = arg;
-    return meta->ready_lines > 0;
+    if (meta->lflag & TTY_LFLAG_ICANON) {
+        return meta->ready_lines > 0;
+    } else {
+        return ds_ringbuf_size(meta->buffer) > 0;
+    }
 }
 
 static size_t read(
@@ -191,7 +207,7 @@ static size_t read(
         ds_ringbuf_pop(meta->buffer, &c);
         *((uint8_t*)ptr + i) = c;
         read_bytes++;
-        if (c == '\n') {
+        if ((meta->lflag & TTY_LFLAG_ICANON) && c == '\n') {
             // TODO: if previous character was non-escaped backslash, that means
             // the new line character is a part of line
             meta->ready_lines--;
