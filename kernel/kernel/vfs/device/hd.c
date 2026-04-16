@@ -2,12 +2,12 @@
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
 #include "kernel/memory/kmalloc.h"
-#include "kernel/spinlock.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include "stdlib.h"
 #include <stddef.h>
 #include <string.h>
+#include "../rw_queue/rw_queue.h"
 
 #define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/dev/hd", __VA_ARGS__)
@@ -118,60 +118,16 @@ static void load_sector_location(
     loc->sector_count = sector_count;
 }
 
-/**
- * Set of values for the is_ready function.
- * 0 = free to use
- * 1 = not ready
- * 2 = ready
- */
-static volatile uint8_t* rw_wait_map = NULL;
-static size_t rw_wait_map_count = 0;
-static size_t rw_wait_map_capacity = 0;
-static spinlock_t rw_wait_spinlock = SPINLOCK_INIT;
-
-/**
- * Creates a new entry in rw_wait_map in "not ready" state and returns ID of
- * the entry.
- */
-static size_t allocate_rw_wait_pos()
-{
-    spinlock_acquire(&rw_wait_spinlock);
-    if (rw_wait_map_capacity == rw_wait_map_count) {
-        rw_wait_map_capacity += 10;
-        rw_wait_map = (volatile uint8_t*)krealloc(
-            (void*)rw_wait_map,
-            sizeof(uint8_t) * rw_wait_map_capacity
-        );
-        memset((void*)(rw_wait_map + rw_wait_map_count), 0, 10);
-        rw_wait_map[rw_wait_map_count] = 1;
-        rw_wait_map_count++;
-        spinlock_release(&rw_wait_spinlock);
-        return rw_wait_map_count - 1;
-    }
-
-    for (size_t i = 0; i < rw_wait_map_capacity; i++) {
-        if (rw_wait_map[i] == 0) {
-            rw_wait_map[i] = 1;
-            spinlock_release(&rw_wait_spinlock);
-            return i;
-        }
-    }
-    _debug_puts("ERR: unexpected situation at allocate_rw_wait_pos");
-    spinlock_release(&rw_wait_spinlock);
-    abort();
-}
+static rw_queue_t rw_queue = RW_QUEUE_INIT;
 
 // Mark RW read from the pointer as ready
 static void rw_ready(void* ptr)
 {
     hd_wakeup_data_t* data = ptr;
     size_t id = data->wait_idx;
-    if (id >= rw_wait_map_capacity) {
-        _debug_puts("ERR: id >= rw_wait_map_capacity");
+    if (!rwq_set_ready(&rw_queue, id)) {
         abort();
     }
-    rw_wait_map[id] = 2;
-
     // Wakeup process in the queue
     wait_wake_up(data->hd_metadata->wait_obj);
 }
@@ -180,11 +136,7 @@ static bool rw_wait_for_ready(void* ptr)
 {
     hd_wakeup_data_t* data = ptr;
     size_t id = data->wait_idx;
-    if (id >= rw_wait_map_capacity) {
-        _debug_puts("ERR: id >= rw_wait_map_capacity");
-        abort();
-    }
-    return rw_wait_map[id] == 2;
+    return rwq_is_ready(&rw_queue, id);
 }
 
 static size_t read(
@@ -199,7 +151,7 @@ static size_t read(
 
     hd_metadata_t* meta = file->dentry->inode->metadata;
 
-    size_t wait_idx = allocate_rw_wait_pos();
+    size_t wait_idx = rwq_allocate_pos(&rw_queue);
     hd_wakeup_data_t wakeup_data;
     wakeup_data.wait_idx = wait_idx;
     wakeup_data.hd_metadata = meta;
@@ -214,7 +166,7 @@ static size_t read(
     hd_sector_location_t loc;
     load_sector_location(&loc, offset, size, meta);
     if (loc.size == 0) {
-        rw_wait_map[wait_idx] = 0;
+        rwq_deallocate_pos(&rw_queue, wait_idx);
         return 0;
     }
 
@@ -253,7 +205,7 @@ static size_t read(
     memcpy(ptr, ((uint8_t*)buffer) + offset_in_buffer, loc.size);
 
     // Mark rw_map entry as free to use
-    rw_wait_map[wait_idx] = 0;
+    rwq_deallocate_pos(&rw_queue, wait_idx);
 
     kfree(buffer);
     return loc.size;
@@ -271,7 +223,7 @@ static size_t write(
 
     hd_metadata_t* meta = file->dentry->inode->metadata;
 
-    size_t wait_idx = allocate_rw_wait_pos();
+    size_t wait_idx = rwq_allocate_pos(&rw_queue);
     hd_wakeup_data_t wakeup_data;
     wakeup_data.wait_idx = wait_idx;
     wakeup_data.hd_metadata = meta;
@@ -286,7 +238,7 @@ static size_t write(
     hd_sector_location_t loc;
     load_sector_location(&loc, offset, size, meta);
     if (loc.size == 0) {
-        rw_wait_map[wait_idx] = 0;
+        rwq_deallocate_pos(&rw_queue, wait_idx);
         return 0;
     }
 
@@ -324,8 +276,7 @@ static size_t write(
         wait_on_condition(meta->wait_obj, rw_wait_for_ready, &wakeup_data);
 
         _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
-        // Re-set wait map back to "waiting"
-        rw_wait_map[wait_idx] = 1;
+        rwq_reset_to_not_ready(&rw_queue, wait_idx);
     }
 
     // Copy data from pointer to sectors
@@ -350,7 +301,7 @@ static size_t write(
     _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
 
     // Mark rw_map entry as free to use
-    rw_wait_map[wait_idx] = 0;
+    rwq_deallocate_pos(&rw_queue, wait_idx);
 
     kfree(buffer);
     return loc.size;
