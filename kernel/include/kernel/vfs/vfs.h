@@ -18,12 +18,14 @@
 #define VFS_TYPE_FILE 0x01
 // A normal directory
 #define VFS_TYPE_DIRECTORY 0x02
+// Symbolic link (not supported yet)
+#define VFS_TYPE_SYMLINK 0x04
 // Character device file (stream of bytes, handled sequentially)
-#define VFS_TYPE_CHARACTER_DEVICE 0x04
+#define VFS_TYPE_CHARACTER_DEVICE 0x08
 // Block device file (allowing reading any block size and alignment)
-#define VFS_TYPE_BLOCK_DEVICE 0x08
+#define VFS_TYPE_BLOCK_DEVICE 0x10
 // Mounted file.
-#define VFS_TYPE_MOUNTPOINT 0x10
+#define VFS_TYPE_MOUNTPOINT 0x20
 
 // Read-only mode
 #define VFS_MODE_READONLY 0x01
