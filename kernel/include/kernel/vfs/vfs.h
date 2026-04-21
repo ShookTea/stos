@@ -67,8 +67,6 @@ typedef struct dentry {
     char name[VFS_MAX_FILENAME];
     struct dentry* parent;
     struct vfs_node* inode;
-    struct dentry** children; // Cached child dentries
-    size_t children_count;
 } dentry_t;
 
 /**

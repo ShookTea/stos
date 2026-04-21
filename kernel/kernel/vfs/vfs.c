@@ -11,6 +11,14 @@
 #define _debug_puts(...) debug_puts_c("VFS", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS", __VA_ARGS__)
 
+typedef struct {
+    char* filename;
+    dentry_t* dentry;
+} vfs_root_content_t;
+
+static vfs_root_content_t* root_content = NULL;
+static size_t root_content_size = 0;
+
 // By how many entries should we extend file_handles array if needed?
 #define VFS_FILE_HANDLE_REALLOC_SIZE 10
 
@@ -94,20 +102,42 @@ static void deallocate_file_handle(vfs_file_t* handle)
     kfree(handle);
 }
 
+static bool root_readdir(
+    struct vfs_node* node __attribute__((unused)),
+    size_t index,
+    struct dirent* out
+) {
+    if (index >= root_content_size) {
+        return false;
+    }
+    strcpy(out->name, root_content[index].filename);
+    out->ino = root_content[index].dentry->inode->inode;
+    return true;
+}
+
+static vfs_node_t* root_finddir(
+    vfs_node_t* node __attribute__((unused)),
+    char* name
+) {
+    for (size_t i = 0; i < root_content_size; i++) {
+        if (strcmp(name, root_content[i].filename) == 0) {
+            return root_content[i].dentry->inode;
+        }
+    }
+    return NULL;
+}
+
 void vfs_init()
 {
     vfs_node_t* root_inode = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
     vfs_populate_node(root_inode, "", VFS_TYPE_DIRECTORY);
-    // Root directory has no readdir_node/finddir_node: all children are
-    // registered via vfs_mount and stored directly in the root dentry's
-    // children array, so the dentry cache fallback in vfs_readdir handles it.
+    root_inode->readdir_node = root_readdir;
+    root_inode->finddir_node = root_finddir;
 
     vfs_root = kmalloc_flags(sizeof(dentry_t), KMALLOC_ZERO);
     vfs_root->name[0] = '\0';
     vfs_root->parent = vfs_root; // root's parent is itself (for ".." handling)
     vfs_root->inode = root_inode;
-    vfs_root->children = NULL;
-    vfs_root->children_count = 0;
 }
 
 dentry_t* vfs_dentry_create(
@@ -119,21 +149,27 @@ dentry_t* vfs_dentry_create(
     strncpy(d->name, name, sizeof(d->name) - 1);
     d->parent = parent;
     d->inode = inode;
-    d->children = NULL;
-    d->children_count = 0;
-
-    if (parent != NULL) {
-        spinlock_acquire(&vfs_lock);
-        parent->children = krealloc(
-            parent->children,
-            sizeof(dentry_t*) * (parent->children_count + 1)
-        );
-        parent->children[parent->children_count] = d;
-        parent->children_count++;
-        spinlock_release(&vfs_lock);
-    }
-
     return d;
+}
+
+static void add_entry_to_root_content(const char* name, dentry_t* dentry)
+{
+    root_content = krealloc(
+        root_content,
+        sizeof(vfs_root_content_t) * (root_content_size + 1)
+    );
+
+    root_content[root_content_size].filename = kmalloc(
+        sizeof(char) * strlen(name)
+    );
+    strcpy(
+        root_content[root_content_size].filename,
+        name
+    );
+
+    root_content[root_content_size].dentry = dentry;
+
+    root_content_size++;
 }
 
 dentry_t* vfs_add_node(const char* name, vfs_node_t* inode)
@@ -141,7 +177,9 @@ dentry_t* vfs_add_node(const char* name, vfs_node_t* inode)
     if (vfs_root == NULL) {
         return NULL;
     }
-    return vfs_dentry_create(vfs_root, name, inode);
+    dentry_t* dentry = vfs_dentry_create(vfs_root, name, inode);
+    add_entry_to_root_content(name, dentry);
+    return dentry;
 }
 
 size_t vfs_read(vfs_file_t* file, size_t size, void* ptr)
@@ -218,17 +256,7 @@ bool vfs_readdir(dentry_t* dentry, size_t index, struct dirent* out)
         return inode->readdir_node(inode, index, out);
     }
 
-    // Fallback: iterate pre-populated dentry children (e.g. VFS root, whose
-    // children are registered via vfs_mount rather than a filesystem handler)
-    if (index >= dentry->children_count) {
-        return false;
-    }
-    strncpy(out->name, dentry->children[index]->name, sizeof(out->name) - 1);
-    out->name[sizeof(out->name) - 1] = '\0';
-    out->ino = dentry->children[index]->inode
-        ? dentry->children[index]->inode->inode
-        : 0;
-    return true;
+    return false;
 }
 
 dentry_t* vfs_finddir(dentry_t* dentry, const char* name)
@@ -238,17 +266,7 @@ dentry_t* vfs_finddir(dentry_t* dentry, const char* name)
         return NULL;
     }
 
-    // 1. Check dentry cache
-    spinlock_acquire(&vfs_lock);
-    for (size_t i = 0; i < dentry->children_count; i++) {
-        if (strcmp(dentry->children[i]->name, name) == 0) {
-            spinlock_release(&vfs_lock);
-            return dentry->children[i];
-        }
-    }
-    spinlock_release(&vfs_lock);
-
-    // 2. Cache miss: ask the filesystem for the inode (no lock held; the
+    // Ask the filesystem for the inode (no lock held; the
     //    filesystem callback may block or be slow)
     if (inode->finddir_node == NULL) {
         return NULL;
@@ -258,31 +276,11 @@ dentry_t* vfs_finddir(dentry_t* dentry, const char* name)
         return NULL;
     }
 
-    // 3. Re-check cache under lock (another thread may have populated it while
-    //    we were in the filesystem callback), then insert if still absent
-    spinlock_acquire(&vfs_lock);
-    for (size_t i = 0; i < dentry->children_count; i++) {
-        if (strcmp(dentry->children[i]->name, name) == 0) {
-            spinlock_release(&vfs_lock);
-            return dentry->children[i];
-        }
-    }
-
     dentry_t* child = kmalloc_flags(sizeof(dentry_t), KMALLOC_ZERO);
     strncpy(child->name, name, sizeof(child->name) - 1);
     child->parent = dentry;
     child->inode = child_inode;
-    child->children = NULL;
-    child->children_count = 0;
 
-    dentry->children = krealloc(
-        dentry->children,
-        sizeof(dentry_t*) * (dentry->children_count + 1)
-    );
-    dentry->children[dentry->children_count] = child;
-    dentry->children_count++;
-
-    spinlock_release(&vfs_lock);
     return child;
 }
 
@@ -466,6 +464,10 @@ dentry_t* vfs_mkdir(dentry_t* parent, const char* name)
     // can be persisted on disk once a real filesystem is implemented.
     if (parent->inode->mkdir_node != NULL) {
         parent->inode->mkdir_node(parent->inode, name);
+    }
+
+    if (parent == vfs_root) {
+        add_entry_to_root_content(name, dentry);
     }
 
     return dentry;
