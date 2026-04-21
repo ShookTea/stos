@@ -17,8 +17,9 @@ typedef struct {
     uint8_t disk_id;
     // Is it representing a single partition, or a whole disk?
     bool is_partition;
-    // Partition ID - ignored if is_partition=false
-    uint8_t partition_id;
+    // For partitions: LBA and size stored directly (no boot-time cache needed)
+    uint32_t part_lba_start;
+    uint32_t part_sectors_count;
     // Tasks queue
     wait_obj_t* wait_obj;
 } hd_metadata_t;
@@ -27,8 +28,6 @@ typedef struct {
     hd_metadata_t* hd_metadata;
     size_t wait_idx;
 } hd_wakeup_data_t;
-
-// Calculation around sector locations
 
 typedef struct {
     size_t size;
@@ -48,6 +47,25 @@ static inline size_t sector_align_up(size_t addr, size_t sector_size)
     return (addr + sector_size - 1) & ~(sector_size - 1);
 }
 
+static rw_queue_t rw_queue = RW_QUEUE_INIT;
+
+static void rw_ready(void* ptr)
+{
+    hd_wakeup_data_t* data = ptr;
+    size_t id = data->wait_idx;
+    if (!rwq_set_ready(&rw_queue, id)) {
+        abort();
+    }
+    wait_wake_up(data->hd_metadata->wait_obj);
+}
+
+static bool rw_wait_for_ready(void* ptr)
+{
+    hd_wakeup_data_t* data = ptr;
+    size_t id = data->wait_idx;
+    return rwq_is_ready(&rw_queue, id);
+}
+
 static void load_sector_location(
     hd_sector_location_t* loc,
     size_t offset,
@@ -58,7 +76,6 @@ static void load_sector_location(
     ata_load_disk_info(meta->disk_id, &disk_info);
     size_t sector_size = disk_info.sector_size;
 
-    // Align offset to sector size
     size_t lowest_sector_byte = sector_align_down(offset, sector_size);
     size_t highest_sector_byte = sector_align_up(offset + size, sector_size);
 
@@ -85,58 +102,24 @@ static void load_sector_location(
         return;
     }
 
-    // Load partition info
-    ata_partition_t part_info;
-    if (meta->partition_id >= disk_info.partitions_count) {
-        _debug_puts("Err on read: partition doesn't exist.");
-        // Partition with given ID doesn't exist
-        loc->size = 0;
-        return;
-    }
-    part_info = disk_info.partitions[meta->partition_id];
-
-    // Calculate LBA position inside partition
+    // Partition: use LBA and sector count stored directly in metadata.
     size_t low_sector_lba_in_part = lowest_sector_byte / sector_size;
     size_t high_sector_lba_in_part = highest_sector_byte / sector_size;
     size_t sector_count = high_sector_lba_in_part - low_sector_lba_in_part;
 
-    // If low sector is beyond partition limits, no read is possible.
-    if (low_sector_lba_in_part >= part_info.sectors_count) {
+    if (low_sector_lba_in_part >= meta->part_sectors_count) {
         _debug_puts("Err on read: read start beyond partition border");
         loc->size = 0;
         return;
     }
 
-    // If high sector is beyond partition limits, reduce it
-    if (high_sector_lba_in_part > part_info.sectors_count) {
-        sector_count -= high_sector_lba_in_part - part_info.sectors_count;
-        high_sector_lba_in_part = part_info.sectors_count;
-        loc->size = part_info.sectors_count * sector_size - offset;
+    if (high_sector_lba_in_part > meta->part_sectors_count) {
+        sector_count -= high_sector_lba_in_part - meta->part_sectors_count;
+        loc->size = meta->part_sectors_count * sector_size - offset;
     }
 
-    loc->low_sector_lba = low_sector_lba_in_part + part_info.lba_start;
+    loc->low_sector_lba = low_sector_lba_in_part + meta->part_lba_start;
     loc->sector_count = sector_count;
-}
-
-static rw_queue_t rw_queue = RW_QUEUE_INIT;
-
-// Mark RW read from the pointer as ready
-static void rw_ready(void* ptr)
-{
-    hd_wakeup_data_t* data = ptr;
-    size_t id = data->wait_idx;
-    if (!rwq_set_ready(&rw_queue, id)) {
-        abort();
-    }
-    // Wakeup process in the queue
-    wait_wake_up(data->hd_metadata->wait_obj);
-}
-
-static bool rw_wait_for_ready(void* ptr)
-{
-    hd_wakeup_data_t* data = ptr;
-    size_t id = data->wait_idx;
-    return rwq_is_ready(&rw_queue, id);
 }
 
 static size_t read(
@@ -177,13 +160,11 @@ static size_t read(
         loc.sector_count
     );
 
-    // Allocate buffer for sector data
     uint16_t* buffer = kmalloc_flags(
         loc.sector_size * loc.sector_count,
         KMALLOC_ZERO
     );
 
-    // Run read command
     ata_read(
         meta->disk_id,
         loc.low_sector_lba,
@@ -195,16 +176,13 @@ static size_t read(
 
     _debug_printf("[wait_idx=%u] start waiting\n", wait_idx);
 
-    // Wait for reading to be completed
     wait_on_condition(meta->wait_obj, rw_wait_for_ready, &wakeup_data);
 
     _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
 
-    // Reading was completed - copy data to output pointer
     size_t offset_in_buffer = offset - loc.lowest_sector_byte;
     memcpy(ptr, ((uint8_t*)buffer) + offset_in_buffer, loc.size);
 
-    // Mark rw_map entry as free to use
     rwq_deallocate_pos(&rw_queue, wait_idx);
 
     kfree(buffer);
@@ -249,21 +227,16 @@ static size_t write(
         loc.sector_count
     );
 
-    // Allocate buffer for sector data
     uint16_t* buffer = kmalloc_flags(
         loc.sector_size * loc.sector_count,
         KMALLOC_ZERO
     );
 
-    // If original offset and size was not aligned to sectors, we need to first
-    // load data, so we won't overwrite parts of sectors that are not updated
-    // by the caller.
     if (offset != loc.lowest_sector_byte || size % loc.sector_size != 0) {
         _debug_printf(
             "[wait_idx=%u] not aligned to sectors - reading wait started\n",
             wait_idx
         );
-        // Run read command
         ata_read(
             meta->disk_id,
             loc.low_sector_lba,
@@ -272,18 +245,15 @@ static size_t write(
             rw_ready,
             &wakeup_data
         );
-        // Wait for reading to be completed
         wait_on_condition(meta->wait_obj, rw_wait_for_ready, &wakeup_data);
 
         _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
         rwq_reset_to_not_ready(&rw_queue, wait_idx);
     }
 
-    // Copy data from pointer to sectors
     size_t offset_in_buffer = offset - loc.lowest_sector_byte;
     memcpy(((uint8_t*)buffer) + offset_in_buffer, ptr, loc.size);
 
-    // Run write command
     ata_write(
         meta->disk_id,
         loc.low_sector_lba,
@@ -295,44 +265,215 @@ static size_t write(
 
     _debug_printf("[wait_idx=%u] start for write\n", wait_idx);
 
-    // Wait for writing to be completed
     wait_on_condition(meta->wait_obj, rw_wait_for_ready, &wakeup_data);
 
     _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
 
-    // Mark rw_map entry as free to use
     rwq_deallocate_pos(&rw_queue, wait_idx);
 
     kfree(buffer);
     return loc.size;
 }
 
-// NULL-terminated list of nodes
-static vfs_node_t** nodes = NULL;
-// Size of nodes, excluding NULL at the end
-static size_t nodes_count = 0;
+// Disk-level nodes (hda, hdb, sr0) — permanent, freed on unmount.
+static vfs_node_t** disk_nodes = NULL;
+static size_t disk_nodes_count = 0;
 
-static void increase_nodes_size(void)
+// Shared wait_obj for blocking MBR reads done during readdir/finddir.
+static wait_obj_t* partition_wait_obj = NULL;
+
+// Per-PIO-disk partition cache, rebuilt on each readdir pass.
+typedef struct {
+    uint8_t disk_id;
+    char drive_letter;
+    ata_partition_t parts[4];
+    uint8_t count;
+} hd_part_cache_entry_t;
+
+#define MAX_PIO_DISKS 4
+static hd_part_cache_entry_t part_cache[MAX_PIO_DISKS];
+static size_t part_cache_pio_count = 0;
+
+// on_release for dynamically-allocated partition nodes.
+static void partition_node_release(vfs_node_t* node)
 {
-    if (nodes == NULL) {
-        nodes = kmalloc_flags(sizeof(vfs_node_t*) * 2, KMALLOC_ZERO);
-        nodes_count = 1;
-    } else {
-        nodes_count++;
-        // +1 here to make sure that we keep NULL at the end
-        nodes = krealloc(nodes, sizeof(vfs_node_t*) * (nodes_count + 1));
-        // Set null termination
-        nodes[nodes_count] = NULL;
+    hd_metadata_t* meta = node->metadata;
+    if (meta != NULL) {
+        if (meta->wait_obj != NULL) {
+            wait_deallocate(meta->wait_obj);
+        }
+        kfree(meta);
     }
+    kfree(node);
+}
+
+// Blocking read of sector 0 from disk_id into mbr_buf (must be sector-sized).
+// Uses partition_wait_obj and the shared rw_queue.
+static void read_mbr_sync(uint8_t disk_id, uint16_t* mbr_buf)
+{
+    hd_metadata_t fake_meta = {
+        .disk_id = disk_id,
+        .is_partition = false,
+        .wait_obj = partition_wait_obj,
+    };
+    size_t wait_idx = rwq_allocate_pos(&rw_queue);
+    hd_wakeup_data_t wd = {
+        .wait_idx = wait_idx,
+        .hd_metadata = &fake_meta,
+    };
+    ata_read(disk_id, 0, 1, mbr_buf, rw_ready, &wd);
+    wait_on_condition(partition_wait_obj, rw_wait_for_ready, &wd);
+    rwq_deallocate_pos(&rw_queue, wait_idx);
+}
+
+// Refresh part_cache by reading current MBR from every PIO disk.
+static void refresh_partition_cache(void)
+{
+    part_cache_pio_count = 0;
+    uint8_t avail[5];
+    ata_get_available_drives(avail);
+    char drive_letter = 'a';
+
+    for (uint8_t* d = avail; *d != ATA_DRIVE_NONE; d++) {
+        ata_disk_info_t di;
+        ata_load_disk_info(*d, &di);
+
+        if (di.type != PIO) {
+            continue;
+        }
+        if (part_cache_pio_count >= MAX_PIO_DISKS) {
+            break;
+        }
+
+        uint16_t* mbr_buf = kmalloc_flags(di.sector_size, KMALLOC_ZERO);
+        read_mbr_sync(*d, mbr_buf);
+
+        hd_part_cache_entry_t* entry = &part_cache[part_cache_pio_count];
+        entry->disk_id = *d;
+        entry->drive_letter = drive_letter;
+        entry->count = ata_parse_mbr_partitions(
+            (uint8_t*)mbr_buf,
+            entry->parts
+        );
+        part_cache_pio_count++;
+
+        kfree(mbr_buf);
+        drive_letter++;
+    }
+}
+
+// Called by device.c readdir for indices past the static device list.
+// part_index == 0 triggers a fresh MBR read for all PIO disks.
+bool device_hd_readdir_partition(size_t part_index, struct dirent* out)
+{
+    if (partition_wait_obj == NULL) {
+        return false;
+    }
+
+    if (part_index == 0) {
+        refresh_partition_cache();
+    }
+
+    size_t idx = 0;
+    for (size_t d = 0; d < part_cache_pio_count; d++) {
+        for (size_t p = 0; p < part_cache[d].count; p++) {
+            if (idx == part_index) {
+                out->name[0] = 'h';
+                out->name[1] = 'd';
+                out->name[2] = part_cache[d].drive_letter;
+                out->name[3] = '1' + p;
+                out->name[4] = '\0';
+                out->ino = (uint32_t)(part_cache[d].disk_id * 4 + p + 1);
+                return true;
+            }
+            idx++;
+        }
+    }
+    return false;
+}
+
+// Called by device.c finddir for names not matching static devices.
+// Reads current MBR on demand. Returns a dynamically-allocated node with
+// on_release set so it is freed when the last file handle is closed.
+vfs_node_t* device_hd_finddir_partition(const char* name)
+{
+    if (partition_wait_obj == NULL) {
+        return NULL;
+    }
+
+    // Accept names of the form "hd[a-z][1-9]"
+    if (name[0] != 'h' || name[1] != 'd'
+        || name[2] < 'a' || name[2] > 'z'
+        || name[3] < '1' || name[3] > '9'
+        || name[4] != '\0') {
+        return NULL;
+    }
+    char drive_letter = name[2];
+    uint8_t part_num = (uint8_t)(name[3] - '1'); // 0-based
+
+    uint8_t avail[5];
+    ata_get_available_drives(avail);
+    char dl = 'a';
+
+    for (uint8_t* d = avail; *d != ATA_DRIVE_NONE; d++) {
+        ata_disk_info_t di;
+        ata_load_disk_info(*d, &di);
+
+        if (di.type != PIO) {
+            continue;
+        }
+
+        if (dl != drive_letter) {
+            dl++;
+            continue;
+        }
+
+        uint16_t* mbr_buf = kmalloc_flags(di.sector_size, KMALLOC_ZERO);
+        read_mbr_sync(*d, mbr_buf);
+
+        ata_partition_t parts[4];
+        uint8_t count = ata_parse_mbr_partitions((uint8_t*)mbr_buf, parts);
+        kfree(mbr_buf);
+
+        if (part_num >= count) {
+            return NULL;
+        }
+
+        ata_partition_t* part = &parts[part_num];
+
+        vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
+        vfs_populate_node(node, (char*)name, VFS_TYPE_BLOCK_DEVICE);
+        node->read_node = read;
+        node->write_node = write;
+        node->length = (uint64_t)part->sectors_count * di.sector_size;
+        node->on_release = partition_node_release;
+
+        hd_metadata_t* metadata = kmalloc_flags(
+            sizeof(hd_metadata_t),
+            KMALLOC_ZERO
+        );
+        metadata->disk_id = *d;
+        metadata->is_partition = true;
+        metadata->part_lba_start = part->lba_start;
+        metadata->part_sectors_count = part->sectors_count;
+        metadata->wait_obj = wait_allocate_queue();
+        node->metadata = metadata;
+
+        return node;
+    }
+
+    return NULL;
 }
 
 vfs_node_t** device_hd_mount()
 {
-    if (nodes != NULL) {
-        return nodes;
+    if (disk_nodes != NULL) {
+        return disk_nodes;
     }
 
-    _debug_puts("Mounting HD files to VFS");
+    partition_wait_obj = wait_allocate_queue();
+
+    _debug_puts("Mounting HD disk files to VFS");
     uint8_t ata_drives[5];
     ata_get_available_drives(ata_drives);
     uint8_t* ata_drive_ptr = ata_drives;
@@ -340,6 +481,10 @@ vfs_node_t** device_hd_mount()
     char drive_letter = 'a';
     char sr_name[] = "sr0";
     char sr_index = '0';
+
+    disk_nodes = kmalloc_flags(sizeof(vfs_node_t*), KMALLOC_ZERO);
+    disk_nodes[0] = NULL;
+
     while (*ata_drive_ptr != ATA_DRIVE_NONE) {
         ata_disk_info_t disk_info;
         ata_load_disk_info(*ata_drive_ptr, &disk_info);
@@ -352,7 +497,7 @@ vfs_node_t** device_hd_mount()
             vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
             vfs_populate_node(node, sr_name, VFS_TYPE_BLOCK_DEVICE);
             node->read_node = read;
-            node->write_node = NULL; // CD-ROM drives are read-only
+            node->write_node = NULL;
             node->length = (uint64_t)disk_info.sectors_count * sector_size;
             hd_metadata_t* metadata = kmalloc_flags(
                 sizeof(hd_metadata_t),
@@ -362,8 +507,14 @@ vfs_node_t** device_hd_mount()
             metadata->disk_id = *ata_drive_ptr;
             metadata->wait_obj = wait_allocate_queue();
             metadata->is_partition = false;
-            increase_nodes_size();
-            nodes[nodes_count - 1] = node;
+
+            disk_nodes_count++;
+            disk_nodes = krealloc(
+                disk_nodes,
+                sizeof(vfs_node_t*) * (disk_nodes_count + 1)
+            );
+            disk_nodes[disk_nodes_count - 1] = node;
+            disk_nodes[disk_nodes_count] = NULL;
 
             sr_index++;
             ata_drive_ptr++;
@@ -376,17 +527,13 @@ vfs_node_t** device_hd_mount()
         }
 
         drive_name[2] = drive_letter;
-        _debug_printf(
-            "PIO drive found, mounting to /dev/%s\n",
-            drive_name
-        );
+        _debug_printf("PIO drive found, mounting to /dev/%s\n", drive_name);
 
         vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
         vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = read;
         node->write_node = write;
-        uint32_t sectors_count = disk_info.sectors_count;
-        node->length = (uint64_t)sectors_count * sector_size;
+        node->length = (uint64_t)disk_info.sectors_count * sector_size;
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),
             KMALLOC_ZERO
@@ -395,54 +542,28 @@ vfs_node_t** device_hd_mount()
         metadata->disk_id = *ata_drive_ptr;
         metadata->wait_obj = wait_allocate_queue();
         metadata->is_partition = false;
-        increase_nodes_size();
-        nodes[nodes_count - 1] = node;
 
-        _debug_printf(
-            "Partitions count in /dev/%s: %u\n",
-            drive_name,
-            disk_info.partitions_count
+        disk_nodes_count++;
+        disk_nodes = krealloc(
+            disk_nodes,
+            sizeof(vfs_node_t*) * (disk_nodes_count + 1)
         );
-        for (size_t i = 0; i < disk_info.partitions_count; i++) {
-            ata_partition_t part_info = disk_info.partitions[i];
-            char partition_name[] = "hda1";
-            partition_name[2] = drive_letter;
-            partition_name[3] = '1' + i;
-            _debug_printf("Loading partition /dev/%s\n", partition_name);
-            vfs_node_t* part_node = kmalloc_flags(
-                sizeof(vfs_node_t),
-                KMALLOC_ZERO
-            );
-            vfs_populate_node(part_node, partition_name, VFS_TYPE_BLOCK_DEVICE);
-            part_node->read_node = read;
-            part_node->write_node = write;
-            part_node->length = (uint64_t)part_info.sectors_count * sector_size;
-            hd_metadata_t* metadata = kmalloc_flags(
-                sizeof(hd_metadata_t),
-                KMALLOC_ZERO
-            );
-            part_node->metadata = metadata;
-            metadata->disk_id = *ata_drive_ptr;
-            metadata->wait_obj = wait_allocate_queue();
-            metadata->is_partition = true;
-            metadata->partition_id = i;
-            increase_nodes_size();
-            nodes[nodes_count - 1] = part_node;
-        }
+        disk_nodes[disk_nodes_count - 1] = node;
+        disk_nodes[disk_nodes_count] = NULL;
 
         drive_letter++;
         ata_drive_ptr++;
     }
 
-    return nodes;
+    return disk_nodes;
 }
 
 void device_hd_unmount()
 {
-    if (nodes == NULL) {
+    if (disk_nodes == NULL) {
         return;
     }
-    vfs_node_t** ptr = nodes;
+    vfs_node_t** ptr = disk_nodes;
     while (*ptr != NULL) {
         vfs_node_t* node = *ptr;
         hd_metadata_t* metadata = node->metadata;
@@ -455,7 +576,12 @@ void device_hd_unmount()
         kfree(node);
         ptr++;
     }
-    kfree(nodes);
-    nodes_count = 0;
-    nodes = NULL;
+    kfree(disk_nodes);
+    disk_nodes_count = 0;
+    disk_nodes = NULL;
+
+    if (partition_wait_obj != NULL) {
+        wait_deallocate(partition_wait_obj);
+        partition_wait_obj = NULL;
+    }
 }

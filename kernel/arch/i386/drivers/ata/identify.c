@@ -221,20 +221,29 @@ void ata_select_drive(uint8_t drive)
     );
 }
 
-static void _load_partition_info_to_disk_data(
-    ata_mbr_partition_table_entry_t* pte,
-    ata_disk_info_t* dest
+uint8_t ata_parse_mbr_partitions(
+    const uint8_t* mbr_buffer,
+    ata_partition_t* out_parts
 ) {
-    if (pte->partition_type == 0) {
-        return;
+    const ata_mbr_t* mbr = (const ata_mbr_t*)mbr_buffer;
+    if (mbr->signature_bytes != 0xAA55) {
+        return 0;
     }
-
-    ata_partition_t* part = &dest->partitions[dest->partitions_count];
-    part->type = pte->partition_type;
-    part->lba_start = pte->partition_start_lba;
-    part->sectors_count = pte->partition_sectors_count;
-    part->bootable = pte->drive_attributes & 0x80;
-    dest->partitions_count++;
+    const ata_mbr_partition_table_entry_t* entries[4] = {
+        &mbr->partition_1, &mbr->partition_2,
+        &mbr->partition_3, &mbr->partition_4,
+    };
+    uint8_t count = 0;
+    for (int i = 0; i < 4; i++) {
+        const ata_mbr_partition_table_entry_t* pte = entries[i];
+        if (pte->partition_type == 0) continue;
+        out_parts[count].type = pte->partition_type;
+        out_parts[count].lba_start = pte->partition_start_lba;
+        out_parts[count].sectors_count = pte->partition_sectors_count;
+        out_parts[count].bootable = pte->drive_attributes & 0x80;
+        count++;
+    }
+    return count;
 }
 
 void _ata_save_disk_info(const uint8_t drive_id, const ata_disk_info_t* src)
@@ -243,28 +252,6 @@ void _ata_save_disk_info(const uint8_t drive_id, const ata_disk_info_t* src)
         return;
     }
     memcpy(&disk_info[drive_id], src, sizeof(ata_disk_info_t));
-}
-
-void _ata_save_partition_data(uint8_t drive_id, ata_mbr_t* mbr)
-{
-    _debug_printf("MBR load completed for drive ID %u\n", drive_id);
-    if (mbr->signature_bytes != 0xAA55) {
-        _debug_printf(
-            "Invalid MBR signature bytes: %#04X, 0xAA55 expected\n",
-            mbr->signature_bytes
-        );
-        return;
-    }
-    _debug_puts("MBR signature bytes valid.");
-    _debug_printf("part1 type=%02x\n", mbr->partition_1.partition_type);
-    _debug_printf("part2 type=%02x\n", mbr->partition_2.partition_type);
-    _debug_printf("part3 type=%02x\n", mbr->partition_3.partition_type);
-    _debug_printf("part4 type=%02x\n", mbr->partition_4.partition_type);
-
-    _load_partition_info_to_disk_data(&mbr->partition_1, &disk_info[drive_id]);
-    _load_partition_info_to_disk_data(&mbr->partition_2, &disk_info[drive_id]);
-    _load_partition_info_to_disk_data(&mbr->partition_3, &disk_info[drive_id]);
-    _load_partition_info_to_disk_data(&mbr->partition_4, &disk_info[drive_id]);
 }
 
 bool ata_load_disk_info(uint8_t disk_id, ata_disk_info_t* ptr)

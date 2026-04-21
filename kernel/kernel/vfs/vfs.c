@@ -241,6 +241,9 @@ void vfs_close(vfs_file_t* file)
         node->close_node(node, file);
     }
     node->open_count--;
+    if (node->open_count == 0 && node->on_release != NULL) {
+        node->on_release(node);
+    }
     deallocate_file_handle(file);
 }
 
@@ -435,6 +438,7 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     node->type = type;
     node->length = 0;
     node->open_count = 0;
+    node->on_release = NULL;
     node->inode = 0;
     node->open_node = NULL;
     node->close_node = NULL;

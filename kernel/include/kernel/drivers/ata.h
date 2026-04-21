@@ -41,10 +41,17 @@ typedef struct {
     uint32_t sectors_count;
     // Size of a single sector in bytes
     uint16_t sector_size;
-    // Actual number of partitions stored in partitions[] array
-    uint8_t partitions_count;
-    ata_partition_t partitions[32];
 } ata_disk_info_t;
+
+/**
+ * Parses MBR partition table from a raw sector buffer (512 bytes).
+ * Populates out_parts (caller must provide space for at least 4 entries).
+ * Returns the number of partitions found (0–4).
+ */
+uint8_t ata_parse_mbr_partitions(
+    const uint8_t* mbr_buffer,
+    ata_partition_t* out_parts
+);
 
 /**
  * Attempts to initialize ATA driver.

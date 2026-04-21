@@ -138,6 +138,8 @@ typedef struct vfs_node {
     uint32_t inode; // File ID, device specific, to identify files (on a disk)
     uint64_t length; // File size in bytes
     uint32_t open_count;
+    // Called when open_count drops to 0. Set on dynamically-allocated nodes.
+    void (*on_release)(struct vfs_node* node);
     open_node_t open_node;
     close_node_t close_node;
     read_node_t read_node;

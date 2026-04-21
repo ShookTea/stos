@@ -5,10 +5,6 @@
 #include <stddef.h>
 #include <string.h>
 
-// TODO: we shouldn't persist information about partitions, since they can
-// change as we run formatting commands. Instead, partition files should be
-// generated on request. Same with calling "ata_dump" actually.
-
 static vfs_node_t* node = NULL;
 static vfs_node_t** device_files = NULL;
 static size_t device_files_count = 0;
@@ -28,13 +24,13 @@ static bool readdir(
     size_t index,
     struct dirent* out
 ) {
-    if (index >= device_files_count) {
-        return false;
+    if (index < device_files_count) {
+        strcpy(out->name, device_files[index]->filename);
+        out->ino = device_files[index]->inode;
+        return true;
     }
-
-    strcpy(out->name, device_files[index]->filename);
-    out->ino = device_files[index]->inode;
-    return true;
+    // Past the static list: enumerate partition nodes dynamically.
+    return device_hd_readdir_partition(index - device_files_count, out);
 }
 
 static vfs_node_t* finddir(
@@ -46,7 +42,7 @@ static vfs_node_t* finddir(
             return device_files[i];
         }
     }
-    return NULL;
+    return device_hd_finddir_partition(name);
 }
 
 dentry_t* device_mount()
