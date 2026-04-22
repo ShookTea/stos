@@ -545,14 +545,15 @@ static void handle_command_sent()
     }
 }
 
+static dentry_t* tty_dentry = NULL;
+
 static void print_prompt_and_read_command()
 {
     puts("");
     printf("\033[36;1m#\033[0m ");
     terminal_enable_cursor();
 
-    dentry_t* tty = vfs_resolve("/dev/tty");
-    vfs_file_t* handle = vfs_open(tty, VFS_MODE_READONLY);
+    vfs_file_t* handle = vfs_open(tty_dentry, VFS_MODE_READONLY);
     command_length = vfs_read(handle, MAX_COMMAND_LENGTH, command_buffer);
     command_buffer[command_length] = '\0';
     command_buffer[command_length - 1] = '\0'; // Clear new line character
@@ -565,6 +566,8 @@ static void print_prompt_and_read_command()
 void debugger_init()
 {
     puts("Kernel debugger. Write \"help\" to get list of available commands.");
+
+    tty_dentry = vfs_resolve("/dev/tty");
 
     // Entering I/O loop with reading command from /dev/tty and analyzing it.
     while (1) {
