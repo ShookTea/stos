@@ -160,7 +160,7 @@ static void add_entry_to_root_content(const char* name, dentry_t* dentry)
     );
 
     root_content[root_content_size].filename = kmalloc(
-        sizeof(char) * strlen(name)
+        sizeof(char) * (strlen(name) + 1)
     );
     strcpy(
         root_content[root_content_size].filename,
@@ -323,7 +323,11 @@ dentry_t* vfs_resolve(const char* abs_path)
     dentry_t* current = vfs_root;
 
     for (size_t i = 0; i < part_count; i++) {
-        current = vfs_finddir(current, parts[i]);
+        dentry_t* parent = current;
+        current = vfs_finddir(parent, parts[i]);
+        if (parent != vfs_root) {
+            kfree(parent);
+        }
         if (current == NULL) {
             break;
         }

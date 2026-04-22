@@ -390,11 +390,15 @@ static void handle_command_sent()
                             printf(" - %s (%.1f %s)\n", child->name, length, unit);
                         }
                     }
+                    kfree(child);
                 }
             } else if (node->inode->type & VFS_TYPE_FILE) {
                 puts("File found");
             } else {
                 puts("Unknown vfs node found");
+            }
+            if (node != vfs_get_real_root()) {
+                kfree(node);
             }
         }
     }
