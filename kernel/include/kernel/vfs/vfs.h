@@ -254,6 +254,7 @@ typedef enum {
 } vfs_mount_result_t;
 
 #define MOUNT_FILESYSTEM_ISO9660 "iso9660"
+#define MOUNT_FILESYSTEM_EXT2 "ext2"
 
 /**
  * Attempts to mount given device under a target, using a filesystem with given

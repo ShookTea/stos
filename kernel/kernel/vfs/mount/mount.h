@@ -11,4 +11,11 @@ vfs_mount_result_t vfs_mount_iso9660(
     const void* data
 );
 
+vfs_mount_result_t vfs_mount_ext2(
+    dentry_t* device_file,
+    dentry_t* target,
+    uint16_t flags,
+    const void* data
+);
+
 #endif

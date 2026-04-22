@@ -20,7 +20,9 @@ vfs_mount_result_t vfs_mount(
 
     if (!strcmp(filesystem, MOUNT_FILESYSTEM_ISO9660)) {
         return vfs_mount_iso9660(device_file, target, flags, data);
-    } else {
-        return MOUNT_ERR_UNKNOWN_FILESYSTEM;
     }
+    if (!strcmp(filesystem, MOUNT_FILESYSTEM_EXT2)) {
+        return vfs_mount_ext2(device_file, target, flags, data);
+    }
+    return MOUNT_ERR_UNKNOWN_FILESYSTEM;
 }
