@@ -34,5 +34,28 @@ vfs_mount_result_t vfs_mount_ext2(
     kfree(device_path);
     kfree(target_path);
 
+    // First check: ext2 must have superblock at byte 1024, with size=1024 B
+    if (device_file->inode->length < 2048) {
+        _debug_printf(
+            "Device file is too small: %u B\n",
+            device_file->inode->length
+        );
+        return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
+    }
+
+    vfs_file_t* file = vfs_open(device_file, VFS_MODE_READONLY);
+    if (file == NULL) {
+        _debug_puts("result of vfs_open is NULL");
+        return MOUNT_ERR_NULL_POINTER;
+    }
+
+    // Locate the superblock
+    vfs_seek(file, 1024);
+    uint8_t* buf = kmalloc_flags(sizeof(uint8_t) * 1024, KMALLOC_ZERO);
+    vfs_read(file, 1024, buf);
+
+    vfs_close(file);
+    kfree(buf);
+
     return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
 }
