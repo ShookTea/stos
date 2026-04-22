@@ -1,3 +1,4 @@
+#include "ext2.h"
 #include "kernel/vfs/vfs.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/debug.h"
@@ -51,8 +52,38 @@ vfs_mount_result_t vfs_mount_ext2(
 
     // Locate the superblock
     vfs_seek(file, 1024);
+    _debug_printf("size of superblock: %d\n", sizeof(ext2_superblock_t));
     uint8_t* buf = kmalloc_flags(sizeof(uint8_t) * 1024, KMALLOC_ZERO);
     vfs_read(file, 1024, buf);
+
+    ext2_superblock_t* superblock = (ext2_superblock_t*)buf;
+    if (superblock->signature != 0xEF53) {
+        _debug_printf(
+            "Invalid signature: 0x%04X, 0xEF53 expected\n",
+            superblock->signature
+        );
+
+        vfs_close(file);
+        kfree(buf);
+
+        return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
+    }
+
+    _debug_puts("Signature valid");
+
+    _debug_printf(
+        "Total blocks = %u, blocks per group = %u, est. group count = %u\n",
+        superblock->total_blocks,
+        superblock->blocks_per_group,
+        superblock->total_blocks / superblock->blocks_per_group
+    );
+
+    _debug_printf(
+        "Total inodes = %u, inodes per group = %u, est. group count = %u\n",
+        superblock->total_inodes,
+        superblock->inodes_per_group,
+        superblock->total_inodes / superblock->inodes_per_group
+    );
 
     vfs_close(file);
     kfree(buf);
