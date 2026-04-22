@@ -485,3 +485,15 @@ dentry_t* vfs_get_real_root()
 {
     return vfs_root;
 }
+
+void vfs_dentry_unref(dentry_t* dentry)
+{
+    if (dentry == NULL || dentry == vfs_root) {
+        return;
+    }
+    vfs_node_t* inode = dentry->inode;
+    kfree(dentry);
+    if (inode != NULL && inode->on_release != NULL && inode->open_count == 0) {
+        inode->on_release(inode);
+    }
+}

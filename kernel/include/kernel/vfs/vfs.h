@@ -234,6 +234,13 @@ dentry_t* vfs_mkdir(dentry_t* parent, const char* name);
  */
 dentry_t* vfs_get_real_root();
 
+/**
+ * Frees a dentry returned by vfs_finddir or vfs_resolve. If the inode is
+ * dynamically owned (on_release set, open_count == 0), fires on_release before
+ * freeing the dentry. Safe to call with vfs_root (no-op).
+ */
+void vfs_dentry_unref(dentry_t* dentry);
+
 typedef enum {
     MOUNT_SUCCESS = 0,
     /** One of required parameters is NULL */

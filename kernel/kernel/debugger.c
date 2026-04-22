@@ -390,16 +390,14 @@ static void handle_command_sent()
                             printf(" - %s (%.1f %s)\n", child->name, length, unit);
                         }
                     }
-                    kfree(child);
+                    vfs_dentry_unref(child);
                 }
             } else if (node->inode->type & VFS_TYPE_FILE) {
                 puts("File found");
             } else {
                 puts("Unknown vfs node found");
             }
-            if (node != vfs_get_real_root()) {
-                kfree(node);
-            }
+            vfs_dentry_unref(node);
         }
     }
     else if (strcmp(command, "vga_colors") == 0) {
