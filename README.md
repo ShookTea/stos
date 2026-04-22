@@ -67,6 +67,30 @@ arguments for compiler that is respected by CLang.
 All text printed to VGA text mode is by default sent to COM1 port, which Qemu
 then prints to the command line.
 
+### Hard drive image
+
+Hard drive image is stored in `.qemu/disk.img`. You can mount it by running:
+
+```shell
+sudo losetup --find --show --partscan .qemu/disk.img
+```
+
+As an output, it will print you a newly created device file, for example
+`dev/loop0`. It will also create device files for partitions (`/dev/loop0p1`)
+that can be mounted in a usual way:
+
+```shell
+mkdir .qemu/mounted
+sudo mount /dev/loop0p1 .qemu/mounted
+```
+
+Remember that partition has to be created first (with tool like `parted`) and
+initialized. For example, to initialize ext2 partition:
+
+```shell
+sudo mkfs.ext2 /dev/loop0p1
+```
+
 ### Unit tests
 
 Some parts of the code (mainly in libraries) have unit tests. They are all
