@@ -3,6 +3,7 @@
 #include "kernel/memory/kmalloc.h"
 #include "kernel/debug.h"
 #include <stdint.h>
+#include <math.h>
 
 #define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
@@ -75,14 +76,18 @@ vfs_mount_result_t vfs_mount_ext2(
         "Total blocks = %u, blocks per group = %u, est. group count = %u\n",
         superblock->total_blocks,
         superblock->blocks_per_group,
-        superblock->total_blocks / superblock->blocks_per_group
+        (int)ceil(
+            ((double)superblock->total_blocks) / superblock->blocks_per_group
+        )
     );
 
     _debug_printf(
         "Total inodes = %u, inodes per group = %u, est. group count = %u\n",
         superblock->total_inodes,
         superblock->inodes_per_group,
-        superblock->total_inodes / superblock->inodes_per_group
+        (int)ceil(
+            ((double)superblock->total_inodes) / superblock->inodes_per_group
+        )
     );
 
     vfs_close(file);

@@ -1,7 +1,7 @@
-#include <stdint.h>
 #ifndef _CTYPE_H
 #define _CTYPE_H 1
 
+#include <stdint.h>
 #include <sys/cdefs.h>
 
 /**
