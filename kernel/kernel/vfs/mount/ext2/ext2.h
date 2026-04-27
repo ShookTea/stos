@@ -46,4 +46,24 @@ typedef struct __attribute__((packed)) {
     uint16_t su_gid;
 } ext2_superblock_t;
 
+/**
+ * Group descriptor table definition
+ */
+typedef struct __attribute__((packed)) {
+    uint32_t block_usage_bitmap_addr;
+    uint32_t inode_usage_bitmap_addr;
+    uint32_t inode_table_start_addr;
+    uint16_t unalloc_blocks_count;
+    uint16_t unalloc_inodes_count;
+    uint16_t directories_count;
+    uint8_t __unused[14];
+} ext2_gdt_t;
+
+/**
+ * Metadata added to inodes mounted in ext2
+ */
+typedef struct {
+    uint32_t inodes_per_group;
+} ext2_inode_metadata_t;
+
 #endif

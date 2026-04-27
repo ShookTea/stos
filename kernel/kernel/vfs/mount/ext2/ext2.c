@@ -8,6 +8,17 @@
 #define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
 
+static void ext2_on_release(vfs_node_t* node)
+{
+    if (node == NULL) {
+        return;
+    }
+    if (node->metadata != NULL) {
+        kfree(node->metadata);
+    }
+    kfree(node);
+}
+
 vfs_mount_result_t vfs_mount_ext2(
     dentry_t* device_file,
     dentry_t* target,
@@ -72,26 +83,43 @@ vfs_mount_result_t vfs_mount_ext2(
 
     _debug_puts("Signature valid");
 
+    int group_count_from_blocks = (int)ceil(
+        ((double)superblock->total_blocks) / superblock->blocks_per_group
+    );
+    int group_count_from_inodes = (int)ceil(
+        ((double)superblock->total_inodes) / superblock->inodes_per_group
+    );
+
     _debug_printf(
         "Total blocks = %u, blocks per group = %u, est. group count = %u\n",
         superblock->total_blocks,
         superblock->blocks_per_group,
-        (int)ceil(
-            ((double)superblock->total_blocks) / superblock->blocks_per_group
-        )
+        group_count_from_blocks
     );
 
     _debug_printf(
         "Total inodes = %u, inodes per group = %u, est. group count = %u\n",
         superblock->total_inodes,
         superblock->inodes_per_group,
-        (int)ceil(
-            ((double)superblock->total_inodes) / superblock->inodes_per_group
-        )
+        group_count_from_inodes
     );
 
-    vfs_close(file);
-    kfree(buf);
+    if (group_count_from_blocks != group_count_from_inodes) {
+        _debug_puts("Group count from blocks and inodes doesn't match");
+        kfree(buf);
+        vfs_close(file);
+        return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
+    }
 
-    return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
+    vfs_node_t* inode = target->inode;
+    inode->inode = 2; // Root directory inode
+    ext2_inode_metadata_t* metadata = kmalloc(sizeof(ext2_inode_metadata_t));
+    metadata->inodes_per_group = superblock->inodes_per_group;
+    inode->metadata = metadata;
+    inode->on_release = ext2_on_release;
+
+    kfree(buf);
+    vfs_close(file);
+
+    return MOUNT_SUCCESS;
 }
