@@ -13,46 +13,34 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
 {
     ext2_inode_metadata_t* meta = node->metadata;
 
-    vfs_file_t* file = vfs_open(meta->device_file, VFS_MODE_READONLY);
-    if (file == NULL) {
-        _debug_puts("result of vfs_open is NULL");
+    if (!ext2_ensure_dir_cache(node)) {
         return NULL;
     }
 
-    ext2_inode_t* dir_inode = ext2_read_inode(file, meta, node->inode);
-
-    uint32_t bs = meta->block_size;
-    uint8_t* block_buf = kmalloc(bs);
-    uint32_t found_inode_num = 0;
     size_t name_len = strlen(name);
+    uint32_t found_inode_num = 0;
 
-    for (int i = 0; i < 12 && found_inode_num == 0; i++) {
-        uint32_t block_ptr = dir_inode->direct_block_pointers[i];
-        if (block_ptr == 0) break;
-
-        vfs_seek(file, block_ptr * bs);
-        vfs_read(file, bs, block_buf);
-
-        uint32_t offset = 0;
-        while (offset < bs) {
-            ext2_dir_entry_t* entry = (ext2_dir_entry_t*)(block_buf + offset);
-            if (entry->rec_len == 0) break;
-
-            if (entry->inode != 0
-                && entry->name_len == name_len
-                && memcmp(entry->name, name, name_len) == 0) {
-                found_inode_num = entry->inode;
-                break;
-            }
-            offset += entry->rec_len;
+    uint32_t offset = 0;
+    while (offset < meta->dir_cache_size) {
+        ext2_dir_entry_t* entry = (ext2_dir_entry_t*)(meta->dir_cache + offset);
+        if (entry->rec_len == 0) {
+            break;
         }
+
+        if (entry->inode != 0
+            && entry->name_len == name_len
+            && memcmp(entry->name, name, name_len) == 0) {
+            found_inode_num = entry->inode;
+            break;
+        }
+        offset += entry->rec_len;
     }
 
-    kfree(block_buf);
-    kfree(dir_inode);
+    if (found_inode_num == 0) return NULL;
 
-    if (found_inode_num == 0) {
-        vfs_close(file);
+    vfs_file_t* file = vfs_open(meta->device_file, VFS_MODE_READONLY);
+    if (file == NULL) {
+        _debug_puts("result of vfs_open is NULL");
         return NULL;
     }
 
@@ -67,8 +55,14 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
     result->length = child_ext2_inode->size_lo;
     result->on_release = ext2_on_release;
 
-    ext2_inode_metadata_t* child_meta = kmalloc(sizeof(ext2_inode_metadata_t));
+    ext2_inode_metadata_t* child_meta = kmalloc_flags(
+        sizeof(ext2_inode_metadata_t),
+        KMALLOC_ZERO
+    );
     *child_meta = *meta;
+    child_meta->cached_inode = NULL;
+    child_meta->dir_cache = NULL;
+    child_meta->dir_cache_size = 0;
     result->metadata = child_meta;
 
     if (vfs_type == VFS_TYPE_DIRECTORY) {

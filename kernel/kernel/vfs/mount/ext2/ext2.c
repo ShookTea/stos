@@ -14,7 +14,10 @@ void ext2_on_release(vfs_node_t* node)
         return;
     }
     if (node->metadata != NULL) {
-        kfree(node->metadata);
+        ext2_inode_metadata_t* meta = node->metadata;
+        if (meta->cached_inode != NULL) kfree(meta->cached_inode);
+        if (meta->dir_cache != NULL) kfree(meta->dir_cache);
+        kfree(meta);
     }
     kfree(node);
 }
@@ -118,7 +121,10 @@ vfs_mount_result_t vfs_mount_ext2(
 
     vfs_node_t* inode = target->inode;
     inode->inode = 2; // Root directory inode
-    ext2_inode_metadata_t* metadata = kmalloc(sizeof(ext2_inode_metadata_t));
+    ext2_inode_metadata_t* metadata = kmalloc_flags(
+        sizeof(ext2_inode_metadata_t),
+        KMALLOC_ZERO
+    );
     metadata->device_file = device_file;
     // hold mount reference; released when ext2 unmounts
     device_file->inode->open_count++;

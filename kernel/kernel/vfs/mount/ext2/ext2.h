@@ -64,16 +64,6 @@ typedef struct __attribute__((packed)) {
 } ext2_gdt_t;
 
 /**
- * Metadata added to inodes mounted in ext2
- */
-typedef struct {
-    dentry_t* device_file;
-    uint32_t inodes_per_group;
-    uint32_t block_size;
-    uint16_t inode_size;
-} ext2_inode_metadata_t;
-
-/**
  * Directory entry as stored on disk
  */
 typedef struct __attribute__((packed)) {
@@ -111,6 +101,19 @@ typedef struct __attribute__((packed)) {
     uint32_t os_specific_val_2[3];
 } ext2_inode_t;
 
+/**
+ * Metadata added to inodes mounted in ext2
+ */
+typedef struct {
+    dentry_t* device_file;
+    uint32_t inodes_per_group;
+    uint32_t block_size;
+    uint16_t inode_size;
+    ext2_inode_t* cached_inode;
+    uint8_t* dir_cache;
+    uint32_t dir_cache_size;
+} ext2_inode_metadata_t;
+
 bool ext2_readdir(vfs_node_t* node, size_t index, struct dirent* out);
 vfs_node_t* ext2_finddir(vfs_node_t* node, char* name);
 void ext2_on_release(vfs_node_t* node);
@@ -120,6 +123,8 @@ ext2_inode_t* ext2_read_inode(
     ext2_inode_metadata_t* meta,
     uint32_t inode_num
 );
+
+bool ext2_ensure_dir_cache(vfs_node_t* node);
 
 inline uint8_t ext2_type_to_vfs(uint16_t type_and_permissions)
 {
