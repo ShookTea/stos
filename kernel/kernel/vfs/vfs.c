@@ -168,6 +168,7 @@ static void add_entry_to_root_content(const char* name, dentry_t* dentry)
     );
 
     root_content[root_content_size].dentry = dentry;
+    dentry->inode->open_count++; // root_content holds a permanent reference
 
     root_content_size++;
 }
