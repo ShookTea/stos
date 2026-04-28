@@ -128,6 +128,7 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name);
 void ext2_on_release(vfs_node_t* node);
 void ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
 void ext2_close(vfs_node_t* node, vfs_file_t* file);
+size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
 
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
