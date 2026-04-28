@@ -23,6 +23,9 @@ void ext2_close(vfs_node_t* node, vfs_file_t* file)
     if (meta->cached_inode != NULL) {
         kfree(meta->cached_inode);
     }
+    if (meta->device_file != NULL) {
+        kfree(meta->device_file);
+    }
     kfree(meta);
     file->metadata = NULL;
 }

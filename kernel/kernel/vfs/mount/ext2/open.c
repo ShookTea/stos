@@ -26,7 +26,13 @@ void ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
         sizeof(ext2_inode_t),
         KMALLOC_ZERO
     );
+    meta->device_file = kmalloc_flags(
+        sizeof(dentry_t),
+        KMALLOC_ZERO
+    );
 
     memcpy(meta->cached_inode, node_meta->cached_inode, sizeof(ext2_inode_t));
+    memcpy(meta->device_file, node_meta->device_file, sizeof(dentry_t));
+    meta->block_size = node_meta->inode_size;
     file->metadata = meta;
 }

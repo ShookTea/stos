@@ -119,6 +119,8 @@ typedef struct {
  */
 typedef struct {
     ext2_inode_t* cached_inode;
+    dentry_t* device_file;
+    uint32_t block_size;
 } ext2_file_metadata_t;
 
 bool ext2_readdir(vfs_node_t* node, size_t index, struct dirent* out);
