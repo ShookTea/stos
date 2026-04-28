@@ -18,6 +18,10 @@ void ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
     );
     ext2_inode_metadata_t* node_meta = node->metadata;
 
+    if (!ext2_ensure_dir_cache(node)) {
+        return;
+    }
+
     ext2_file_metadata_t* meta = kmalloc_flags(
         sizeof(ext2_file_metadata_t),
         KMALLOC_ZERO
