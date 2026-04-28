@@ -2,6 +2,7 @@
 #define INCLUDE_KERNEL_SRC_VFS_MOUNT_EXT2_H
 
 #include <stdint.h>
+#include "kernel/vfs/vfs.h"
 
 typedef struct __attribute__((packed)) {
     uint32_t total_inodes;
@@ -44,6 +45,9 @@ typedef struct __attribute__((packed)) {
     uint16_t su_uid;
     /** Group ID that can use reserved blocks */
     uint16_t su_gid;
+    /* Extended fields (major_version >= 1) */
+    uint32_t first_unreserved_inode;
+    uint16_t inode_size;
 } ext2_superblock_t;
 
 /**
@@ -63,7 +67,48 @@ typedef struct __attribute__((packed)) {
  * Metadata added to inodes mounted in ext2
  */
 typedef struct {
+    dentry_t* device_file;
     uint32_t inodes_per_group;
+    uint32_t block_size;
+    uint16_t inode_size;
 } ext2_inode_metadata_t;
+
+/**
+ * Directory entry as stored on disk
+ */
+typedef struct __attribute__((packed)) {
+    uint32_t inode;
+    uint16_t rec_len;
+    uint8_t  name_len;
+    uint8_t  file_type;
+    char     name[];
+} ext2_dir_entry_t;
+
+/**
+ * Definition of inode
+ */
+typedef struct __attribute__((packed)) {
+    uint16_t type_and_permissions;
+    uint16_t user_id;
+    uint32_t size_lo;
+    uint32_t last_access_time;
+    uint32_t creation_time;
+    uint32_t last_modification_time;
+    uint32_t deletion_time;
+    uint16_t group_id;
+    uint16_t hard_links_count;
+    uint32_t disk_sectors_count;
+    uint32_t flags;
+    uint32_t os_specific_val_1;
+    uint32_t direct_block_pointers[12];
+    uint32_t singly_indirect_block_pointer;
+    uint32_t doubly_indirect_block_pointer;
+    uint32_t triply_indirect_block_pointer;
+    uint32_t generation_number;
+    uint32_t __reserved1;
+    uint32_t __reserved2; // potentially size_hi
+    uint32_t block_address_of_fragment;
+    uint32_t os_specific_val_2[3];
+} ext2_inode_t;
 
 #endif
