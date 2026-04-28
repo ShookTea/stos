@@ -111,4 +111,26 @@ typedef struct __attribute__((packed)) {
     uint32_t os_specific_val_2[3];
 } ext2_inode_t;
 
+bool ext2_readdir(vfs_node_t* node, size_t index, struct dirent* out);
+vfs_node_t* ext2_finddir(vfs_node_t* node, char* name);
+void ext2_on_release(vfs_node_t* node);
+
+ext2_inode_t* ext2_read_inode(
+    vfs_file_t* file,
+    ext2_inode_metadata_t* meta,
+    uint32_t inode_num
+);
+
+inline uint8_t ext2_type_to_vfs(uint16_t type_and_permissions)
+{
+    switch (type_and_permissions & 0xF000) {
+        case 0x4000: return VFS_TYPE_DIRECTORY;
+        case 0x8000: return VFS_TYPE_FILE;
+        case 0xA000: return VFS_TYPE_SYMLINK;
+        case 0x6000: return VFS_TYPE_BLOCK_DEVICE;
+        case 0x2000: return VFS_TYPE_CHARACTER_DEVICE;
+        default: return VFS_TYPE_FILE;
+    }
+}
+
 #endif
