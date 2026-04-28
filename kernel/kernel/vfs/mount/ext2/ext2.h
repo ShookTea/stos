@@ -137,6 +137,17 @@ ext2_inode_t* ext2_read_inode(
 
 bool ext2_ensure_dir_cache(vfs_node_t* node);
 
+/**
+ * Return address (in bytes, on a partition file) where a block ID of a given
+ * inode is located, or 0 on error.
+ */
+size_t ext2_block_id_to_addr(
+    dentry_t* device,
+    ext2_inode_t* inode,
+    size_t block_id,
+    size_t block_size
+);
+
 inline uint8_t ext2_type_to_vfs(uint16_t type_and_permissions)
 {
     switch (type_and_permissions & 0xF000) {
