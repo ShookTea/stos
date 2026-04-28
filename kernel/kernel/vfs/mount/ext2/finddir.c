@@ -68,6 +68,9 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
     if (vfs_type == VFS_TYPE_DIRECTORY) {
         result->readdir_node = ext2_readdir;
         result->finddir_node = ext2_finddir;
+    } else {
+        result->open_node = ext2_open;
+        result->close_node = ext2_close;
     }
 
     kfree(child_ext2_inode);

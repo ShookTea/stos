@@ -114,9 +114,18 @@ typedef struct {
     uint32_t dir_cache_size;
 } ext2_inode_metadata_t;
 
+/**
+ * Metadata for opened file
+ */
+typedef struct {
+    ext2_inode_t* cached_inode;
+} ext2_file_metadata_t;
+
 bool ext2_readdir(vfs_node_t* node, size_t index, struct dirent* out);
 vfs_node_t* ext2_finddir(vfs_node_t* node, char* name);
 void ext2_on_release(vfs_node_t* node);
+void ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
+void ext2_close(vfs_node_t* node, vfs_file_t* file);
 
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
