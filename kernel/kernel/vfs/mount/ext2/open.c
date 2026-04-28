@@ -5,8 +5,8 @@
 #include "kernel/vfs/vfs.h"
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/mount/ext2/open", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/mount/ext2/open", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
 
 void ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
 {

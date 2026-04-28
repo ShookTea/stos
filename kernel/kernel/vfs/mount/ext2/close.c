@@ -4,8 +4,8 @@
 #include "kernel/memory/kmalloc.h"
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/mount/ext2/close", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/mount/ext2/close", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
 
 void ext2_close(vfs_node_t* node, vfs_file_t* file)
 {

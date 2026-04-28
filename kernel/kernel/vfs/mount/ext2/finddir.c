@@ -6,8 +6,8 @@
 #include "kernel/memory/kmalloc.h"
 #include "./ext2.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/mount/ext2/finddir", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/mount/ext2/finddir", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
 
 vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
 {
