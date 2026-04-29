@@ -155,6 +155,18 @@ bool ext2_set_block_id(
     uint32_t new_block_num
 );
 
+/**
+ * Write the in-memory inode struct back to its on-disk location.
+ */
+void ext2_write_inode(
+    dentry_t* device,
+    uint32_t inode_num,
+    uint32_t block_size,
+    uint16_t inode_size,
+    uint32_t inodes_per_group,
+    ext2_inode_t* inode
+);
+
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
     ext2_inode_metadata_t* meta,
