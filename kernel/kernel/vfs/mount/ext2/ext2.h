@@ -140,6 +140,21 @@ size_t ext2_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);
  */
 uint32_t ext2_alloc_block(dentry_t* device, uint32_t block_size);
 
+/**
+ * Set the block pointer for logical block_id inside inode to new_block_num.
+ * Allocates intermediate indirect blocks as needed.
+ * Updates inode->direct_block_pointers or the relevant indirect pointer field
+ * in-memory; the caller must write the inode back to persist those changes.
+ * Returns true on success.
+ */
+bool ext2_set_block_id(
+    dentry_t* device,
+    ext2_inode_t* inode,
+    size_t block_id,
+    size_t block_size,
+    uint32_t new_block_num
+);
+
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
     ext2_inode_metadata_t* meta,
