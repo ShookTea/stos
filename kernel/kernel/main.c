@@ -79,7 +79,7 @@ void kernel_main()
     device_mount();
 
     // With filesystem initialized fbcon can now load fonts.
-    font_load_psf("/initrd/font.psf");
+    font_load_psf("/initrd/font_light.psf");
 
     // Initialize multitasking scheduler & syscall handling
     scheduler_init();
