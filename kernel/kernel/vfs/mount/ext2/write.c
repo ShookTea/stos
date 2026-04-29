@@ -6,10 +6,10 @@
 #define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
 
-size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
+size_t ext2_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr)
 {
     _debug_printf(
-        "Reading inode %u '%s' - off=%u size=%u \n",
+        "Writing to inode %u '%s' - off=%u size=%u \n",
         file->dentry->inode->inode,
         file->dentry->name,
         offset,
@@ -17,11 +17,11 @@ size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
     );
 
     if (file == NULL || ptr == NULL || file->metadata == NULL) {
-        _debug_puts("nullpointer at ext2 read");
+        _debug_puts("nullpointer at ext2 write");
         return 0;
     }
-    if (!file->readable) {
-        _debug_puts("file not readable");
+    if (!file->writeable) {
+        _debug_puts("file not writeable");
         return 0;
     }
 
@@ -35,7 +35,7 @@ size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
         size = file_size - offset;
     }
     if (size == 0) {
-        _debug_puts("Readable size = 0");
+        _debug_puts("Writeable size = 0");
         return 0;
     }
 
@@ -48,24 +48,23 @@ size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
     size_t start_block_id = offset / meta->block_size;
     size_t end_block_id = (offset + size) / meta->block_size;
     // Open device file
-    vfs_file_t* device_file = vfs_open(device_file_dentry, VFS_MODE_READONLY);
+    vfs_file_t* device_file = vfs_open(device_file_dentry, VFS_MODE_WRITEONLY);
     if (device_file == NULL) {
         _debug_puts("device file = NULL");
         return 0;
     }
 
-    uint8_t* out = (uint8_t*)ptr;
-    size_t bytes_read = 0;
+    const uint8_t* in = (const uint8_t*)ptr;
+    size_t bytes_written = 0;
 
     for (size_t i = start_block_id; i <= end_block_id; i++) {
         size_t block_file_start = i * meta->block_size;
 
-        // Clamp read range to [offset, offset+size) intersected with this block
-        size_t read_start = (i == start_block_id) ? offset : block_file_start;
-        size_t read_end = (i == end_block_id)
+        size_t write_start = (i == start_block_id) ? offset : block_file_start;
+        size_t write_end = (i == end_block_id)
             ? offset + size
             : block_file_start + meta->block_size;
-        size_t bytes_this_block = read_end - read_start;
+        size_t bytes_this_block = write_end - write_start;
 
         if (bytes_this_block == 0) {
             break;
@@ -81,12 +80,12 @@ size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
             break;
         }
 
-        size_t src_off = read_start - block_file_start;
-        vfs_seek(device_file, block_addr + src_off);
-        vfs_read(device_file, bytes_this_block, out + bytes_read);
-        bytes_read += bytes_this_block;
+        size_t dst_off = write_start - block_file_start;
+        vfs_seek(device_file, block_addr + dst_off);
+        vfs_write(device_file, bytes_this_block, in + bytes_written);
+        bytes_written += bytes_this_block;
     }
 
     vfs_close(device_file);
-    return bytes_read;
+    return bytes_written;
 }

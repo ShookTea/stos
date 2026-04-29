@@ -72,6 +72,7 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
         result->open_node = ext2_open;
         result->close_node = ext2_close;
         result->read_node = ext2_read;
+        result->write_node = ext2_write;
     }
 
     kfree(child_ext2_inode);

@@ -129,6 +129,7 @@ void ext2_on_release(vfs_node_t* node);
 void ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
 void ext2_close(vfs_node_t* node, vfs_file_t* file);
 size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
+size_t ext2_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);
 
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
