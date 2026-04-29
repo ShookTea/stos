@@ -5,6 +5,7 @@
 #include <kernel/memory/kmalloc.h>
 #include <stdio.h>
 #include "kernel/drivers/vga/fbcon.h"
+#include "kernel/drivers/vga/font.h"
 #include "kernel/drivers/vga/rgb.h"
 #include "kernel/multiboot2.h"
 #include "kernel/drivers/vga/text_mode.h"
@@ -18,9 +19,6 @@
 
 #define BG_COLOR_DEFAULT VGA_COLOR_BLACK
 #define FG_COLOR_DEFAULT VGA_COLOR_LIGHT_GREY
-
-#define INTENSITY_MODE_NORMAL 0
-#define INTENSITY_MODE_BOLD 1
 
 /**
  * Structure describing a single character on screen
@@ -56,7 +54,7 @@ static size_t escape_mode_buffer_length = 0;
 
 static size_t saved_cursor_row = 0;
 static size_t saved_cursor_column = 0;
-static uint8_t font_style;
+static font_mode_t font_mode;
 
 static bool rgbmode = false;
 
@@ -71,7 +69,14 @@ static inline uint8_t get_current_color()
 static void putentryat(uint32_t c, size_t row, size_t column)
 {
     if (rgbmode) {
-        fbcon_putentryat(c, (uint8_t)fg_color, (uint8_t)bg_color, column, row);
+        fbcon_putentryat(
+            font_mode,
+            c,
+            (uint8_t)fg_color,
+            (uint8_t)bg_color,
+            column,
+            row
+        );
     } else {
         vga_text_putentryat(
             c,
@@ -132,7 +137,7 @@ static void terminal_reset_styling()
 {
     bg_color = BG_COLOR_DEFAULT;
     fg_color = FG_COLOR_DEFAULT;
-    font_style = INTENSITY_MODE_NORMAL;
+    font_mode = FONT_MODE_NORMAL;
 }
 
 /**
@@ -402,10 +407,10 @@ static void terminal_handle_csi_sequence()
                 terminal_reset_styling();
             }
             else if (args[i] == 1) {
-                font_style = INTENSITY_MODE_BOLD;
+                font_mode = FONT_MODE_BOLD;
             }
             else if (args[i] == 22) {
-                font_style = INTENSITY_MODE_NORMAL;
+                font_mode = FONT_MODE_NORMAL;
             }
             else if ((args[i] >= 30 && args[i] <= 37)
                 || (args[i] >= 40 && args[i] <= 47)) {

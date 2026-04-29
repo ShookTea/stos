@@ -21,15 +21,18 @@ typedef struct {
     uint16_t glyph_index;
 } unicode_entry_t;
 
-static unicode_entry_t* unicode_map = NULL;
-static size_t unicode_map_size = 0;
+static unicode_entry_t* unicode_map[2] = { NULL, NULL };
+static size_t unicode_map_size[2] = { 0, 0 };
 static bool font_loaded = false;
 
 /**
  * Parsing unicode table from the PSF file
  */
-static void parse_unicode_table(uint16_t* table, size_t u16_count)
-{
+static void parse_unicode_table(
+    font_mode_t font_mode,
+    uint16_t* table,
+    size_t u16_count
+) {
     // First pass: count mappable entries so we can allocate exactly.
     size_t count = 0;
     uint16_t glyphs_done = 0;
@@ -43,8 +46,8 @@ static void parse_unicode_table(uint16_t* table, size_t u16_count)
         }
     }
 
-    unicode_map = kmalloc(count * sizeof(unicode_entry_t));
-    if (!unicode_map) {
+    unicode_map[font_mode] = kmalloc(count * sizeof(unicode_entry_t));
+    if (!unicode_map[font_mode]) {
         _debug_printf(
             "font: failed to allocate unicode map (%u entries)\n",
             (uint32_t)count
@@ -69,25 +72,29 @@ static void parse_unicode_table(uint16_t* table, size_t u16_count)
             } else {
                 cp = v;
             }
-            unicode_map[idx].codepoint   = cp;
-            unicode_map[idx].glyph_index = glyph_index;
+            unicode_map[font_mode][idx].codepoint   = cp;
+            unicode_map[font_mode][idx].glyph_index = glyph_index;
             idx++;
         }
     }
-    unicode_map_size = idx;
+    unicode_map_size[font_mode] = idx;
 
     // Sort by codepoint (insertion sort – adequate for typical font sizes).
-    for (size_t i = 1; i < unicode_map_size; i++) {
-        unicode_entry_t key = unicode_map[i];
+    for (size_t i = 1; i < unicode_map_size[font_mode]; i++) {
+        unicode_entry_t key = unicode_map[font_mode][i];
         size_t j = i;
-        while (j > 0 && unicode_map[j - 1].codepoint > key.codepoint) {
-            unicode_map[j] = unicode_map[j - 1];
+        while (j > 0 && unicode_map[font_mode][j - 1].codepoint > key.codepoint)
+        {
+            unicode_map[font_mode][j] = unicode_map[font_mode][j - 1];
             j--;
         }
-        unicode_map[j] = key;
+        unicode_map[font_mode][j] = key;
     }
 
-    _debug_printf("font: %u unicode mappings loaded\n", (uint32_t)unicode_map_size);
+    _debug_printf(
+        "font: %u unicode mappings loaded\n",
+        (uint32_t)unicode_map_size[font_mode]
+    );
 }
 
 /**
@@ -135,7 +142,7 @@ static void parse_psf(font_mode_t font_mode, uint8_t* file, size_t file_size)
     if (unicode_offset < file_size) {
         uint16_t* table = (uint16_t*)(file + unicode_offset);
         size_t u16_count = (file_size - unicode_offset) / 2;
-        parse_unicode_table(table, u16_count);
+        parse_unicode_table(font_mode, table, u16_count);
     }
 
     font_loaded = true;
@@ -163,15 +170,15 @@ void font_load_psf(font_mode_t font_mode, char* path)
     kfree(file);
 }
 
-static int32_t find_glyph(uint32_t codepoint)
+static int32_t find_glyph(font_mode_t font_mode, uint32_t codepoint)
 {
-    size_t lo = 0, hi = unicode_map_size;
+    size_t lo = 0, hi = unicode_map_size[font_mode];
     while (lo < hi) {
         size_t mid = lo + (hi - lo) / 2;
-        if (unicode_map[mid].codepoint == codepoint) {
-            return unicode_map[mid].glyph_index;
+        if (unicode_map[font_mode][mid].codepoint == codepoint) {
+            return unicode_map[font_mode][mid].glyph_index;
         }
-        else if (unicode_map[mid].codepoint  < codepoint) {
+        else if (unicode_map[font_mode][mid].codepoint  < codepoint) {
             lo = mid + 1;
         }
         else {
@@ -181,17 +188,25 @@ static int32_t find_glyph(uint32_t codepoint)
     return -1;
 }
 
-void font_render_char(uint32_t c, size_t x, size_t y, uint32_t fg, uint32_t bg)
-{
+void font_render_char(
+    font_mode_t font_mode,
+    uint32_t c,
+    size_t x,
+    size_t y,
+    uint32_t fg,
+    uint32_t bg
+) {
     if (!font_loaded) {
         return;
     }
 
-    int32_t idx = find_glyph(c);
-    if (idx < 0) idx = find_glyph(0xFFFD); // Unicode replacement character
-    if (idx < 0) idx = 0; // last resort: glyph 0
+    int32_t idx = find_glyph(font_mode, c);
+    // Unicode replacement character
+    if (idx < 0) idx = find_glyph(font_mode, 0xFFFD);
+    // last resort: glyph 0
+    if (idx < 0) idx = 0;
 
-    const uint8_t* bitmap = font_glyphs[0][idx];
+    const uint8_t* bitmap = font_glyphs[font_mode][idx];
     uint32_t* fb = vga_rgb_framebuffer();
     size_t pitch_words = vga_rgb_pitch() / 4;
     for (size_t row = 0; row < PSF1_GLYPH_HEIGHT; row++) {

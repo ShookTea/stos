@@ -23,6 +23,13 @@ void font_load_psf(font_mode_t font_mode, char* path);
  * under given (x,y) position on fbcon, with given ARGB fore- and background
  * colors.
  */
-void font_render_char(uint32_t c, size_t x, size_t y, uint32_t fg, uint32_t bg);
+void font_render_char(
+    font_mode_t font_mode,
+    uint32_t c,
+    size_t x,
+    size_t y,
+    uint32_t fg,
+    uint32_t bg
+);
 
 #endif
