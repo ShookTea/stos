@@ -16,6 +16,7 @@
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
 #include "kernel/drivers/ata.h"
+#include "kernel/drivers/vga/font.h"
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -110,7 +111,7 @@ static void handle_command_sent()
         puts("  vfs_cat [F]       - Prints content of a file at abs. path");
         puts("  vfs_ls [F]        - Prints info about file at abs. path [F]");
         puts("  vga_colors        - Prints VGA colors map");
-        puts("  vga_utf8 [N]      - Dumps Nth page of UTF-8, starting from 0");
+        puts("  vga_utf8 [N] [F]  - Dumps Nth page of UTF-8, starting from 0, in given font mode [F]");
         puts("  vmm_memory_map    - Prints detailed memory map");
         puts("  vmm_stats         - Prints virtual memory statistics");
         puts("  vmm_test          - Runs virtual memory test suite");
@@ -460,9 +461,11 @@ static void handle_command_sent()
         }
     }
     else if (strcmp(command, "vga_utf8") == 0) {
-        if (argcount != 1) {
-            puts("vga_utf8 requires 1 argument");
+        if (argcount != 1 && argcount != 2) {
+            puts("vga_utf8 requires 1 or 2 arguments");
         } else {
+            font_mode_t font_mode =
+                argcount == 1 ? FONT_MODE_NORMAL : atoi(args[1]);
             int page = atoi(args[0]);
             if (page < 0) {
                 puts("Page must be greater or equal to 0");
@@ -476,6 +479,11 @@ static void handle_command_sent()
                     first_char,
                     last_char
                 );
+
+                switch (font_mode) {
+                    case FONT_MODE_NORMAL: printf("\033[22m"); break;
+                    case FONT_MODE_BOLD: printf("\033[1m"); break;
+                }
 
                 for (uint32_t i = 0; i < page_size; i++) {
                     if (i % 16 == 0) {
@@ -519,7 +527,7 @@ static void handle_command_sent()
                         putchar(byte_buf[j]);
                     }
                 }
-                puts("");
+                puts("\033[0m");
             }
         }
     }
