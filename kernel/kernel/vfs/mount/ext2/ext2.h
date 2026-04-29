@@ -121,6 +121,8 @@ typedef struct {
     ext2_inode_t* cached_inode;
     dentry_t* device_file;
     uint32_t block_size;
+    uint16_t inode_size;
+    uint32_t inodes_per_group;
 } ext2_file_metadata_t;
 
 bool ext2_readdir(vfs_node_t* node, size_t index, struct dirent* out);
