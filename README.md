@@ -140,6 +140,7 @@ compiled and executed on host machine with `make test`. Running it requires
 - Usermode tasks
 - Heap for usermode
 - forking and `exec` processes
+- Support for ISO9660 and ext2 filesystem formats
 
 ### (Short-term) todo list
 
