@@ -8,10 +8,15 @@
 #define PSF1_GLYPH_HEIGHT 16
 #define PSF1_GLYPH_WIDTH  8
 
+typedef enum {
+    FONT_MODE_NORMAL = 0,
+    FONT_MODE_BOLD,
+} font_mode_t;
+
 /**
  * Loads PSF font from given absolute path.
  */
-void font_load_psf(char* path);
+void font_load_psf(font_mode_t font_mode, char* path);
 
 /**
  * Renders character (given as 4-byte integer for compatibility with Unicode)

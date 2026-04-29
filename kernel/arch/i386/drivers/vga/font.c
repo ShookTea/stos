@@ -13,7 +13,7 @@
 
 // Glyph bitmaps copied out of the font file. Each row is one byte; bit 7 is
 // the leftmost pixel.
-static uint8_t font_glyphs[PSF1_GLYPH_COUNT][PSF1_GLYPH_HEIGHT];
+static uint8_t font_glyphs[2][PSF1_GLYPH_COUNT][PSF1_GLYPH_HEIGHT];
 
 // Sorted (codepoint → glyph index) table for O(log n) lookup.
 typedef struct {
@@ -93,7 +93,7 @@ static void parse_unicode_table(uint16_t* table, size_t u16_count)
 /**
  * PSF1 parser
  */
-static void parse_psf(uint8_t* file, size_t file_size)
+static void parse_psf(font_mode_t font_mode, uint8_t* file, size_t file_size)
 {
     if (file[0] != 0x36 || file[1] != 0x04) {
         _debug_puts("font: not a valid PSF1 file");
@@ -125,7 +125,7 @@ static void parse_psf(uint8_t* file, size_t file_size)
     uint8_t* glyph_data = file + 4;
     for (int i = 0; i < PSF1_GLYPH_COUNT; i++)
         memcpy(
-            font_glyphs[i],
+            font_glyphs[font_mode][i],
             glyph_data + i * PSF1_GLYPH_HEIGHT,
             PSF1_GLYPH_HEIGHT
         );
@@ -147,7 +147,7 @@ static void parse_psf(uint8_t* file, size_t file_size)
     );
 }
 
-void font_load_psf(char* path)
+void font_load_psf(font_mode_t font_mode, char* path)
 {
     dentry_t* node = vfs_resolve(path);
     if (node == NULL) {
@@ -159,7 +159,7 @@ void font_load_psf(char* path)
     uint8_t* file = kmalloc_flags(size, KMALLOC_ZERO);
     vfs_read(handle, size, file);
     vfs_close(handle);
-    parse_psf(file, size);
+    parse_psf(font_mode, file, size);
     kfree(file);
 }
 
@@ -191,7 +191,7 @@ void font_render_char(uint32_t c, size_t x, size_t y, uint32_t fg, uint32_t bg)
     if (idx < 0) idx = find_glyph(0xFFFD); // Unicode replacement character
     if (idx < 0) idx = 0; // last resort: glyph 0
 
-    const uint8_t* bitmap = font_glyphs[idx];
+    const uint8_t* bitmap = font_glyphs[0][idx];
     uint32_t* fb = vga_rgb_framebuffer();
     size_t pitch_words = vga_rgb_pitch() / 4;
     for (size_t row = 0; row < PSF1_GLYPH_HEIGHT; row++) {
