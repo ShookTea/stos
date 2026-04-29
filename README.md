@@ -7,9 +7,12 @@ _Kernel running in debug mode, in Qemu emulator_
 
 ## Included dependencies
 
-- The source code contains, under `dep/spleen` directory, the
-  [Spleen](https://github.com/fcambus/spleen) monospaced font in version 2.2.0.
-  It is released under [BSD-2-Clause license](./dep/spleen/LICENSE)
+- in the `dep/spleen` directory: the [Spleen](https://github.com/fcambus/spleen)
+  monospaced font in version 2.2.0. It is released under
+  [BSD-2-Clause](./dep/spleen/LICENSE) license.
+- in the `dep/zap` directory: the set of two fonts from
+  [ZAP Group Australia](https://www.zap.org.au/projects/console-fonts-zap/). It
+  is released under [GNU GPL](./dep/zap/LICENSE) license.
 
 ## Syscalls
 
