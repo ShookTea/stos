@@ -133,6 +133,13 @@ void ext2_close(vfs_node_t* node, vfs_file_t* file);
 size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
 size_t ext2_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);
 
+/**
+ * Scan group bitmaps, mark the first free block as used, update the group
+ * descriptor and superblock counts, and return the allocated block number.
+ * Returns 0 on failure (no free blocks or I/O error).
+ */
+uint32_t ext2_alloc_block(dentry_t* device, uint32_t block_size);
+
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
     ext2_inode_metadata_t* meta,
