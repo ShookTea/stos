@@ -56,20 +56,16 @@ static size_t escape_mode_buffer_length = 0;
 
 static size_t saved_cursor_row = 0;
 static size_t saved_cursor_column = 0;
-static uint8_t intensity_mode;
+static uint8_t font_style;
 
 static bool rgbmode = false;
 
 /**
  * Merges bg_color and fg_color into entry acceptable by VGA.
- * Also handles the intensity mode: if set to INTENSITY_MODE_BOLD,
- * it will enforce the light variant of foreground color.
  */
 static inline uint8_t get_current_color()
 {
-    return fg_color
-    | bg_color << 4
-    | (intensity_mode == INTENSITY_MODE_BOLD ? 0x08 : 0);
+    return fg_color | bg_color << 4;
 }
 
 static void putentryat(uint32_t c, size_t row, size_t column)
@@ -136,7 +132,7 @@ static void terminal_reset_styling()
 {
     bg_color = BG_COLOR_DEFAULT;
     fg_color = FG_COLOR_DEFAULT;
-    intensity_mode = INTENSITY_MODE_NORMAL;
+    font_style = INTENSITY_MODE_NORMAL;
 }
 
 /**
@@ -406,10 +402,10 @@ static void terminal_handle_csi_sequence()
                 terminal_reset_styling();
             }
             else if (args[i] == 1) {
-                intensity_mode = INTENSITY_MODE_BOLD;
+                font_style = INTENSITY_MODE_BOLD;
             }
             else if (args[i] == 22) {
-                intensity_mode = INTENSITY_MODE_NORMAL;
+                font_style = INTENSITY_MODE_NORMAL;
             }
             else if ((args[i] >= 30 && args[i] <= 37)
                 || (args[i] >= 40 && args[i] <= 47)) {
