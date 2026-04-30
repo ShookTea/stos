@@ -1,4 +1,3 @@
-#include "../device.h"
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
 #include "kernel/memory/kmalloc.h"
@@ -7,45 +6,12 @@
 #include "stdlib.h"
 #include <stddef.h>
 #include <string.h>
-#include "../rw_queue/rw_queue.h"
+#include "../../rw_queue/rw_queue.h"
+#include "../../device.h"
+#include "./hd.h"
 
 #define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/dev/hd", __VA_ARGS__)
-
-typedef struct {
-    // one of ATA_DRIVE_ values
-    uint8_t disk_id;
-    // Is it representing a single partition, or a whole disk?
-    bool is_partition;
-    // For partitions: LBA and size stored directly (no boot-time cache needed)
-    uint32_t part_lba_start;
-    uint32_t part_sectors_count;
-    // Tasks queue
-    wait_obj_t* wait_obj;
-} hd_metadata_t;
-
-typedef struct {
-    hd_metadata_t* hd_metadata;
-    size_t wait_idx;
-} hd_wakeup_data_t;
-
-typedef struct {
-    size_t size;
-    size_t low_sector_lba;
-    size_t sector_count;
-    size_t lowest_sector_byte;
-    size_t sector_size;
-} hd_sector_location_t;
-
-static inline size_t sector_align_down(size_t addr, size_t sector_size)
-{
-    return addr & ~(sector_size - 1);
-}
-
-static inline size_t sector_align_up(size_t addr, size_t sector_size)
-{
-    return (addr + sector_size - 1) & ~(sector_size - 1);
-}
 
 static rw_queue_t rw_queue = RW_QUEUE_INIT;
 
@@ -64,62 +30,6 @@ static bool rw_wait_for_ready(void* ptr)
     hd_wakeup_data_t* data = ptr;
     size_t id = data->wait_idx;
     return rwq_is_ready(&rw_queue, id);
-}
-
-static void load_sector_location(
-    hd_sector_location_t* loc,
-    size_t offset,
-    size_t size,
-    hd_metadata_t* meta
-) {
-    ata_disk_info_t disk_info;
-    ata_load_disk_info(meta->disk_id, &disk_info);
-    size_t sector_size = disk_info.sector_size;
-
-    size_t lowest_sector_byte = sector_align_down(offset, sector_size);
-    size_t highest_sector_byte = sector_align_up(offset + size, sector_size);
-
-    loc->size = size;
-    loc->lowest_sector_byte = lowest_sector_byte;
-    loc->sector_size = sector_size;
-
-    if (!meta->is_partition) {
-        size_t disk_sectors = disk_info.sectors_count;
-        loc->low_sector_lba = lowest_sector_byte / sector_size;
-        size_t high_sector_lba = highest_sector_byte / sector_size;
-
-        if (loc->low_sector_lba >= disk_sectors) {
-            loc->size = 0;
-            return;
-        }
-
-        if (high_sector_lba > disk_sectors) {
-            high_sector_lba = disk_sectors;
-            loc->size = disk_sectors * sector_size - offset;
-        }
-
-        loc->sector_count = high_sector_lba - loc->low_sector_lba;
-        return;
-    }
-
-    // Partition: use LBA and sector count stored directly in metadata.
-    size_t low_sector_lba_in_part = lowest_sector_byte / sector_size;
-    size_t high_sector_lba_in_part = highest_sector_byte / sector_size;
-    size_t sector_count = high_sector_lba_in_part - low_sector_lba_in_part;
-
-    if (low_sector_lba_in_part >= meta->part_sectors_count) {
-        _debug_puts("Err on read: read start beyond partition border");
-        loc->size = 0;
-        return;
-    }
-
-    if (high_sector_lba_in_part > meta->part_sectors_count) {
-        sector_count -= high_sector_lba_in_part - meta->part_sectors_count;
-        loc->size = meta->part_sectors_count * sector_size - offset;
-    }
-
-    loc->low_sector_lba = low_sector_lba_in_part + meta->part_lba_start;
-    loc->sector_count = sector_count;
 }
 
 static size_t read(
@@ -147,7 +57,7 @@ static size_t read(
     );
 
     hd_sector_location_t loc;
-    load_sector_location(&loc, offset, size, meta);
+    hd_calc_sector_loc(&loc, offset, size, meta);
     if (loc.size == 0) {
         rwq_deallocate_pos(&rw_queue, wait_idx);
         return 0;
@@ -214,7 +124,7 @@ static size_t write(
     );
 
     hd_sector_location_t loc;
-    load_sector_location(&loc, offset, size, meta);
+    hd_calc_sector_loc(&loc, offset, size, meta);
     if (loc.size == 0) {
         rwq_deallocate_pos(&rw_queue, wait_idx);
         return 0;
