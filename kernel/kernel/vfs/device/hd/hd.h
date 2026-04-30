@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "kernel/task/wait.h"
+#include "../../rw_queue/rw_queue.h"
+#include "kernel/vfs/vfs.h"
 
 typedef struct {
     // one of ATA_DRIVE_ values
@@ -31,6 +33,12 @@ typedef struct {
     size_t sector_size;
 } hd_sector_location_t;
 
+// Shared wait_obj for blocking MBR reads done during readdir/finddir.
+extern wait_obj_t* hd_partition_wait_obj;
+
+size_t hd_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr);
+size_t hd_read(vfs_file_t* file, size_t offset, size_t size,void* ptr);
+
 /**
  * Calculate sector location based on given offset and size, and store it in
  * given `loc` pointer.
@@ -41,5 +49,14 @@ void hd_calc_sector_loc(
     size_t size,
     hd_metadata_t* meta
 );
+
+/**
+ * Blocking read of sector 0 from disk_id into mbr_buf (must be sector-sized).
+ */
+void hd_read_mbr_sync(uint8_t disk_id, uint16_t* mbr_buf);
+
+extern rw_queue_t hd_rw_queue;
+void hd_rw_ready(void* ptr);
+bool hd_rw_wait_for_ready(void* ptr);
 
 #endif
