@@ -14,7 +14,7 @@ static void read_from_ata(
     uint16_t* target,
     size_t sector_start,
     size_t sector_end,
-    size_t sector_size __attribute__((unused))
+    size_t sector_size
 ) {
     _debug_printf(
         "[wait_idx=%u] Reading data from ATA for sectors %u-%u\n",
