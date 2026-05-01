@@ -13,7 +13,8 @@ static void read_from_ata(
     hd_wakeup_data_t* wakeup_data,
     uint16_t* target,
     size_t sector_start,
-    size_t sector_end
+    size_t sector_end,
+    size_t sector_size __attribute__((unused))
 ) {
     _debug_printf(
         "[wait_idx=%u] Reading data from ATA for sectors %u-%u\n",
@@ -33,6 +34,15 @@ static void read_from_ata(
     _debug_printf("[wait_idx=%u] start waiting\n", wakeup_data->wait_idx);
     wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, wakeup_data);
     _debug_printf("[wait_idx=%u] waiting completed\n", wakeup_data->wait_idx);
+
+    for (size_t i = sector_start; i <= sector_end; i++) {
+        hd_cache_load(
+            meta->disk_id,
+            i,
+            sector_size,
+            ((uint8_t*)target) + ((i - sector_start) * sector_size)
+        );
+    }
 }
 
 size_t hd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
@@ -83,7 +93,7 @@ size_t hd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
         bool cache_hit = hd_cache_seek(
             meta->disk_id,
             sector,
-            buffer + (i * loc.sector_size)
+            ((uint8_t*)buffer) + (i * loc.sector_size)
         );
 
         if (!cache_hit) {
@@ -112,9 +122,10 @@ size_t hd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
         read_from_ata(
             meta,
             &wakeup_data,
-            buffer + (first_uncached_sector * loc.sector_size),
+            buffer + (first_uncached_sector * loc.sector_size / 2),
             sector_start,
-            sector_end
+            sector_end,
+            loc.sector_size
         );
         // Clear flag
         prev_cache_hit = true;
@@ -126,7 +137,8 @@ size_t hd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
             &wakeup_data,
             buffer + (first_uncached_sector * loc.sector_size),
             loc.low_sector_lba + first_uncached_sector,
-            loc.low_sector_lba + loc.sector_count - 1
+            loc.low_sector_lba + loc.sector_count - 1,
+            loc.sector_size
         );
     }
 

@@ -36,7 +36,7 @@ typedef struct {
 typedef struct {
     size_t sector_lba;
     size_t sector_size;
-    uint16_t* content;
+    uint8_t* content;
     bool is_dirty; // if set to true, syncing should write it to the drive
 } hd_cache_entry_t;
 
@@ -70,6 +70,17 @@ bool hd_rw_wait_for_ready(void* ptr);
  * If given sector at a disk exists, copy it's content to `buf` and return
  * `true`. Otherwise return `false`.
  */
-bool hd_cache_seek(uint8_t disk_id, size_t lba, uint16_t* buf);
+bool hd_cache_seek(uint8_t disk_id, size_t lba, uint8_t* buf);
+
+/**
+ * Loads data to the cache. It's marked as not-dirty, and there's no checks if
+ * entry already exists in the cache.
+ */
+void hd_cache_load(
+    const uint8_t disk_id,
+    const size_t lba,
+    const size_t sector_size,
+    const uint8_t* buf
+);
 
 #endif
