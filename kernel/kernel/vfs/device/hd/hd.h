@@ -33,6 +33,13 @@ typedef struct {
     size_t sector_size;
 } hd_sector_location_t;
 
+typedef struct {
+    size_t sector_lba;
+    size_t sector_size;
+    uint16_t* content;
+    bool is_dirty; // if set to true, syncing should write it to the drive
+} hd_cache_entry_t;
+
 // Shared wait_obj for blocking MBR reads done during readdir/finddir.
 extern wait_obj_t* hd_partition_wait_obj;
 
@@ -58,5 +65,11 @@ void hd_read_mbr_sync(uint8_t disk_id, uint16_t* mbr_buf);
 extern rw_queue_t hd_rw_queue;
 void hd_rw_ready(void* ptr);
 bool hd_rw_wait_for_ready(void* ptr);
+
+/**
+ * If given sector at a disk exists, copy it's content to `buf` and return
+ * `true`. Otherwise return `false`.
+ */
+bool hd_cache_seek(uint8_t disk_id, size_t lba, uint16_t* buf);
 
 #endif

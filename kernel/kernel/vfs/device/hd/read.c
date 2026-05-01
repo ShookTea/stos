@@ -47,24 +47,81 @@ size_t hd_read(vfs_file_t* file, size_t offset, size_t size,void* ptr)
         KMALLOC_ZERO
     );
 
-    ata_read(
-        meta->disk_id,
-        loc.low_sector_lba,
-        loc.sector_count,
-        buffer,
-        hd_rw_ready,
-        &wakeup_data
-    );
+    bool prev_cache_hit = true;
+    size_t first_uncached_sector = 0;
+    for (size_t i = 0; i < loc.sector_count; i++)
+    {
+        size_t sector = loc.low_sector_lba + i;
+        // Try to read data to the buffer from cache
+        bool cache_hit = hd_cache_seek(
+            meta->disk_id,
+            sector,
+            buffer + (i * loc.sector_size)
+        );
 
-    _debug_printf("[wait_idx=%u] start waiting\n", wait_idx);
+        if (!cache_hit) {
+            // Current sector is not in cache
+            if (prev_cache_hit) {
+                // this is the first sector in a row that is not cached - save
+                // it for later
+                first_uncached_sector = i;
+            }
+            prev_cache_hit = false;
+            continue;
+        }
 
-    wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
+        // Sector was in cache and is now in the buffer.
+        _debug_printf("[wait_idx=%u] Cache hit for sector %u\n", sector);
 
-    _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
+        if (prev_cache_hit) {
+            // Previous sector was also in the cache
+            continue;
+        }
+
+        // Previous sector(s) weren't in the cache and need to be actually
+        // loaded from ATA.
+        size_t sector_start = loc.low_sector_lba + first_uncached_sector;
+        size_t sector_end = loc.low_sector_lba + i - 1;
+        _debug_printf(
+            "[wait_idx=%u] Reading data from ATA for sectors %u-%u\n",
+            sector_start,
+            sector_end
+        );
+
+        ata_read(
+            meta->disk_id,
+            sector_start,
+            sector_end - sector_start + 1,
+            buffer + (first_uncached_sector * loc.sector_size),
+            hd_rw_ready,
+            &wakeup_data
+        );
+
+        _debug_printf("[wait_idx=%u] start waiting\n", wait_idx);
+        wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
+        _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
+
+        // Clear flag
+        prev_cache_hit = true;
+    }
+
+    if (!prev_cache_hit) {
+        ata_read(
+            meta->disk_id,
+            loc.low_sector_lba + first_uncached_sector,
+            loc.sector_count - first_uncached_sector,
+            buffer + (first_uncached_sector * loc.sector_size),
+            hd_rw_ready,
+            &wakeup_data
+        );
+
+        _debug_printf("[wait_idx=%u] start waiting\n", wait_idx);
+        wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
+        _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
+    }
 
     size_t offset_in_buffer = offset - loc.lowest_sector_byte;
     memcpy(ptr, ((uint8_t*)buffer) + offset_in_buffer, loc.size);
-
     rwq_deallocate_pos(&hd_rw_queue, wait_idx);
 
     kfree(buffer);
