@@ -8,7 +8,34 @@
 #define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/dev/hd", __VA_ARGS__)
 
-size_t hd_read(vfs_file_t* file, size_t offset, size_t size,void* ptr)
+static void read_from_ata(
+    hd_metadata_t* meta,
+    hd_wakeup_data_t* wakeup_data,
+    uint16_t* target,
+    size_t sector_start,
+    size_t sector_end
+) {
+    _debug_printf(
+        "[wait_idx=%u] Reading data from ATA for sectors %u-%u\n",
+        sector_start,
+        sector_end
+    );
+
+    ata_read(
+        meta->disk_id,
+        sector_start,
+        sector_end - sector_start + 1,
+        target,
+        hd_rw_ready,
+        wakeup_data
+    );
+
+    _debug_printf("[wait_idx=%u] start waiting\n", wakeup_data->wait_idx);
+    wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, wakeup_data);
+    _debug_printf("[wait_idx=%u] waiting completed\n", wakeup_data->wait_idx);
+}
+
+size_t hd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
 {
     if (!file->readable) {
         return 0;
@@ -82,42 +109,25 @@ size_t hd_read(vfs_file_t* file, size_t offset, size_t size,void* ptr)
         // loaded from ATA.
         size_t sector_start = loc.low_sector_lba + first_uncached_sector;
         size_t sector_end = loc.low_sector_lba + i - 1;
-        _debug_printf(
-            "[wait_idx=%u] Reading data from ATA for sectors %u-%u\n",
+        read_from_ata(
+            meta,
+            &wakeup_data,
+            buffer + (first_uncached_sector * loc.sector_size),
             sector_start,
             sector_end
         );
-
-        ata_read(
-            meta->disk_id,
-            sector_start,
-            sector_end - sector_start + 1,
-            buffer + (first_uncached_sector * loc.sector_size),
-            hd_rw_ready,
-            &wakeup_data
-        );
-
-        _debug_printf("[wait_idx=%u] start waiting\n", wait_idx);
-        wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
-        _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
-
         // Clear flag
         prev_cache_hit = true;
     }
 
     if (!prev_cache_hit) {
-        ata_read(
-            meta->disk_id,
-            loc.low_sector_lba + first_uncached_sector,
-            loc.sector_count - first_uncached_sector,
+        read_from_ata(
+            meta,
+            &wakeup_data,
             buffer + (first_uncached_sector * loc.sector_size),
-            hd_rw_ready,
-            &wakeup_data
+            loc.low_sector_lba + first_uncached_sector,
+            loc.low_sector_lba + loc.sector_count - 1
         );
-
-        _debug_printf("[wait_idx=%u] start waiting\n", wait_idx);
-        wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
-        _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
     }
 
     size_t offset_in_buffer = offset - loc.lowest_sector_byte;
