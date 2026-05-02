@@ -125,6 +125,10 @@ typedef struct vfs_node* (*finddir_node_t)(struct vfs_node* node, char* name);
 typedef bool (*mkdir_node_t)(struct vfs_node* node, const char* name);
 // Handler for ioctl syscall commands.
 typedef int (*ioctl_node_t)(vfs_file_t* file, uint32_t op, void* arg);
+/**
+ * Forces saving of all pending changes to the filesystem.
+ */
+typedef void (*sync_node_t)(const vfs_file_t* file);
 
 /*
  * Basic definition of a single inode in the VFS. Contains file data and
@@ -148,6 +152,7 @@ typedef struct vfs_node {
     finddir_node_t finddir_node;
     mkdir_node_t mkdir_node;
     ioctl_node_t ioctl_node;
+    sync_node_t sync_node;
     void* metadata; // Data that can be used by filesystem
 } vfs_node_t;
 
@@ -168,6 +173,7 @@ vfs_file_t* vfs_open(dentry_t* dentry, uint8_t open_mode);
 void vfs_close(vfs_file_t* file);
 bool vfs_readdir(dentry_t* dentry, size_t index, struct dirent* out);
 dentry_t* vfs_finddir(dentry_t* dentry, const char* name);
+void vfs_sync(const vfs_file_t* file);
 
 void vfs_init();
 

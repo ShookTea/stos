@@ -288,6 +288,18 @@ dentry_t* vfs_finddir(dentry_t* dentry, const char* name)
     return child;
 }
 
+void vfs_sync(const vfs_file_t* file)
+{
+    if (file == NULL || file->dentry == NULL || file->dentry->inode == NULL)
+    {
+        return;
+    }
+    vfs_node_t* node = file->dentry->inode;
+    if (node->sync_node != NULL) {
+        node->sync_node(file);
+    }
+}
+
 dentry_t* vfs_resolve(const char* abs_path)
 {
     // Make copy of the path (include space for null terminator)
