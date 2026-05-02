@@ -81,3 +81,27 @@ void hd_cache_load(
 
     cache_count_per_disk[disk_id]++;
 }
+
+void hd_cache_update(
+    const uint8_t disk_id,
+    const size_t lba,
+    const uint8_t* buf
+) {
+    // Cache not initialized
+    if (disk_count < ((size_t)disk_id + 1)) {
+        return;
+    }
+
+    hd_cache_entry_t* entries = cache_entries[disk_id];
+    for (size_t i = 0; i < cache_count_per_disk[disk_id]; i++) {
+        if (entries[i].sector_lba == lba) {
+            memcpy(
+                entries[i].content,
+                buf,
+                entries[i].sector_size
+            );
+            entries[i].is_dirty = true;
+            return;
+        }
+    }
+}

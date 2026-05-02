@@ -83,4 +83,14 @@ void hd_cache_load(
     const uint8_t* buf
 );
 
+/**
+ * Updates existing cache entry with new one from `buf` and marks entry as
+ * dirty.
+ */
+void hd_cache_update(
+    const uint8_t disk_id,
+    const size_t lba,
+    const uint8_t* buf
+);
+
 #endif
