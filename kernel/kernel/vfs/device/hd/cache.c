@@ -37,14 +37,27 @@ bool hd_cache_seek(const uint8_t disk_id, const size_t lba, uint8_t* buf)
     return false;
 }
 
-void hd_cache_load(
+void hd_cache_upsert(
     const uint8_t disk_id,
     const size_t lba,
     const size_t sector_size,
-    const uint8_t* buf
+    const uint8_t* buf,
+    const bool dirty
 ) {
+    // Update existing entry if present
+    if (disk_count >= ((size_t)disk_id + 1)) {
+        hd_cache_entry_t* entries = cache_entries[disk_id];
+        for (size_t i = 0; i < cache_count_per_disk[disk_id]; i++) {
+            if (entries[i].sector_lba == lba) {
+                memcpy(entries[i].content, buf, entries[i].sector_size);
+                entries[i].is_dirty = dirty;
+                return;
+            }
+        }
+    }
+
+    // Entry not found — initialize disk slot if needed and insert
     if (disk_count < ((size_t)disk_id + 1)) {
-        // Cache not initialized for given disk ID
         size_t new_disk_count = disk_id + 1;
         cache_entries = krealloc(
             cache_entries,
@@ -58,50 +71,18 @@ void hd_cache_load(
             cache_entries[i] = NULL;
             cache_count_per_disk[i] = 0;
         }
-
         disk_count = new_disk_count;
     }
 
-    // Add entry
     size_t index = cache_count_per_disk[disk_id];
     cache_entries[disk_id] = krealloc(
         cache_entries[disk_id],
         sizeof(hd_cache_entry_t) * (index + 1)
     );
-    // return;
     cache_entries[disk_id][index].sector_size = sector_size;
     cache_entries[disk_id][index].sector_lba = lba;
-    cache_entries[disk_id][index].is_dirty = false;
+    cache_entries[disk_id][index].is_dirty = dirty;
     cache_entries[disk_id][index].content = kmalloc(sector_size);
-    memcpy(
-        cache_entries[disk_id][index].content,
-        buf,
-        sector_size
-    );
-
+    memcpy(cache_entries[disk_id][index].content, buf, sector_size);
     cache_count_per_disk[disk_id]++;
-}
-
-void hd_cache_update(
-    const uint8_t disk_id,
-    const size_t lba,
-    const uint8_t* buf
-) {
-    // Cache not initialized
-    if (disk_count < ((size_t)disk_id + 1)) {
-        return;
-    }
-
-    hd_cache_entry_t* entries = cache_entries[disk_id];
-    for (size_t i = 0; i < cache_count_per_disk[disk_id]; i++) {
-        if (entries[i].sector_lba == lba) {
-            memcpy(
-                entries[i].content,
-                buf,
-                entries[i].sector_size
-            );
-            entries[i].is_dirty = true;
-            return;
-        }
-    }
 }

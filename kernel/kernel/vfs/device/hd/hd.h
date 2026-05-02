@@ -73,24 +73,15 @@ bool hd_rw_wait_for_ready(void* ptr);
 bool hd_cache_seek(uint8_t disk_id, size_t lba, uint8_t* buf);
 
 /**
- * Loads data to the cache. It's marked as not-dirty, and there's no checks if
- * entry already exists in the cache.
+ * Updates existing cache entry or inserts a new one. `dirty` controls the
+ * is_dirty flag on the entry.
  */
-void hd_cache_load(
-    const uint8_t disk_id,
-    const size_t lba,
-    const size_t sector_size,
-    const uint8_t* buf
-);
-
-/**
- * Updates existing cache entry with new one from `buf` and marks entry as
- * dirty.
- */
-void hd_cache_update(
-    const uint8_t disk_id,
-    const size_t lba,
-    const uint8_t* buf
+void hd_cache_upsert(
+    uint8_t disk_id,
+    size_t lba,
+    size_t sector_size,
+    const uint8_t* buf,
+    bool dirty
 );
 
 #endif

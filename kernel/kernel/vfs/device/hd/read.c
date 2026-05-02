@@ -36,11 +36,12 @@ static void read_from_ata(
     _debug_printf("[wait_idx=%u] waiting completed\n", wakeup_data->wait_idx);
 
     for (size_t i = sector_start; i <= sector_end; i++) {
-        hd_cache_load(
+        hd_cache_upsert(
             meta->disk_id,
             i,
             sector_size,
-            ((uint8_t*)target) + ((i - sector_start) * sector_size)
+            ((uint8_t*)target) + ((i - sector_start) * sector_size),
+            false
         );
     }
 }
