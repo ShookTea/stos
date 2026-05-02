@@ -126,7 +126,7 @@ vfs_node_t** device_hd_mount()
             vfs_node_t* node = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
             vfs_populate_node(node, sr_name, VFS_TYPE_BLOCK_DEVICE);
             node->read_node = hd_read;
-            node->write_node = NULL;
+            node->sync_node = hd_sync;
             node->length = (uint64_t)disk_info.sectors_count * sector_size;
             hd_metadata_t* metadata = kmalloc_flags(
                 sizeof(hd_metadata_t),
@@ -162,6 +162,7 @@ vfs_node_t** device_hd_mount()
         vfs_populate_node(node, drive_name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = hd_read;
         node->write_node = hd_write;
+        node->sync_node = hd_sync;
         node->length = (uint64_t)disk_info.sectors_count * sector_size;
         hd_metadata_t* metadata = kmalloc_flags(
             sizeof(hd_metadata_t),
