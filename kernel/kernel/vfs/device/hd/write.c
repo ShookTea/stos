@@ -8,6 +8,39 @@
 #define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/dev/hd", __VA_ARGS__)
 
+static void read_uncached_sectors(
+    hd_metadata_t* meta,
+    hd_wakeup_data_t* wakeup_data,
+    uint8_t* buffer,
+    size_t base_lba,
+    size_t first_i,
+    size_t last_i,
+    size_t sector_size
+) {
+    size_t sector_start = base_lba + first_i;
+    size_t sector_end = base_lba + last_i;
+
+    ata_read(
+        meta->disk_id,
+        sector_start,
+        sector_end - sector_start + 1,
+        (uint16_t*)(buffer + first_i * sector_size),
+        hd_rw_ready,
+        wakeup_data
+    );
+    wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, wakeup_data);
+
+    for (size_t lba = sector_start; lba <= sector_end; lba++) {
+        hd_cache_upsert(
+            meta->disk_id,
+            lba,
+            sector_size,
+            buffer + (lba - base_lba) * sector_size,
+            false
+        );
+    }
+}
+
 size_t hd_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr)
 {
     if (!file->writeable) {
@@ -42,50 +75,79 @@ size_t hd_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr)
         loc.sector_count
     );
 
-    uint16_t* buffer = kmalloc_flags(
+    uint8_t* buffer = kmalloc_flags(
         loc.sector_size * loc.sector_count,
         KMALLOC_ZERO
     );
 
     if (offset != loc.lowest_sector_byte || size % loc.sector_size != 0) {
         _debug_printf(
-            "[wait_idx=%u] not aligned to sectors - reading wait started\n",
+            "[wait_idx=%u] not aligned to sectors - pre-reading\n",
             wait_idx
         );
-        ata_read(
-            meta->disk_id,
-            loc.low_sector_lba,
-            loc.sector_count,
-            buffer,
-            hd_rw_ready,
-            &wakeup_data
-        );
-        wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
 
-        _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
-        rwq_reset_to_not_ready(&hd_rw_queue, wait_idx);
+        bool prev_cache_hit = true;
+        size_t first_uncached = 0;
+
+        for (size_t i = 0; i < loc.sector_count; i++) {
+            size_t sector = loc.low_sector_lba + i;
+            bool cache_hit = hd_cache_seek(
+                meta->disk_id,
+                sector,
+                buffer + i * loc.sector_size
+            );
+
+            if (!cache_hit) {
+                if (prev_cache_hit) {
+                    first_uncached = i;
+                }
+                prev_cache_hit = false;
+                continue;
+            }
+
+            _debug_printf(
+                "[wait_idx=%u] Cache hit for sector %u\n",
+                wait_idx,
+                sector
+            );
+
+            if (prev_cache_hit) {
+                continue;
+            }
+
+            read_uncached_sectors(
+                meta, &wakeup_data, buffer,
+                loc.low_sector_lba, first_uncached, i - 1,
+                loc.sector_size
+            );
+            prev_cache_hit = true;
+        }
+
+        if (!prev_cache_hit) {
+            read_uncached_sectors(
+                meta, &wakeup_data, buffer,
+                loc.low_sector_lba, first_uncached, loc.sector_count - 1,
+                loc.sector_size
+            );
+        }
+
+        _debug_printf("[wait_idx=%u] pre-read completed\n", wait_idx);
     }
 
     size_t offset_in_buffer = offset - loc.lowest_sector_byte;
-    memcpy(((uint8_t*)buffer) + offset_in_buffer, ptr, loc.size);
+    memcpy(buffer + offset_in_buffer, ptr, loc.size);
 
-    ata_write(
-        meta->disk_id,
-        loc.low_sector_lba,
-        loc.sector_count,
-        buffer,
-        hd_rw_ready,
-        &wakeup_data
-    );
-
-    _debug_printf("[wait_idx=%u] start for write\n", wait_idx);
-
-    wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
-
-    _debug_printf("[wait_idx=%u] waiting completed\n", wait_idx);
+    for (size_t i = 0; i < loc.sector_count; i++) {
+        hd_cache_upsert(
+            meta->disk_id,
+            loc.low_sector_lba + i,
+            loc.sector_size,
+            buffer + i * loc.sector_size,
+            true
+        );
+    }
 
     rwq_deallocate_pos(&hd_rw_queue, wait_idx);
-
     kfree(buffer);
     return loc.size;
 }
