@@ -45,6 +45,7 @@ extern wait_obj_t* hd_partition_wait_obj;
 
 size_t hd_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr);
 size_t hd_read(vfs_file_t* file, size_t offset, size_t size,void* ptr);
+void hd_sync(const vfs_file_t* file);
 
 /**
  * Calculate sector location based on given offset and size, and store it in
@@ -83,5 +84,16 @@ void hd_cache_upsert(
     const uint8_t* buf,
     bool dirty
 );
+
+/**
+ * Returns pointer to a list of entries for given `disk_id`; saves total count
+ * of those entries to `count`.
+ */
+hd_cache_entry_t* hd_cache_get_entries(uint8_t disk_id, size_t* count);
+
+/**
+ * Clears cache for given disk ID.
+ */
+void hd_cache_clear(uint8_t disk_id);
 
 #endif

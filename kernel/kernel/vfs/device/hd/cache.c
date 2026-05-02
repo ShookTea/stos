@@ -86,3 +86,31 @@ void hd_cache_upsert(
     memcpy(cache_entries[disk_id][index].content, buf, sector_size);
     cache_count_per_disk[disk_id]++;
 }
+
+hd_cache_entry_t* hd_cache_get_entries(uint8_t disk_id, size_t* count)
+{
+    // Cache not initialized
+    if (disk_count < ((size_t)disk_id + 1)) {
+        *count = 0;
+        return NULL;
+    }
+
+    *count = cache_count_per_disk[disk_id];
+    return cache_entries[disk_id];
+}
+
+void hd_cache_clear(uint8_t disk_id)
+{
+    // Cache not initialized
+    if (disk_count < ((size_t)disk_id + 1)) {
+        return;
+    }
+
+    hd_cache_entry_t* entries = cache_entries[disk_id];
+    for (size_t i = 0; i < cache_count_per_disk[disk_id]; i++) {
+        kfree(entries[i].content);
+    }
+    kfree(cache_entries[disk_id]);
+    cache_entries[disk_id] = NULL;
+    cache_count_per_disk[disk_id] = 0;
+}
