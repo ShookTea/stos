@@ -464,6 +464,8 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     node->readdir_node = NULL;
     node->finddir_node = NULL;
     node->mkdir_node = NULL;
+    node->ioctl_node = NULL;
+    node->sync_node = NULL;
     node->metadata = NULL;
 }
 
