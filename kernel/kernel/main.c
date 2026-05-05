@@ -34,6 +34,48 @@
 #error "This kernel needs to be compiled with a ix86-elf compiler"
 #endif
 
+static bool in_debug_mode = false;
+
+static void launch_task(const char* name, void (*entrypoint)())
+{
+    task_t* task = task_create(
+        name,
+        entrypoint,
+        true,
+        vfs_get_real_root(),
+        vfs_get_real_root()
+    );
+    scheduler_add_task(task);
+}
+
+static void kernel_root_task()
+{
+    // Initialize drivers for basic devices
+    ps2_init();
+    keyboard_init();
+    ata_init();
+
+    // Initialize filesystem and mount initrd.
+    vfs_init();
+    initrd_mount();
+    device_mount();
+
+    // With filesystem initialized fbcon can now load fonts.
+    font_load_psf(FONT_MODE_NORMAL, "/initrd/font_light.psf");
+    font_load_psf(FONT_MODE_BOLD, "/initrd/font_bold.psf");
+
+    debug_puts("");
+    _debug_puts("=== Kernel Initialization Complete ===");
+    _debug_puts("All subsystems initialized and tested successfully");
+    _debug_puts("Entering idle loop...\n");
+
+    if (in_debug_mode) {
+        launch_task("debugger", debugger_init);
+    }
+
+    while (1) {}
+}
+
 void kernel_main()
 {
     terminal_init();
@@ -56,8 +98,7 @@ void kernel_main()
     // Set allocators for libds library
     libds_set_allocators(kmalloc, krealloc, kfree);
 
-    bool in_debug_mode =
-        strcmp(multiboot2_get_boot_command_line(), "debug") == 0;
+    in_debug_mode = strcmp(multiboot2_get_boot_command_line(), "debug") == 0;
 
     if (in_debug_mode) {
         // Running tests
@@ -67,40 +108,12 @@ void kernel_main()
         kmalloc_run_all_tests();
     }
 
-    // Initialize drivers for basic devices
+    // Initialize PIT driver and scheduling
     pit_init();
-    ps2_init();
-    keyboard_init();
-    ata_init();
-
-    // Initialize filesystem and mount initrd.
-    vfs_init();
-    initrd_mount();
-    device_mount();
-
-    // With filesystem initialized fbcon can now load fonts.
-    font_load_psf(FONT_MODE_NORMAL, "/initrd/font_light.psf");
-    font_load_psf(FONT_MODE_BOLD, "/initrd/font_bold.psf");
-
-    // Initialize multitasking scheduler & syscall handling
     scheduler_init();
     syscall_init();
 
-    debug_puts("");
-    _debug_puts("=== Kernel Initialization Complete ===");
-    _debug_puts("All subsystems initialized and tested successfully");
-    _debug_puts("Entering idle loop...\n");
-
-    if (in_debug_mode) {
-        task_t* debugger = task_create(
-            "debugger",
-            debugger_init,
-            true,
-            vfs_get_real_root(),
-            vfs_get_real_root()
-        );
-        scheduler_add_task(debugger);
-    }
+    launch_task("kernel", kernel_root_task);
 
     while (1) {}
 }
