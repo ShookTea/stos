@@ -16,6 +16,7 @@
 #include <kernel/task/task.h>
 #include "kernel/drivers/ata.h"
 #include "kernel/drivers/vga/font.h"
+#include "kernel/task/wait.h"
 #include "kernel/vfs/device.h"
 #include <libds/libds.h>
 #include "task/syscall.h"
@@ -48,7 +49,7 @@ static void launch_task(const char* name, void (*entrypoint)())
     scheduler_add_task(task);
 }
 
-static void kernel_root_task()
+static void kernel_init_task()
 {
     // Initialize drivers for basic devices
     ps2_init();
@@ -72,9 +73,6 @@ static void kernel_root_task()
         _debug_puts("Launching debugger task");
         launch_task("debugger", debugger_init);
     }
-
-    _debug_puts("Entering idle loop...");
-    while (1) {}
 }
 
 void kernel_main()
@@ -114,7 +112,8 @@ void kernel_main()
     scheduler_init();
     syscall_init();
 
-    launch_task("kernel", kernel_root_task);
+    launch_task("kernel_init", kernel_init_task);
 
+    _debug_puts("Entering idle loop...");
     while (1) {}
 }

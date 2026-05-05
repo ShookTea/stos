@@ -3,7 +3,6 @@
 #include "kernel/memory/kmalloc.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
-#include "sys/wait.h"
 #include <stdbool.h>
 
 static void enqueue_waiter(wait_obj_t* wait_obj, task_t* waiter)
@@ -127,4 +126,5 @@ void wait_sleep(size_t millis)
     pit_register_timeout(millis, pit_callback, meta);
     wait_on_condition(wait_obj, sleep_condition, meta);
     wait_deallocate(wait_obj);
+    kfree(meta);
 }
