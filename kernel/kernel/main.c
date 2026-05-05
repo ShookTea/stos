@@ -67,12 +67,13 @@ static void kernel_root_task()
     debug_puts("");
     _debug_puts("=== Kernel Initialization Complete ===");
     _debug_puts("All subsystems initialized and tested successfully");
-    _debug_puts("Entering idle loop...\n");
 
     if (in_debug_mode) {
+        _debug_puts("Launching debugger task");
         launch_task("debugger", debugger_init);
     }
 
+    _debug_puts("Entering idle loop...");
     while (1) {}
 }
 
