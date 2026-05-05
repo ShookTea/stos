@@ -3,48 +3,17 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
 
 int main(void)
 {
     puts("Hello from userspace!");
-    void* array1 = malloc(sizeof(int) * 1024);
-    void* array2 = malloc(sizeof(int) * 1024);
-    void* array3 = malloc(sizeof(int) * 1024);
-
-    printf("Addr array1 = %#x\n", array1);
-    printf("Addr array2 = %#x\n", array2);
-    printf("Addr array3 = %#x\n", array3);
-
-    ((int*)array1)[5] = 32;
-    ((int*)array2)[5] = 64;
-    ((int*)array3)[5] = 128;
-
-    printf("array1 val = %d\n", ((int*)array1)[5]);
-    printf("array2 val = %d\n", ((int*)array2)[5]);
-    printf("array3 val = %d\n", ((int*)array3)[5]);
-
-    free(array3);
-
-    void* array4 = malloc(sizeof(int) * 1024);
-    printf("Addr array4 = %#x\n", array4);
-    array4 = realloc(array4, sizeof(int) * 2048);
-    printf("Addr array4 = %#x\n", array4);
-    void* array5 = malloc(sizeof(int) * 512);
-    printf("Addr array5 = %#x\n", array5);
-
-    int fd = open("/initrd/test", O_RDONLY);
-    printf("FD = %d\n", fd);
-    uint8_t* data = malloc(16);
-    int readcount = 0;
-    while ((readcount = read(fd, data, 16)) != 0) {
-        for (int i = 0; i < readcount; i++) {
-            printf("%02x", data[i]);
-            if (i % 2 == 1) {
-                printf(" ");
-            }
-        }
-        printf("\n");
-    }
+    struct timespec* sleep = malloc(sizeof(struct timespec));
+    sleep->tv_spec = 5;
+    sleep->tv_nsec = 0;
+    puts("Before sleep");
+    nanosleep(sleep, NULL);
+    puts("After sleep");
 
     return 0;
 }

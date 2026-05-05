@@ -5,6 +5,7 @@
 #include <kernel/task/task.h>
 #include <stdint.h>
 #include <kernel/task/syscall_handler.h>
+#include <time.h>
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
 
@@ -59,6 +60,15 @@ static uint32_t syscall_int_handler(
             const char* path = (const char*)arg1;
             assert_range(path, VFS_MAX_PATH_LENGTH);
             return sys_chdir(path);
+        }
+        case SYS_SLEEP: {
+            const struct timespec* duration = (const struct timespec*)arg1;
+            struct timespec* rem = (struct timespec*)arg2;
+            assert_ptr(duration);
+            if (rem != NULL) {
+                assert_ptr(rem);
+            }
+            return sys_sleep(duration, rem);
         }
         case SYS_OPEN: {
             const char* path = (const char*)arg1;

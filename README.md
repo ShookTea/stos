@@ -34,6 +34,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `EXEC` | `0x06` | [`<unistd.h>`](libc/include/unistd.h) | `int execve(const char* path, const char* argv[], const char* envp[])` | Replace the current process with ELF executable |
 | `GETCWD` | `0x07` | [`<unistd.h>`](libc/include/unistd.h) | `char* getcwd(char buf[], size_t size)` | Returns current working directory |
 | `CHDIR` | `0x08` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
+| `SLEEP` | `0x09` | [`<time.h>`](libc/include/time.h) | `int nanosleep(const struct timespec* duration, struct timespec* rem)` | Suspends current thread for some specified time |
 | _file management (`0x1n`)_ |   |   |   |   |
 | `OPEN` | `0x10` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
 | `CLOSE`| `0x11` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |

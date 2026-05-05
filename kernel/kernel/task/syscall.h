@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <time.h>
 
 // Syscall numbers
 #define SYS_EXIT 0x00
@@ -31,6 +32,9 @@ char* sys_getcwd(char* buf, size_t size);
 
 #define SYS_CHDIR 0x08
 int sys_chdir(const char* path);
+
+#define SYS_SLEEP 0x09
+int sys_sleep(const struct timespec* duration, struct timespec* rem);
 
 #define SYS_OPEN 0x10
 uint32_t sys_open(const char* path, uint32_t flags);
