@@ -1,7 +1,9 @@
 #include "kernel/task/wait.h"
+#include "kernel/drivers/pit.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
+#include "sys/wait.h"
 #include <stdbool.h>
 
 static void enqueue_waiter(wait_obj_t* wait_obj, task_t* waiter)
@@ -96,4 +98,33 @@ void wait_deallocate(wait_obj_t* wait_obj)
     }
     kfree(wait_obj->waiters);
     kfree(wait_obj);
+}
+
+typedef struct {
+    bool done;
+    wait_obj_t* wait_obj;
+} wait_metadata_t;
+
+static void pit_callback(void* _params)
+{
+    wait_metadata_t* params = _params;
+    params->done = true;
+    wait_wake_up(params->wait_obj);
+}
+
+static bool sleep_condition(void* _params)
+{
+    wait_metadata_t* params = _params;
+    return params->done;
+}
+
+void wait_sleep(size_t millis)
+{
+    wait_obj_t* wait_obj = wait_allocate_queue();
+    wait_metadata_t* meta = kmalloc(sizeof(wait_metadata_t));
+    meta->done = false;
+    meta->wait_obj = wait_obj;
+    pit_register_timeout(millis, pit_callback, meta);
+    wait_on_condition(wait_obj, sleep_condition, meta);
+    wait_deallocate(wait_obj);
 }

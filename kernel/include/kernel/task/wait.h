@@ -56,4 +56,9 @@ wait_obj_t* wait_allocate_event();
  */
 void wait_deallocate(wait_obj_t* wait_obj);
 
+/**
+ * Move current task to a sleeping state for a given time.
+ */
+void wait_sleep(size_t millis);
+
 #endif
