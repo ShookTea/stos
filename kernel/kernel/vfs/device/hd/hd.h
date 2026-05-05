@@ -47,6 +47,8 @@ size_t hd_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr);
 size_t hd_read(vfs_file_t* file, size_t offset, size_t size,void* ptr);
 void hd_sync(const vfs_file_t* file);
 
+void hd_sync_with_metadata(hd_metadata_t* meta);
+
 /**
  * Calculate sector location based on given offset and size, and store it in
  * given `loc` pointer.
@@ -95,5 +97,10 @@ hd_cache_entry_t* hd_cache_get_entries(uint8_t disk_id, size_t* count);
  * Clears cache for given disk ID.
  */
 void hd_cache_clear(uint8_t disk_id);
+
+/**
+ * Synchronizes all disks in the filesystem and clears cache
+ */
+void hd_sync_all(void);
 
 #endif

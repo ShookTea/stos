@@ -276,4 +276,9 @@ vfs_mount_result_t vfs_mount(
     const void* data
 );
 
+/**
+ * Forces synchronization of everything in the filesystem
+ */
+void vfs_sync_filesystem(void);
+
 #endif

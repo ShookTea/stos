@@ -1,5 +1,6 @@
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
+#include "kernel/drivers/pit.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
@@ -25,6 +26,8 @@ typedef struct {
 } hd_part_cache_entry_t;
 
 #define MAX_PIO_DISKS 4
+#define SYNC_FREQUENCY_MS 1000
+
 static hd_part_cache_entry_t part_cache[MAX_PIO_DISKS];
 static size_t part_cache_pio_count = 0;
 
@@ -94,11 +97,44 @@ bool device_hd_readdir_partition(size_t part_index, struct dirent* out)
     return false;
 }
 
+void hd_sync_all(void)
+{
+    _debug_printf("Sync called - disk count = %u\n", disk_nodes_count);
+    vfs_node_t** ptr = disk_nodes;
+    while (*ptr != NULL) {
+        vfs_node_t* node = *ptr;
+        hd_metadata_t* metadata = node->metadata;
+        if (metadata != NULL) {
+            hd_sync_with_metadata(metadata);
+        }
+        ptr++;
+    }
+    _debug_puts("Sync completed");
+}
+
+static void sync_callback()
+{
+    // Re-register the callback
+    // pit_register_timeout(
+    //     SYNC_FREQUENCY_MS,
+    //     sync_callback,
+    //     NULL
+    // );
+
+    hd_sync_all();
+}
+
 vfs_node_t** device_hd_mount()
 {
     if (disk_nodes != NULL) {
         return disk_nodes;
     }
+
+    pit_register_timeout(
+        SYNC_FREQUENCY_MS,
+        sync_callback,
+        NULL
+    );
 
     hd_partition_wait_obj = wait_allocate_queue();
 

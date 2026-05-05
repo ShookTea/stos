@@ -110,6 +110,7 @@ static void handle_command_sent()
         puts("  slab_stats        - Prints slab allocator statistics");
         puts("  vfs_cat [F]       - Prints content of a file at abs. path");
         puts("  vfs_ls [F]        - Prints info about file at abs. path [F]");
+        puts("  vfs_sync          - Runs synchronization in the VFS");
         puts("  vga_colors        - Prints VGA colors map");
         puts("  vga_utf8 [N] [F]  - Dumps Nth page of UTF-8, starting from 0, in given font mode [F]");
         puts("  vmm_memory_map    - Prints detailed memory map");
@@ -400,6 +401,11 @@ static void handle_command_sent()
             }
             vfs_dentry_unref(node);
         }
+    }
+    else if (strcmp(command, "vfs_sync") == 0) {
+        puts("Running synchronization...");
+        vfs_sync_filesystem();
+        puts("Synchronization completed.");
     }
     else if (strcmp(command, "vga_colors") == 0) {
         puts("Color matrix with styling using ^[F;Bm");

@@ -7,6 +7,7 @@
 #include <kernel/memory/kmalloc.h>
 #include <string.h>
 #include "kernel/debug.h"
+#include "./device/hd/hd.h"
 
 #define _debug_puts(...) debug_puts_c("VFS", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS", __VA_ARGS__)
@@ -511,4 +512,9 @@ void vfs_dentry_unref(dentry_t* dentry)
     if (inode != NULL && inode->on_release != NULL && inode->open_count == 0) {
         inode->on_release(inode);
     }
+}
+
+void vfs_sync_filesystem(void)
+{
+    hd_sync_all();
 }
