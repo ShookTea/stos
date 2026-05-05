@@ -1,7 +1,8 @@
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
-#include "kernel/drivers/pit.h"
 #include "kernel/memory/kmalloc.h"
+#include "kernel/task/scheduler.h"
+#include "kernel/task/task.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include "stdlib.h"
@@ -97,9 +98,9 @@ bool device_hd_readdir_partition(size_t part_index, struct dirent* out)
     return false;
 }
 
+
 void hd_sync_all(void)
 {
-    _debug_printf("Sync called - disk count = %u\n", disk_nodes_count);
     vfs_node_t** ptr = disk_nodes;
     while (*ptr != NULL) {
         vfs_node_t* node = *ptr;
@@ -109,19 +110,14 @@ void hd_sync_all(void)
         }
         ptr++;
     }
-    _debug_puts("Sync completed");
 }
 
-static void sync_callback()
+static void hd_sync_bg_task(void)
 {
-    // Re-register the callback
-    // pit_register_timeout(
-    //     SYNC_FREQUENCY_MS,
-    //     sync_callback,
-    //     NULL
-    // );
-
-    hd_sync_all();
+    while (true) {
+        hd_sync_all();
+        wait_sleep(SYNC_FREQUENCY_MS);
+    }
 }
 
 vfs_node_t** device_hd_mount()
@@ -130,11 +126,15 @@ vfs_node_t** device_hd_mount()
         return disk_nodes;
     }
 
-    pit_register_timeout(
-        SYNC_FREQUENCY_MS,
-        sync_callback,
-        NULL
+    // Add synchronization task
+    task_t* sync_task = task_create(
+        "hd_sync",
+        hd_sync_bg_task,
+        true,
+        vfs_get_real_root(),
+        vfs_get_real_root()
     );
+    scheduler_add_task(sync_task);
 
     hd_partition_wait_obj = wait_allocate_queue();
 

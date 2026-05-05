@@ -4,6 +4,7 @@
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
 
+#define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c("VFS/dev/hd", __VA_ARGS__)
 
 void hd_sync_with_metadata(hd_metadata_t* meta)
