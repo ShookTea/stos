@@ -27,8 +27,45 @@ static bool check_if_exists(vfs_node_t* node, const char* name)
     return false;
 }
 
+static void populate_inode_metadata(
+    ext2_inode_t* inode,
+    vfs_node_t* parent,
+    uint32_t dir_block
+) {
+    ext2_inode_metadata_t* meta = parent->metadata;
+
+    // TODO: using default permissions here. Maybe inherit them from parent?
+    inode->type_and_permissions = 0x4000 | 0755;
+    // TODO: set valid UID and GID
+    inode->user_id = meta->cached_inode->user_id;
+    inode->group_id = meta->cached_inode->group_id;
+    // TODO: set valid timestamps
+    inode->creation_time = 0;
+    inode->last_access_time = 0;
+    inode->last_modification_time = 0;
+
+    inode->size_lo = meta->block_size;
+
+    // Point first direct block pointer to newly allocated block, zero the rest
+    memset(
+        inode->direct_block_pointers,
+        0,
+        sizeof(inode->direct_block_pointers)
+    );
+    inode->direct_block_pointers[0] = dir_block;
+    inode->singly_indirect_block_pointer = 0;
+    inode->doubly_indirect_block_pointer = 0;
+    inode->triply_indirect_block_pointer = 0;
+
+    // For a brand new directory the number of hard links is always 2: one
+    // from parent and one from itself (`.`)
+    inode->hard_links_count = 2;
+}
+
 bool ext2_mkdir(vfs_node_t* node, const char* name)
 {
+    ext2_inode_metadata_t* meta = node->metadata;
+
     _debug_printf(
         "Run mkdir with name '%s' on inode %u ('%s')\n",
         name,
@@ -46,7 +83,31 @@ bool ext2_mkdir(vfs_node_t* node, const char* name)
         return false;
     }
 
-    _debug_puts("creating dir");
+    // Allocate inode for the new directory
+    uint32_t ino = ext2_alloc_inode(meta->device_file, meta->block_size);
+    if (ino == 0) {
+        _debug_puts("Failed to allocate inode");
+        return false;
+    }
+
+    uint32_t dir_block = ext2_alloc_block(meta->device_file, meta->block_size);
+    if (dir_block == 0) {
+        _debug_puts("Failed to allocate block");
+        // TODO: free allocated `ino`
+        return false;
+    }
+
+    // Create inode for new directory, populate metadata, and save to disk
+    ext2_inode_t new_inode = {0};
+    populate_inode_metadata(&new_inode, node, dir_block);
+    ext2_write_inode(
+        meta->device_file,
+        ino,
+        meta->block_size,
+        meta->inode_size,
+        meta->inodes_per_group,
+        &new_inode
+    );
 
     return false;
 }
