@@ -2,6 +2,10 @@
 #include "kernel/memory/kmalloc.h"
 #include <string.h>
 
+// TODO: improvements to caching
+// - track reading frequency of block - if high, maybe we should consider
+//   keeping it in memory instead of deallocating after flush?
+
 /**
  * Two-dimensional array. First dimension is disk ID, second dimension grows
  * on request.
