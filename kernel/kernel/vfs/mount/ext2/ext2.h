@@ -142,6 +142,13 @@ bool ext2_mkdir(vfs_node_t* node, const char* name);
 uint32_t ext2_alloc_block(dentry_t* device, uint32_t block_size);
 
 /**
+ * Scan group bitmaps, mark the first free inode as used, update the group
+ * descriptor and superblock counts, and return the allocated inode.
+ * Returns 0 on failure (no free blocks or I/O error).
+ */
+uint32_t ext2_alloc_inode(dentry_t* device, uint32_t block_size);
+
+/**
  * Set the block pointer for logical block_id inside inode to new_block_num.
  * Allocates intermediate indirect blocks as needed.
  * Updates inode->direct_block_pointers or the relevant indirect pointer field
