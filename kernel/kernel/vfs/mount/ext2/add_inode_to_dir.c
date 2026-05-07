@@ -27,12 +27,12 @@ inline uint16_t pad_len(uint16_t len)
 }
 
 bool ext2_add_inode_to_dir(
-    vfs_file_t* device_file,
     ext2_inode_metadata_t* meta,
     uint32_t parent_inode_num,
     uint32_t child_inode_num,
     const char* name
 ) {
+    vfs_file_t* device_file = vfs_open(meta->device_file, VFS_MODE_READWRITE);
     ext2_inode_t* parent_inode = ext2_read_inode(
         device_file,
         meta,

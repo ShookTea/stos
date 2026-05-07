@@ -154,7 +154,6 @@ uint32_t ext2_alloc_inode(dentry_t* device, uint32_t block_size);
  * on failure.
  */
 bool ext2_add_inode_to_dir(
-    vfs_file_t* device_file,
     ext2_inode_metadata_t* meta,
     const uint32_t parent_inode,
     const uint32_t child_inode,
