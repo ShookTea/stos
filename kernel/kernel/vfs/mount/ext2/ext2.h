@@ -149,6 +149,19 @@ uint32_t ext2_alloc_block(dentry_t* device, uint32_t block_size);
 uint32_t ext2_alloc_inode(dentry_t* device, uint32_t block_size);
 
 /**
+ * Adds `child_inode` as a new child in directory `parent_inode` with given
+ * name. Updates number of hard links for child inode as well. Returns `false`
+ * on failure.
+ */
+bool ext2_add_inode_to_dir(
+    vfs_file_t* device_file,
+    ext2_inode_metadata_t* meta,
+    const uint32_t parent_inode,
+    const uint32_t child_inode,
+    const char* name
+);
+
+/**
  * Set the block pointer for logical block_id inside inode to new_block_num.
  * Allocates intermediate indirect blocks as needed.
  * Updates inode->direct_block_pointers or the relevant indirect pointer field
