@@ -29,8 +29,7 @@ static bool check_if_exists(vfs_node_t* node, const char* name)
 
 static void populate_inode_metadata(
     ext2_inode_t* inode,
-    vfs_node_t* parent,
-    uint32_t dir_block
+    vfs_node_t* parent
 ) {
     ext2_inode_metadata_t* meta = parent->metadata;
 
@@ -44,22 +43,18 @@ static void populate_inode_metadata(
     inode->last_access_time = 0;
     inode->last_modification_time = 0;
 
-    inode->size_lo = meta->block_size;
+    inode->size_lo = 0;
+    inode->hard_links_count = 0;
 
-    // Point first direct block pointer to newly allocated block, zero the rest
+    // Zero all block pointers
     memset(
         inode->direct_block_pointers,
         0,
         sizeof(inode->direct_block_pointers)
     );
-    inode->direct_block_pointers[0] = dir_block;
     inode->singly_indirect_block_pointer = 0;
     inode->doubly_indirect_block_pointer = 0;
     inode->triply_indirect_block_pointer = 0;
-
-    // For a brand new directory the number of hard links is always 2: one
-    // from parent and one from itself (`.`)
-    inode->hard_links_count = 2;
 }
 
 bool ext2_mkdir(vfs_node_t* node, const char* name)
@@ -90,16 +85,9 @@ bool ext2_mkdir(vfs_node_t* node, const char* name)
         return false;
     }
 
-    uint32_t dir_block = ext2_alloc_block(meta->device_file, meta->block_size);
-    if (dir_block == 0) {
-        _debug_puts("Failed to allocate block");
-        // TODO: free allocated `ino`
-        return false;
-    }
-
     // Create inode for new directory, populate metadata, and save to disk
     ext2_inode_t new_inode = {0};
-    populate_inode_metadata(&new_inode, node, dir_block);
+    populate_inode_metadata(&new_inode, node);
     ext2_write_inode(
         meta->device_file,
         ino,
@@ -109,5 +97,23 @@ bool ext2_mkdir(vfs_node_t* node, const char* name)
         &new_inode
     );
 
-    return false;
+    // Add "." and ".." to the new directory's content, and add new directory
+    // to the parent.
+    if (!ext2_add_inode_to_dir(meta, ino, ino, ".")) {
+        _debug_puts("Failed to create '.' entry");
+        return false;
+        // TODO: cleanup - dealloc inode
+    }
+    if (!ext2_add_inode_to_dir(meta, ino, node->inode, "..")) {
+        _debug_puts("Failed to create '..' entry");
+        return false;
+        // TODO: cleanup - remove "." and dealloc inode
+    }
+    if (!ext2_add_inode_to_dir(meta, node->inode, ino, name)) {
+        _debug_puts("Failed to add child to parent directory");
+        return false;
+        // TODO: cleanup - remove "." and "..", and dealloc inode
+    }
+
+    return true;
 }
