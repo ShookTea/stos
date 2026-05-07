@@ -15,9 +15,7 @@ void hd_sync_with_metadata(hd_metadata_t* meta)
         return;
     }
 
-    size_t wait_idx = rwq_allocate_pos(&hd_rw_queue);
     hd_wakeup_data_t wakeup_data;
-    wakeup_data.wait_idx = wait_idx;
     wakeup_data.hd_metadata = meta;
 
     for (size_t i = 0; i < count; i++) {
@@ -25,9 +23,13 @@ void hd_sync_with_metadata(hd_metadata_t* meta)
             continue;
         }
 
+        size_t wait_idx = rwq_allocate_pos(&hd_rw_queue);
+        wakeup_data.wait_idx = wait_idx;
+
         _debug_printf(
-            "[sync] Writing dirty sector %u to disk\n",
-            entries[i].sector_lba
+            "[sync] Writing dirty sector %u to disk [wait_idx=%u]\n",
+            entries[i].sector_lba,
+            wait_idx
         );
 
         ata_write(
@@ -39,9 +41,9 @@ void hd_sync_with_metadata(hd_metadata_t* meta)
             &wakeup_data
         );
         wait_on_condition(meta->wait_obj, hd_rw_wait_for_ready, &wakeup_data);
+        rwq_deallocate_pos(&hd_rw_queue, wait_idx);
     }
 
-    rwq_deallocate_pos(&hd_rw_queue, wait_idx);
     hd_cache_clear(meta->disk_id);
 }
 

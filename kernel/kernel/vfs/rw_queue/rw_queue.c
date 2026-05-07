@@ -77,7 +77,7 @@ bool rwq_set_ready(rw_queue_t* queue, size_t idx)
     }
 
     if (queue->rw_wait_map[idx] == RW_QUEUE_FREE_TO_USE) {
-        _debug_puts("ERR: id is free to use");
+        _debug_printf("ERR: id %u is free to use\n", idx);
         spinlock_release(&queue->spinlock);
         return false;
     }
