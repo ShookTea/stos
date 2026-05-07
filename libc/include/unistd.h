@@ -7,6 +7,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define SEEK_SET 1
+#define SEEK_CUR 2
+#define SEEK_END 3
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -69,7 +73,7 @@ void* sbrk(intptr_t increment);
  * returns 0 for child process, and PID of the child for parent process. On
  * failure it returns -1.
  */
-int fork();
+int fork(void);
 
 /**
  * Stores current working directory in the buffer, and returns the pointer to
@@ -158,6 +162,17 @@ int execle(
  * Environment variables are inherited from the current process.
  */
 int execv(const char* path, const char* argv[]);
+
+/**
+ * Moves the file offset of the open file descriptor `fd` to the argument
+ * `offset` according to the value of `whence`:
+ * - `SEEK_SET` - the file offset is set to `offset`
+ * - `SEEK_CUR` - the file offset is set to current offset + `offset`
+ * - `SEEK_END` - the file offset is set to the size of the file + `offset`
+ *
+ * On success it returns the new offset; on failure returns -1.
+ */
+int lseek(int fd, int offset, int whence);
 
 #ifdef __cplusplus
 }

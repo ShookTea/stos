@@ -41,6 +41,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `WRITE` | `0x12` | [`<unistd.h>`](libc/include/unistd.h) | `int write(int fd, const void* buffer, size_t count)` | Writes up to _count_ bytes from _buffer_ to file descriptor _fd_ |
 | `READ` | `0x13` | [`<unistd.h>`](libc/include/unistd.h) | `int read(int fd, void* buf, size_t count)` | Reads up to _count_ bytes from file descriptor _fd_ to _buffer_ |
 | `IOCTL` | `0x14` | [`<sys/ioctl.h>`](libc/include/sys/ioctl.h) | `int ioctl(int fd, int op, void* arg)` | Manipulates underlying device params of special files |
+| `LSEEK` | `0x15` | [`<unistd.h>`](libc/include/unistd.h) | `int lseek(int fd, int offset, int whence)` | Moves offset of the file descriptor _fd_ |
 | _memory operations (`0x2n`)_ |   |   |   |   |
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 

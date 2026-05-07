@@ -91,6 +91,7 @@ static uint32_t syscall_int_handler(
             assert_ptr(buf);
             return sys_ioctl((int)arg1, (int)arg2, buf);
         }
+        case SYS_LSEEK: return sys_lseek((int)arg1, (int)arg2, (int)arg3);
         case SYS_BRK: return sys_brk(arg1);
         default:
             _debug_printf("Unknown syscall: %d\n", syscall_num);

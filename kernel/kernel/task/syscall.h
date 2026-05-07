@@ -48,8 +48,11 @@ int sys_write(int fd, const void* buf, size_t count);
 #define SYS_READ 0x13
 int sys_read(int fd, void* buf, size_t count);
 
-#define SYS_IOCTL   0x14
+#define SYS_IOCTL 0x14
 int sys_ioctl(int fd, int op, void* arg);
+
+#define SYS_LSEEK 0x15
+int sys_lseek(int fd, int offset, int whence);
 
 #define SYS_BRK 0x20
 uint32_t sys_brk(uint32_t addr);
@@ -60,6 +63,9 @@ uint32_t sys_brk(uint32_t addr);
 
 // Syscall options
 #define SYS_WAIT_OPT_NO_HANG 1
+#define SYS_LSEEK_OPT_SEEK_SET 1
+#define SYS_LSEEK_OPT_SEEK_CUR 2
+#define SYS_LSEEK_OPT_SEEK_END 3
 
 /**
  * Initializes syscall handling system.
