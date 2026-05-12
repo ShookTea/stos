@@ -10,6 +10,11 @@
 
 size_t ext2_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr)
 {
+    if (file == NULL || ptr == NULL || file->metadata == NULL) {
+        _debug_puts("nullpointer at ext2 write");
+        return 0;
+    }
+
     _debug_printf(
         "Writing to inode %u '%s' - off=%u size=%u \n",
         file->dentry->inode->inode,
@@ -17,11 +22,6 @@ size_t ext2_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr)
         offset,
         size
     );
-
-    if (file == NULL || ptr == NULL || file->metadata == NULL) {
-        _debug_puts("nullpointer at ext2 write");
-        return 0;
-    }
     if (!file->writeable) {
         _debug_puts("file not writeable");
         return 0;

@@ -8,6 +8,11 @@
 
 size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
 {
+    if (file == NULL || ptr == NULL || file->metadata == NULL) {
+        _debug_puts("nullpointer at ext2 read");
+        return 0;
+    }
+
     _debug_printf(
         "Reading inode %u '%s' - off=%u size=%u \n",
         file->dentry->inode->inode,
@@ -15,11 +20,6 @@ size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
         offset,
         size
     );
-
-    if (file == NULL || ptr == NULL || file->metadata == NULL) {
-        _debug_puts("nullpointer at ext2 read");
-        return 0;
-    }
     if (!file->readable) {
         _debug_puts("file not readable");
         return 0;
