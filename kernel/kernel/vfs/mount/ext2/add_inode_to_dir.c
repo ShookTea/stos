@@ -34,16 +34,22 @@ bool ext2_add_inode_to_dir(
 ) {
     _debug_printf("Adding entry %u to parent %u with name '%s'\n", child_inode_num, parent_inode_num, name);
     vfs_file_t* device_file = vfs_open(meta->device_file, VFS_MODE_READWRITE);
+    if (device_file == NULL) {
+        return false;
+    }
     ext2_inode_t* parent_inode = ext2_read_inode(
         device_file,
         meta,
         parent_inode_num
     );
     if (parent_inode == NULL) {
+        vfs_close(device_file);
         return false;
     }
     uint8_t parent_type = ext2_type_to_vfs(parent_inode->type_and_permissions);
     if ((parent_type & VFS_TYPE_DIRECTORY) == 0) {
+        kfree(parent_inode);
+        vfs_close(device_file);
         return false;
     }
 
@@ -54,6 +60,7 @@ bool ext2_add_inode_to_dir(
     );
     if (child_inode == NULL) {
         kfree(parent_inode);
+        vfs_close(device_file);
         return false;
     }
 
@@ -249,5 +256,6 @@ bool ext2_add_inode_to_dir(
     if (zeros != NULL) {
         kfree(zeros);
     }
+    vfs_close(device_file);
     return success;
 }
