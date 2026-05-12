@@ -2,8 +2,8 @@
 #include <stdbool.h>
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("ELF", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ELF", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_ELF, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_ELF, __VA_ARGS__)
 
 bool elf_validate(void* addr)
 {

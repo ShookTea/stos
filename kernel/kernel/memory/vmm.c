@@ -7,8 +7,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define _debug_puts(...) debug_puts_c("VMM", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VMM", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_MEM, "VMM", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_MEM, "VMM", __VA_ARGS__)
 
 static spinlock_t vmm_lock = SPINLOCK_INIT;
 

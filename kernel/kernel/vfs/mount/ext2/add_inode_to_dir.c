@@ -6,8 +6,8 @@
 #include "kernel/vfs/vfs.h"
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_VFS_EXT2, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_VFS_EXT2, __VA_ARGS__)
 
 static uint8_t dir_entry_file_type(uint8_t vfs_type)
 {

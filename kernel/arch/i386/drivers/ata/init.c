@@ -6,8 +6,8 @@
 #include "../../idt/pic.h"
 #include "../../idt/idt.h"
 
-#define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_ATA, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_ATA, __VA_ARGS__)
 
 void ata_init()
 {

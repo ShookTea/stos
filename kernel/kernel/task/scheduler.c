@@ -9,8 +9,8 @@
 #include <kernel/spinlock.h>
 #include <kernel/task/task.h>
 
-#define _debug_puts(...) debug_puts_c("Scheduler", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("Scheduler", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_SCHEDULER, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_SCHEDULER, __VA_ARGS__)
 
 static spinlock_t scheduler_lock = SPINLOCK_INIT;
 

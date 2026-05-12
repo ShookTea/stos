@@ -6,8 +6,8 @@
 #include "stdlib.h"
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("PS/2", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("PS/2", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_PS2, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_PS2, __VA_ARGS__)
 
 static bool initialized = false;
 static bool dual_channel = false;

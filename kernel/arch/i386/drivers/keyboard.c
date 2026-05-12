@@ -10,8 +10,8 @@
 #include <stdbool.h>
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("PS/2-KB", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("PS/2-KB", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_PS2, "KB", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_PS2, "KB", __VA_ARGS__)
 
 #define COM_GET_SET_CURRENT_SCAN_CODE_SET 0xF0
 #define COM_ENABLE_SCANNING 0xF4

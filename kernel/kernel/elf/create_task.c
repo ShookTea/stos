@@ -8,8 +8,8 @@
 #include "kernel/debug.h"
 #include <string.h>
 
-#define _debug_puts(...) debug_puts_c("ELF", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ELF", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_ELF, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_ELF, __VA_ARGS__)
 
 // Space between heap and stack (e.g. 1 MB)
 #define MIN_HEAP_STACK_GAP (1 * 1024 * 1024) // 1 MB

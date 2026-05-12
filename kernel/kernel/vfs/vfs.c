@@ -9,8 +9,8 @@
 #include "kernel/debug.h"
 #include "./device/hd/hd.h"
 
-#define _debug_puts(...) debug_puts_c("VFS", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_VFS, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_VFS, __VA_ARGS__)
 
 typedef struct {
     char* filename;

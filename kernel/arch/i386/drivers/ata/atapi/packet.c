@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#define _debug_puts(...) debug_puts_c("ATAPI/pkt", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ATAPI/pkt", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_ATAPI, "pkt", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_ATAPI, "pkt", __VA_ARGS__)
 
 void _atapi_send_packet(ata_request_t* req)
 {

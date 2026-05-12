@@ -8,8 +8,8 @@
 #include "kernel/drivers/ata.h"
 #include "kernel/memory/kmalloc.h"
 
-#define _debug_puts(...) debug_puts_c("ATAPI/id", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ATAPI/id", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_ATAPI, "id", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_ATAPI, "id", __VA_ARGS__)
 
 #define swipe_endian(w) ((uint16_t)((w >> 8) | (w << 8)))
 

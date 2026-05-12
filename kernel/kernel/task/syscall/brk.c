@@ -8,8 +8,8 @@
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 
-#define _debug_puts(...) debug_puts_c("Syscall/BRK", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("Syscall/BRK", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_SYSCALL, "BRK", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_SYSCALL, "BRK", __VA_ARGS__)
 
 /**
  * Sets a new program break (end of heap).

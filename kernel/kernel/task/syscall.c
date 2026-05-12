@@ -9,8 +9,8 @@
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
 
-#define _debug_puts(...) debug_puts_c("Syscall", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("Syscall", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_SYSCALL, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_SYSCALL, __VA_ARGS__)
 
 
 #define ptr_valid(ptr) \

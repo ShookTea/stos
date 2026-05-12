@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define _debug_puts(...) debug_puts_c("Paging", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("Paging", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_PAGING, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_PAGING, __VA_ARGS__)
 
 // Assembly functions from paging_asm.s
 extern void paging_load_directory(uint32_t* page_directory_physical);

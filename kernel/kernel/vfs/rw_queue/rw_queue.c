@@ -8,8 +8,8 @@
 #include "kernel/debug.h"
 #include "stdlib.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/rwq", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/rwq", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_VFS, "rwq", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_VFS, "rwq", __VA_ARGS__)
 
 size_t rwq_allocate_pos(rw_queue_t* queue)
 {

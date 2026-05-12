@@ -6,8 +6,8 @@
 #include <libds/ringbuf.h>
 #include <string.h>
 
-#define _debug_puts(...) debug_puts_c("ATA/queue", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ATA/queue", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_ATA, "queue", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_ATA, "queue", __VA_ARGS__)
 
 #define QUEUE_SIZE 16
 

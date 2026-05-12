@@ -3,8 +3,8 @@
 #include "./ext2.h"
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_VFS_EXT2, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_VFS_EXT2, __VA_ARGS__)
 
 size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
 {

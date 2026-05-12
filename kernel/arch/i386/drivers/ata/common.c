@@ -6,8 +6,8 @@
 #include "stdlib.h"
 #include "./common.h"
 
-#define _debug_puts(...) debug_puts_c("ATA", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ATA", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_ATA, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_ATA, __VA_ARGS__)
 
 /**
  * Because of ATA quirks, there can be a long delay for the process of selecting

@@ -10,6 +10,9 @@
 #include <string.h>
 #include "./tty.h"
 
+#define _debug_puts(...) debug_puts_cc(DBC_VFS_DEV, "tty", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_VFS_DEV, "tty", __VA_ARGS__)
+
 static vfs_node_t* node = NULL;
 
 static void push_curr_line_to_buffer(tty_state_t* meta)
@@ -81,7 +84,7 @@ static void handle_non_ascii(tty_state_t* meta, keyboard_event_t evt)
         | ((evt.l_system_pressed || evt.r_system_pressed) ? 0x08 : 0)
     ) + 1;
 
-    debug_printf_c("TTY", "keycode = %u, mod = %u\n", evt.key_code, modifier);
+    _debug_printf("keycode = %u, mod = %u\n", evt.key_code, modifier);
 
     if (evt.key_code == KCODE_ARROW_LEFT
         || evt.key_code == KCODE_ARROW_RIGHT

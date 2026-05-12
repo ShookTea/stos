@@ -8,8 +8,8 @@
 #include <string.h>
 #include "kernel/debug.h"
 
-#define _debug_puts(...) debug_puts_c("VGA", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VGA", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_VGA, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_VGA, __VA_ARGS__)
 
 // Glyph bitmaps copied out of the font file. Each row is one byte; bit 7 is
 // the leftmost pixel.

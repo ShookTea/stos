@@ -6,8 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define _debug_puts(...) debug_puts_c("kmalloc", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("kmalloc", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_MEM, "kmalloc", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_MEM, "kmalloc", __VA_ARGS__)
 
 static spinlock_t kmalloc_lock = SPINLOCK_INIT;
 

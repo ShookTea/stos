@@ -7,8 +7,8 @@
 #include "kernel/debug.h"
 #include "pic.h"
 
-#define _debug_puts(...) debug_puts_c("IDT", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("IDT", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_IDT, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_IDT, __VA_ARGS__)
 
 // An array of IDT entries
 __attribute__((aligned(0x10)))

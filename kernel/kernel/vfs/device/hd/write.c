@@ -5,8 +5,8 @@
 #include "kernel/memory/kmalloc.h"
 #include "kernel/drivers/ata.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/dev/hd", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/dev/hd", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_VFS_DEV, "hd", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_VFS_DEV, "hd", __VA_ARGS__)
 
 static void read_uncached_sectors(
     hd_metadata_t* meta,

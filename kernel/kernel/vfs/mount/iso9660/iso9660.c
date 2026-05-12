@@ -10,8 +10,8 @@
 #include "kernel/debug.h"
 #include "./iso9660.h"
 
-#define _debug_puts(...) debug_puts_c("VFS/mount/iso9660", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/mount/iso9660", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_VFS_ISO9660, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_VFS_ISO9660, __VA_ARGS__)
 
 static mount_task_t** tasks = NULL;
 static size_t tasks_capacity = 0;

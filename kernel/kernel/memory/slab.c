@@ -6,8 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define _debug_puts(...) debug_puts_c("Slab", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("Slab", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_MEM, "slab", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_MEM, "slab", __VA_ARGS__)
 
 // Size classes: 8, 16, 32, 64, 128, 256, 512, 1024 bytes
 const size_t SLAB_SIZE_CLASSES[SLAB_NUM_CACHES] = {

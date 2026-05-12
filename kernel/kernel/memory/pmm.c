@@ -8,8 +8,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define _debug_puts(...) debug_puts_c("PMM", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("PMM", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_MEM, "PMM", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_MEM, "PMM", __VA_ARGS__)
 
 static spinlock_t pmm_lock = SPINLOCK_INIT;
 

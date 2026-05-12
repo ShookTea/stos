@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <math.h>
 
-#define _debug_puts(...) debug_puts_c("VFS/mount/ext2", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("VFS/mount/ext2", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_VFS_EXT2, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_VFS_EXT2, __VA_ARGS__)
 
 void ext2_on_release(vfs_node_t* node)
 {

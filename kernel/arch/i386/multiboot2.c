@@ -8,8 +8,8 @@
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
 
-#define _debug_puts(...) debug_puts_c("GRUB-MB2", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("GRUB-MB2", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_GRUB, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_GRUB, __VA_ARGS__)
 
 static multiboot_info_t* mbi;
 static char boot_command_line[64];

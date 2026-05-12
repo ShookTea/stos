@@ -8,8 +8,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define _debug_puts(...) debug_puts_c("ATA/id", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ATA/id", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_cc(DBC_ATA, "id", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_ATA, "id", __VA_ARGS__)
 
 #define ATA_CYLINDER_PIO 0x0000
 #define ATA_CYLINDER_SATA 0xC33C

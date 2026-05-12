@@ -6,8 +6,8 @@
 #include <string.h>
 #include "io.h"
 
-#define _debug_puts(...) debug_puts_c("ACPI", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("ACPI", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_ACPI, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_ACPI, __VA_ARGS__)
 
 // Global ACPI state - store values, not pointers
 static bool acpi_available = false;

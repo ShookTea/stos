@@ -12,8 +12,8 @@
 #include <kernel/elf.h>
 #include <string.h>
 
-#define _debug_puts(...) debug_puts_c("Task", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c("Task", __VA_ARGS__)
+#define _debug_puts(...) debug_puts_c(DBC_TASK, __VA_ARGS__)
+#define _debug_printf(...) debug_printf_c(DBC_TASK, __VA_ARGS__)
 
 /** When increasing tasks list length, use this size */
 #define TASKS_LIST_REALLOC_SIZE 10
