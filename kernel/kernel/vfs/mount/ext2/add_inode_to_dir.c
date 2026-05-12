@@ -32,6 +32,7 @@ bool ext2_add_inode_to_dir(
     uint32_t child_inode_num,
     const char* name
 ) {
+    _debug_printf("Adding entry %u to parent %u with name '%s'\n", child_inode_num, parent_inode_num, name);
     vfs_file_t* device_file = vfs_open(meta->device_file, VFS_MODE_READWRITE);
     ext2_inode_t* parent_inode = ext2_read_inode(
         device_file,
@@ -131,11 +132,18 @@ bool ext2_add_inode_to_dir(
             // We created a brand new block for this inode anyway, so we can
             // just save that inode there. But first we need to update rec_len,
             // to use full block size.
-            dir_entry->rec_len = meta->block_size;
-            memcpy(buffer, dir_entry, rec_length);
+            memset(buffer, 0, meta->block_size);
+            ext2_dir_entry_t* de = (ext2_dir_entry_t*)buffer;
+            de->inode = child_inode_num;
+            de->rec_len = meta->block_size;
+            de->name_len = name_length;
+            de->file_type = dir_entry_file_type(child_type);
+            memcpy(de->name, name, name_length);
+
             vfs_seek(device_file, block_addr);
             vfs_write(device_file, meta->block_size, buffer);
             success = true;
+            _debug_printf("Written entry to newly allocated block at addr %u\n", block_addr);
             break;
         }
 
@@ -144,6 +152,13 @@ bool ext2_add_inode_to_dir(
         while (bytes_read < meta->block_size) {
             ext2_dir_entry_t* read_entry =
                 (ext2_dir_entry_t*)(buffer + bytes_read);
+            _debug_printf(
+                "Block=%u byte=%u inode=%u rec_len=%u\n",
+                current_block_index,
+                bytes_read,
+                read_entry->inode,
+                read_entry->rec_len
+            );
             if (read_entry->inode == 0) {
                 if (read_entry->rec_len >= rec_length) {
                     // This entry can be used. Let's replace it, but keep the
@@ -154,6 +169,9 @@ bool ext2_add_inode_to_dir(
                     vfs_seek(device_file, block_addr);
                     vfs_write(device_file, meta->block_size, buffer);
                     success = true;
+                    _debug_printf(
+                        "Replacing inode=0 with this node\n"
+                    );
                     break;
                 }
                 else if (read_entry->rec_len == 0) {
@@ -169,6 +187,11 @@ bool ext2_add_inode_to_dir(
                 uint16_t real_len = 8 + pad_len(read_entry->name_len);
                 uint16_t slack_space = read_entry->rec_len - real_len;
                 if (slack_space >= rec_length) {
+                    _debug_printf(
+                        "Cutting %u bytes of slack space - updating rec_len to %u\n",
+                        slack_space,
+                        real_len
+                    );
                     // There's enough space. Cut it's length to the actual size:
                     read_entry->rec_len = real_len;
                     // Shift to the position of next entry
