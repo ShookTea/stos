@@ -115,5 +115,17 @@ bool ext2_mkdir(vfs_node_t* node, const char* name)
         // TODO: cleanup - remove "." and "..", and dealloc inode
     }
 
+    // Invalidate parent node's in-memory caches so the next readdir/finddir
+    // reloads from disk and sees the new entry.
+    if (meta->dir_cache != NULL) {
+        kfree(meta->dir_cache);
+        meta->dir_cache = NULL;
+        meta->dir_cache_size = 0;
+    }
+    if (meta->cached_inode != NULL) {
+        kfree(meta->cached_inode);
+        meta->cached_inode = NULL;
+    }
+
     return true;
 }
