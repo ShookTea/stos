@@ -228,25 +228,39 @@ bool ext2_add_inode_to_dir(
     }
 
     if (success) {
-        // Update child's hard link count
-        child_inode->hard_links_count++;
-        // Save data
-        ext2_write_inode(
-            device_file->dentry,
-            parent_inode_num,
-            meta->block_size,
-            meta->inode_size,
-            meta->inodes_per_group,
-            parent_inode
-        );
-        ext2_write_inode(
-            device_file->dentry,
-            child_inode_num,
-            meta->block_size,
-            meta->inode_size,
-            meta->inodes_per_group,
-            child_inode
-        );
+        if (parent_inode_num == child_inode_num) {
+            // Same inode (self-referential entry like "."). We should apply
+            // `hard_links_count` to `parent_inode` (which already has the
+            // updated size and block pointers), and only write once.
+            // (second write of `child_inode` would overwrite `parent_inode`)
+            parent_inode->hard_links_count++;
+            ext2_write_inode(
+                device_file->dentry,
+                parent_inode_num,
+                meta->block_size,
+                meta->inode_size,
+                meta->inodes_per_group,
+                parent_inode
+            );
+        } else {
+            child_inode->hard_links_count++;
+            ext2_write_inode(
+                device_file->dentry,
+                parent_inode_num,
+                meta->block_size,
+                meta->inode_size,
+                meta->inodes_per_group,
+                parent_inode
+            );
+            ext2_write_inode(
+                device_file->dentry,
+                child_inode_num,
+                meta->block_size,
+                meta->inode_size,
+                meta->inodes_per_group,
+                child_inode
+            );
+        }
     }
 
     kfree(parent_inode);
