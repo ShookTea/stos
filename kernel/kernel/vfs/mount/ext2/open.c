@@ -18,8 +18,12 @@ void ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
     );
     ext2_inode_metadata_t* node_meta = node->metadata;
 
-    if (!ext2_ensure_dir_cache(node)) {
-        return;
+    if (node_meta->cached_inode == NULL) {
+        vfs_file_t* dev = vfs_open(node_meta->device_file, VFS_MODE_READONLY);
+        if (dev == NULL) return;
+        node_meta->cached_inode = ext2_read_inode(dev, node_meta, node->inode);
+        vfs_close(dev);
+        if (node_meta->cached_inode == NULL) return;
     }
 
     ext2_file_metadata_t* meta = kmalloc_flags(

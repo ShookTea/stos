@@ -18,19 +18,9 @@ bool ext2_ensure_dir_cache(vfs_node_t* node)
     ext2_inode_t* inode = meta->cached_inode;
 
     uint32_t bs = meta->block_size;
-    uint32_t block_count = 0;
-    for (int i = 0; i < 12; i++) {
-        if (inode->direct_block_pointers[i] == 0) break;
-        block_count++;
-    }
-
-    // Clamp to what size_lo implies
-    if (inode->size_lo > 0) {
-        uint32_t size_blocks = (inode->size_lo + bs - 1) / bs;
-        if (block_count > size_blocks) block_count = size_blocks;
-    } else {
-        block_count = 0;
-    }
+    uint32_t block_count = inode->size_lo > 0
+        ? (inode->size_lo + bs - 1) / bs
+        : 0;
 
     meta->dir_cache_size = block_count * bs;
     meta->dir_cache = kmalloc_flags(
@@ -39,7 +29,15 @@ bool ext2_ensure_dir_cache(vfs_node_t* node)
     );
 
     for (uint32_t i = 0; i < block_count; i++) {
-        uint64_t byte_off = (uint64_t)inode->direct_block_pointers[i] * bs;
+        size_t byte_off = ext2_block_id_to_addr(
+            meta->device_file,
+            inode,
+            i,
+            bs
+        );
+        if (byte_off == 0) {
+            break;
+        }
         vfs_seek(file, byte_off);
         vfs_read(file, bs, meta->dir_cache + i * bs);
     }
