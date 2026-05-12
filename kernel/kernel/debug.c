@@ -2,8 +2,16 @@
 #include "kernel/serial.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #if (KERNEL_DEBUG_ANY)
+
+static int cat_mask = (1 << DBC_ATA) | (1 << DBC_VFS_DEV);
+
+static inline bool cat_suppressed(const debug_channel_t cat)
+{
+    return (cat_mask & (1 << cat)) != 0;
+}
 
 static inline int cat_color(const debug_channel_t cat)
 {
@@ -47,6 +55,7 @@ void debug_puts(const char* string)
 
 void debug_puts_c(const debug_channel_t cat, const char* string)
 {
+    if (cat_suppressed(cat)) return;
     debug_printf(
         "\033[%d;1m[%s]\033[0m %s\n",
         cat_color(cat),
@@ -60,6 +69,7 @@ void debug_puts_cc(
     const char* subcat,
     const char* string
 ) {
+    if (cat_suppressed(cat)) return;
     debug_printf(
         "\033[%d;1m[%s/%s]\033[0m %s\n",
         cat_color(cat),
@@ -89,6 +99,7 @@ void debug_printf(const char* format, ...)
 
 void debug_printf_c(const debug_channel_t cat_id, const char* format, ...)
 {
+    if (cat_suppressed(cat_id)) return;
     char* cat = cat_label(cat_id);
     #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
         char buffer[200];
@@ -118,6 +129,7 @@ void debug_printf_cc(
     const char* format,
     ...
 ) {
+    if (cat_suppressed(cat_id)) return;
     char* cat = cat_label(cat_id);
     #if KERNEL_DEBUG_COM && !KERNEL_DEBUG_TERMINAL
         char buffer[200];
