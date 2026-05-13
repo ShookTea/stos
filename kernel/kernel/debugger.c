@@ -1,6 +1,7 @@
 #include "debugger.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <libtime/libtime.h>
 #include <kernel/terminal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,7 @@
 #include <kernel/task/task.h>
 #include "kernel/drivers/ata.h"
 #include "kernel/drivers/vga/font.h"
+#include "kernel/drivers/rtc.h"
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -108,6 +110,7 @@ static void handle_command_sent()
         puts("  shutdown          - Shutdown the system via ACPI");
         puts("  slab_cache        - Prints slab allocator cache info");
         puts("  slab_stats        - Prints slab allocator statistics");
+        puts("  time              - Prints current time");
         puts("  vfs_cat [F]       - Prints content of a file at abs. path");
         puts("  vfs_ls [F]        - Prints info about file at abs. path [F]");
         puts("  vfs_sync          - Runs synchronization in the VFS");
@@ -324,6 +327,16 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "slab_stats") == 0) {
         slab_print_stats(true);
+    }
+    else if (strcmp(command, "time") == 0) {
+        int64_t time = rtc_gettime();
+        libtime_datetime_t dt;
+        libtime_timestamp_to_datetime(time, &dt);
+        printf(
+            "Current time is: %04u-%02u-%02u %02u:%02u:%02u.%03u",
+            dt.year, dt.month, dt.day,
+            dt.hour, dt.minute, dt.second, dt.millis
+        );
     }
     else if (strcmp(command, "vfs_cat") == 0) {
         if (argcount != 1) {
