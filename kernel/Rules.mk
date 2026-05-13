@@ -16,6 +16,6 @@ $(BUILD_DIR)/%.o: $(KERNEL_SRC_DIR)/%.s
 	@mkdir -p $(@D)
 	$(AS) -c $< -o $@
 
-$(TARGET): $(KERNEL_OBJS) $(LIBK_TARGET) $(LIBDS_TARGET)
+$(TARGET): $(KERNEL_OBJS) $(LIBK_TARGET) $(LIBDS_TARGET) $(LIBTIME_TARGET)
 	$(CC) -o $@ $^ $(LDFLAGS)
 	grub-file --is-x86-multiboot2 $@ && echo "Multiboot validated"
