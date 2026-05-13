@@ -26,6 +26,7 @@ typedef enum {
     DBC_OTHER,
     DBC_PAGING,
     DBC_PS2,
+    DBC_RTC,
     DBC_SCHEDULER,
     DBC_SYSCALL,
     DBC_TASK,

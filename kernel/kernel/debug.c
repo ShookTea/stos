@@ -31,6 +31,7 @@ static inline char* cat_label(const debug_channel_t cat)
         case DBC_OTHER: return ".";
         case DBC_PAGING: return "paging";
         case DBC_PS2: return "PS-2";
+        case DBC_RTC: return "RTC";
         case DBC_SCHEDULER: return "scheduler";
         case DBC_SYSCALL: return "syscall";
         case DBC_TASK: return "task";

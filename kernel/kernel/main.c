@@ -16,7 +16,6 @@
 #include <kernel/task/task.h>
 #include "kernel/drivers/ata.h"
 #include "kernel/drivers/vga/font.h"
-#include "kernel/task/wait.h"
 #include "kernel/vfs/device.h"
 #include <libds/libds.h>
 #include "task/syscall.h"
@@ -29,7 +28,7 @@
 #include <kernel/terminal.h>
 
 #define _debug_puts(...) debug_puts_cc(DBC_OTHER, "main", __VA_ARGS__)
-#define _debug_printf(...) debug_printf_c(DBC_OTHER, "main", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_OTHER, "main", __VA_ARGS__)
 
 #if !defined(__i386__)
 #error "This kernel needs to be compiled with a ix86-elf compiler"
