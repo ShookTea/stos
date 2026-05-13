@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../io.h"
+#include <libtime/libtime.h>
 #include "kernel/debug.h"
 
 #define _debug_puts(...) debug_puts_c(DBC_RTC, __VA_ARGS__)
@@ -124,6 +125,12 @@ void rtc_resync(void)
         hour, minute, second,
         status_b
     );
+
+    curr_time = libtime_days_since_epoch(year, month, day);
+    curr_time = (curr_time * 24) + hour;
+    curr_time = (curr_time * 60) + minute;
+    curr_time = (curr_time * 60) + second;
+    curr_time *= 1000;
 }
 
 int64_t rtc_gettime(void)
