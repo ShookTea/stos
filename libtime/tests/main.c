@@ -6,6 +6,7 @@ int _total = 0;
 
 void test_days_since_epoch(void);
 void test_datetime_to_timestamp(void);
+void test_timestamp_to_datetime(void);
 
 int main(void)
 {
@@ -13,6 +14,8 @@ int main(void)
     test_days_since_epoch();
     printf("datetime_to_timestamp\n");
     test_datetime_to_timestamp();
+    printf("timestamp_to_datetime\n");
+    test_timestamp_to_datetime();
 
     printf("\n%d passed, %d failed\n", _total - _failures, _failures);
     return _failures > 0 ? 1 : 0;

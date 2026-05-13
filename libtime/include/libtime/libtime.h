@@ -33,4 +33,9 @@ int64_t libtime_days_since_epoch(uint16_t year, uint8_t month, uint8_t day);
  * Converts given parameters to timstamp
  */
 int64_t libtime_datetime_to_timestamp(libtime_datetime_t* datetime);
+
+/**
+ * Read timestamp and store the values in given pointer
+ */
+void libtime_timestamp_to_datetime(int64_t timestamp, libtime_datetime_t* datetime);
 #endif
