@@ -15,6 +15,7 @@
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
 #include "kernel/drivers/ata.h"
+#include "kernel/drivers/rtc.h"
 #include "kernel/drivers/vga/font.h"
 #include "kernel/vfs/device.h"
 #include <libds/libds.h>
@@ -51,6 +52,8 @@ static void launch_task(const char* name, void (*entrypoint)())
 static void kernel_init_task()
 {
     // Initialize drivers for basic devices
+    rtc_init();
+    rtc_resync();
     ps2_init();
     keyboard_init();
     ata_init();
