@@ -3,6 +3,7 @@
 #include "../io.h"
 #include <libtime/libtime.h>
 #include "kernel/debug.h"
+#include "kernel/drivers/pit.h"
 
 #define _debug_puts(...) debug_puts_c(DBC_RTC, __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c(DBC_RTC, __VA_ARGS__)
@@ -43,7 +44,7 @@ static bool cmos_update_in_progress()
 void rtc_init(void)
 {
     // TODO: read form ACPI if century register is present
-    // TODO: setup PIT
+    pit_set_rtc_timer_addr(&curr_time);
 }
 
 void rtc_resync(void)

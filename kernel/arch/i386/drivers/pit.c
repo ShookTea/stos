@@ -5,6 +5,7 @@
 #include "../idt/pic.h"
 #include "../io.h"
 #include "kernel/spinlock.h"
+#include "stdio.h"
 
 #define PIT_INPUT_CLOCK_FREQUENCY 1193180
 #define PIT_COMMAND_PORT 0x43
@@ -15,6 +16,7 @@
 
 static uint32_t tick = 0;
 static bool initialized = false;
+static int64_t* rtc_timer_addr = NULL;
 
 static struct timeout_entries {
     uint32_t expire_tick;
@@ -27,6 +29,7 @@ static spinlock_t pit_lock = SPINLOCK_INIT;
 
 static void pit_timer_callback()
 {
+    if (rtc_timer_addr != NULL) (*rtc_timer_addr)++;
     spinlock_acquire(&pit_lock);
     tick++;
     for (int i = 0; i < PIT_TIMEOUT_CALLBACK_SIZE; i++) {
@@ -109,4 +112,9 @@ void pit_init()
 
     // Enable PIT
     pic_enable(PIC_LINE_PIT);
+}
+
+void pit_set_rtc_timer_addr(int64_t* addr)
+{
+    rtc_timer_addr = addr;
 }

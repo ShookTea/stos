@@ -6,7 +6,7 @@
 // Timeout callback function
 typedef void (*timeout_callback_t)(void* data);
 
-void pit_init();
+void pit_init(void);
 
 /**
  * Register a new timeout that will be called after a given time, with selected
@@ -23,4 +23,9 @@ int pit_register_timeout(
  * Cancels selected timeout by ID.
  */
 void pit_cancel_timeout(int id);
+
+/**
+ * Sets address of timer for RTC.
+ */
+void pit_set_rtc_timer_addr(int64_t* addr);
 #endif

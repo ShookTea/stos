@@ -333,9 +333,9 @@ static void handle_command_sent()
         libtime_datetime_t dt;
         libtime_timestamp_to_datetime(time, &dt);
         printf(
-            "Current time is: %04u-%02u-%02u %02u:%02u:%02u.%03u",
+            "Current time is %04u-%02u-%02u %02u:%02u:%02u",
             dt.year, dt.month, dt.day,
-            dt.hour, dt.minute, dt.second, dt.millis
+            dt.hour, dt.minute, dt.second
         );
     }
     else if (strcmp(command, "vfs_cat") == 0) {
