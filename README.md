@@ -112,7 +112,8 @@ compiled and executed on host machine with `make test`. Running it requires
 ├── libc/                # implementation of libc standard library
 │   ├── include/         # libc headers
 │   └── src/             # Implementations of libc headers
-├── libds/               # implementation of libds library of data structures
+├── libds/               # Custom libds library of data structures
+├── libtime/             # Custom libtime library for time utilities
 ├── usermode/            # Usermode programs built and loaded into initrd
 └── dep/                 # Various external dependencies
 ```
