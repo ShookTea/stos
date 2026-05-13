@@ -10,6 +10,10 @@
 #define CMOS_DATA_PORT 0x71
 #define CMOS_REGISTRY_NO_NMI_BIT (1 << 7)
 
+// This should be updated every year. No drama if it won't though - it's safe
+// to be used for full 100 years.
+#define COMPILATION_YEAR 2026
+
 #define CMOS_REG_SECONDS 0x00
 #define CMOS_REG_MINUTES 0x02
 #define CMOS_REG_HOURS 0x04
@@ -21,6 +25,7 @@
 
 #define BCD_TO_BIN(v) (((v & 0xF0) >> 1) + ((v & 0xF0) >> 3) + (v & 0xF))
 
+static uint8_t century_register = 0;
 static int64_t curr_time = 0;
 
 static inline uint8_t read_byte(uint8_t registry)
@@ -44,8 +49,9 @@ void rtc_resync(void)
 {
     _debug_puts("RTC resync requested");
     uint8_t second, prev_second, minute, prev_minute, hour, prev_hour,
-            day, prev_day, month, prev_month, year, prev_year,
-            status_b;
+            day, prev_day, month, prev_month,
+            century = 0, prev_century = 0, status_b;
+    uint16_t year, prev_year;
     while (cmos_update_in_progress()); // Wait for update to be completed
 
     // Read first batch of data
@@ -55,6 +61,9 @@ void rtc_resync(void)
     day = read_byte(CMOS_REG_DAY);
     month = read_byte(CMOS_REG_MONTH);
     year = read_byte(CMOS_REG_YEAR);
+    if (century_register != 0) {
+        century = read_byte(century_register);
+    }
 
     // Repeat reading until there are no changes between previous and new values
     do {
@@ -64,16 +73,23 @@ void rtc_resync(void)
         prev_day = day;
         prev_month = month;
         prev_year = year;
+        prev_century = century;
+
         while (cmos_update_in_progress());
+
         second = read_byte(CMOS_REG_SECONDS);
         minute = read_byte(CMOS_REG_MINUTES);
         hour = read_byte(CMOS_REG_HOURS);
         day = read_byte(CMOS_REG_DAY);
         month = read_byte(CMOS_REG_MONTH);
         year = read_byte(CMOS_REG_YEAR);
+        if (century_register != 0) {
+            century = read_byte(century_register);
+        }
     } while ((second != prev_second) || (minute != prev_minute)
         || (hour != prev_hour) || (day != prev_day)
-        || (month != prev_month) || (year != prev_year));
+        || (month != prev_month) || (year != prev_year)
+        || (century != prev_century));
 
     status_b = read_byte(CMOS_REG_STATUS_B);
 
@@ -93,7 +109,14 @@ void rtc_resync(void)
           hour = ((hour & 0x7F) + 12) % 24;
     }
 
-    year += 2000;
+    if (century_register != 0) {
+          year += century * 100;
+    } else {
+          year += COMPILATION_YEAR / 100 * 100;
+          if( year < COMPILATION_YEAR) {
+              year += 100;
+          }
+    }
 
     _debug_printf(
         "Value read: %04u-%02u-%02u %02u:%02u:%02u (0x%02X)\n",
