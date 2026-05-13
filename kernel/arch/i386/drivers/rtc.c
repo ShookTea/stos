@@ -126,11 +126,15 @@ void rtc_resync(void)
         status_b
     );
 
-    curr_time = libtime_days_since_epoch(year, month, day);
-    curr_time = (curr_time * 24) + hour;
-    curr_time = (curr_time * 60) + minute;
-    curr_time = (curr_time * 60) + second;
-    curr_time *= 1000;
+    libtime_datetime_t parts = LIBTIME_DATETIME_ZERO;
+    parts.year = year;
+    parts.month = month;
+    parts.day = day;
+    parts.hour = hour;
+    parts.minute = minute;
+    parts.second = second;
+
+    curr_time = libtime_datetime_to_timestamp(&parts);
 }
 
 int64_t rtc_gettime(void)
