@@ -49,7 +49,10 @@ time_t time(time_t* tloc);
  * representation, stores it in `tm_ptr`, and returns `tm_ptr`. It will return
  * `NULL` if either `time_ptr` or `tm_ptr` are `NULL`.
  */
-struct tm* gmtime_r(const time_t* time_ptr, struct tm* tm_ptr);
+struct tm* gmtime_r(
+    const time_t* restrict time_ptr,
+    struct tm* restrict tm_ptr
+);
 
 /**
  * Converts Unix timestamp given in `time_ptr` into a broken-down time
@@ -66,7 +69,10 @@ struct tm* gmtime(const time_t* time_ptr);
  * TODO: There's no support for local time zones yet, so this function behaves
  * exactly like gmtime_r.
  */
-struct tm* localtime_r(const time_t* time_ptr, struct tm* tm_ptr);
+struct tm* localtime_r(
+    const time_t* restrict time_ptr,
+    struct tm* restrict tm_ptr
+);
 
 /**
  * Converts Unix timestamp given in `time_ptr` into a broken-down time

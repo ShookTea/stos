@@ -1,8 +1,10 @@
 #include <stddef.h>
 #include <time.h>
 
-struct tm* localtime_r(const time_t* time_ptr, struct tm* tm_ptr)
-{
+struct tm* localtime_r(
+    const time_t* restrict time_ptr,
+    struct tm* restrict tm_ptr
+) {
     if (time_ptr == NULL || tm_ptr == NULL) {
         return NULL;
     }
