@@ -129,6 +129,16 @@ char* asctime_r(
  */
 char* asctime(const struct tm* tm_ptr);
 
+/**
+ * This function is an equivalent of calling asctime_r(localtime(time_ptr), buf).
+ */
+char* ctime_r(const time_t* restrict time_ptr, char buf[restrict 26]);
+
+/**
+ * This function is equivalent of calling asctime(localtime(time_ptr)).
+ */
+char* ctime(const time_t* time_ptr);
+
 #if !(defined(__is_libk))
 
 /**

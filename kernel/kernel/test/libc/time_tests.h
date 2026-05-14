@@ -254,9 +254,22 @@ static inline bool time_test_asctime2(void) {
     return true;
 }
 
+// Format date for 2026-05-14 08:41:25 UTC
+static inline bool time_test_ctime1(void) {
+    time_t ts = 1778748085LL; // 2026-05-14
+    char buf[26];
+    ctime_r(&ts, buf);
+    ASSERT_STR_EQ(
+        buf,
+        "Thu May 14 08:41:25 2026\n",
+        "ctime for 2026-05-14 08:41:25 UTC"
+    );
+    return true;
+}
+
 static inline bool time_run_all_tests(void) {
     int passed = 0;
-    int total = 15;
+    int total = 16;
 
     // gmtime tests
     if (time_test_gmtime_epoch()) passed++;
@@ -275,9 +288,10 @@ static inline bool time_run_all_tests(void) {
     if (time_test_mktime_normalize5()) passed++;
     if (time_test_mktime_calc1()) passed++;
 
-    // asctime tests
+    // asctime/ctime tests
     if (time_test_asctime1()) passed++;
     if (time_test_asctime2()) passed++;
+    if (time_test_ctime1()) passed++;
 
     // Print results
     if (passed == total) {
