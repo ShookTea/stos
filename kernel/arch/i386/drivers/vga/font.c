@@ -188,9 +188,16 @@ static int32_t find_glyph(font_mode_t font_mode, uint32_t codepoint)
     return -1;
 }
 
+static inline bool full_width(uint8_t font_decor, size_t row)
+{
+    return (row == 0 && (font_decor & FONT_DECORATION_OVERLINE))
+        || (row == PSF1_GLYPH_HEIGHT/2 && (font_decor & FONT_DECORATION_STRIKE))
+        || (row == PSF1_GLYPH_HEIGHT - 1 && (font_decor & FONT_DECORATION_UNDERLINE));
+}
+
 void font_render_char(
     font_mode_t font_mode,
-    uint8_t font_decor __attribute__((unused)),
+    uint8_t font_decor,
     uint32_t c,
     size_t x,
     size_t y,
@@ -211,10 +218,11 @@ void font_render_char(
     uint32_t* fb = vga_rgb_framebuffer();
     size_t pitch_words = vga_rgb_pitch() / 4;
     for (size_t row = 0; row < PSF1_GLYPH_HEIGHT; row++) {
+        bool full_line = full_width(font_decor, row);
         uint8_t bits = bitmap[row];
         uint32_t* row_ptr = fb + (y + row) * pitch_words + x;
         for (size_t col = 0; col < PSF1_GLYPH_WIDTH; col++) {
-            row_ptr[col] = (bits & (0x80u >> col)) ? fg : bg;
+            row_ptr[col] = (full_line || (bits & (0x80u >> col))) ? fg : bg;
         }
     }
 }
