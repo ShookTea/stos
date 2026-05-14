@@ -1,6 +1,5 @@
 #include "runner.h"
 #include <libtime/libtime.h>
-#include <stdio.h>
 
 static void assert_datetime(libtime_datetime_t* dt,
     uint16_t year, uint8_t month, uint8_t day,

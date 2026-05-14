@@ -2,6 +2,7 @@
 #define _LIBTIME_H
 
 #include <stdint.h>
+#include <time.h>
 
 /**
  * General library for handling time-related things for kernel, using Jan 1st
@@ -30,7 +31,7 @@ typedef struct {
 int64_t libtime_days_since_epoch(uint16_t year, uint8_t month, uint8_t day);
 
 /**
- * Converts given parameters to timstamp
+ * Converts given parameters to timestamp
  */
 int64_t libtime_datetime_to_timestamp(libtime_datetime_t* datetime);
 
@@ -43,4 +44,14 @@ void libtime_timestamp_to_datetime(int64_t timestamp, libtime_datetime_t* dateti
  * Return the weekday number ([0 - 6] -> [Sun - Sat]) for given date.
  */
 uint8_t libtime_weekday_from_days(uint16_t year, uint8_t month, uint8_t day);
+
+/**
+ * Converts given epoch timestamp to Unix timestamp
+ */
+time_t libtime_timestamp_to_unix(int64_t timestamp);
+
+/**
+ * Converts given Unix timestamp to epoch timestamp
+ */
+int64_t libtime_unix_to_timestamp(time_t unix_ts);
 #endif

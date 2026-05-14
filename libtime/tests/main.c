@@ -8,6 +8,8 @@ void test_days_since_epoch(void);
 void test_datetime_to_timestamp(void);
 void test_timestamp_to_datetime(void);
 void test_weekday_from_days(void);
+void test_timestamp_to_unix(void);
+void test_unix_to_timestamp(void);
 
 int main(void)
 {
@@ -19,6 +21,10 @@ int main(void)
     test_timestamp_to_datetime();
     puts("weekday_from_days");
     test_weekday_from_days();
+    puts("timestamp_to_unix");
+    test_timestamp_to_unix();
+    puts("unix_to_timestamp");
+    test_unix_to_timestamp();
 
     printf("\n%d passed, %d failed\n", _total - _failures, _failures);
     return _failures > 0 ? 1 : 0;
