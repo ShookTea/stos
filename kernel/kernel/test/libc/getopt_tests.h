@@ -583,7 +583,7 @@ static inline bool getopt_long_only_test_single_dash_with_arg(void) {
 
 static inline bool getopt_run_all_tests(void) {
     int passed = 0;
-    int total = 44;
+    int total = 48;
 
     /* getopt tests */
     if (getopt_test_basic_option()) passed++;
