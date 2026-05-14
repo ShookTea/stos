@@ -1,12 +1,15 @@
+#include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include "../getopt/_getopt.h"
 
-char* optarg = NULL;
-int optind = 1, opterr = 1, optopt = 0;
-
-int getopt(
-    int argc __attribute__((unused)),
-    char *argv[] __attribute__((unused)),
-    const char *optstring __attribute__((unused))
-) {
-    return 0;
+int getopt(int argc, char *argv[], const char *optstring) {
+    return __getopt_internal(
+        argc,
+        argv,
+        optstring,
+        NULL,
+        NULL,
+        false
+    );
 }
