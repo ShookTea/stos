@@ -2,8 +2,6 @@
 #define _SYS_UNISTD_H 1
 #include <sys/cdefs.h>
 
-#if !(defined(__is_libk))
-
 #include <stddef.h>
 #include <stdint.h>
 
@@ -11,9 +9,20 @@
 #define SEEK_CUR 2
 #define SEEK_END 3
 
+extern char* optarg;
+extern int optind, opterr, optopt;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Parsing of command line arguments.
+ * TODO: write better documentation. For now: https://man7.org/linux/man-pages/man3/getopt.3.html
+ */
+int getopt(int argc, char *argv[], const char *optstring);
+
+#if !(defined(__is_libk))
 
 /**
  * Writes up to [count] bytes from the buffer to the file referred to by file
@@ -174,9 +183,10 @@ int execv(const char* path, const char* argv[]);
  */
 int lseek(int fd, int offset, int whence);
 
+#endif // #if !(defined(__is_libk))
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif
 #endif

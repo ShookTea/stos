@@ -6,6 +6,7 @@
 #include "libc/ctype_tests.h"
 #include "libc/math_tests.h"
 #include "libc/time_tests.h"
+#include "libc/getopt_tests.h"
 #include "stdlib.h"
 
 /**
@@ -22,6 +23,9 @@ static inline void libc_run_all_tests(void) {
     bool success = true;
 
     if (!ctype_run_all_tests()) {
+        success = false;
+    }
+    if (!getopt_run_all_tests()) {
         success = false;
     }
     if (!math_run_all_tests()) {
