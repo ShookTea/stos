@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include "./ext2.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
@@ -228,6 +229,7 @@ bool ext2_add_inode_to_dir(
     }
 
     if (success) {
+        parent_inode->last_modification_time = (uint32_t)time(NULL);
         if (parent_inode_num == child_inode_num) {
             // Same inode (self-referential entry like "."). We should apply
             // `hard_links_count` to `parent_inode` (which already has the
