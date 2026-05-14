@@ -98,6 +98,37 @@ struct tm* localtime(const time_t* time_ptr);
  */
 time_t mktime(struct tm* tm_ptr);
 
+/**
+ * This function takes time from the `tm_ptr` structure and converts it into
+ * a string in form:
+ *   "Thu May 14 12:58:13 2026\n"
+ * and stores it in `buf`, returning pointer to that buffer.
+ *
+ * Used abbreviations for days of week are: "Sun", "Mon", "Tue", "Wed", "Thu",
+ * "Fri", and "Sat".
+ * Used abbreviations for months are: "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+ * "Jul", "Aug", "Sep", "Oct", "Nov", and "Dec".
+ */
+char* asctime_r(
+    const struct tm* restrict tm_ptr,
+    char buf[restrict 26]
+);
+
+/**
+ * This function takes time from the `tm_ptr` structure and converts it into
+ * a string in form:
+ *   "Thu May 14 12:58:13 2026\n"
+ * and returns pointer to that string. This pointer is statically allocated and
+ * its value might be overwritten by subsequent calls to any of the date and
+ * time functions.
+ *
+ * Used abbreviations for days of week are: "Sun", "Mon", "Tue", "Wed", "Thu",
+ * "Fri", and "Sat".
+ * Used abbreviations for months are: "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+ * "Jul", "Aug", "Sep", "Oct", "Nov", and "Dec".
+ */
+char* asctime(const struct tm* tm_ptr);
+
 #if !(defined(__is_libk))
 
 /**

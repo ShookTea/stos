@@ -214,9 +214,49 @@ static inline bool time_test_mktime_calc1(void) {
     return true;
 }
 
+// Format date for 2026-11-04 14:02:48 UTC
+static inline bool time_test_asctime1(void) {
+    struct tm tm = TM_ZERO;
+    tm.tm_year = 2026 - 1900;
+    tm.tm_mon = 11 - 1;
+    tm.tm_mday = 4;
+    tm.tm_hour = 14;
+    tm.tm_min = 2;
+    tm.tm_sec = 48;
+    mktime(&tm); // calculate valid weekday
+    char buf[26];
+    asctime_r(&tm, buf);
+    ASSERT_STR_EQ(
+        buf,
+        "Wed Nov 04 14:02:48 2026\n",
+        "asctime for 2026-11-04 14:02:48 UTC"
+    );
+    return true;
+}
+
+// Format date for 1950-05-29 02:08:01 UTC
+static inline bool time_test_asctime2(void) {
+    struct tm tm = TM_ZERO;
+    tm.tm_year = 1950 - 1900;
+    tm.tm_mon = 5 - 1;
+    tm.tm_mday = 29;
+    tm.tm_hour = 2;
+    tm.tm_min = 8;
+    tm.tm_sec = 1;
+    mktime(&tm); // calculate valid weekday
+    char buf[26];
+    asctime_r(&tm, buf);
+    ASSERT_STR_EQ(
+        buf,
+        "Mon May 29 02:08:01 1950\n",
+        "asctime for 1950-05-29 02:08:01 UTC"
+    );
+    return true;
+}
+
 static inline bool time_run_all_tests(void) {
     int passed = 0;
-    int total = 13;
+    int total = 15;
 
     // gmtime tests
     if (time_test_gmtime_epoch()) passed++;
@@ -234,6 +274,10 @@ static inline bool time_run_all_tests(void) {
     if (time_test_mktime_normalize4()) passed++;
     if (time_test_mktime_normalize5()) passed++;
     if (time_test_mktime_calc1()) passed++;
+
+    // asctime tests
+    if (time_test_asctime1()) passed++;
+    if (time_test_asctime2()) passed++;
 
     // Print results
     if (passed == total) {
