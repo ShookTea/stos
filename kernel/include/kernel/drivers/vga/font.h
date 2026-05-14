@@ -13,6 +13,10 @@ typedef enum {
     FONT_MODE_BOLD,
 } font_mode_t;
 
+#define FONT_DECORATION_UNDERLINE 1
+#define FONT_DECORATION_OVERLINE 2
+#define FONT_DECORATION_STRIKE 4
+
 /**
  * Loads PSF font from given absolute path.
  */
@@ -25,6 +29,7 @@ void font_load_psf(font_mode_t font_mode, char* path);
  */
 void font_render_char(
     font_mode_t font_mode,
+    uint8_t font_decor,
     uint32_t c,
     size_t x,
     size_t y,

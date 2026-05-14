@@ -35,7 +35,8 @@ static void draw_cursor(bool visible)
     } else {
         fbcon_cell_t cell = char_buffer[cursor_y * fbcon_get_columns() + cursor_x];
         font_render_char(
-            FONT_MODE_NORMAL,
+            cell.font_mode,
+            cell.font_decor,
             cell.codepoint,
             px, py,
             vga_color_to_argb(cell.fg), vga_color_to_argb(cell.bg)
@@ -66,6 +67,7 @@ void fbcon_init()
 
 void fbcon_putentryat(
     font_mode_t font_mode,
+    uint8_t font_decor,
     uint32_t c,
     uint8_t fg, uint8_t bg,
     size_t x, size_t y
@@ -73,10 +75,12 @@ void fbcon_putentryat(
     size_t index = y * fbcon_get_columns() + x;
     char_buffer[index].codepoint = c;
     char_buffer[index].font_mode = font_mode;
+    char_buffer[index].font_decor = font_decor;
     char_buffer[index].fg = fg;
     char_buffer[index].bg = bg;
     font_render_char(
         font_mode,
+        font_decor,
         c,
         x * PSF1_GLYPH_WIDTH,
         y * PSF1_GLYPH_HEIGHT,
@@ -114,6 +118,7 @@ void fbcon_scroll_up()
             fbcon_cell_t cell = char_buffer[row * cols + col];
             font_render_char(
                 cell.font_mode,
+                cell.font_decor,
                 cell.codepoint,
                 col * PSF1_GLYPH_WIDTH,
                 row * PSF1_GLYPH_HEIGHT,

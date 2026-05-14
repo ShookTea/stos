@@ -71,6 +71,7 @@ static void putentryat(uint32_t c, size_t row, size_t column)
     if (rgbmode) {
         fbcon_putentryat(
             font_mode,
+            0,
             c,
             (uint8_t)fg_color,
             (uint8_t)bg_color,

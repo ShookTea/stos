@@ -10,7 +10,8 @@ typedef struct {
     uint32_t codepoint;
     uint8_t fg; // enum vga_color index (0-15)
     uint8_t bg; // enum vga_color index (0-15)
-    uint8_t _pad[2];
+    uint8_t font_decor;
+    uint8_t _pad[1];
 } fbcon_cell_t;
 
 /**
@@ -23,6 +24,7 @@ void fbcon_init();
  */
 void fbcon_putentryat(
     font_mode_t font_mode,
+    uint8_t font_decor,
     uint32_t c,
     uint8_t fg, uint8_t bg,
     size_t x, size_t y

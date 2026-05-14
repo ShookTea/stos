@@ -190,6 +190,7 @@ static int32_t find_glyph(font_mode_t font_mode, uint32_t codepoint)
 
 void font_render_char(
     font_mode_t font_mode,
+    uint8_t font_decor __attribute__((unused)),
     uint32_t c,
     size_t x,
     size_t y,
