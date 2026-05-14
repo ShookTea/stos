@@ -57,6 +57,9 @@ int sys_lseek(int fd, int offset, int whence);
 #define SYS_BRK 0x20
 uint32_t sys_brk(uint32_t addr);
 
+#define SYS_UNIXTIME 0x30
+int sys_time(time_t* result_ptr);
+
 // Syscall return values
 #define SYSCALL_SUCCESS 0
 #define SYSCALL_ERROR -1

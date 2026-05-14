@@ -41,6 +41,8 @@ The libc library contains wrappers for all implemented syscalls.
 | `LSEEK` | `0x15` | [`<unistd.h>`](libc/include/unistd.h) | `int lseek(int fd, int offset, int whence)` | Moves offset of the file descriptor _fd_ |
 | _memory operations (`0x2n`)_ |   |   |   |   |
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
+| _time operations (`0x3n`)_ |   |   |   |   |
+| `UNIXTIME` | `0x30` | [`<time.h>`](libc/include/time.h) | `time_t time(time_t* tloc)` | Returns current Unix timestamp |
 
 ## Development
 

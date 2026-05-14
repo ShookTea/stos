@@ -4,25 +4,31 @@
 
 #if !(defined(__is_libk))
 
-#define SYS_EXIT    0x00 // void exit(int status)
-#define SYS_YIELD   0x01 // void yield()
-#define SYS_GETPID  0x02 // uint32_t getpid()
-#define SYS_GETPPID 0x03 // uint32_t getpid()
-#define SYS_FORK    0x04 // int fork()
-#define SYS_WAIT    0x05 // int waitpid(int pid, int* status, int options)
-#define SYS_EXEC    0x06 // int execve(const char*, const char*[], const char*[])
-#define SYS_GETCWD  0x07 // char* getcwd(char buf[], size_t size)
-#define SYS_CHDIR   0x08 // int chdir(const char* path)
-#define SYS_SLEEP   0x09 // int nanosleep(const struct timespec* duration, struct timespec* rem)
+// Process management
+#define SYS_EXIT        0x00 // void exit(int status)
+#define SYS_YIELD       0x01 // void yield()
+#define SYS_GETPID      0x02 // uint32_t getpid()
+#define SYS_GETPPID     0x03 // uint32_t getpid()
+#define SYS_FORK        0x04 // int fork()
+#define SYS_WAIT        0x05 // int waitpid(int pid, int* status, int options)
+#define SYS_EXEC        0x06 // int execve(const char*, const char*[], const char*[])
+#define SYS_GETCWD      0x07 // char* getcwd(char buf[], size_t size)
+#define SYS_CHDIR       0x08 // int chdir(const char* path)
+#define SYS_SLEEP       0x09 // int nanosleep(const struct timespec* duration, struct timespec* rem)
 
-#define SYS_OPEN    0x10 // int open(const char* path, int flags)
-#define SYS_CLOSE   0x11 // int close(int fd);
-#define SYS_WRITE   0x12 // int write(int fd, const void* buf, size_t count)
-#define SYS_READ    0x13 // int read(int fd, void* buf, size_t count)
-#define SYS_IOCTL   0x14 // int ioctl(int fd, int op, void* arg)
-#define SYS_LSEEK   0x15 // int lseek(int fd, int offset, int whence)
+// File management
+#define SYS_OPEN        0x10 // int open(const char* path, int flags)
+#define SYS_CLOSE       0x11 // int close(int fd);
+#define SYS_WRITE       0x12 // int write(int fd, const void* buf, size_t count)
+#define SYS_READ        0x13 // int read(int fd, void* buf, size_t count)
+#define SYS_IOCTL       0x14 // int ioctl(int fd, int op, void* arg)
+#define SYS_LSEEK       0x15 // int lseek(int fd, int offset, int whence)
 
-#define SYS_BRK     0x20 // uint32_t brk(void* addr)
+// Memory operations
+#define SYS_BRK         0x20 // uint32_t brk(void* addr)
+
+// Time operations
+#define SYS_UNIXTIME    0x30 // time_t time(time_t* tloc)
 
 #ifdef __cplusplus
 extern "C" {

@@ -93,6 +93,11 @@ static uint32_t syscall_int_handler(
         }
         case SYS_LSEEK: return sys_lseek((int)arg1, (int)arg2, (int)arg3);
         case SYS_BRK: return sys_brk(arg1);
+        case SYS_UNIXTIME: {
+            time_t* res_ptr = (time_t*)arg1;
+            assert_ptr(res_ptr);
+            return sys_time(res_ptr);
+        }
         default:
             _debug_printf("Unknown syscall: %d\n", syscall_num);
             return SYSCALL_ERROR;

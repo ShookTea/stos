@@ -17,11 +17,19 @@ struct timespec {
     long tv_nsec;
 };
 
-#if !(defined(__is_libk))
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Returns the current time as Unix timestamp - the number of seconds since
+ * 1970-01-01 00:00:00 UTC.
+ *
+ * If `tloc` is not NULL, the return value is stored in the pointer as well.
+ */
+time_t time(time_t* tloc);
+
+#if !(defined(__is_libk))
 
 /**
  * Suspends the execution of a calling thread until at least the time specified
@@ -32,9 +40,9 @@ extern "C" {
  */
 int nanosleep(const struct timespec* duration, struct timespec* rem);
 
+#endif // #if !(defined(__is_libk))
+
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 #endif
