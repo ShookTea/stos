@@ -1,5 +1,5 @@
-#include "stdio.h"
 #include <libtime/libtime.h>
+#include <stddef.h>
 #include <stdint.h>
 
 int64_t libtime_datetime_to_timestamp(

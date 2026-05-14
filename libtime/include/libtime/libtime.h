@@ -38,4 +38,9 @@ int64_t libtime_datetime_to_timestamp(libtime_datetime_t* datetime);
  * Read timestamp and store the values in given pointer
  */
 void libtime_timestamp_to_datetime(int64_t timestamp, libtime_datetime_t* datetime);
+
+/**
+ * Return the weekday number ([0 - 6] -> [Sun - Sat]) for given date.
+ */
+uint8_t libtime_weekday_from_days(uint16_t year, uint8_t month, uint8_t day);
 #endif
