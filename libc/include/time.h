@@ -79,6 +79,19 @@ struct tm* localtime_r(const time_t* time_ptr, struct tm* tm_ptr);
  */
 struct tm* localtime(const time_t* time_ptr);
 
+/**
+ * This function does two primary things:
+ * 1. It normalizes value in `tm_ptr` - first by updating structure members that
+ *    are outside of their valid interval (for example converting "May 33rd"
+ *    to "June 2nd"), and then by updating `tm_yday` and `tm_wday` to correct
+ *    values
+ * 2. Then it converts given structure into a Unix timestamp that represents
+ *    this value.
+ *
+ * TODO: `tm_isdst` is ignored for now.
+ */
+time_t mktime(struct tm* tm_ptr);
+
 #if !(defined(__is_libk))
 
 /**
