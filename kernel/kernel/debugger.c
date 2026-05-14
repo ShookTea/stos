@@ -18,7 +18,6 @@
 #include <kernel/task/task.h>
 #include "kernel/drivers/ata.h"
 #include "kernel/drivers/vga/font.h"
-#include "kernel/drivers/rtc.h"
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -329,7 +328,8 @@ static void handle_command_sent()
         slab_print_stats(true);
     }
     else if (strcmp(command, "time") == 0) {
-        int64_t time = rtc_gettime();
+        time_t unixtime = time(NULL);
+        int64_t time = libtime_unix_to_timestamp(unixtime);
         libtime_datetime_t dt;
         libtime_timestamp_to_datetime(time, &dt);
         printf(
