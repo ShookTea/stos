@@ -6,5 +6,6 @@ int main(void)
     puts("Hello from userspace!");
     time_t ts = time(NULL);
     printf("timestamp = %dll\n", ts);
+    printf("Current time is %s", ctime(&ts));
     return 0;
 }
