@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
+#include <time.h>
 #include "kernel/vfs/vfs.h"
 #include "kernel/memory/kmalloc.h"
 #include "./ext2.h"
@@ -33,15 +34,16 @@ static void populate_inode_metadata(
 ) {
     ext2_inode_metadata_t* meta = parent->metadata;
 
+    uint32_t timestamp = (uint32_t)time(NULL);
+
     // TODO: using default permissions here. Maybe inherit them from parent?
     inode->type_and_permissions = 0x4000 | 0755;
     // TODO: set valid UID and GID
     inode->user_id = meta->cached_inode->user_id;
     inode->group_id = meta->cached_inode->group_id;
-    // TODO: set valid timestamps
-    inode->creation_time = 0;
-    inode->last_access_time = 0;
-    inode->last_modification_time = 0;
+    inode->creation_time = timestamp;
+    inode->last_access_time = timestamp;
+    inode->last_modification_time = timestamp;
 
     inode->size_lo = 0;
     inode->hard_links_count = 0;
