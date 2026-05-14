@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <time.h>
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
 #include "kernel/memory/kmalloc.h"
@@ -51,6 +52,17 @@ size_t ext2_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr)
         _debug_puts("device file = NULL");
         return 0;
     }
+
+    // Update file's last modification time
+    meta->cached_inode->last_modification_time = (uint32_t)time(NULL);
+    ext2_write_inode(
+        meta->device_file,
+        file->dentry->inode->inode,
+        meta->block_size,
+        meta->inode_size,
+        meta->inodes_per_group,
+        meta->cached_inode
+    );
 
     const uint8_t* in = (const uint8_t*)ptr;
     size_t bytes_written = 0;
