@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
 
@@ -17,6 +18,17 @@ bool ext2_readdir(
     if (meta->dir_cache_size == 0) {
         return false;
     }
+
+    // Update directory's last access time
+    meta->cached_inode->last_access_time = (uint32_t)time(NULL);
+    ext2_write_inode(
+        meta->device_file,
+        node->inode,
+        meta->block_size,
+        meta->inode_size,
+        meta->inodes_per_group,
+        meta->cached_inode
+    );
 
     size_t count = 0;
     uint32_t offset = 0;

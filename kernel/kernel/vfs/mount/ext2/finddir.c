@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include "kernel/vfs/vfs.h"
 #include "kernel/debug.h"
 #include "kernel/memory/kmalloc.h"
@@ -16,6 +17,17 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
     if (!ext2_ensure_dir_cache(node)) {
         return NULL;
     }
+
+    // Update directory's last access time
+    meta->cached_inode->last_access_time = (uint32_t)time(NULL);
+    ext2_write_inode(
+        meta->device_file,
+        node->inode,
+        meta->block_size,
+        meta->inode_size,
+        meta->inodes_per_group,
+        meta->cached_inode
+    );
 
     size_t name_len = strlen(name);
     uint32_t found_inode_num = 0;
