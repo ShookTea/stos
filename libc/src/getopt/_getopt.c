@@ -82,9 +82,11 @@ static void init(const char *optstring) {
 
     if (optstring[0] == '-') {
         ordering = RETURN_IN_ORDER;
+        optstring++;
     }
     else if (optstring[0] == '+') {
         ordering = REQUIRE_ORDER;
+        optstring++;
     }
     #if !(defined(__is_libk))
     else if (getenv("POSIXLY_CORRECT")) {
@@ -95,7 +97,7 @@ static void init(const char *optstring) {
         ordering = PERMUTE;
     }
 
-    initialized = 1;
+    initialized = true;
 }
 
 int __getopt_internal(
@@ -120,8 +122,10 @@ int __getopt_internal(
         init(optstring);
     }
 
-    if (*optstring == '+' || *optstring == '-') {
-        ++optstring;
+    // Skip leading prefix chars for optstring matching
+    const char *optstring_base = optstring;
+    if (*optstring_base == '+' || *optstring_base == '-') {
+        ++optstring_base;
     }
 
     while (1) {
@@ -129,14 +133,11 @@ int __getopt_internal(
             nextchar = NULL;
 
             if (ordering == PERMUTE) {
-                if (last_nonopt > optind) {
-                    last_nonopt = optind;
-                }
+                // Sync range pointers if optind moved backward (restart)
+                if (last_nonopt > optind) last_nonopt = optind;
+                if (first_nonopt > optind) first_nonopt = optind;
 
-                if (first_nonopt > optind) {
-                    first_nonopt = optind;
-                }
-
+                // Exchange previously collected non-opts to after current position
                 if (first_nonopt != last_nonopt && last_nonopt != optind) {
                     exchange(argv, first_nonopt, last_nonopt, optind);
                 }
@@ -144,15 +145,21 @@ int __getopt_internal(
                     first_nonopt = optind;
                 }
 
+                // Scan past non-options, recording their range
+                first_nonopt = optind;
                 while (optind < argc &&
-                       (argv[optind][0] != '-' || argv[optind][1] == '\0')) {
+                       (argv[optind][0] != '-' || argv[optind][1] == '\0')
+                ) {
                     optind++;
                 }
-
                 last_nonopt = optind;
             }
 
             if (optind >= argc) {
+                // Restore optind to start of non-opts so caller can find them
+                if (ordering == PERMUTE && first_nonopt != last_nonopt) {
+                    optind = first_nonopt;
+                }
                 return -1;
             }
 
@@ -164,6 +171,7 @@ int __getopt_internal(
                 return -1;
             }
 
+            // Bare '-' or any non-option
             if (argv[optind][0] != '-' || argv[optind][1] == '\0') {
                 if (ordering == REQUIRE_ORDER) {
                     return -1;
@@ -182,8 +190,8 @@ int __getopt_internal(
                     try_long = true;
                     nextchar = argv[optind] + 2;
                 } else if (long_only &&
-                           (argv[optind][2] != '\0' ||
-                            strchr(optstring, argv[optind][1]) == NULL)) {
+                        (argv[optind][2] != '\0' ||
+                        strchr(optstring_base, argv[optind][1]) == NULL)) {
                     try_long = true;
                     nextchar = argv[optind] + 1;
                 }
@@ -196,18 +204,13 @@ int __getopt_internal(
                     int idx = -1;
                     bool ambiguous = false;
                     const struct option *o = match_longopt(
-                        nextchar,
-                        namelen,
-                        longopts,
-                        &idx,
-                        &ambiguous
+                        nextchar, namelen, longopts, &idx, &ambiguous
                     );
 
                     if (ambiguous) {
                         printf_err(
                             "%s: option '%s' is ambiguous\n",
-                            argv[0],
-                            argv[optind]
+                            argv[0], argv[optind]
                         );
                         optind++;
                         optopt = 0;
@@ -224,8 +227,7 @@ int __getopt_internal(
                             if (eq) {
                                 printf_err(
                                     "%s: option '--%s' doesn't allow an argument\n",
-                                    argv[0],
-                                    o->name
+                                    argv[0], o->name
                                 );
                                 optind++;
                                 nextchar = NULL;
@@ -239,11 +241,11 @@ int __getopt_internal(
                             } else if (optind + 1 < argc) {
                                 optarg = argv[++optind];
                             } else {
-                                if (optstring[0] != ':') {
+                                if (optstring_base[-1] != ':' &&
+                                    optstring[0] != ':') {
                                     printf_err(
                                         "%s: option '--%s' requires an argument\n",
-                                        argv[0],
-                                        o->name
+                                        argv[0], o->name
                                     );
                                 }
                                 optind++;
@@ -251,7 +253,7 @@ int __getopt_internal(
                                 optopt = o->val;
                                 return (optstring[0] == ':') ? ':' : '?';
                             }
-                        } else { // optional_argument
+                        } else {
                             optarg = eq ? eq + 1 : NULL;
                         }
 
@@ -265,11 +267,11 @@ int __getopt_internal(
                         return o->val;
                     }
 
+                    // Unrecognized long option
                     if (argv[optind][1] == '-') {
                         printf_err(
                             "%s: unrecognized option '%s'\n",
-                            argv[0],
-                            argv[optind]
+                            argv[0], argv[optind]
                         );
                         optind++;
                         nextchar = NULL;
@@ -277,6 +279,7 @@ int __getopt_internal(
                         return '?';
                     }
 
+                    // long_only fallthrough: treat as short
                     nextchar = argv[optind] + 1;
                 } else {
                     nextchar = argv[optind] + 1;
@@ -286,8 +289,9 @@ int __getopt_internal(
             }
         }
 
+        // Short option processing
         char c = *nextchar++;
-        const char *spec = strchr(optstring, c);
+        const char *spec = strchr(optstring_base, c);
 
         if (*nextchar == '\0') {
             optind++;
@@ -295,7 +299,7 @@ int __getopt_internal(
 
         if (!spec || c == ':') {
             if (optstring[0] != ':') {
-                printf_err( "%s: invalid option -- '%c'\n", argv[0], c);
+                printf_err("%s: invalid option -- '%c'\n", argv[0], c);
             }
             optopt = c;
             return '?';
