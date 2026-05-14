@@ -10,14 +10,14 @@ static inline bool time_test_gmtime_epoch(void) {
     struct tm tm;
     time_t ts = 0;
     gmtime_r(&ts, &tm);
-    ASSERT_EQ(tm.tm_sec, 0, "gmtime_epoch tm_sec");
-    ASSERT_EQ(tm.tm_min, 0, "gmtime_epoch tm_min");
-    ASSERT_EQ(tm.tm_hour, 0, "gmtime_epoch tm_hour");
-    ASSERT_EQ(tm.tm_mday, 1, "gmtime_epoch tm_mday");
-    ASSERT_EQ(tm.tm_mon, 0, "gmtime_epoch tm_mon");
-    ASSERT_EQ(tm.tm_year, 1970 - 1900, "gmtime_epoch tm_year");
-    ASSERT_EQ(tm.tm_wday, 4, "gmtime_epoch tm_wday");
-    ASSERT_EQ(tm.tm_yday, 0, "gmtime_epoch tm_yday");
+    ASSERT_EQ(0, tm.tm_sec, "gmtime_epoch tm_sec");
+    ASSERT_EQ(0, tm.tm_min, "gmtime_epoch tm_min");
+    ASSERT_EQ(0, tm.tm_hour, "gmtime_epoch tm_hour");
+    ASSERT_EQ(1, tm.tm_mday, "gmtime_epoch tm_mday");
+    ASSERT_EQ(0, tm.tm_mon, "gmtime_epoch tm_mon");
+    ASSERT_EQ(1970 - 1900, tm.tm_year, "gmtime_epoch tm_year");
+    ASSERT_EQ(4, tm.tm_wday, "gmtime_epoch tm_wday");
+    ASSERT_EQ(0, tm.tm_yday, "gmtime_epoch tm_yday");
     return true;
 }
 
@@ -25,14 +25,14 @@ static inline bool time_test_gmtime_future1(void) {
     struct tm tm;
     time_t ts = 1778748085LL; // 2026-05-14
     gmtime_r(&ts, &tm);
-    ASSERT_EQ(tm.tm_sec, 25, "gmtime_future1 tm_sec");
-    ASSERT_EQ(tm.tm_min, 41, "gmtime_future1 tm_min");
-    ASSERT_EQ(tm.tm_hour, 8, "gmtime_future1 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 14, "gmtime_future1 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 4, "gmtime_future1 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2026 - 1900, "gmtime_future1 tm_year");
-    ASSERT_EQ(tm.tm_wday, 4, "gmtime_future1 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 133, "gmtime_future1 tm_yday");
+    ASSERT_EQ(25, tm.tm_sec, "gmtime_future1 tm_sec");
+    ASSERT_EQ(41, tm.tm_min, "gmtime_future1 tm_min");
+    ASSERT_EQ(8, tm.tm_hour, "gmtime_future1 tm_hour");
+    ASSERT_EQ(14, tm.tm_mday, "gmtime_future1 tm_mday");
+    ASSERT_EQ(4, tm.tm_mon, "gmtime_future1 tm_mon");
+    ASSERT_EQ(2026 - 1900, tm.tm_year, "gmtime_future1 tm_year");
+    ASSERT_EQ(4, tm.tm_wday, "gmtime_future1 tm_wday");
+    ASSERT_EQ(133, tm.tm_yday, "gmtime_future1 tm_yday");
     return true;
 }
 
@@ -40,14 +40,14 @@ static inline bool time_test_gmtime_future2(void) {
     struct tm tm;
     time_t ts = 5299480968LL; // 2137-12-07
     gmtime_r(&ts, &tm);
-    ASSERT_EQ(tm.tm_sec, 48, "gmtime_future2 tm_sec");
-    ASSERT_EQ(tm.tm_min, 2, "gmtime_future2 tm_min");
-    ASSERT_EQ(tm.tm_hour, 14, "gmtime_future2 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 7, "gmtime_future2 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 11, "gmtime_future2 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2137 - 1900, "gmtime_future2 tm_year");
-    ASSERT_EQ(tm.tm_wday, 6, "gmtime_future2 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 340, "gmtime_future2 tm_yday");
+    ASSERT_EQ(48, tm.tm_sec, "gmtime_future2 tm_sec");
+    ASSERT_EQ(2, tm.tm_min, "gmtime_future2 tm_min");
+    ASSERT_EQ(14, tm.tm_hour, "gmtime_future2 tm_hour");
+    ASSERT_EQ(7, tm.tm_mday, "gmtime_future2 tm_mday");
+    ASSERT_EQ(11, tm.tm_mon, "gmtime_future2 tm_mon");
+    ASSERT_EQ(2137 - 1900, tm.tm_year, "gmtime_future2 tm_year");
+    ASSERT_EQ(6, tm.tm_wday, "gmtime_future2 tm_wday");
+    ASSERT_EQ(340, tm.tm_yday, "gmtime_future2 tm_yday");
     return true;
 }
 
@@ -55,14 +55,14 @@ static inline bool time_test_gmtime_leapyear1(void) {
     struct tm tm;
     time_t ts = 1468414968LL; // 2016-07-13 (handle leap year)
     gmtime_r(&ts, &tm);
-    ASSERT_EQ(tm.tm_sec, 48, "gmtime_leapyear1 tm_sec");
-    ASSERT_EQ(tm.tm_min, 2, "gmtime_leapyear1 tm_min");
-    ASSERT_EQ(tm.tm_hour, 13, "gmtime_leapyear1 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 13, "gmtime_leapyear1 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 6, "gmtime_leapyear1 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2016 - 1900, "gmtime_leapyear1 tm_year");
-    ASSERT_EQ(tm.tm_wday, 3, "gmtime_leapyear1 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 194, "gmtime_leapyear1 tm_yday");
+    ASSERT_EQ(48, tm.tm_sec, "gmtime_leapyear1 tm_sec");
+    ASSERT_EQ(2, tm.tm_min, "gmtime_leapyear1 tm_min");
+    ASSERT_EQ(13, tm.tm_hour, "gmtime_leapyear1 tm_hour");
+    ASSERT_EQ(13, tm.tm_mday, "gmtime_leapyear1 tm_mday");
+    ASSERT_EQ(6, tm.tm_mon, "gmtime_leapyear1 tm_mon");
+    ASSERT_EQ(2016 - 1900, tm.tm_year, "gmtime_leapyear1 tm_year");
+    ASSERT_EQ(3, tm.tm_wday, "gmtime_leapyear1 tm_wday");
+    ASSERT_EQ(194, tm.tm_yday, "gmtime_leapyear1 tm_yday");
     return true;
 }
 
@@ -70,14 +70,14 @@ static inline bool time_test_gmtime_leapyear2(void) {
     struct tm tm;
     time_t ts = 4119166968LL; // 2100-07-13 (not a leap year)
     gmtime_r(&ts, &tm);
-    ASSERT_EQ(tm.tm_sec, 48, "gmtime_leapyear2 tm_sec");
-    ASSERT_EQ(tm.tm_min, 2, "gmtime_leapyear2 tm_min");
-    ASSERT_EQ(tm.tm_hour, 13, "gmtime_leapyear2 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 13, "gmtime_leapyear2 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 6, "gmtime_leapyear2 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2100 - 1900, "gmtime_leapyear2 tm_year");
-    ASSERT_EQ(tm.tm_wday, 2, "gmtime_leapyear2 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 193, "gmtime_leapyear2 tm_yday");
+    ASSERT_EQ(48, tm.tm_sec, "gmtime_leapyear2 tm_sec");
+    ASSERT_EQ(2, tm.tm_min, "gmtime_leapyear2 tm_min");
+    ASSERT_EQ(13, tm.tm_hour, "gmtime_leapyear2 tm_hour");
+    ASSERT_EQ(13, tm.tm_mday, "gmtime_leapyear2 tm_mday");
+    ASSERT_EQ(6, tm.tm_mon, "gmtime_leapyear2 tm_mon");
+    ASSERT_EQ(2100 - 1900, tm.tm_year, "gmtime_leapyear2 tm_year");
+    ASSERT_EQ(2, tm.tm_wday, "gmtime_leapyear2 tm_wday");
+    ASSERT_EQ(193, tm.tm_yday, "gmtime_leapyear2 tm_yday");
     return true;
 }
 
@@ -85,14 +85,14 @@ static inline bool time_test_gmtime_leapyear3(void) {
     struct tm tm;
     time_t ts = 963493368LL; // 2000-07-13 (a leap year)
     gmtime_r(&ts, &tm);
-    ASSERT_EQ(tm.tm_sec, 48, "gmtime_leapyear3 tm_sec");
-    ASSERT_EQ(tm.tm_min, 2, "gmtime_leapyear3 tm_min");
-    ASSERT_EQ(tm.tm_hour, 13, "gmtime_leapyear3 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 13, "gmtime_leapyear3 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 6, "gmtime_leapyear3 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2000 - 1900, "gmtime_leapyear3 tm_year");
-    ASSERT_EQ(tm.tm_wday, 4, "gmtime_leapyear3 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 194, "gmtime_leapyear3 tm_yday");
+    ASSERT_EQ(48, tm.tm_sec, "gmtime_leapyear3 tm_sec");
+    ASSERT_EQ(2, tm.tm_min, "gmtime_leapyear3 tm_min");
+    ASSERT_EQ(13, tm.tm_hour, "gmtime_leapyear3 tm_hour");
+    ASSERT_EQ(13, tm.tm_mday, "gmtime_leapyear3 tm_mday");
+    ASSERT_EQ(6, tm.tm_mon, "gmtime_leapyear3 tm_mon");
+    ASSERT_EQ(2000 - 1900, tm.tm_year, "gmtime_leapyear3 tm_year");
+    ASSERT_EQ(4, tm.tm_wday, "gmtime_leapyear3 tm_wday");
+    ASSERT_EQ(194, tm.tm_yday, "gmtime_leapyear3 tm_yday");
     return true;
 }
 
@@ -100,14 +100,14 @@ static inline bool time_test_gmtime_past1(void) {
     struct tm tm;
     time_t ts = -506426232LL; // 1953-12-14
     gmtime_r(&ts, &tm);
-    ASSERT_EQ(tm.tm_sec, 48, "gmtime_past1 tm_sec");
-    ASSERT_EQ(tm.tm_min, 2, "gmtime_past1 tm_min");
-    ASSERT_EQ(tm.tm_hour, 14, "gmtime_past1 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 14, "gmtime_past1 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 11, "gmtime_past1 tm_mon");
-    ASSERT_EQ(tm.tm_year, 1953 - 1900, "gmtime_past1 tm_year");
-    ASSERT_EQ(tm.tm_wday, 1, "gmtime_past1 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 347, "gmtime_past1 tm_yday");
+    ASSERT_EQ(48, tm.tm_sec, "gmtime_past1 tm_sec");
+    ASSERT_EQ(2, tm.tm_min, "gmtime_past1 tm_min");
+    ASSERT_EQ(14, tm.tm_hour, "gmtime_past1 tm_hour");
+    ASSERT_EQ(14, tm.tm_mday, "gmtime_past1 tm_mday");
+    ASSERT_EQ(11, tm.tm_mon, "gmtime_past1 tm_mon");
+    ASSERT_EQ(1953 - 1900, tm.tm_year, "gmtime_past1 tm_year");
+    ASSERT_EQ(1, tm.tm_wday, "gmtime_past1 tm_wday");
+    ASSERT_EQ(347, tm.tm_yday, "gmtime_past1 tm_yday");
     return true;
 }
 
@@ -120,14 +120,14 @@ static inline bool time_test_mktime_normalize1(void) {
     tm.tm_mday = 1;
     tm.tm_sec = 65;
     mktime(&tm);
-    ASSERT_EQ(tm.tm_sec, 5, "mktime_normalize1 tm_sec");
-    ASSERT_EQ(tm.tm_min, 1, "mktime_normalize1 tm_min");
-    ASSERT_EQ(tm.tm_hour, 0, "mktime_normalize1 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 1, "mktime_normalize1 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 0, "mktime_normalize1 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2016 - 1900, "mktime_normalize1 tm_year");
-    ASSERT_EQ(tm.tm_wday, 5, "mktime_normalize1 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 0, "mktime_normalize1 tm_yday");
+    ASSERT_EQ(5, tm.tm_sec, "mktime_normalize1 tm_sec");
+    ASSERT_EQ(1, tm.tm_min, "mktime_normalize1 tm_min");
+    ASSERT_EQ(0, tm.tm_hour, "mktime_normalize1 tm_hour");
+    ASSERT_EQ(1, tm.tm_mday, "mktime_normalize1 tm_mday");
+    ASSERT_EQ(0, tm.tm_mon, "mktime_normalize1 tm_mon");
+    ASSERT_EQ(2016 - 1900, tm.tm_year, "mktime_normalize1 tm_year");
+    ASSERT_EQ(5, tm.tm_wday, "mktime_normalize1 tm_wday");
+    ASSERT_EQ(0, tm.tm_yday, "mktime_normalize1 tm_yday");
     return true;
 }
 
@@ -138,14 +138,14 @@ static inline bool time_test_mktime_normalize2(void) {
     tm.tm_mday = 1;
     tm.tm_hour = 79;
     mktime(&tm);
-    ASSERT_EQ(tm.tm_sec, 0, "mktime_normalize2 tm_sec");
-    ASSERT_EQ(tm.tm_min, 0, "mktime_normalize2 tm_min");
-    ASSERT_EQ(tm.tm_hour, 7, "mktime_normalize2 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 4, "mktime_normalize2 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 0, "mktime_normalize2 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2016 - 1900, "mktime_normalize2 tm_year");
-    ASSERT_EQ(tm.tm_wday, 1, "mktime_normalize2 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 3, "mktime_normalize2 tm_yday");
+    ASSERT_EQ(0, tm.tm_sec, "mktime_normalize2 tm_sec");
+    ASSERT_EQ(0, tm.tm_min, "mktime_normalize2 tm_min");
+    ASSERT_EQ(7, tm.tm_hour, "mktime_normalize2 tm_hour");
+    ASSERT_EQ(4, tm.tm_mday, "mktime_normalize2 tm_mday");
+    ASSERT_EQ(0, tm.tm_mon, "mktime_normalize2 tm_mon");
+    ASSERT_EQ(2016 - 1900, tm.tm_year, "mktime_normalize2 tm_year");
+    ASSERT_EQ(1, tm.tm_wday, "mktime_normalize2 tm_wday");
+    ASSERT_EQ(3, tm.tm_yday, "mktime_normalize2 tm_yday");
     return true;
 }
 
@@ -155,14 +155,14 @@ static inline bool time_test_mktime_normalize3(void) {
     tm.tm_year = 2016 - 1900;
     tm.tm_mday = 33;
     mktime(&tm);
-    ASSERT_EQ(tm.tm_sec, 0, "mktime_normalize3 tm_sec");
-    ASSERT_EQ(tm.tm_min, 0, "mktime_normalize3 tm_min");
-    ASSERT_EQ(tm.tm_hour, 0, "mktime_normalize3 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 2, "mktime_normalize3 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 1, "mktime_normalize3 tm_mon");
-    ASSERT_EQ(tm.tm_year, 2016 - 1900, "mktime_normalize3 tm_year");
-    ASSERT_EQ(tm.tm_wday, 2, "mktime_normalize3 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 32, "mktime_normalize3 tm_yday");
+    ASSERT_EQ(0, tm.tm_sec, "mktime_normalize3 tm_sec");
+    ASSERT_EQ(0, tm.tm_min, "mktime_normalize3 tm_min");
+    ASSERT_EQ(0, tm.tm_hour, "mktime_normalize3 tm_hour");
+    ASSERT_EQ(2, tm.tm_mday, "mktime_normalize3 tm_mday");
+    ASSERT_EQ(1, tm.tm_mon, "mktime_normalize3 tm_mon");
+    ASSERT_EQ(2016 - 1900, tm.tm_year, "mktime_normalize3 tm_year");
+    ASSERT_EQ(2, tm.tm_wday, "mktime_normalize3 tm_wday");
+    ASSERT_EQ(32, tm.tm_yday, "mktime_normalize3 tm_yday");
     return true;
 }
 
@@ -172,14 +172,14 @@ static inline bool time_test_mktime_normalize4(void) {
     tm.tm_year = 1970 - 1900;
     tm.tm_mday = 512;
     mktime(&tm);
-    ASSERT_EQ(tm.tm_sec, 0, "mktime_normalize4 tm_sec");
-    ASSERT_EQ(tm.tm_min, 0, "mktime_normalize4 tm_min");
-    ASSERT_EQ(tm.tm_hour, 0, "mktime_normalize4 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 27, "mktime_normalize4 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 4, "mktime_normalize4 tm_mon");
-    ASSERT_EQ(tm.tm_year, 1971 - 1900, "mktime_normalize4 tm_year");
-    ASSERT_EQ(tm.tm_wday, 4, "mktime_normalize4 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 146, "mktime_normalize4 tm_yday");
+    ASSERT_EQ(0, tm.tm_sec, "mktime_normalize4 tm_sec");
+    ASSERT_EQ(0, tm.tm_min, "mktime_normalize4 tm_min");
+    ASSERT_EQ(0, tm.tm_hour, "mktime_normalize4 tm_hour");
+    ASSERT_EQ(27, tm.tm_mday, "mktime_normalize4 tm_mday");
+    ASSERT_EQ(4, tm.tm_mon, "mktime_normalize4 tm_mon");
+    ASSERT_EQ(1971 - 1900, tm.tm_year, "mktime_normalize4 tm_year");
+    ASSERT_EQ(4, tm.tm_wday, "mktime_normalize4 tm_wday");
+    ASSERT_EQ(146, tm.tm_yday, "mktime_normalize4 tm_yday");
     return true;
 }
 
@@ -189,14 +189,14 @@ static inline bool time_test_mktime_normalize5(void) {
     tm.tm_year = 1970 - 1900;
     tm.tm_mday = -2; // days are 1-indexed
     mktime(&tm);
-    ASSERT_EQ(tm.tm_sec, 0, "mktime_normalize5 tm_sec");
-    ASSERT_EQ(tm.tm_min, 0, "mktime_normalize5 tm_min");
-    ASSERT_EQ(tm.tm_hour, 0, "mktime_normalize5 tm_hour");
-    ASSERT_EQ(tm.tm_mday, 29, "mktime_normalize5 tm_mday");
-    ASSERT_EQ(tm.tm_mon, 11, "mktime_normalize5 tm_mon");
-    ASSERT_EQ(tm.tm_year, 1969 - 1900, "mktime_normalize5 tm_year");
-    ASSERT_EQ(tm.tm_wday, 1, "mktime_normalize5 tm_wday");
-    ASSERT_EQ(tm.tm_yday, 362, "mktime_normalize5 tm_yday");
+    ASSERT_EQ(0, tm.tm_sec, "mktime_normalize5 tm_sec");
+    ASSERT_EQ(0, tm.tm_min, "mktime_normalize5 tm_min");
+    ASSERT_EQ(0, tm.tm_hour, "mktime_normalize5 tm_hour");
+    ASSERT_EQ(29, tm.tm_mday, "mktime_normalize5 tm_mday");
+    ASSERT_EQ(11, tm.tm_mon, "mktime_normalize5 tm_mon");
+    ASSERT_EQ(1969 - 1900, tm.tm_year, "mktime_normalize5 tm_year");
+    ASSERT_EQ(1, tm.tm_wday, "mktime_normalize5 tm_wday");
+    ASSERT_EQ(362, tm.tm_yday, "mktime_normalize5 tm_yday");
     return true;
 }
 
@@ -210,7 +210,7 @@ static inline bool time_test_mktime_calc1(void) {
     tm.tm_min = 2;
     tm.tm_sec = 48;
     time_t res = mktime(&tm);
-    ASSERT_EQ(1794664968LL, res, "mktime_calc1 result");
+    ASSERT_EQ(res, 1794664968LL, "mktime_calc1 result");
     return true;
 }
 
