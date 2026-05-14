@@ -594,7 +594,7 @@ static void print_prompt_and_read_command()
 
 void debugger_init()
 {
-    puts("Kernel debugger. Write \"help\" to get list of available commands.");
+    puts("Kernel debugger. Write \"\033[1mhelp\033[22m\" to get list of available commands.");
 
     tty_dentry = vfs_resolve("/dev/tty");
 
