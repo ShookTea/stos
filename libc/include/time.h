@@ -58,6 +58,27 @@ struct tm* gmtime_r(const time_t* time_ptr, struct tm* tm_ptr);
  */
 struct tm* gmtime(const time_t* time_ptr);
 
+/**
+ * Converts Unix timestamp given in `time_ptr` into a broken-down time
+ * representation in a local timezone, stores it in `tm_ptr`, and returns
+ * `tm_ptr`. It will return `NULL` if either `time_ptr` or `tm_ptr` are `NULL`.
+ *
+ * TODO: There's no support for local time zones yet, so this function behaves
+ * exactly like gmtime_r.
+ */
+struct tm* localtime_r(const time_t* time_ptr, struct tm* tm_ptr);
+
+/**
+ * Converts Unix timestamp given in `time_ptr` into a broken-down time
+ * representation in a local timezone and returns pointer to statically
+ * allocated struct which might be overwritten by subsequent calls to any of the
+ * date and time functions.
+ *
+ * TODO: There's no support for local time zones yet, so this function behaves
+ * exactly like gmtime.
+ */
+struct tm* localtime(const time_t* time_ptr);
+
 #if !(defined(__is_libk))
 
 /**
