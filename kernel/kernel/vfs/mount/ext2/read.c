@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <time.h>
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
 #include "kernel/debug.h"
@@ -53,6 +54,17 @@ size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
         _debug_puts("device file = NULL");
         return 0;
     }
+
+    // Update file's last access time
+    meta->cached_inode->last_access_time = (uint32_t)time(NULL);
+    ext2_write_inode(
+        meta->device_file,
+        file->dentry->inode->inode,
+        meta->block_size,
+        meta->inode_size,
+        meta->inodes_per_group,
+        meta->cached_inode
+    );
 
     uint8_t* out = (uint8_t*)ptr;
     size_t bytes_read = 0;
