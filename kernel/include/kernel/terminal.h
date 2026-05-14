@@ -86,12 +86,18 @@ void terminal_init();
  * - m - Select Graphic Rendition mode - all arguments are parsed in order
  *       and applied, according to the following rules:
  *       - 0       - resets graphic rendition rules to default
- *       - 1       - set font style to bold
- *       - 22      - set font style to default
+ *       - 1       - set font weight to bold
+ *       - 4       - enable underline
+ *       - 9       - enable strike-through
+ *       - 22      - set font weight to normal
+ *       - 24      - disable underline
+ *       - 29      - disable strike-through
  *       - 30-37   - set foreground color (see below)
  *       - 39      - set default foreground color
  *       - 40-47   - set background color (see below)
  *       - 49      - set default background color
+ *       - 53      - enable overline
+ *       - 55      - disable overline
  *       - 90-97   - set foreground color (see below)
  *       - 100-107 - set background color (see below)
  *

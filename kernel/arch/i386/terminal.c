@@ -56,7 +56,20 @@ static size_t saved_cursor_row = 0;
 static size_t saved_cursor_column = 0;
 static font_mode_t font_mode;
 
+static bool underline = false;
+static bool overline = false;
+static bool strike_through = false;
+static uint8_t font_decor = 0;
+
 static bool rgbmode = false;
+
+static inline void recalc_font_decor(void)
+{
+    font_decor =
+        (underline ? FONT_DECORATION_UNDERLINE : 0) |
+        (overline ? FONT_DECORATION_OVERLINE : 0) |
+        (strike_through ? FONT_DECORATION_STRIKE : 0);
+}
 
 /**
  * Merges bg_color and fg_color into entry acceptable by VGA.
@@ -71,7 +84,7 @@ static void putentryat(uint32_t c, size_t row, size_t column)
     if (rgbmode) {
         fbcon_putentryat(
             font_mode,
-            0,
+            font_decor,
             c,
             (uint8_t)fg_color,
             (uint8_t)bg_color,
@@ -139,6 +152,10 @@ static void terminal_reset_styling()
     bg_color = BG_COLOR_DEFAULT;
     fg_color = FG_COLOR_DEFAULT;
     font_mode = FONT_MODE_NORMAL;
+    underline = false;
+    overline = false;
+    strike_through = false;
+    recalc_font_decor();
 }
 
 /**
@@ -410,8 +427,24 @@ static void terminal_handle_csi_sequence()
             else if (args[i] == 1) {
                 font_mode = FONT_MODE_BOLD;
             }
+            else if (args[i] == 4) {
+                underline = true;
+                recalc_font_decor();
+            }
+            else if (args[i] == 9) {
+                strike_through = true;
+                recalc_font_decor();
+            }
             else if (args[i] == 22) {
                 font_mode = FONT_MODE_NORMAL;
+            }
+            else if (args[i] == 24) {
+                underline = false;
+                recalc_font_decor();
+            }
+            else if (args[i] == 29) {
+                strike_through = false;
+                recalc_font_decor();
             }
             else if ((args[i] >= 30 && args[i] <= 37)
                 || (args[i] >= 40 && args[i] <= 47)) {
@@ -427,6 +460,7 @@ static void terminal_handle_csi_sequence()
                     case 5: color = VGA_COLOR_MAGENTA; break;
                     case 6: color = VGA_COLOR_CYAN; break;
                     case 7: color = VGA_COLOR_LIGHT_GREY; break;
+                    default: color = VGA_COLOR_BLACK;
                 }
                 if (foreground) {
                     fg_color = color;
@@ -442,6 +476,14 @@ static void terminal_handle_csi_sequence()
                 // Set default background color
                 bg_color = BG_COLOR_DEFAULT;
             }
+            else if (args[i] == 53) {
+                overline = true;
+                recalc_font_decor();
+            }
+            else if (args[i] == 55) {
+                overline = false;
+                recalc_font_decor();
+            }
             else if ((args[i] >= 90 && args[i] <= 97)
                 || (args[i] >= 100 && args[i] <= 107)) {
                 // Set bg/fg color (intense variant)
@@ -456,6 +498,7 @@ static void terminal_handle_csi_sequence()
                     case 5: color = VGA_COLOR_LIGHT_MAGENTA; break;
                     case 6: color = VGA_COLOR_LIGHT_CYAN; break;
                     case 7: color = VGA_COLOR_WHITE; break;
+                    default: color = VGA_COLOR_BLACK;
                 }
                 if (foreground) {
                     fg_color = color;
