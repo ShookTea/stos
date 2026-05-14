@@ -97,7 +97,6 @@ static inline bool time_test_gmtime_leapyear3(void) {
 }
 
 static inline bool time_run_all_tests(void) {
-    debug_puts("\n=== Time Library Tests ===");
     int passed = 0;
     int total = 6;
 
@@ -111,10 +110,10 @@ static inline bool time_run_all_tests(void) {
 
     // Print results
     if (passed == total) {
-        debug_printf("Time: %d/%d PASSED\n", passed, total);
+        debug_printf("time.h: %d/%d PASSED\n", passed, total);
         return true;
     } else {
-        debug_printf("Time: %d/%d FAILED\n", passed, total);
+        debug_printf("time.h: %d/%d FAILED\n", passed, total);
         return false;
     }
 }

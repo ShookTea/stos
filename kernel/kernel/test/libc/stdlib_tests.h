@@ -311,7 +311,6 @@ static inline bool stdlib_test_strtoul_invalid_base(void) {
  * Run all stdlib tests
  */
 static inline bool stdlib_run_all_tests(void) {
-    debug_printf("\n=== Stdlib Library Tests ===\n");
     int passed = 0;
     int total = 20;
 
@@ -343,10 +342,10 @@ static inline bool stdlib_run_all_tests(void) {
 
     // Print results
     if (passed == total) {
-        debug_printf("Stdlib: %d/%d PASSED\n", passed, total);
+        debug_printf("stdlib.h: %d/%d PASSED\n", passed, total);
         return true;
     } else {
-        debug_printf("Stdlib: %d/%d FAILED\n", passed, total);
+        debug_printf("stdlib.h: %d/%d FAILED\n", passed, total);
         return false;
     }
 }

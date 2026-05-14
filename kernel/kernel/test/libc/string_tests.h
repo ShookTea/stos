@@ -626,7 +626,6 @@ static inline bool string_test_strtok_edges(void) {
  * Run all string tests
  */
 static inline bool string_run_all_tests(void) {
-    debug_printf("\n=== String Library Tests ===\n");
     int passed = 0;
     int total = 33;
 
@@ -691,10 +690,10 @@ static inline bool string_run_all_tests(void) {
 
     // Print results
     if (passed == total) {
-        debug_printf("String: %d/%d PASSED\n", passed, total);
+        debug_printf("string.h: %d/%d PASSED\n", passed, total);
         return true;
     } else {
-        debug_printf("String: %d/%d FAILED\n", passed, total);
+        debug_printf("string.h: %d/%d FAILED\n", passed, total);
         return false;
     }
 }

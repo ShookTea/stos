@@ -75,7 +75,6 @@ static inline bool math_test_ceil_negative(void) {
 }
 
 static inline bool math_run_all_tests(void) {
-    debug_printf("\n=== Math Library Tests ===\n");
     int passed = 0;
     int total = 9;
 
@@ -90,10 +89,10 @@ static inline bool math_run_all_tests(void) {
     if (math_test_ceil_negative()) passed++;
 
     if (passed == total) {
-        debug_printf("Math: %d/%d PASSED\n", passed, total);
+        debug_printf("math.h: %d/%d PASSED\n", passed, total);
         return true;
     } else {
-        debug_printf("Math: %d/%d FAILED\n", passed, total);
+        debug_printf("math.: %d/%d FAILED\n", passed, total);
         return false;
     }
 }

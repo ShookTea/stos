@@ -341,7 +341,6 @@ static inline bool ctype_test_boundaries(void) {
  * Run all ctype tests
  */
 static inline bool ctype_run_all_tests(void) {
-    debug_printf("\n=== Ctype Library Tests ===\n");
     int passed = 0;
     int total = 13;
 
@@ -361,10 +360,10 @@ static inline bool ctype_run_all_tests(void) {
 
     // Print results
     if (passed == total) {
-        debug_printf("Ctype: %d/%d PASSED\n", passed, total);
+        debug_printf("ctype.h: %d/%d PASSED\n", passed, total);
         return true;
     } else {
-        debug_printf("Ctype: %d/%d FAILED\n", passed, total);
+        debug_printf("ctype.h: %d/%d FAILED\n", passed, total);
         return false;
     }
 }

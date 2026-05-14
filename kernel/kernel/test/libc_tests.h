@@ -21,19 +21,18 @@ static inline void libc_run_all_tests(void) {
     debug_printf("\n========== LIBC TEST SUITE ==========\n");
     bool success = true;
 
-    if (!string_run_all_tests()) {
-        success = false;
-    }
-    if (!stdlib_run_all_tests()) {
-        success = false;
-    }
     if (!ctype_run_all_tests()) {
         success = false;
     }
     if (!math_run_all_tests()) {
         success = false;
     }
-
+    if (!stdlib_run_all_tests()) {
+        success = false;
+    }
+    if (!string_run_all_tests()) {
+        success = false;
+    }
     if (!time_run_all_tests()) {
         success = false;
     }
