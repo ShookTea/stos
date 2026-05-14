@@ -5,6 +5,7 @@
 #include "libc/stdlib_tests.h"
 #include "libc/ctype_tests.h"
 #include "libc/math_tests.h"
+#include "libc/time_tests.h"
 #include "stdlib.h"
 
 /**
@@ -30,6 +31,10 @@ static inline void libc_run_all_tests(void) {
         success = false;
     }
     if (!math_run_all_tests()) {
+        success = false;
+    }
+
+    if (!time_run_all_tests()) {
         success = false;
     }
 
