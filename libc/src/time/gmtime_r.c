@@ -8,14 +8,14 @@ struct tm* gmtime_r(const time_t* time_ptr, struct tm* tm_ptr)
     }
     time_t datetime = *time_ptr;
     time_t time = datetime % (24LL * 60 * 60);
+    if (time < 0) time += (24LL * 60 * 60);
+    time_t date = (datetime - time) / (24LL * 60 * 60);
 
     tm_ptr->tm_sec = time % 60;
     time /= 60;
     tm_ptr->tm_min = time % 60;
     time /= 60;
     tm_ptr->tm_hour = time;
-
-    time_t date = (datetime - time) / (24LL * 60 * 60);
     tm_ptr->tm_wday = date >= -4 ? (date+4) % 7 : (date+5) % 7 + 6;
 
     date += 719468;
