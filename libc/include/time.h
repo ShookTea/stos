@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /** Time measurement unit in seconds */
-typedef uint64_t time_t;
+typedef int64_t time_t;
 
 /**
  * Describes time in seconds and nanoseconds.
