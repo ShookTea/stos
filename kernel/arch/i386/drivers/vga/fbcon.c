@@ -54,7 +54,7 @@ static void fbcon_rerender_all(void)
     for (size_t row = 0; row < fbcon_get_rows(); row++) {
         for (size_t col = 0; col < cols; col++) {
             fbcon_cell_t cell = char_buffer[row * cols + col];
-            char codepoint = cell.codepoint;
+            uint32_t codepoint = cell.codepoint;
             if (
                 ((cell.font_decor & FONT_DECORATION_QUICK_BLINK) && quick_blink_state)
                 || ((cell.font_decor & FONT_DECORATION_SLOW_BLINK) && slow_blink_state)
