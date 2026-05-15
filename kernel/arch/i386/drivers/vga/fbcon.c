@@ -8,6 +8,7 @@
 #include <string.h>
 
 #define CURSOR_BLINK_INTERVAL_MS 100
+#define SLOW_BLINK_COUNTER 4
 #define FBCON_DEFAULT_FG 0xFFFFFFFF
 #define FBCON_DEFAULT_BG 0xFF000000
 #define CURSOR_HEIGHT 2
@@ -18,6 +19,9 @@ size_t cursor_y = 0;
 
 static bool cursor_enabled = false;
 static bool cursor_blink_state = false;
+static bool quick_blink_state = true;
+static bool slow_blink_state = true;
+static int slow_blink_counter = SLOW_BLINK_COUNTER;
 
 // Render or erase the cursor underline bar at the current cursor cell.
 static void draw_cursor(bool visible)
@@ -44,10 +48,40 @@ static void draw_cursor(bool visible)
     }
 }
 
-static void fbcon_cursor_blink()
+static void fbcon_blink_handler()
 {
     // Re-add handler to run this in interval
-    pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_cursor_blink, NULL);
+    pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_blink_handler, NULL);
+
+    quick_blink_state = !quick_blink_state;
+    slow_blink_counter--;
+    if (slow_blink_counter == 0) {
+        slow_blink_counter = SLOW_BLINK_COUNTER;
+        slow_blink_state = !slow_blink_state;
+    }
+
+    size_t cols = fbcon_get_columns();
+    for (size_t row = 0; row < fbcon_get_rows(); row++) {
+        for (size_t col = 0; col < cols; col++) {
+            fbcon_cell_t cell = char_buffer[row * cols + col];
+            char codepoint = cell.codepoint;
+            if (
+                ((cell.font_decor & FONT_DECORATION_QUICK_BLINK) && quick_blink_state)
+                || ((cell.font_decor & FONT_DECORATION_SLOW_BLINK) && slow_blink_state)
+            ) {
+                codepoint = ' ';
+            }
+            font_render_char(
+                cell.font_mode,
+                cell.font_decor,
+                codepoint,
+                col * PSF1_GLYPH_WIDTH,
+                row * PSF1_GLYPH_HEIGHT,
+                vga_color_to_argb(cell.fg),
+                vga_color_to_argb(cell.bg)
+            );
+        }
+    }
 
     if (cursor_enabled) {
         cursor_blink_state = !cursor_blink_state;
@@ -62,7 +96,7 @@ void fbcon_init()
         * fbcon_get_rows();
     char_buffer = kmalloc(buf_size);
     memset(char_buffer, 0, buf_size);
-    pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_cursor_blink, NULL);
+    pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_blink_handler, NULL);
 }
 
 void fbcon_putentryat(

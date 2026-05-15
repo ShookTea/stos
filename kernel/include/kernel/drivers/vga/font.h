@@ -16,6 +16,8 @@ typedef enum {
 #define FONT_DECORATION_UNDERLINE 1
 #define FONT_DECORATION_OVERLINE 2
 #define FONT_DECORATION_STRIKE 4
+#define FONT_DECORATION_SLOW_BLINK 8
+#define FONT_DECORATION_QUICK_BLINK 16
 
 /**
  * Loads PSF font from given absolute path.
