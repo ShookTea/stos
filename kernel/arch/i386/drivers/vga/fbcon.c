@@ -48,18 +48,8 @@ static void draw_cursor(bool visible)
     }
 }
 
-static void fbcon_blink_handler()
+static void fbcon_rerender_all(void)
 {
-    // Re-add handler to run this in interval
-    pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_blink_handler, NULL);
-
-    quick_blink_state = !quick_blink_state;
-    slow_blink_counter--;
-    if (slow_blink_counter == 0) {
-        slow_blink_counter = SLOW_BLINK_COUNTER;
-        slow_blink_state = !slow_blink_state;
-    }
-
     size_t cols = fbcon_get_columns();
     for (size_t row = 0; row < fbcon_get_rows(); row++) {
         for (size_t col = 0; col < cols; col++) {
@@ -82,6 +72,21 @@ static void fbcon_blink_handler()
             );
         }
     }
+}
+
+static void fbcon_blink_handler()
+{
+    // Re-add handler to run this in interval
+    pit_register_timeout(CURSOR_BLINK_INTERVAL_MS, fbcon_blink_handler, NULL);
+
+    quick_blink_state = !quick_blink_state;
+    slow_blink_counter--;
+    if (slow_blink_counter == 0) {
+        slow_blink_counter = SLOW_BLINK_COUNTER;
+        slow_blink_state = !slow_blink_state;
+    }
+
+    fbcon_rerender_all();
 
     if (cursor_enabled) {
         cursor_blink_state = !cursor_blink_state;
