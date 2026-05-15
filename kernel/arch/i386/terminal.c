@@ -59,6 +59,7 @@ static size_t escape_mode_buffer_length = 0;
 static size_t saved_cursor_row = 0;
 static size_t saved_cursor_column = 0;
 static font_mode_t font_mode;
+static bool inverse = false;
 
 static bool underline = false;
 static bool overline = false;
@@ -83,7 +84,8 @@ static inline void recalc_font_decor(void)
  */
 static inline uint8_t get_current_color()
 {
-    return fg_color | bg_color << 4;
+    return (inverse ? bg_color : fg_color)
+        | (inverse ? fg_color : bg_color) << 4;
 }
 
 static void putentryat(uint32_t c, size_t row, size_t column)
@@ -93,8 +95,8 @@ static void putentryat(uint32_t c, size_t row, size_t column)
             font_mode,
             font_decor,
             c,
-            (uint8_t)fg_color,
-            (uint8_t)bg_color,
+            inverse ? (uint8_t)bg_color : (uint8_t)fg_color,
+            inverse ? (uint8_t)fg_color : (uint8_t)bg_color,
             column,
             row
         );
@@ -163,6 +165,7 @@ static void terminal_reset_styling()
     overline = false;
     strike_through = false;
     blinking = NO_BLINKING;
+    inverse = false;
     recalc_font_decor();
 }
 
@@ -447,6 +450,9 @@ static void terminal_handle_csi_sequence()
                 blinking = FAST_BLINKING;
                 recalc_font_decor();
             }
+            else if (args[i] == 7) {
+                inverse = true;
+            }
             else if (args[i] == 9) {
                 strike_through = true;
                 recalc_font_decor();
@@ -461,6 +467,9 @@ static void terminal_handle_csi_sequence()
             else if (args[i] == 25) {
                 blinking = NO_BLINKING;
                 recalc_font_decor();
+            }
+            else if (args[i] == 27) {
+                inverse = false;
             }
             else if (args[i] == 29) {
                 strike_through = false;
