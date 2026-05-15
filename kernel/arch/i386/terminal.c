@@ -30,6 +30,10 @@ typedef struct {
     uint8_t flags;
 } cell_t;
 
+typedef enum {
+    NO_BLINKING, SLOW_BLINKING, FAST_BLINKING
+} blinking_t;
+
 static size_t vga_width;
 static size_t vga_height;
 
@@ -59,6 +63,7 @@ static font_mode_t font_mode;
 static bool underline = false;
 static bool overline = false;
 static bool strike_through = false;
+static blinking_t blinking = NO_BLINKING;
 static uint8_t font_decor = 0;
 
 static bool rgbmode = false;
@@ -68,7 +73,9 @@ static inline void recalc_font_decor(void)
     font_decor =
         (underline ? FONT_DECORATION_UNDERLINE : 0) |
         (overline ? FONT_DECORATION_OVERLINE : 0) |
-        (strike_through ? FONT_DECORATION_STRIKE : 0);
+        (strike_through ? FONT_DECORATION_STRIKE : 0) |
+        (blinking == SLOW_BLINKING ? FONT_DECORATION_SLOW_BLINK : 0) |
+        (blinking == FAST_BLINKING ? FONT_DECORATION_QUICK_BLINK : 0);
 }
 
 /**
@@ -155,6 +162,7 @@ static void terminal_reset_styling()
     underline = false;
     overline = false;
     strike_through = false;
+    blinking = NO_BLINKING;
     recalc_font_decor();
 }
 
@@ -431,6 +439,14 @@ static void terminal_handle_csi_sequence()
                 underline = true;
                 recalc_font_decor();
             }
+            else if (args[i] == 5) {
+                blinking = SLOW_BLINKING;
+                recalc_font_decor();
+            }
+            else if (args[i] == 6) {
+                blinking = FAST_BLINKING;
+                recalc_font_decor();
+            }
             else if (args[i] == 9) {
                 strike_through = true;
                 recalc_font_decor();
@@ -440,6 +456,10 @@ static void terminal_handle_csi_sequence()
             }
             else if (args[i] == 24) {
                 underline = false;
+                recalc_font_decor();
+            }
+            else if (args[i] == 25) {
+                blinking = NO_BLINKING;
                 recalc_font_decor();
             }
             else if (args[i] == 29) {

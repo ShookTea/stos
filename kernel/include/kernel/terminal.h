@@ -88,9 +88,12 @@ void terminal_init();
  *       - 0       - resets graphic rendition rules to default
  *       - 1       - set font weight to bold
  *       - 4       - enable underline
+ *       - 5       - enable slow blinking
+ *       - 6       - enable fast blinking
  *       - 9       - enable strike-through
  *       - 22      - set font weight to normal
  *       - 24      - disable underline
+ *       - 25      - disable blinking
  *       - 29      - disable strike-through
  *       - 30-37   - set foreground color (see below)
  *       - 39      - set default foreground color
