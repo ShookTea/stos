@@ -33,12 +33,16 @@ typedef struct {
     size_t sector_size;
 } hd_sector_location_t;
 
-typedef struct {
+struct hd_cache_entry {
     size_t sector_lba;
     size_t sector_size;
     uint8_t* content;
     bool is_dirty; // if set to true, syncing should write it to the drive
-} hd_cache_entry_t;
+    uint32_t popularity;
+    struct hd_cache_entry* prev;
+    struct hd_cache_entry* next;
+};
+typedef struct hd_cache_entry hd_cache_entry_t;
 
 // Shared wait_obj for blocking MBR reads done during readdir/finddir.
 extern wait_obj_t* hd_partition_wait_obj;
@@ -88,10 +92,13 @@ void hd_cache_upsert(
 );
 
 /**
- * Returns pointer to a list of entries for given `disk_id`; saves total count
- * of those entries to `count`.
+ * Runs iteration over all entries for given disk ID marked as dirty.
  */
-hd_cache_entry_t* hd_cache_get_entries(uint8_t disk_id, size_t* count);
+void hd_cache_iterate_dirty(
+    uint8_t disk_id,
+    void (*callback)(hd_cache_entry_t* entry, void* arg),
+    void* arg
+);
 
 /**
  * Clears cache for given disk ID.

@@ -2,17 +2,65 @@
 #include "kernel/memory/kmalloc.h"
 #include <string.h>
 
-// TODO: improvements to caching
-// - track reading frequency of block - if high, maybe we should consider
-//   keeping it in memory instead of deallocating after flush?
+#define STARTING_POPULARITY 10
+#define POPULARITY_INCREMENT 1
+#define POPULARITY_DECREMENT 1
+#define POPULARITY_MAX 255
+#define MAX_ENTRIES_PER_DISK 128
+
+#define min(a, b) ((a < b) ? a : b)
 
 /**
- * Two-dimensional array. First dimension is disk ID, second dimension grows
- * on request.
+ * Heads and tails of lists, indexed by disk ID
  */
-static hd_cache_entry_t** cache_entries = NULL;
+static hd_cache_entry_t** cache_entry_heads = NULL;
+static hd_cache_entry_t** cache_entry_tails = NULL;
 static size_t* cache_count_per_disk = NULL;
 static size_t disk_count = 0;
+
+static inline void popularity_inc(hd_cache_entry_t* entry)
+{
+    entry->popularity = min(
+        entry->popularity + POPULARITY_INCREMENT,
+        POPULARITY_MAX
+    );
+}
+
+static inline void popularity_dec(hd_cache_entry_t* entry)
+{
+    if (entry->popularity <= POPULARITY_DECREMENT) {
+        entry->popularity = 0;
+        return;
+    }
+    entry->popularity -= POPULARITY_DECREMENT;
+}
+
+/**
+ * Update location of passed entry based on popularity
+ */
+static void hd_cache_sort(size_t disk_id, hd_cache_entry_t* entry)
+{
+    while (entry->prev != NULL && entry->prev->popularity < entry->popularity) {
+        hd_cache_entry_t* prev = entry->prev;
+        if (prev->prev != NULL) {
+            prev->prev->next = entry;
+        }
+        if (entry->next != NULL) {
+            entry->next->prev = prev;
+        }
+        prev->next = entry->next;
+        entry->prev = prev->prev;
+        entry->next = prev;
+        prev->prev = entry;
+
+        if (entry == cache_entry_tails[disk_id]) {
+            cache_entry_tails[disk_id] = prev;
+        }
+        if (prev == cache_entry_heads[disk_id]) {
+            cache_entry_heads[disk_id] = entry;
+        }
+    }
+}
 
 /**
  * If given sector at a disk exists, copy it's content to `buf` and return
@@ -25,16 +73,19 @@ bool hd_cache_seek(const uint8_t disk_id, const size_t lba, uint8_t* buf)
         return false;
     }
 
-    hd_cache_entry_t* entries = cache_entries[disk_id];
-    for (size_t i = 0; i < cache_count_per_disk[disk_id]; i++) {
-        if (entries[i].sector_lba == lba) {
+    hd_cache_entry_t* entry = cache_entry_heads[disk_id];
+    while (entry != NULL) {
+        if (entry->sector_lba == lba) {
             memcpy(
                 buf,
-                entries[i].content,
-                entries[i].sector_size
+                entry->content,
+                entry->sector_size
             );
+            popularity_inc(entry);
+            hd_cache_sort(disk_id, entry);
             return true;
         }
+        entry = entry->next;
     }
 
     // LBA not found
@@ -50,21 +101,28 @@ void hd_cache_upsert(
 ) {
     // Update existing entry if present
     if (disk_count >= ((size_t)disk_id + 1)) {
-        hd_cache_entry_t* entries = cache_entries[disk_id];
-        for (size_t i = 0; i < cache_count_per_disk[disk_id]; i++) {
-            if (entries[i].sector_lba == lba) {
-                memcpy(entries[i].content, buf, entries[i].sector_size);
-                entries[i].is_dirty = dirty;
+        hd_cache_entry_t* entry = cache_entry_heads[disk_id];
+        while (entry != NULL) {
+            if (entry->sector_lba == lba) {
+                memcpy(entry->content, buf, entry->sector_size);
+                entry->is_dirty = dirty;
+                popularity_inc(entry);
+                hd_cache_sort(disk_id, entry);
                 return;
             }
+            entry = entry->next;
         }
     }
 
-    // Entry not found — initialize disk slot if needed and insert
+    // Entry not found. First check if we need to setup disk slot
     if (disk_count < ((size_t)disk_id + 1)) {
         size_t new_disk_count = disk_id + 1;
-        cache_entries = krealloc(
-            cache_entries,
+        cache_entry_heads = krealloc(
+            cache_entry_heads,
+            sizeof(hd_cache_entry_t*) * new_disk_count
+        );
+        cache_entry_tails = krealloc(
+            cache_entry_tails,
             sizeof(hd_cache_entry_t*) * new_disk_count
         );
         cache_count_per_disk = krealloc(
@@ -72,35 +130,56 @@ void hd_cache_upsert(
             sizeof(size_t) * new_disk_count
         );
         for (size_t i = disk_count; i < new_disk_count; i++) {
-            cache_entries[i] = NULL;
+            cache_entry_heads[i] = NULL;
+            cache_entry_tails[i] = NULL;
             cache_count_per_disk[i] = 0;
         }
         disk_count = new_disk_count;
     }
 
-    size_t index = cache_count_per_disk[disk_id];
-    cache_entries[disk_id] = krealloc(
-        cache_entries[disk_id],
-        sizeof(hd_cache_entry_t) * (index + 1)
+    // Allocate new entry for cache
+    hd_cache_entry_t* new_entry = kmalloc_flags(
+        sizeof(hd_cache_entry_t),
+        KMALLOC_ZERO
     );
-    cache_entries[disk_id][index].sector_size = sector_size;
-    cache_entries[disk_id][index].sector_lba = lba;
-    cache_entries[disk_id][index].is_dirty = dirty;
-    cache_entries[disk_id][index].content = kmalloc(sector_size);
-    memcpy(cache_entries[disk_id][index].content, buf, sector_size);
-    cache_count_per_disk[disk_id]++;
-}
+    new_entry->sector_size = sector_size;
+    new_entry->sector_lba = lba;
+    new_entry->is_dirty = dirty;
+    new_entry->popularity = STARTING_POPULARITY;
+    new_entry->content = kmalloc(sector_size);
+    memcpy(new_entry->content, buf, sector_size);
 
-hd_cache_entry_t* hd_cache_get_entries(uint8_t disk_id, size_t* count)
-{
-    // Cache not initialized
-    if (disk_count < ((size_t)disk_id + 1)) {
-        *count = 0;
-        return NULL;
+    // Add entry to the end of the list
+    new_entry->prev = cache_entry_tails[disk_id];
+    if (cache_entry_tails[disk_id] != NULL) {
+        cache_entry_tails[disk_id]->next = new_entry;
+    }
+    cache_entry_tails[disk_id] = new_entry;
+    // Handle case where this entry is the first one
+    if (cache_entry_heads[disk_id] == NULL) {
+        cache_entry_heads[disk_id] = new_entry;
     }
 
-    *count = cache_count_per_disk[disk_id];
-    return cache_entries[disk_id];
+    cache_count_per_disk[disk_id]++;
+    hd_cache_sort(disk_id, new_entry);
+}
+
+void hd_cache_iterate_dirty(
+    uint8_t disk_id,
+    void (*callback)(hd_cache_entry_t* entry, void* arg),
+    void* arg
+) {
+    if (disk_count < ((size_t)disk_id + 1)) {
+        return;
+    }
+
+    hd_cache_entry_t* entry = cache_entry_heads[disk_id];
+    while (entry != NULL) {
+        if (entry->is_dirty) {
+            callback(entry, arg);
+        }
+        entry = entry->next;
+    }
 }
 
 void hd_cache_clear(uint8_t disk_id)
@@ -110,11 +189,39 @@ void hd_cache_clear(uint8_t disk_id)
         return;
     }
 
-    hd_cache_entry_t* entries = cache_entries[disk_id];
-    for (size_t i = 0; i < cache_count_per_disk[disk_id]; i++) {
-        kfree(entries[i].content);
+    size_t entries_count = cache_count_per_disk[disk_id];
+    // The forced minimum number of items to be removed
+    size_t forced_cut = (entries_count > MAX_ENTRIES_PER_DISK)
+        ? (entries_count - MAX_ENTRIES_PER_DISK)
+        : 0;
+
+    hd_cache_entry_t* entry = cache_entry_tails[disk_id];
+    while (entry != NULL) {
+        popularity_dec(entry);
+        hd_cache_entry_t* prev_entry = entry->prev;
+
+        if (entry->popularity == 0 || forced_cut > 0) {
+            if (prev_entry != NULL) {
+                prev_entry->next = entry->next;
+            }
+            if (entry->next != NULL) {
+                entry->next->prev = prev_entry;
+            }
+            if (cache_entry_tails[disk_id] == entry) {
+                cache_entry_tails[disk_id] = prev_entry;
+            }
+            if (cache_entry_heads[disk_id] == entry) {
+                cache_entry_heads[disk_id] = entry->next;
+            }
+            kfree(entry->content);
+            kfree(entry);
+
+            if (forced_cut > 0) {
+                forced_cut--;
+            }
+            cache_count_per_disk[disk_id]--;
+        }
+
+        entry = prev_entry;
     }
-    kfree(cache_entries[disk_id]);
-    cache_entries[disk_id] = NULL;
-    cache_count_per_disk[disk_id] = 0;
 }
