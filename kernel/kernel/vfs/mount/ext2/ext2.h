@@ -4,11 +4,13 @@
 #include <stdint.h>
 #include "kernel/vfs/vfs.h"
 
-#define EXT2_TYPE_CHARACTER_DEVICE 0x2000
-#define EXT2_TYPE_DIRECTORY        0x4000
-#define EXT2_TYPE_BLOCK_DEVICE     0x6000
-#define EXT2_TYPE_FILE             0x8000
-#define EXT2_TYPE_SYMLINK          0xA000
+typedef enum {
+    EXT2_TYPE_CHARACTER_DEVICE = 0x2000,
+    EXT2_TYPE_DIRECTORY = 0x4000,
+    EXT2_TYPE_BLOCK_DEVICE = 0x6000,
+    EXT2_TYPE_FILE = 0x8000,
+    EXT2_TYPE_SYMLINK = 0xA000,
+} ext2_type_t;
 
 typedef struct __attribute__((packed)) {
     uint32_t total_inodes;
@@ -210,6 +212,20 @@ size_t ext2_block_id_to_addr(
     ext2_inode_t* inode,
     size_t block_id,
     size_t block_size
+);
+
+/**
+ * Creates a new inode with given type and adds it to parent inode under given
+ * name.
+ *
+ * On success, saves created result in `result` pointer and returns inode value.
+ * On failure returns 0.
+ */
+uint32_t ext2_create_inode(
+    vfs_node_t* parent_inode,
+    const char* name,
+    ext2_type_t type,
+    ext2_inode_t* result
 );
 
 inline uint8_t ext2_type_to_vfs(uint16_t type_and_permissions)
