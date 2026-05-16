@@ -5,5 +5,5 @@
 uint32_t sys_yield()
 {
     scheduler_yield();
-    return SYSCALL_SUCCESS;
+    return 0;
 }

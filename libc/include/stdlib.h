@@ -34,12 +34,20 @@ int atoi(const char* str);
  * character in *endptr. If there were no digits at all, strtol stores the
  * original value of str in *endptr. Returns the converted value or 0 if
  * no conversion could be performed.
+ *
+ * On error, this function will return 0 and set `errno` to one of following\
+ * values:
+ * - EINVAL - if `base` contains an unsupported value
  */
 long strtol(const char* str, char** endptr, int base);
 
 /**
  * Converts the initial portion of the string pointed to by str to
  * unsigned long int according to the given base (same rules as strtol).
+ *
+ * On error, this function will return 0 and set `errno` to one of following\
+ * values:
+ * - EINVAL - if `base` contains an unsupported value
  */
 unsigned long strtoul(const char* str, char** endptr, int base);
 
@@ -54,6 +62,9 @@ void exit(int status);
 /**
  * Allocates [size] bytes and returns a pointer to allocated memory. The memory
  * is not initialized.
+ *
+ * On error, this function can return NULL and set `errno` to any error value
+ * reported by `brk`.
  */
 void* malloc(size_t size);
 
@@ -74,6 +85,9 @@ void free(void* addr);
  * If the returned pointer is different than [ptr], then the original [ptr]
  * can be considered "freed" and doesn't need to be freed again. The resulting
  * new pointer has to be freed later.
+ *
+ * On error, this function can return NULL and set `errno` to any error value
+ * reported by `brk`.
  */
 void* realloc(void* ptr, size_t size);
 
@@ -86,6 +100,9 @@ void* realloc(void* ptr, size_t size);
  * 2. Verify multiplication overflow - if multiplication of count*size would
  *    cause an integer overflow, this function will return NULL instead of
  *    allocating an incorrect amount of space.
+ *
+ * On error, this function can return NULL and set `errno` to any error value
+ * reported by `brk`.
  */
 void* calloc(size_t count, size_t size);
 
@@ -99,13 +116,22 @@ char* getenv(const char* name);
 /**
  * Adds or updates the environment variable name to value. If overwrite is
  * zero and name already exists, the value is left unchanged. Returns 0 on
- * success, -1 on error.
+ * success.
+ *
+ * On error it returns -1 and sets `errno` to one of following values:
+ * - `EINVAL` - `name` is NULL, points to a string with length 0, or contains
+ *              an "=" character
+ * - `ENOMEM` - insufficient memory to add new variable to the environment
  */
 int setenv(const char* name, const char* value, int overwrite);
 
 /**
  * Removes the environment variable name. Returns 0 on success, -1 on error.
  * Not an error if name does not exist.
+ *
+ * On error it returns -1 and sets `errno` to one of following values:
+ * - `EINVAL` - `name` is NULL, points to a string with length 0, or contains
+ *              an "=" character
  */
 int unsetenv(const char* name);
 

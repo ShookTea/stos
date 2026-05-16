@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -6,20 +7,21 @@ long strtol(const char* str, char** endptr, int base)
 	long result = 0;
 	int sign = 1;
 	const char* start = str;
-	
+
 	/* Validate base */
 	if (base < 0 || base == 1 || base > 36) {
 		if (endptr) {
 			*endptr = (char*)str;
 		}
+		errno = EINVAL;
 		return 0;
 	}
-	
+
 	/* Skip leading whitespace */
 	while (isspace(*str)) {
 		str++;
 	}
-	
+
 	/* Handle optional sign */
 	if (*str == '-') {
 		sign = -1;
@@ -27,7 +29,7 @@ long strtol(const char* str, char** endptr, int base)
 	} else if (*str == '+') {
 		str++;
 	}
-	
+
 	/* Handle base detection and prefixes */
 	if (base == 0) {
 		if (*str == '0') {
@@ -46,12 +48,12 @@ long strtol(const char* str, char** endptr, int base)
 			str += 2;
 		}
 	}
-	
+
 	/* Convert digits */
 	int found_digit = 0;
 	while (*str) {
 		int digit;
-		
+
 		if (isdigit(*str)) {
 			digit = *str - '0';
 		} else if (isalpha(*str)) {
@@ -63,17 +65,17 @@ long strtol(const char* str, char** endptr, int base)
 		} else {
 			break;
 		}
-		
+
 		/* Check if digit is valid for the base */
 		if (digit >= base) {
 			break;
 		}
-		
+
 		found_digit = 1;
 		result = result * base + digit;
 		str++;
 	}
-	
+
 	/* Set endptr */
 	if (endptr) {
 		if (found_digit) {
@@ -82,6 +84,6 @@ long strtol(const char* str, char** endptr, int base)
 			*endptr = (char*)start;
 		}
 	}
-	
+
 	return sign * result;
 }

@@ -1,4 +1,5 @@
 #include "../syscall.h"
+#include <errno.h>
 #include "kernel/task/scheduler.h"
 #include "kernel/task/wait.h"
 
@@ -10,9 +11,9 @@ int sys_sleep(
 ) {
     task_t* current = scheduler_get_current_task();
     if (current == NULL) {
-        return SYSCALL_ERROR;
+        return -ENOTSUP;
     }
 
     wait_sleep((duration->tv_nsec / 1000) + (duration->tv_spec * 1000));
-    return SYSCALL_SUCCESS;
+    return 0;
 }

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "kernel/debug.h"
 #include <string.h>
+#include <errno.h>
 #include "../syscall.h"
 #include "kernel/memory/pmm.h"
 #include "kernel/memory/vmm.h"
@@ -21,7 +22,7 @@
  * - If addr > heap_end - expand heap, return new heap_end
  * - If addr < heap_end - shrink heap, return new heap_end
  */
-uint32_t sys_brk(uint32_t addr)
+int sys_brk(uint32_t addr)
 {
     task_t* task = scheduler_get_current_task();
     if (task == NULL) {
@@ -49,7 +50,7 @@ uint32_t sys_brk(uint32_t addr)
             task->heap_max,
             task->pid
         );
-        return SYSCALL_ERROR;
+        return -ENOMEM;
     }
 
     uint32_t old_heap_end = PAGE_ALIGN_UP(task->heap_end);

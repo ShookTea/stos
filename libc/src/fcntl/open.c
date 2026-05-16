@@ -1,5 +1,6 @@
 #if !(defined(__is_libk))
 
+#include <errno.h>
 #include <sys/syscall.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -14,7 +15,12 @@ int open(const char* path, int flags)
     }
 
     int res = syscall(SYS_OPEN, (int)path, flags, 0);
+    if (res < 0) {
+        errno = -res;
+        return -1;
+    }
     if (res < 3) { // Entries 0-2 are reserved for stdin/out/err
+        errno = ENOTSUP;
         return -1;
     }
 

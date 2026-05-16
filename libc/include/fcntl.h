@@ -21,12 +21,20 @@ extern "C" {
  *
  * The flags start with O_ prefix. One of O_RDONLY, O_WRONLY, or O_RDWR must be
  * included.
+ *
+ * On error -1 is returned and `errno` is set to one of following values:
+ * - ENOENT - if there is no file under given path
+ * - EIO - on I/O error
+ * - ENOTSUP - on unsupported operation and other unknown errors
  */
 int open(const char* path, int flags);
 
 /**
  * Closes a file descriptor, so it no longer refers to any file and can be
  * reused. It returns 0 on success, or -1 on error.
+ *
+ * On error -1 is returned and `errno` is set to one of following values:
+ * - ENOTSUP - on unsupported operation and other unknown errors
  */
 int close(int fd);
 

@@ -1,4 +1,5 @@
 #include "../syscall.h"
+#include <errno.h>
 #include "kernel/memory/kmalloc.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
@@ -9,7 +10,7 @@ uint32_t sys_open(const char* path, uint32_t flags)
 {
     task_t* current = scheduler_get_current_task();
     if (current == NULL) {
-        return SYSCALL_ERROR;
+        return -ENOTSUP;
     }
 
     dentry_t* node = vfs_resolve_relative(
@@ -18,12 +19,12 @@ uint32_t sys_open(const char* path, uint32_t flags)
         path
     );
     if (node == NULL) {
-        return SYSCALL_ERROR;
+        return -ENOENT;
     }
 
     vfs_file_t* handler = vfs_open(node, flags);
     if (handler == NULL) {
-        return SYSCALL_ERROR;
+        return -EIO;
     }
 
     // First try to find first existing identifier that is already allocated but

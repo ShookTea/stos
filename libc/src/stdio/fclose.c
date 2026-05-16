@@ -1,10 +1,7 @@
 #if !(defined(__is_libk))
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <fcntl.h>
-#include <string.h>
-
 
 int fclose(FILE* stream)
 {

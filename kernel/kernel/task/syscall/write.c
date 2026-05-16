@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <errno.h>
 #include "../syscall.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
@@ -46,7 +47,7 @@ int sys_write(int fd_id, const void* buf, size_t count)
 
     task_file_descriptor_t* fd = get_descriptor(fd_id);
     if (fd == NULL) {
-        return -1;
+        return -EBADF;
     }
 
     size_t result = vfs_write(fd->file, count, buf);

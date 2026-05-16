@@ -13,7 +13,9 @@ void* calloc(size_t count, size_t size)
     }
 
     void* space = malloc(final_size);
-    memset(space, 0, final_size);
+    if (space != NULL) {
+        memset(space, 0, final_size);
+    }
     return space;
 }
 

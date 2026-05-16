@@ -1,7 +1,8 @@
+#include <stdbool.h>
+#include <errno.h>
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "../syscall.h"
-#include <stdbool.h>
 
 static task_t* find_child(task_t* parent, int pid)
 {
@@ -28,7 +29,7 @@ int sys_wait(int pid, int* status_code, int options)
 {
     task_t* curr = scheduler_get_current_task();
     if (curr == NULL) {
-        return SYSCALL_ERROR;
+        return -ENOTSUP;
     }
 
     if (options & SYS_WAIT_OPT_NO_HANG) {
@@ -38,7 +39,7 @@ int sys_wait(int pid, int* status_code, int options)
         if (pid > 0) {
             task_t* child = find_child(curr, pid);
             if (child == NULL) {
-                return SYSCALL_ERROR; // TODO: set error code
+                return -ECHILD;
             } else if (child->state != TASK_ZOMBIE) {
                 return 0; // Special case, when PID exists but is not zombie
             }
@@ -47,7 +48,7 @@ int sys_wait(int pid, int* status_code, int options)
         } else {
             // PID=0 passed - does the task have any children at all?
             if (curr->first_child == NULL) {
-                return SYSCALL_ERROR; // TODO: set error code
+                return -ECHILD;
             }
             // Check if there is any zombie child
             task_t* zombie = find_any_zombie_child(curr);
@@ -62,5 +63,5 @@ int sys_wait(int pid, int* status_code, int options)
         return reaped_pid;
     }
 
-    return SYSCALL_ERROR; // TODO: analyze return value and set error code
+    return -ENOTSUP; // TODO: analyze return value and set error code
 }

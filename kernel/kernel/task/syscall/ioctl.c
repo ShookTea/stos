@@ -1,3 +1,4 @@
+#include <errno.h>
 #include "../syscall.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
@@ -34,13 +35,13 @@ int sys_ioctl(int fd_id, int op, void* arg)
     // Get file descriptor
     task_file_descriptor_t* fd = get_descriptor(fd_id);
     if (fd == NULL) {
-        return SYSCALL_ERROR;
+        return -EBADF;
     }
 
     vfs_file_t* file = fd->file;
 
     if (file->dentry->inode->ioctl_node == NULL) {
-        return SYSCALL_ERROR; // TODO: mark correct error status ("not a TTY")
+        return -ENOTTY;
     }
 
     return fd->file->dentry->inode->ioctl_node(file, op, arg);

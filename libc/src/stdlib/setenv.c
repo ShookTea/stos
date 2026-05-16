@@ -1,3 +1,4 @@
+#include <errno.h>
 #if !(defined(__is_libk))
 
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 int setenv(const char* name, const char* value, int overwrite)
 {
     if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL) {
+        errno = EINVAL;
         return -1;
     }
 

@@ -40,6 +40,12 @@ int wait(int* status_code);
  *   specified PID (if specified)
  * - the function will return 0 if current process has a child with specified
  *   PID (or any child, if PID is not specified), but has not stopped yet.
+ *
+ * In case of failures `errno` will be set to one of following values:
+ * - ECHILD - if `pid` is set to 0 and process doesn't have any children
+ * - ECHILD - if `pid` is greater than 0 and process doesn't have a child with
+ *            given PID.
+ * - ENOTSUP - other unsupported errors
  */
 int waitpid(int pid, int* status_code, int options);
 

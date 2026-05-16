@@ -27,7 +27,9 @@ int getopt(int argc, char *argv[], const char *optstring);
 /**
  * Writes up to [count] bytes from the buffer to the file referred to by file
  * descriptor fd. On success returns the number of written bytes; on error -1
- * is returned.
+ * is returned and `errno` is set to one of following values:
+ * - EBADF - `fd` is not valid descriptor or is not open for writing
+ * - EFAULT - `buffer` is outside accessible address space
  */
 int write(int fd, const void* buffer, size_t count);
 
@@ -35,7 +37,10 @@ int write(int fd, const void* buffer, size_t count);
  * Reads up to [count] bytes from given file descriptor into the buffer starting
  * at [buf].
  * On success, returns the number of read bytes (zero indicates end of file),
- * and the file position is advanced by this number. On error -1 is returned.
+ * and the file position is advanced by this number. On error -1 is returned and
+ * `errno` is set to one of following values:
+ * - EBADF - `fd` is not valid descriptor or is not open for reading
+ * - EFAULT - `buffer` is outside accessible address space
  */
 int read(int fd, void* buf, size_t count);
 
@@ -63,6 +68,8 @@ uint32_t getppid(void);
  *
  * If [addr] is smaller than the current program break, this function will
  * decrease the heap size and return the new address of the program break.
+ *
+ * On error, this function will return (void*)-1 and set `errno` to `ENOMEM`.
  */
 void* brk(void* addr);
 
@@ -73,7 +80,7 @@ void* brk(void* addr);
  * On success, it returns the previous program break, which mean that (in case
  * of increasing the heap) it can be used as a pointer to newly allocated area.
  *
- * In case of error it will return (void*)-1.
+ * On error, this function will return (void*)-1 and set `errno` to `ENOMEM`.
  */
 void* sbrk(intptr_t increment);
 

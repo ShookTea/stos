@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <errno.h>
 #include "../syscall.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
@@ -38,7 +39,7 @@ int sys_lseek(int fd_id, int offset, int whence)
     task_file_descriptor_t* fd = get_descriptor(fd_id);
     if (fd == NULL) {
         // TODO: set error
-        return SYSCALL_ERROR;
+        return -EBADF;
     }
 
     int new_offset = 0;
@@ -53,8 +54,7 @@ int sys_lseek(int fd_id, int offset, int whence)
             new_offset = fd->file->dentry->inode->length + offset;
             break;
         default:
-            // TODO: set error for wrong whence value
-            return SYSCALL_ERROR;
+            return -EINVAL;
     }
 
     vfs_seek(fd->file, new_offset);

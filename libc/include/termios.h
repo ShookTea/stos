@@ -32,14 +32,19 @@ extern "C" {
  * `optional_action` defines the way ioctl is updated:
  * - `TCSANOW` - the change will occur immediately.
  *
- * It will return 0 on success.
+ * It will return 0 on success. On error it will return -1 and set `errno` to
+ * one of following values:
+ * - EINVAL - if `optional_action` is invalid
+ * - any error reported by `ioctl_tty`
  */
 int tcsetattr(int fd, int optional_action, const struct termios* termios_p);
 
 /**
  * Loads parameters of TTY refrerred to by open file descriptor `fd`.
  *
- * It will return 0 on success.
+ * It will return 0 on success. On error it will return -1 and set `errno` to
+ * one of following values:
+ * - any error reported by `ioctl_tty`
  */
 int tcgetattr(int fd, struct termios* termios_p);
 

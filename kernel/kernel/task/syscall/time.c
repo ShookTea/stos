@@ -1,13 +1,14 @@
-#include "../syscall.h"
 #include <time.h>
 #include <stddef.h>
+#include <errno.h>
+#include "../syscall.h"
 
 int sys_time(time_t* result_ptr)
 {
     if (result_ptr == NULL) {
-        return SYSCALL_ERROR;
+        return -EFAULT;
     }
     // time.h as a libk variant that converts internal time to Unix timestamp
     time(result_ptr);
-    return SYSCALL_SUCCESS;
+    return 0;
 }

@@ -1,11 +1,12 @@
+#include <string.h>
+#include <stdint.h>
+#include <errno.h>
 #include "../syscall.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/memory/vmm.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
-#include <string.h>
-#include <stdint.h>
 
 /* Safety cap to prevent malicious/buggy programs from exhausting kernel heap */
 #define EXEC_MAX_ARGS    64
@@ -71,7 +72,7 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
 {
     task_t* current_task = scheduler_get_current_task();
     if (current_task == NULL) {
-        return SYSCALL_ERROR;
+        return -ENOTSUP;
     }
 
     dentry_t* node = vfs_resolve_relative(
@@ -80,22 +81,22 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
         path
     );
     if (node == NULL) {
-        return SYSCALL_ERROR;
+        return -ENOENT;
     }
     if (!(node->inode->type & VFS_TYPE_FILE)) {
-        return SYSCALL_ERROR;
+        return -EACCES;
     }
 
     vfs_file_t* file = vfs_open(node, VFS_MODE_READONLY);
     if (file == NULL) {
-        return SYSCALL_ERROR;
+        return -EIO;
     }
 
     size_t size = file->dentry->inode->length;
     void* buf = kmalloc(size);
     if (buf == NULL) {
         vfs_close(file);
-        return SYSCALL_ERROR;
+        return -ENOMEM;
     }
 
     vfs_read(file, size, buf);
@@ -111,12 +112,12 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
 
     if (exec_copy_string_array(uargv, &argv, &argc) < 0) {
         kfree(buf);
-        return SYSCALL_ERROR;
+        return -EFAULT;
     }
     if (exec_copy_string_array(uenvp, &envp, &envc) < 0) {
         exec_free_string_array(argv, argc);
         kfree(buf);
-        return SYSCALL_ERROR;
+        return -EFAULT;
     }
 
     int ret = task_exec(buf, size, argc, argv, envc, envp);

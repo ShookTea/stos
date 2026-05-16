@@ -31,7 +31,10 @@ int putchar(int);
 
 /**
  * Writes a null-terminated string + a newline to stdout. Returns the number of
- * bytes written (including the newline), or EOF in case of error.
+ * bytes written (including the newline).
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `printf`.
  */
 int puts(const char*);
 
@@ -41,6 +44,9 @@ int puts(const char*);
  *
  * Documentation in the sdtio/_stdio_format.c file gives more information about
  * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
  */
 int printf(const char* __restrict, ...);
 
@@ -50,6 +56,9 @@ int printf(const char* __restrict, ...);
  *
  * Documentation in the sdtio/_stdio_format.c file gives more information about
  * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
  */
 int vprintf(const char* __restrict, va_list list);
 
@@ -60,6 +69,9 @@ int vprintf(const char* __restrict, va_list list);
  *
  * Documentation in the sdtio/_stdio_format.c file gives more information about
  * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
  */
 int sprintf(char* restrict buffer, const char* restrict format, ...);
 
@@ -70,6 +82,9 @@ int sprintf(char* restrict buffer, const char* restrict format, ...);
  *
  * Documentation in the sdtio/_stdio_format.c file gives more information about
  * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
  */
 int vsprintf(char* restrict buffer, const char* restrict format, va_list list);
 
@@ -82,6 +97,9 @@ int vsprintf(char* restrict buffer, const char* restrict format, va_list list);
  *
  * Documentation in the sdtio/_stdio_format.c file gives more information about
  * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
  */
 int snprintf(char* restrict buffer, size_t n, const char* restrict format, ...);
 
@@ -94,6 +112,9 @@ int snprintf(char* restrict buffer, size_t n, const char* restrict format, ...);
  *
  * Documentation in the sdtio/_stdio_format.c file gives more information about
  * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
  */
 int vsnprintf(
     char* restrict buffer,
@@ -120,6 +141,10 @@ int vsnprintf(
  * -  "a" - open the file for appending (writing at the end of the file). The
  *          file is created if it doesn't exist.
  * - "a+" - open the file for reading and appending.
+ *
+ * On failure, it will return NULL and set `errno` to one of following values:
+ * - EINVAL - if `mode` provided to the function is invalid
+ * - any error that can be reported by `malloc` or `open`
  */
 FILE* fopen(const char* restrict path, const char* restrict mode);
 
@@ -132,6 +157,8 @@ FILE* fopen(const char* restrict path, const char* restrict mode);
  *
  * In both cases, it will return 0 after success or EOF on failure.
  *
+ * On error it can set any of errors defined in `write`.
+ *
  * TODO: if stream is NULL, it should flush all open output streams.
  */
 int fflush(FILE* stream);
@@ -139,6 +166,8 @@ int fflush(FILE* stream);
 /**
  * Flush the stream and close the underlying file descriptor. On success returns
  * 0, on failure returns EOF.
+ *
+ * On error it can set any of errors defined in `close`, `write` or `fflush`.
  */
 int fclose(FILE* stream);
 

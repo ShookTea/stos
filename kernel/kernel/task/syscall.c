@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <kernel/task/syscall_handler.h>
 #include <time.h>
+#include <errno.h>
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
 
@@ -15,12 +16,12 @@
 
 #define ptr_valid(ptr) \
     ((uint32_t)ptr >= VMM_USER_START && (uint32_t)ptr <= VMM_USER_END)
-#define assert_ptr(ptr) if (!ptr_valid(ptr)) { return SYSCALL_ERROR; }
+#define assert_ptr(ptr) if (!ptr_valid(ptr)) { return -EFAULT; }
 #define assert_range(ptr,size) if (\
     !ptr_valid(ptr) \
     || !ptr_valid((uint32_t)ptr + (uint32_t)size) \
     || (((uint32_t)ptr + (uint32_t)size) < ((uint32_t)ptr)) \
-    ) { return SYSCALL_ERROR; }
+    ) { return -EFAULT; }
 
 static uint32_t syscall_int_handler(
     uint32_t syscall_num,
@@ -100,7 +101,7 @@ static uint32_t syscall_int_handler(
         }
         default:
             _debug_printf("Unknown syscall: %d\n", syscall_num);
-            return SYSCALL_ERROR;
+            return -ENOTSUP;
     }
 }
 

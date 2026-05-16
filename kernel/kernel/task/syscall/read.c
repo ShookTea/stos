@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <errno.h>
 #include "../syscall.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
@@ -37,7 +38,7 @@ int sys_read(int fd_id, void* buf, size_t count)
     // Get file descriptor
     task_file_descriptor_t* fd = get_descriptor(fd_id);
     if (fd == NULL) {
-        return SYSCALL_ERROR;
+        return -EBADF;
     }
 
     size_t result = vfs_read(fd->file, count, buf);

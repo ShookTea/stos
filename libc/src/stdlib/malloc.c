@@ -1,3 +1,4 @@
+#include <errno.h>
 #if !(defined(__is_libk))
 
 #include <stddef.h>
@@ -117,6 +118,7 @@ void* malloc(size_t size)
         __stdlib_mem_init();
         heap_start = __stdlib_mem_get_heap_start();
         if (heap_start == (void*)-1) {
+            errno = ENOMEM;
             return NULL;
         }
 
@@ -152,6 +154,7 @@ void* malloc(size_t size)
         entry = extend_heap(size);
         if (entry == NULL) {
             // We can't increase the heap in any way - returning
+            errno = ENOMEM;
             return NULL;
         }
     }

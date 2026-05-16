@@ -5,5 +5,5 @@
 uint32_t sys_exit(int status_code)
 {
     task_exit(status_code);
-    return SYSCALL_SUCCESS; // Never reached - task_exit is noreturn
+    return 0; // Never reached - task_exit is noreturn
 }
