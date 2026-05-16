@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "kernel/vfs/vfs.h"
 
+#define EXT2_TYPE_CHARACTER_DEVICE 0x2000
+#define EXT2_TYPE_DIRECTORY        0x4000
+#define EXT2_TYPE_BLOCK_DEVICE     0x6000
+#define EXT2_TYPE_FILE             0x8000
+#define EXT2_TYPE_SYMLINK          0xA000
+
 typedef struct __attribute__((packed)) {
     uint32_t total_inodes;
     uint32_t total_blocks;
@@ -209,11 +215,11 @@ size_t ext2_block_id_to_addr(
 inline uint8_t ext2_type_to_vfs(uint16_t type_and_permissions)
 {
     switch (type_and_permissions & 0xF000) {
-        case 0x4000: return VFS_TYPE_DIRECTORY;
-        case 0x8000: return VFS_TYPE_FILE;
-        case 0xA000: return VFS_TYPE_SYMLINK;
-        case 0x6000: return VFS_TYPE_BLOCK_DEVICE;
-        case 0x2000: return VFS_TYPE_CHARACTER_DEVICE;
+        case EXT2_TYPE_DIRECTORY: return VFS_TYPE_DIRECTORY;
+        case EXT2_TYPE_FILE: return VFS_TYPE_FILE;
+        case EXT2_TYPE_SYMLINK: return VFS_TYPE_SYMLINK;
+        case EXT2_TYPE_BLOCK_DEVICE: return VFS_TYPE_BLOCK_DEVICE;
+        case EXT2_TYPE_CHARACTER_DEVICE: return VFS_TYPE_CHARACTER_DEVICE;
         default: return VFS_TYPE_FILE;
     }
 }
