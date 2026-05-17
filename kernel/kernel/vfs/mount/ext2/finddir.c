@@ -66,6 +66,7 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
     result->inode = found_inode_num;
     result->length = child_ext2_inode->size_lo;
     result->on_release = ext2_on_release;
+    result->stat_node = ext2_stat;
 
     ext2_inode_metadata_t* child_meta = kmalloc_flags(
         sizeof(ext2_inode_metadata_t),
