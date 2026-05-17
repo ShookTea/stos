@@ -1,6 +1,7 @@
 #ifndef INCLUDE_KERNEL_VFS_H
 #define INCLUDE_KERNEL_VFS_H
 
+#include "sys/stat.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -135,6 +136,11 @@ typedef int (*ioctl_node_t)(vfs_file_t* file, uint32_t op, void* arg);
  * Forces saving of all pending changes to the filesystem.
  */
 typedef void (*sync_node_t)(const vfs_file_t* file);
+/**
+ * Populate stat struct with information about node. Return 0 on success; on
+ * error return one of possible errors as defined in `errno.h`.
+ */
+typedef int (*stat_node_t)(const struct vfs_node* node, struct stat* stat);
 
 /*
  * Basic definition of a single inode in the VFS. Contains file data and
@@ -160,6 +166,7 @@ typedef struct vfs_node {
     mkfile_node_t mkfile_node;
     ioctl_node_t ioctl_node;
     sync_node_t sync_node;
+    stat_node_t stat_node;
     void* metadata; // Data that can be used by filesystem
 } vfs_node_t;
 
@@ -181,6 +188,13 @@ void vfs_close(vfs_file_t* file);
 bool vfs_readdir(dentry_t* dentry, size_t index, struct dirent* out);
 dentry_t* vfs_finddir(dentry_t* dentry, const char* name);
 void vfs_sync(const vfs_file_t* file);
+/**
+ * Populate `stat` with stats about given `dentry`, and return `0` on success
+ * or one of `errno.h` values on failure. If given dentry is a soft link, then
+ * setting `link_ignore` to `true` will use stats of the soft link file itself,
+ * while setting it to `false` will follow the link.
+ */
+int vfs_stat(const dentry_t* dentry, struct stat* stat, bool link_ignore);
 
 void vfs_init();
 

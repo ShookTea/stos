@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <kernel/memory/kmalloc.h>
 #include <string.h>
+#include <errno.h>
 #include "kernel/debug.h"
 #include "./device/hd/hd.h"
 
@@ -299,6 +300,18 @@ void vfs_sync(const vfs_file_t* file)
     if (node->sync_node != NULL) {
         node->sync_node(file);
     }
+}
+
+int vfs_stat(
+    const dentry_t* dentry,
+    struct stat* stat,
+    bool link_ignore __attribute__((unused))
+) {
+    if (dentry->inode->stat_node != NULL) {
+        return dentry->inode->stat_node(dentry->inode, stat);
+    }
+    // TODO: handle soft links
+    return ENOTSUP;
 }
 
 dentry_t* vfs_resolve(const char* abs_path)
