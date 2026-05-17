@@ -3,7 +3,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
+#include <sys/stat.h>
 #include <time.h>
+#include "kernel/task/task.h"
 
 // Syscall numbers
 #define SYS_EXIT 0x00
@@ -54,6 +57,12 @@ int sys_ioctl(int fd, int op, void* arg);
 #define SYS_LSEEK 0x15
 int sys_lseek(int fd, int offset, int whence);
 
+#define SYS_STAT 0x16
+int sys_stat(const char* path, struct stat* stat, bool link_ignore);
+
+#define SYS_FSTAT 0x17
+int sys_fstat(int fd, struct stat* stat);
+
 #define SYS_BRK 0x20
 int sys_brk(uint32_t addr);
 
@@ -70,5 +79,10 @@ int sys_time(time_t* result_ptr);
  * Initializes syscall handling system.
  */
 void syscall_init();
+
+/**
+ * Returns valid descriptor by FD value
+ */
+task_file_descriptor_t* syscall_get_descriptor_by_fd(int fd);
 
 #endif

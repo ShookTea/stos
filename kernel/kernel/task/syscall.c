@@ -109,3 +109,30 @@ void syscall_init()
 {
     syscall_handler_register(syscall_int_handler);
 }
+
+task_file_descriptor_t* syscall_get_descriptor_by_fd(int fd)
+{
+    task_t* current = scheduler_get_current_task();
+    if (current == NULL) {
+        return NULL;
+    }
+
+    // Validate wrong FD values
+    if (fd < 0) {
+        return NULL;
+    }
+    if (fd < 3) {
+        // Reserved for stdin/out/err; currenty unsupported
+        // TODO: add support
+        return NULL;
+    }
+
+    for (size_t i = 0; i < current->fd_count; i++) {
+        if (current->fd[i]->file != NULL
+            && current->fd[i]->identifier == (uint32_t)fd) {
+            return current->fd[i];
+        }
+    }
+
+    return NULL;
+}
