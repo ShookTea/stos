@@ -24,7 +24,7 @@
 #include "test/kmalloc_tests.h"
 #include "test/libc_tests.h"
 
-#define MAX_COMMAND_LENGTH 64
+#define MAX_COMMAND_LENGTH 128
 
 static char command_buffer[MAX_COMMAND_LENGTH];
 static uint8_t command_length = 0;
@@ -74,7 +74,7 @@ static void handle_command_sent()
         return;
     }
 
-    char* args[3];
+    char** args = NULL;
     char* arg = strtok(command_buffer, " ");
     char* command = arg;
 
@@ -84,6 +84,7 @@ static void handle_command_sent()
 
     uint8_t argcount = 0;
     while ((arg = strtok(NULL, " ")) != NULL && argcount < 3) {
+        args = krealloc(args, sizeof(char*) * (argcount + 1));
         args[argcount] = arg;
         argcount++;
     }
@@ -624,6 +625,7 @@ static void handle_command_sent()
     else {
         printf("Unrecognized command: %s\n", command);
     }
+    kfree(args);
 }
 
 static dentry_t* tty_dentry = NULL;
