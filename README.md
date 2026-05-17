@@ -39,6 +39,8 @@ The libc library contains wrappers for all implemented syscalls.
 | `READ` | `0x13` | [`<unistd.h>`](libc/include/unistd.h) | `int read(int fd, void* buf, size_t count)` | Reads up to _count_ bytes from file descriptor _fd_ to _buffer_ |
 | `IOCTL` | `0x14` | [`<sys/ioctl.h>`](libc/include/sys/ioctl.h) | `int ioctl(int fd, int op, void* arg)` | Manipulates underlying device params of special files |
 | `LSEEK` | `0x15` | [`<unistd.h>`](libc/include/unistd.h) | `int lseek(int fd, int offset, int whence)` | Moves offset of the file descriptor _fd_ |
+| `STAT` | `0x16` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int stat(const char* restrict path, struct stat* restrict statbuf)` | Loads statistics about given file _path_ |
+| `FSTAT` | `0x17` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int fstat(int fd, struct stat* statbuf)` | Loads statistics about given file descriptor _fd_ |
 | _memory operations (`0x2n`)_ |   |   |   |   |
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 | _time operations (`0x3n`)_ |   |   |   |   |
