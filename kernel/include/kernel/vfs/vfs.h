@@ -123,6 +123,11 @@ typedef struct vfs_node* (*finddir_node_t)(struct vfs_node* node, char* name);
 // filesystem backend can persist the new directory entry on disk.
 // Returns true on success, false on failure.
 typedef bool (*mkdir_node_t)(struct vfs_node* node, const char* name);
+// Handler for creating a file named `name` inside directory `node`. Called by
+// vfs_mkdir after the in-memory dentry/inode are created, so the filesystem
+// backend can persist the new file entry on disk. Returns true on success,
+// false on failure.
+typedef bool (*mkfile_node_t)(struct vfs_node* node, const char* name);
 // Handler for ioctl syscall commands.
 typedef int (*ioctl_node_t)(vfs_file_t* file, uint32_t op, void* arg);
 /**
@@ -151,6 +156,7 @@ typedef struct vfs_node {
     readdir_node_t readdir_node;
     finddir_node_t finddir_node;
     mkdir_node_t mkdir_node;
+    mkfile_node_t mkfile_node;
     ioctl_node_t ioctl_node;
     sync_node_t sync_node;
     void* metadata; // Data that can be used by filesystem
@@ -234,6 +240,14 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type);
  * Returns the new dentry, or NULL if `parent` is NULL or not a directory.
  */
 dentry_t* vfs_mkdir(dentry_t* parent, const char* name);
+
+/**
+ * Creates a new file named `name` as a child of `parent`. The in-memory
+ * dentry and inode are always created. If the parent inode has a `mkfile_node`
+ * callback set, it is also called so a filesystem backend can persist the entry.
+ * Returns the new dentry, or NULL if `parent` is NULL or not a directory.
+ */
+dentry_t* vfs_mkfile(dentry_t* parent, const char* name);
 
 /**
  * Returns the real root dentry of the VFS.

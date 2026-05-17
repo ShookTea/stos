@@ -497,6 +497,33 @@ dentry_t* vfs_mkdir(dentry_t* parent, const char* name)
     return dentry;
 }
 
+dentry_t* vfs_mkfile(dentry_t* parent, const char* name)
+{
+    if (parent == NULL) {
+        return NULL;
+    }
+    if ((parent->inode->type & VFS_TYPE_DIRECTORY) == 0) {
+        return NULL;
+    }
+
+    vfs_node_t* inode = kmalloc_flags(sizeof(vfs_node_t), KMALLOC_ZERO);
+    vfs_populate_node(inode, (char*)name, VFS_TYPE_FILE);
+
+    dentry_t* dentry = vfs_dentry_create(parent, name, inode);
+
+    // If the parent filesystem provides a mkfile hook, call it so the file
+    // can be persisted on disk once a real filesystem is implemented.
+    if (parent->inode->mkfile_node != NULL) {
+        parent->inode->mkfile_node(parent->inode, name);
+    }
+
+    if (parent == vfs_root) {
+        add_entry_to_root_content(name, dentry);
+    }
+
+    return dentry;
+}
+
 dentry_t* vfs_get_real_root()
 {
     return vfs_root;

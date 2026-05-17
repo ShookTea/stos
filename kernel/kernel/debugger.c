@@ -100,6 +100,7 @@ static void handle_command_sent()
         puts("  mb2_data          - Prints GRUB multiboot2 data");
         puts("  memleak_test      - Runs memleak test");
         puts("  mkdir [P]         - Creates directory at absolute path [P]");
+        puts("  mkfile [P]        - Creates file at absolute path [P]");
         puts("  mount [D] [T] [F] - Mounts device [D] in target [T] with filesystem [F]");
         puts("  pag_stats         - Prints paging stats");
         puts("  pmm_stats         - Prints physical memory statistics");
@@ -260,6 +261,57 @@ static void handle_command_sent()
                             puts("Failed to create directory");
                         } else {
                             printf("Directory '%s' created\n", path);
+                        }
+                    }
+                }
+                kfree(parent_path);
+            }
+        }
+    }
+    else if (strcmp(command, "mkfile") == 0) {
+        if (argcount != 1) {
+            puts("mkfile requires 1 argument");
+        } else {
+            const char* path = args[0];
+            // Split path into parent directory and new file name
+            const char* last_slash = NULL;
+            for (const char* p = path; *p != '\0'; p++) {
+                if (*p == '/') last_slash = p;
+            }
+            if (last_slash == NULL || last_slash == path) {
+                // No slash or slash only at root: parent is root
+                const char* name = (last_slash == NULL) ? path : last_slash + 1;
+                if (*name == '\0') {
+                    puts("Invalid path: no directory name given");
+                } else {
+                    dentry_t* parent = vfs_root;
+                    dentry_t* result = vfs_mkfile(parent, name);
+                    if (result == NULL) {
+                        puts("Failed to create file");
+                    } else {
+                        printf("File '%s' created\n", name);
+                    }
+                }
+            } else {
+                // Temporarily split path at the last slash
+                size_t parent_len = last_slash - path;
+                char* parent_path = kmalloc(parent_len + 1);
+                memcpy(parent_path, path, parent_len);
+                parent_path[parent_len] = '\0';
+                const char* name = last_slash + 1;
+
+                if (*name == '\0') {
+                    puts("Invalid path: no directory name given");
+                } else {
+                    dentry_t* parent = vfs_resolve(parent_path);
+                    if (parent == NULL) {
+                        printf("Parent directory '%s' not found\n", parent_path);
+                    } else {
+                        dentry_t* result = vfs_mkfile(parent, name);
+                        if (result == NULL) {
+                            puts("Failed to create File");
+                        } else {
+                            printf("File '%s' created\n", path);
                         }
                     }
                 }
