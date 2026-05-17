@@ -4,7 +4,7 @@
 
 void ext2_write_inode(
     dentry_t* device,
-    uint32_t inode_num,
+    ino_t inode_num,
     uint32_t block_size,
     uint16_t inode_size,
     uint32_t inodes_per_group,

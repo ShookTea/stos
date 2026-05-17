@@ -49,7 +49,7 @@ bool ext2_ensure_dir_cache(vfs_node_t* node)
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
     ext2_inode_metadata_t* meta,
-    uint32_t inode_num
+    ino_t inode_num
 ) {
     uint32_t bs = meta->block_size;
     uint32_t block_group = (inode_num - 1) / meta->inodes_per_group;

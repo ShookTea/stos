@@ -2,6 +2,7 @@
 #define INCLUDE_KERNEL_SRC_VFS_MOUNT_EXT2_H
 
 #include <stdint.h>
+#include <sys/types.h>
 #include "kernel/vfs/vfs.h"
 
 typedef enum {
@@ -75,26 +76,26 @@ typedef struct __attribute__((packed)) {
  * Directory entry as stored on disk
  */
 typedef struct __attribute__((packed)) {
-    uint32_t inode;
+    ino_t inode;
     uint16_t rec_len;
-    uint8_t  name_len;
-    uint8_t  file_type;
-    char     name[];
+    uint8_t name_len;
+    uint8_t file_type;
+    char name[];
 } ext2_dir_entry_t;
 
 /**
  * Definition of inode
  */
 typedef struct __attribute__((packed)) {
-    uint16_t type_and_permissions;
-    uint16_t user_id;
+    mode_t type_and_permissions;
+    uid_t user_id;
     uint32_t size_lo;
     uint32_t last_access_time;
     uint32_t creation_time;
     uint32_t last_modification_time;
     uint32_t deletion_time;
-    uint16_t group_id;
-    uint16_t hard_links_count;
+    gid_t group_id;
+    nlink_t hard_links_count;
     uint32_t disk_sectors_count;
     uint32_t flags;
     uint32_t os_specific_val_1;
@@ -189,7 +190,7 @@ bool ext2_set_block_id(
  */
 void ext2_write_inode(
     dentry_t* device,
-    uint32_t inode_num,
+    ino_t inode_num,
     uint32_t block_size,
     uint16_t inode_size,
     uint32_t inodes_per_group,
@@ -199,7 +200,7 @@ void ext2_write_inode(
 ext2_inode_t* ext2_read_inode(
     vfs_file_t* file,
     ext2_inode_metadata_t* meta,
-    uint32_t inode_num
+    ino_t inode_num
 );
 
 bool ext2_ensure_dir_cache(vfs_node_t* node);
@@ -229,7 +230,7 @@ uint32_t ext2_create_inode(
     ext2_inode_t* result
 );
 
-inline uint8_t ext2_type_to_vfs(uint16_t type_and_permissions)
+inline uint8_t ext2_type_to_vfs(mode_t type_and_permissions)
 {
     switch (type_and_permissions & 0xF000) {
         case EXT2_TYPE_DIRECTORY: return VFS_TYPE_DIRECTORY;

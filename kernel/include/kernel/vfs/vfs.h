@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/types.h>
 
 /**
  * Header files for the Virtual File System. VFS is organized as a tree, with
@@ -144,7 +145,7 @@ typedef void (*sync_node_t)(const vfs_file_t* file);
 typedef struct vfs_node {
     char filename[VFS_MAX_FILENAME]; // Filesystem-internal name (used by filesystem callbacks)
     uint8_t type; // one of VFS_TYPE_
-    uint32_t inode; // File ID, device specific, to identify files (on a disk)
+    ino_t inode; // File ID, device specific, to identify files (on a disk)
     uint64_t length; // File size in bytes
     uint32_t open_count;
     // Called when open_count drops to 0. Set on dynamically-allocated nodes.
@@ -166,7 +167,7 @@ typedef struct vfs_node {
 struct dirent
 {
   char name[VFS_MAX_FILENAME]; // Filename.
-  uint32_t ino; // Inode number. Required by POSIX.
+  ino_t ino; // Inode number. Required by POSIX.
 };
 
 // The root dentry of the filesystem
