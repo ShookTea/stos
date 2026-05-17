@@ -141,6 +141,7 @@ void ext2_close(vfs_node_t* node, vfs_file_t* file);
 size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
 size_t ext2_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);
 bool ext2_mkdir(vfs_node_t* node, const char* name);
+bool ext2_mkfile(vfs_node_t* node, const char* name);
 
 /**
  * Scan group bitmaps, mark the first free block as used, update the group

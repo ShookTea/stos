@@ -81,6 +81,7 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
         result->readdir_node = ext2_readdir;
         result->finddir_node = ext2_finddir;
         result->mkdir_node = ext2_mkdir;
+        result->mkfile_node = ext2_mkfile;
     } else {
         result->open_node = ext2_open;
         result->close_node = ext2_close;

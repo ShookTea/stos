@@ -141,6 +141,7 @@ vfs_mount_result_t vfs_mount_ext2(
     inode->readdir_node = ext2_readdir;
     inode->finddir_node = ext2_finddir;
     inode->mkdir_node = ext2_mkdir;
+    inode->mkfile_node = ext2_mkfile;
 
     kfree(buf);
     vfs_close(file);
