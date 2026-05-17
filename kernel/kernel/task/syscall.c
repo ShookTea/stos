@@ -9,6 +9,7 @@
 #include <errno.h>
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
+#include "sys/stat.h"
 
 #define _debug_puts(...) debug_puts_c(DBC_SYSCALL, __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c(DBC_SYSCALL, __VA_ARGS__)
@@ -93,6 +94,18 @@ static uint32_t syscall_int_handler(
             return sys_ioctl((int)arg1, (int)arg2, buf);
         }
         case SYS_LSEEK: return sys_lseek((int)arg1, (int)arg2, (int)arg3);
+        case SYS_STAT: {
+            const char* path = (const char*)arg1;
+            struct stat* stat = (struct stat*)arg2;
+            assert_range(path, VFS_MAX_PATH_LENGTH);
+            assert_range(stat, sizeof(struct stat));
+            return sys_stat(path, stat, (bool)arg3);
+        }
+        case SYS_FSTAT: {
+            struct stat* stat = (struct stat*)arg2;
+            assert_range(stat, sizeof(struct stat));
+            return sys_fstat((int)arg1, stat);
+        }
         case SYS_BRK: return sys_brk(arg1);
         case SYS_UNIXTIME: {
             time_t* res_ptr = (time_t*)arg1;
