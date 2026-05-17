@@ -23,6 +23,8 @@
 #define SYS_READ        0x13 // int read(int fd, void* buf, size_t count)
 #define SYS_IOCTL       0x14 // int ioctl(int fd, int op, void* arg)
 #define SYS_LSEEK       0x15 // int lseek(int fd, int offset, int whence)
+#define SYS_STAT        0x16 // int stat(const char* path, struct stat* statbuf)
+#define SYS_FSTAT       0x17 // int fstat(int fd, struct stat* statbuf)
 
 // Memory operations
 #define SYS_BRK         0x20 // uint32_t brk(void* addr)

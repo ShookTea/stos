@@ -22,4 +22,36 @@ struct stat {
     struct timespec st_ctim; // Creation time
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if !(defined(__is_libk))
+
+/**
+ * Loads stats about given `path` and stores them in `statbuf`. On success
+ * returns 0, on failure returns -1 and sets `errno` to a value.
+ */
+int stat(const char* restrict path, struct stat* restrict statbuf);
+
+/**
+ * Loads stats about file described in file descriptor `fd` and stores them
+ * in `statbuf`. On success returns 0, on failure returns -1 and sets `errno`
+ * to a value.
+ */
+int fstat(int fd, struct stat* statbuf);
+
+/**
+ * Behaves similarly to `stat`, but if `path` points to a soft link file, it
+ * will use statistics about that file instead of the one pointed to by the
+ * soft link.
+ */
+int lstat(const char* restrict path, struct stat* restrict statbuf);
+
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
