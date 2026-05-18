@@ -60,7 +60,7 @@ int printf(const char* __restrict, ...);
  * In case of error, EOF is returned and `errno` can be set to any value defined
  * in `write`.
  */
-int vprintf(const char* __restrict, va_list list);
+int vprintf(const char* restrict format, va_list list);
 
 /**
  * Formats tring and puts the output into the buffer, followed by a NULL byte.
@@ -171,7 +171,55 @@ int fflush(FILE* stream);
  */
 int fclose(FILE* stream);
 
-#endif
+/**
+ * Prints formatted string to `stream`. Returns the number of characters
+ * written, or EOF in case of error.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
+ */
+int fprintf(FILE* restrict stream, const char* restrict format, ...);
+
+/**
+ * Prints formatted string to `stream` using va_list argument. Returns the
+ * number of characters written, or EOF in case of error.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
+ */
+int vfprintf(FILE* restrict stream, const char* restrict format, va_list list);
+
+/**
+ * Prints formatted string to file descriptor `fd`. Returns the number of
+ * characters written, or EOF in case of error.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
+ */
+int dprintf(int fd, const char* restrict format, ...);
+
+/**
+ * Prints formatted string to file descriptor `fd` using va_list argument.
+ * Returns the number of characters written, or EOF in case of error.
+ *
+ * Documentation in the sdtio/_stdio_format.c file gives more information about
+ * format placeholders.
+ *
+ * In case of error, EOF is returned and `errno` can be set to any value defined
+ * in `write`.
+ */
+int vdprintf(int fd, const char* restrict format, va_list list);
+
+#endif // #if !(defined(__is_libk))
 
 #ifdef __cplusplus
 }

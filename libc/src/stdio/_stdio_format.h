@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#define STDIO_BUF_SIZE 128
+
 typedef struct __stdio_format_out {
     /**
      * Function that emits a character and returns the number of outputted
@@ -14,7 +16,11 @@ typedef struct __stdio_format_out {
     /** Different output channels */
     union {
         /** File descriptor ID (unistd.h -> write()) */
-        struct { int fd; } fd;
+        struct {
+            int fd;
+            char buf[STDIO_BUF_SIZE]; // current buffer
+            size_t len; // Current length of the buffer
+        } fd;
         /** String buffer */
         struct {
             /** Pointer to buffer */
