@@ -83,12 +83,13 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
         result->finddir_node = ext2_finddir;
         result->mkdir_node = ext2_mkdir;
         result->mkfile_node = ext2_mkfile;
+    } else if (vfs_type == VFS_TYPE_SYMLINK) {
+        result->readlink_node = ext2_readlink;
     } else {
         result->open_node = ext2_open;
         result->close_node = ext2_close;
         result->read_node = ext2_read;
         result->write_node = ext2_write;
-        result->readlink_node = ext2_readlink;
     }
 
     kfree(child_ext2_inode);
