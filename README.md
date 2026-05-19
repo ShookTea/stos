@@ -41,6 +41,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `LSEEK` | `0x15` | [`<unistd.h>`](libc/include/unistd.h) | `int lseek(int fd, int offset, int whence)` | Moves offset of the file descriptor _fd_ |
 | `STAT` | `0x16` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int stat(const char* restrict path, struct stat* restrict statbuf)` | Loads statistics about given file _path_ |
 | `FSTAT` | `0x17` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int fstat(int fd, struct stat* statbuf)` | Loads statistics about given file descriptor _fd_ |
+| `READLINK` | `0x18` | [`<unistd.h>`](libc/include/unistd.h) | `size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)` | Reads symlink path from `path` into `buf` |
 | _memory operations (`0x2n`)_ |   |   |   |   |
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 | _time operations (`0x3n`)_ |   |   |   |   |
