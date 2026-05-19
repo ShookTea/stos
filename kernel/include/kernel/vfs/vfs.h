@@ -20,7 +20,7 @@
 #define VFS_TYPE_FILE 0x01
 // A normal directory
 #define VFS_TYPE_DIRECTORY 0x02
-// Symbolic link (not supported yet)
+// Symbolic link
 #define VFS_TYPE_SYMLINK 0x04
 // Character device file (stream of bytes, handled sequentially)
 #define VFS_TYPE_CHARACTER_DEVICE 0x08
@@ -141,6 +141,19 @@ typedef void (*sync_node_t)(const vfs_file_t* file);
  * error return one of possible errors as defined in `errno.h`.
  */
 typedef int (*stat_node_t)(const struct vfs_node* node, struct stat* stat);
+/**
+ * If `node` is a symlink, stores symlink target (either relative or absolute)
+ * in `buf`, and returns number of characters stored there. Up to `size`
+ * characters will be stored. It won't append NULL at the end.
+ *
+ * On failure it will return (as negative value) one of possible errors as
+ * defined in `errno.h.`.
+ */
+typedef int (*readlink_node_t)(
+    const struct vfs_node* node,
+    char* buf,
+    size_t size
+);
 
 /*
  * Basic definition of a single inode in the VFS. Contains file data and
@@ -167,6 +180,7 @@ typedef struct vfs_node {
     ioctl_node_t ioctl_node;
     sync_node_t sync_node;
     stat_node_t stat_node;
+    readlink_node_t readlink_node;
     void* metadata; // Data that can be used by filesystem
 } vfs_node_t;
 
@@ -188,6 +202,7 @@ void vfs_close(vfs_file_t* file);
 bool vfs_readdir(dentry_t* dentry, size_t index, struct dirent* out);
 dentry_t* vfs_finddir(dentry_t* dentry, const char* name);
 void vfs_sync(const vfs_file_t* file);
+int vfs_readlink(const dentry_t* dentry, char* buf, size_t len);
 /**
  * Populate `stat` with stats about given `dentry`, and return `0` on success
  * or one of `errno.h` values on failure. If given dentry is a soft link, then

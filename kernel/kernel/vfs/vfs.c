@@ -302,6 +302,23 @@ void vfs_sync(const vfs_file_t* file)
     }
 }
 
+int vfs_readlink(const dentry_t* dentry, char* buf, size_t len)
+{
+    if (dentry == NULL || buf == NULL || dentry->inode == NULL) {
+        return -EINVAL;
+    }
+    vfs_node_t* node = dentry->inode;
+    if (node->type != VFS_TYPE_SYMLINK || node->readlink_node == NULL) {
+        return -EINVAL;
+    }
+
+    if (len == 0) {
+        return 0;
+    }
+
+    return node->readlink_node(node, buf, len);
+}
+
 int vfs_stat(
     const dentry_t* dentry,
     struct stat* stat,
@@ -480,6 +497,8 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     node->mkdir_node = NULL;
     node->ioctl_node = NULL;
     node->sync_node = NULL;
+    node->stat_node = NULL;
+    node->readlink_node = NULL;
     node->metadata = NULL;
 }
 
