@@ -106,6 +106,13 @@ static uint32_t syscall_int_handler(
             assert_range(stat, sizeof(struct stat));
             return sys_fstat((int)arg1, stat);
         }
+        case SYS_READLINK: {
+            const char* path = (const char*)arg1;
+            char* buf = (char*)arg2;
+            assert_range(path, VFS_MAX_PATH_LENGTH);
+            assert_range(buf, arg3);
+            return sys_readlink(path, buf, arg3);
+        }
         case SYS_BRK: return sys_brk(arg1);
         case SYS_UNIXTIME: {
             time_t* res_ptr = (time_t*)arg1;

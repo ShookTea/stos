@@ -63,6 +63,9 @@ int sys_stat(const char* path, struct stat* stat, bool link_ignore);
 #define SYS_FSTAT 0x17
 int sys_fstat(int fd, struct stat* stat);
 
+#define SYS_READLINK 0x18
+int sys_readlink(const char* path, char* buf, int bufsiz);
+
 #define SYS_BRK 0x20
 int sys_brk(uint32_t addr);
 
