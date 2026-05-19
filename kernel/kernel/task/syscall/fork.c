@@ -1,6 +1,6 @@
 #include <errno.h>
 #include "kernel/task/task.h"
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 
 int sys_fork()
 {

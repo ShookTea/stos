@@ -25,6 +25,7 @@
 #define SYS_LSEEK       0x15 // int lseek(int fd, int offset, int whence)
 #define SYS_STAT        0x16 // int stat(const char* path, struct stat* statbuf)
 #define SYS_FSTAT       0x17 // int fstat(int fd, struct stat* statbuf)
+#define SYS_READLINK    0x18 // size_t readlink(const char* path, char* buf, size_t bufsiz);
 
 // Memory operations
 #define SYS_BRK         0x20 // uint32_t brk(void* addr)

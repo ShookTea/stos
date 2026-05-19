@@ -1,6 +1,6 @@
 #include <kernel/task/scheduler.h>
 #include <stdint.h>
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 
 uint32_t sys_getppid()
 {

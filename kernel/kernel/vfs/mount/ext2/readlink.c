@@ -11,8 +11,8 @@
 int ext2_readlink(const vfs_node_t* node, char* buf, size_t len)
 {
     ext2_inode_metadata_t* meta = node->metadata;
-    if (meta == NULL || meta->cached_inode == NULL) {
-        return -EINVAL;
+    if (meta == NULL) {
+        return -EIO;
     }
 
     _debug_printf(
@@ -41,14 +41,14 @@ int ext2_readlink(const vfs_node_t* node, char* buf, size_t len)
     }
 
     // Update file's last access time
-    meta->cached_inode->last_access_time = (uint32_t)time(NULL);
+    ino->last_access_time = (uint32_t)time(NULL);
     ext2_write_inode(
         meta->device_file,
         node->inode,
         meta->block_size,
         meta->inode_size,
         meta->inodes_per_group,
-        meta->cached_inode
+        ino
     );
 
     // Fast symlinks: target is stored inline in the inode's block pointer area

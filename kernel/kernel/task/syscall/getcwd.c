@@ -1,4 +1,4 @@
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"

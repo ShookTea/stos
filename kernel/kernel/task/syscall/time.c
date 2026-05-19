@@ -1,7 +1,7 @@
 #include <time.h>
 #include <stddef.h>
 #include <errno.h>
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 
 int sys_time(time_t* result_ptr)
 {

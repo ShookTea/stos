@@ -19,7 +19,7 @@
 #include "kernel/drivers/vga/font.h"
 #include "kernel/vfs/device.h"
 #include <libds/libds.h>
-#include "task/syscall.h"
+#include "kernel/task/syscall.h"
 #include "test/libc_tests.h"
 #include "test/vmm_tests.h"
 #include "test/memory_tests.h"

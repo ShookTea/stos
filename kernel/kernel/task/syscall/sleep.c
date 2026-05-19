@@ -1,4 +1,4 @@
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 #include <errno.h>
 #include "kernel/task/scheduler.h"
 #include "kernel/task/wait.h"

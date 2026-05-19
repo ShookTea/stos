@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/memory/vmm.h"
 #include "kernel/task/scheduler.h"

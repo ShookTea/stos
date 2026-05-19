@@ -2,7 +2,7 @@
 #include "kernel/debug.h"
 #include <string.h>
 #include <errno.h>
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 #include "kernel/memory/pmm.h"
 #include "kernel/memory/vmm.h"
 #include "kernel/paging.h"

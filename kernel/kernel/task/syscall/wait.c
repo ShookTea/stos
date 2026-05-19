@@ -2,7 +2,7 @@
 #include <errno.h>
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 
 static task_t* find_child(task_t* parent, int pid)
 {

@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 #include <kernel/task/scheduler.h>
 
 uint32_t sys_yield()

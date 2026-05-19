@@ -22,6 +22,21 @@ extern "C" {
  */
 int getopt(int argc, char *argv[], const char *optstring);
 
+/**
+ * Places the content of the symbolic link stored in `path` into `buf`. Up to
+ * `bufsiz` bytes will be stored. It will not store a terminal NULL character.
+ * On success, returns the number of bytes stored into the `buf`.
+ *
+ * On failure, in libk mode, returns a negated value of one of errors described
+ * below. In libc mode, it will return -1 and store that error value in `errno`:
+ * - EFAULT - `path` or `buf` extends outside allocated space
+ * - EINVAL - `bufsize` is not positive
+ * - EINVAL - file at `path` is not a symbolic link
+ * - EIO - general input/output error
+ * - ENOENT - file at `path` doesn't exist
+ */
+size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz);
+
 #if !(defined(__is_libk))
 
 /**

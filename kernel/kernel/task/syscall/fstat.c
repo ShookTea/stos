@@ -2,7 +2,7 @@
 #include <errno.h>
 #include "kernel/vfs/vfs.h"
 #include "kernel/task/task.h"
-#include "../syscall.h"
+#include "kernel/task/syscall.h"
 
 int sys_fstat(int fd_id, struct stat* stat)
 {

@@ -1,6 +1,5 @@
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 
@@ -13,24 +12,14 @@ int main(int argc, char** argv)
 
     char* path = argv[1];
     errno = 0;
-    int file = open(path, O_WRONLY);
+    char buf[128] = {0};
 
-    if (file == -1) {
-        switch (errno) {
-            case ENOENT: puts("Given path doesn't exist"); break;
-            case EIO: puts("I/O error"); break;
-            default: puts("Unrecognized error");
-        }
-        return 2;
+    int res = readlink(path, buf, 127);
+    if (res < 0) {
+        printf("Err %u\n", errno);
+    } else {
+        printf("Readlink res: '%s'\n", buf);
     }
 
-    char* text = "Hello, world!\n";
-    int res = dprintf(file, text);
-    int expected = strlen(text);
-
-    printf("Printed %u characters, %u expected, error: %u\n", res, expected, errno);
-
-    close(file);
-
-    return res == expected ? 0 : 3;
+    return res < 0 ? 2 : 0;
 }
