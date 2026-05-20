@@ -326,9 +326,8 @@ static void handle_command_sent()
         } else {
             dentry_t* device = vfs_resolve(args[0]);
             dentry_t* target = vfs_resolve(args[1]);
-            if (device == NULL) {
-                puts("Device file not found");
-            } else if (target == NULL) {
+            // we allow "device" to be not exist - for cases like "proc" fs
+            if (target == NULL) {
                 puts("Target file not found");
             } else {
                 vfs_mount_result_t result =

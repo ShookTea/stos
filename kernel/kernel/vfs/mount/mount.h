@@ -18,4 +18,8 @@ vfs_mount_result_t vfs_mount_ext2(
     const void* data
 );
 
+vfs_mount_result_t vfs_mount_proc(
+    dentry_t* target
+);
+
 #endif

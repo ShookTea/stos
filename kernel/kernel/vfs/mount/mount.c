@@ -10,7 +10,7 @@ vfs_mount_result_t vfs_mount(
     uint16_t flags,
     const void* data
 ) {
-    if (device_file == NULL || target == NULL || filesystem == NULL) {
+    if (target == NULL || filesystem == NULL) {
         return MOUNT_ERR_NULL_POINTER;
     }
 
@@ -18,11 +18,21 @@ vfs_mount_result_t vfs_mount(
         return MOUNT_ERR_TARGET_NOT_DIR;
     }
 
-    if (!strcmp(filesystem, MOUNT_FILESYSTEM_ISO9660)) {
-        return vfs_mount_iso9660(device_file, target, flags, data);
+    if (!strcmp(filesystem, MOUNT_FILESYSTEM_PROC)) {
+        return vfs_mount_proc(target);
     }
+
+    if (device_file == NULL) {
+        return MOUNT_ERR_NULL_POINTER;
+    }
+
     if (!strcmp(filesystem, MOUNT_FILESYSTEM_EXT2)) {
         return vfs_mount_ext2(device_file, target, flags, data);
     }
+
+    if (!strcmp(filesystem, MOUNT_FILESYSTEM_ISO9660)) {
+        return vfs_mount_iso9660(device_file, target, flags, data);
+    }
+
     return MOUNT_ERR_UNKNOWN_FILESYSTEM;
 }
