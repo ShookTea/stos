@@ -11,11 +11,20 @@ int sys_stat(const char* path, struct stat* stat, bool link_ignore)
         return -ENOTSUP;
     }
 
-    dentry_t* node = vfs_resolve_relative(
-        current->root_node,
-        current->working_directory,
-        path
-    );
+    dentry_t* node = NULL;
+    if (link_ignore) {
+        node = vfs_resolve_relative_no_follow(
+            current->root_node,
+            current->working_directory,
+            path
+        );
+    } else {
+        node = vfs_resolve_relative(
+            current->root_node,
+            current->working_directory,
+            path
+        );
+    }
     if (node == NULL) {
         return -ENOENT;
     }
