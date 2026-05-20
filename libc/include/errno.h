@@ -3,6 +3,7 @@
 
 #include <sys/cdefs.h>
 
+// TODO: convert this into #defines
 typedef enum {
     EACCES, // Permission denied
     EBADF, // Invalid file descriptor
@@ -10,6 +11,7 @@ typedef enum {
     EFAULT, // Bad address
     EINVAL, // Invalid argument
     EIO, // Input/output error
+    ELOOP, // Too many levels of symbolic links
     ENOENT, // No such file or directory
     ENOEXEC, // Exec format error
     ENOMEM, // Not enough space / cannot allocate memory

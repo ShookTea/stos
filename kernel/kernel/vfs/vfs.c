@@ -4,11 +4,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <kernel/memory/kmalloc.h>
 #include <string.h>
 #include <errno.h>
 #include "kernel/debug.h"
 #include "./device/hd/hd.h"
+
+#define VFS_SYMLINK_MAX_DEPTH 8
 
 #define _debug_puts(...) debug_puts_c(DBC_VFS, __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c(DBC_VFS, __VA_ARGS__)
@@ -331,76 +334,25 @@ int vfs_stat(
     return ENOTSUP;
 }
 
-dentry_t* vfs_resolve(const char* abs_path)
-{
-    // Make copy of the path (include space for null terminator)
-    size_t path_len = strlen(abs_path);
-    char* path_copy = kmalloc(sizeof(char) * (path_len + 1));
-    strcpy(path_copy, abs_path);
 
-    // Count the number of path parts (separated by '/')
-    size_t part_count = 0;
-    for (size_t i = 0; i < path_len; i++) {
-        if (path_copy[i] == '/' && i + 1 < path_len && path_copy[i + 1] != '/') {
-            part_count++;
-        }
-    }
-
-    // Allocate array to hold pointers to each part
-    char** parts = kmalloc(sizeof(char*) * part_count);
-
-    // Split the path by replacing '/' with '\0' and storing pointers
-    size_t part_index = 0;
-    bool in_part = false;
-
-    for (size_t i = 0; i < path_len; i++) {
-        if (path_copy[i] == '/') {
-            path_copy[i] = '\0';
-            in_part = false;
-        } else if (!in_part) {
-            // Start of a new part
-            parts[part_index++] = &path_copy[i];
-            in_part = true;
-        }
-    }
-
-    dentry_t* current = vfs_root;
-
-    for (size_t i = 0; i < part_count; i++) {
-        dentry_t* parent = current;
-        current = vfs_finddir(parent, parts[i]);
-        if (parent != vfs_root) {
-            kfree(parent);
-        }
-        if (current == NULL) {
-            break;
-        }
-    }
-
-    // Clean up
-    kfree(parts);
-    kfree(path_copy);
-
-    return current;
-}
-
-dentry_t* vfs_resolve_relative(
+/**
+ * Shared implementation for both vfs_resolve and vfs_resolve_relative.
+ * symlink_depth tracks how many symlinks we've followed to detect loops.
+ */
+static dentry_t* vfs_resolve_impl(
     dentry_t* root,
-    dentry_t* current,
-    const char* path
+    dentry_t* start,
+    const char* path,
+    int symlink_depth
 ) {
-    _debug_printf(
-        "Resolving relative %s for root=%s current=%s\n",
-        path,
-        root->name,
-        current->name
-    );
+    if (symlink_depth >= VFS_SYMLINK_MAX_DEPTH) {
+        return NULL;
+    }
     if (path == NULL || path[0] == '\0') {
-        return current;
+        return start;
     }
 
-    // Absolute path: resolve from root, not vfs_root
-    dentry_t* node = (path[0] == '/') ? root : current;
+    dentry_t* node = (path[0] == '/') ? root : start;
 
     size_t path_len = strlen(path);
     char* path_copy = kmalloc(path_len + 1);
@@ -421,7 +373,6 @@ dentry_t* vfs_resolve_relative(
         if (strcmp(ptr, ".") == 0) {
             // Stay in current directory
         } else if (strcmp(ptr, "..") == 0) {
-            // Go to parent, but never above root
             if (node != root) {
                 node = node->parent;
                 if (node == NULL) {
@@ -429,7 +380,55 @@ dentry_t* vfs_resolve_relative(
                 }
             }
         } else {
+            dentry_t* parent_dir = node;
             node = vfs_finddir(node, ptr);
+
+            if (node != NULL && node->inode->type == VFS_TYPE_SYMLINK) {
+                if (node->inode->readlink_node == NULL) {
+                    node = NULL;
+                    break;
+                }
+
+                char* target = kmalloc(VFS_MAX_PATH_LENGTH);
+                int r = node->inode->readlink_node(
+                    node->inode, target, VFS_MAX_PATH_LENGTH - 1
+                );
+                if (r < 0) {
+                    kfree(target);
+                    node = NULL;
+                    break;
+                }
+                target[r] = '\0';
+
+                // Restore saved so 'end' shows the remaining path
+                // ('\0' or '/...')
+                *end = saved;
+
+                char* combined = kmalloc(VFS_MAX_PATH_LENGTH);
+                if (saved == '\0') {
+                    // Symlink is the final component — no remaining path
+                    strncpy(combined, target, VFS_MAX_PATH_LENGTH - 1);
+                    combined[VFS_MAX_PATH_LENGTH - 1] = '\0';
+                } else {
+                    // 'end' points to '/' followed by the remaining components
+                    snprintf(
+                        combined,
+                        VFS_MAX_PATH_LENGTH,
+                        "%s%s",
+                        target,
+                        end
+                    );
+                }
+
+                dentry_t* base = (combined[0] == '/') ? root : parent_dir;
+                kfree(path_copy);
+                kfree(target);
+                dentry_t* result = vfs_resolve_impl(
+                    root, base, combined, symlink_depth + 1
+                );
+                kfree(combined);
+                return result;
+            }
         }
 
         *end = saved;
@@ -438,6 +437,28 @@ dentry_t* vfs_resolve_relative(
 
     kfree(path_copy);
     return node;
+}
+
+dentry_t* vfs_resolve(const char* abs_path)
+{
+    return vfs_resolve_impl(vfs_root, vfs_root, abs_path, 0);
+}
+
+dentry_t* vfs_resolve_relative(
+    dentry_t* root,
+    dentry_t* current,
+    const char* path
+) {
+    _debug_printf(
+        "Resolving relative %s for root=%s current=%s\n",
+        path,
+        root->name,
+        current->name
+    );
+    if (path == NULL || path[0] == '\0') {
+        return current;
+    }
+    return vfs_resolve_impl(root, current, path, 0);
 }
 
 char* vfs_build_absolute_path(
