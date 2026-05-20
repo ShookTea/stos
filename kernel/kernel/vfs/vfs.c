@@ -336,14 +336,18 @@ int vfs_stat(
 
 
 /**
- * Shared implementation for both vfs_resolve and vfs_resolve_relative.
- * symlink_depth tracks how many symlinks we've followed to detect loops.
+ * Shared implementation for vfs_resolve and vfs_resolve_relative.
+ * symlink_depth tracks followed symlinks to detect loops.
+ * follow_last_symlink controls whether a symlink that is the final path
+ * component gets followed (false = return the symlink dentry itself, as
+ * needed by readlink and lstat).
  */
 static dentry_t* vfs_resolve_impl(
     dentry_t* root,
     dentry_t* start,
     const char* path,
-    int symlink_depth
+    int symlink_depth,
+    bool follow_last_symlink
 ) {
     if (symlink_depth >= VFS_SYMLINK_MAX_DEPTH) {
         return NULL;
@@ -383,7 +387,9 @@ static dentry_t* vfs_resolve_impl(
             dentry_t* parent_dir = node;
             node = vfs_finddir(node, ptr);
 
-            if (node != NULL && node->inode->type == VFS_TYPE_SYMLINK) {
+            if (node != NULL && node->inode->type == VFS_TYPE_SYMLINK
+                && (follow_last_symlink || saved != '\0')
+            ) {
                 if (node->inode->readlink_node == NULL) {
                     node = NULL;
                     break;
@@ -424,7 +430,7 @@ static dentry_t* vfs_resolve_impl(
                 kfree(path_copy);
                 kfree(target);
                 dentry_t* result = vfs_resolve_impl(
-                    root, base, combined, symlink_depth + 1
+                    root, base, combined, symlink_depth + 1, follow_last_symlink
                 );
                 kfree(combined);
                 return result;
@@ -441,7 +447,7 @@ static dentry_t* vfs_resolve_impl(
 
 dentry_t* vfs_resolve(const char* abs_path)
 {
-    return vfs_resolve_impl(vfs_root, vfs_root, abs_path, 0);
+    return vfs_resolve_impl(vfs_root, vfs_root, abs_path, 0, true);
 }
 
 dentry_t* vfs_resolve_relative(
@@ -458,7 +464,24 @@ dentry_t* vfs_resolve_relative(
     if (path == NULL || path[0] == '\0') {
         return current;
     }
-    return vfs_resolve_impl(root, current, path, 0);
+    return vfs_resolve_impl(root, current, path, 0, true);
+}
+
+dentry_t* vfs_resolve_relative_no_follow(
+    dentry_t* root,
+    dentry_t* current,
+    const char* path
+) {
+    _debug_printf(
+        "Resolving relative (no follow) %s for root=%s current=%s\n",
+        path,
+        root->name,
+        current->name
+    );
+    if (path == NULL || path[0] == '\0') {
+        return current;
+    }
+    return vfs_resolve_impl(root, current, path, 0, false);
 }
 
 char* vfs_build_absolute_path(

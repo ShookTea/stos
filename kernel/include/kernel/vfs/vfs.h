@@ -237,9 +237,20 @@ dentry_t* vfs_resolve(const char* abs_path);
 /**
  * Resolves the passed path, either as an absolute path (when starting with /)
  * or a path relative to [current], while making sure that it doesn't go outside
- * of [root] dentry.
+ * of [root] dentry. Symlinks are followed, including the final component.
  */
 dentry_t* vfs_resolve_relative(
+    dentry_t* root,
+    dentry_t* current,
+    const char* path
+);
+
+/**
+ * Like vfs_resolve_relative, but does NOT follow a symlink that is the final
+ * component of the path. Returns the symlink dentry itself. Used by readlink()
+ * and lstat().
+ */
+dentry_t* vfs_resolve_relative_no_follow(
     dentry_t* root,
     dentry_t* current,
     const char* path
