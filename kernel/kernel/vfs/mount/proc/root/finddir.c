@@ -43,8 +43,10 @@ vfs_node_t* proc_root_finddir(
         vfs_node_t* result = kmalloc(sizeof(vfs_node_t));
         vfs_populate_node(result, name, VFS_TYPE_DIRECTORY);
         result->on_release = proc_on_release;
-        proc_inode_meta_procdir_t* meta = kmalloc(
-            sizeof(proc_inode_meta_procdir_t)
+        result->readdir_node = proc_pid_readdir;
+        result->finddir_node = proc_pid_finddir;
+        proc_inode_meta_pid_t* meta = kmalloc(
+            sizeof(proc_inode_meta_pid_t)
         );
         meta->pid = pid;
         result->metadata = meta;
