@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define TASK_PROCESS_NAME_MAX_LEN 64
+
 /**
  * Process states enum
  */
@@ -86,7 +88,7 @@ typedef struct task {
     /** Process ID (unique) */
     uint32_t pid;
     /** Process name */
-    char name[64];
+    char name[TASK_PROCESS_NAME_MAX_LEN];
     /** Current state of the task */
     task_state_t state;
     /** Exit code (valid when state = TASK_ZOMBIE) */
@@ -161,7 +163,6 @@ typedef struct task {
 
     // TODO: for future implementations:
     // - priority
-    // - working directory ID/path
     // - pending signals to be sent to the process
     // - signal handlers
 } task_t;

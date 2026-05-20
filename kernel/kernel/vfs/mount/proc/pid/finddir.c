@@ -25,6 +25,7 @@ vfs_node_t* proc_pid_finddir(
         );
         res_meta->pid = meta->pid;
         result->metadata = res_meta;
+        result->read_node = proc_pid_read_stat;
         return result;
     }
 

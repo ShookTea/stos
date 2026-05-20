@@ -20,4 +20,12 @@ vfs_node_t* proc_root_finddir(vfs_node_t* node, char* name);
 bool proc_pid_readdir(vfs_node_t* node, size_t index, struct dirent* out);
 vfs_node_t* proc_pid_finddir(vfs_node_t* node, char* name);
 
+// Functions for reading files in /proc/<pid> directories
+size_t proc_pid_read_stat(
+    vfs_file_t* file,
+    size_t offset,
+    size_t size,
+    void* ptr
+);
+
 #endif
