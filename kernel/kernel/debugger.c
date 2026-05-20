@@ -431,7 +431,19 @@ static void handle_command_sent()
 
                     if (child->inode->type & VFS_TYPE_DIRECTORY) {
                         printf(" - %s (dir)\n", child->name);
-                    } else {
+                    }
+                    else if (child->inode->type & VFS_TYPE_SYMLINK) {
+                        char full_path_buff[128] = {0};
+                        char readlink_path[128] = {0};
+                        sprintf(full_path_buff, "%s/%s", args[0], child->name);
+                        int res = readlink(full_path_buff, readlink_path, 127);
+                        if (res > 0) {
+                            printf(" - %s -> %s\n", child->name, readlink_path);
+                        } else {
+                            printf(" - %s (invalid symlink)\n", child->name);
+                        }
+                    }
+                    else {
                         double length = child->inode->length;
                         const char* unit;
                         bool use_byte = false;
