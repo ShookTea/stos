@@ -31,7 +31,7 @@ size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)
             return -ENOTSUP;
         }
 
-        dentry_t* dentry = vfs_resolve_relative(
+        dentry_t* dentry = vfs_resolve_relative_no_follow(
             current->root_node,
             current->working_directory,
             path
