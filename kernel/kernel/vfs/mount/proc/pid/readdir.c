@@ -11,7 +11,7 @@ bool proc_pid_readdir(
     proc_inode_meta_pid_t* meta = node->metadata;
     task_t* task = task_get_task_by_pid(meta->pid);
     if (task == NULL) {
-        return NULL;
+        return false;
     }
 
     out->ino = 0;
