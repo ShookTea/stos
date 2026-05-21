@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "../proc.h"
-#include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
 #include "kernel/memory/kmalloc.h"
@@ -11,8 +10,8 @@ vfs_node_t* proc_pid_finddir(
     char* name
 ) {
     proc_inode_meta_pid_t* meta = node->metadata;
-    task_t* curr = scheduler_get_current_task();
-    if (curr == NULL) {
+    task_t* task = task_get_task_by_pid(meta->pid);
+    if (task == NULL) {
         return NULL;
     }
 

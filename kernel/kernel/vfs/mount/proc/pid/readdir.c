@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <string.h>
 #include "../proc.h"
-#include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 
 bool proc_pid_readdir(
-    vfs_node_t* node __attribute__((unused)),
+    vfs_node_t* node,
     size_t index,
     struct dirent* out
 ) {
-    task_t* curr = scheduler_get_current_task();
-    if (curr == NULL) {
+    proc_inode_meta_pid_t* meta = node->metadata;
+    task_t* task = task_get_task_by_pid(meta->pid);
+    if (task == NULL) {
         return NULL;
     }
 
