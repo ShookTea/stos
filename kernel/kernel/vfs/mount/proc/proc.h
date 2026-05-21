@@ -13,6 +13,12 @@ typedef struct {
     uint32_t fd_id;
 } proc_inode_meta_fd_t;
 
+typedef struct {
+    uint32_t pid;
+    uint32_t fd_id;
+    vfs_file_t* opened_file;
+} proc_file_meta_fd_t;
+
 /**
  * General-purpose entry that will deallocate node and meta (if present)
  */
