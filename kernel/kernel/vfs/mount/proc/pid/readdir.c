@@ -14,10 +14,14 @@ bool proc_pid_readdir(
         return false;
     }
 
-    out->ino = 0;
+    out->ino = index;
 
     if (index == 0) {
         strcpy(out->name, "stat");
+        return true;
+    }
+    if (index == 1) {
+        strcpy(out->name, "fd");
         return true;
     }
 
