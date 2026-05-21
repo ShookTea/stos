@@ -40,4 +40,14 @@ bool device_hd_readdir_partition(size_t part_index, struct dirent* out);
  */
 vfs_node_t* device_hd_finddir_partition(const char* name);
 
+/**
+ * Mounts set of standard input/output devices
+ */
+vfs_node_t** device_stdio_mount();
+
+/**
+ * Unmounts standard I/O devices and clears resources
+ */
+void device_stdio_unmount();
+
 #endif

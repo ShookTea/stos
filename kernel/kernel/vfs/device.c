@@ -19,6 +19,14 @@ static void add_device_file(vfs_node_t* node)
     device_files_count++;
 }
 
+static void add_device_files(vfs_node_t** nodes)
+{
+    while (*nodes != NULL) {
+        add_device_file(*nodes);
+        nodes++;
+    }
+}
+
 static bool readdir(
     vfs_node_t* directory __attribute__((unused)),
     size_t index,
@@ -58,11 +66,8 @@ dentry_t* device_mount()
     dentry_t* dev_dentry = vfs_add_node("dev", node);
 
     add_device_file(device_tty_mount());
-    vfs_node_t** hd = device_hd_mount();
-    while (*hd != NULL) {
-        add_device_file(*hd);
-        hd++;
-    }
+    add_device_files(device_stdio_mount());
+    add_device_files(device_hd_mount());
 
     return dev_dentry;
 }
@@ -74,6 +79,7 @@ void device_unmount()
     }
     device_tty_unmount();
     device_hd_unmount();
+    device_stdio_unmount();
     // TODO: call VFS and tell it that the node no longer exists
     kfree(node);
     node = NULL;
