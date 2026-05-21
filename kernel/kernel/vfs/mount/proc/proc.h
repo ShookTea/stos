@@ -28,4 +28,8 @@ size_t proc_pid_read_stat(
     void* ptr
 );
 
+// Functions for /proc/<pid>/fd directories (using proc_inode_meta_pid_t)
+bool proc_fd_readdir(vfs_node_t* node, size_t index, struct dirent* out);
+vfs_node_t* proc_fd_finddir(vfs_node_t* node, char* name);
+
 #endif

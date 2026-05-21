@@ -40,7 +40,7 @@ uint32_t sys_open(const char* path, uint32_t flags)
     // Allocate new entry for file descriptor
     task_file_descriptor_t* desc = kmalloc(sizeof(task_file_descriptor_t));
     desc->file = handler;
-    desc->identifier = current->fd_count + 3; // 0-2 are reserved
+    desc->identifier = current->fd_count;
     current->fd = krealloc(
         current->fd,
         sizeof(task_file_descriptor_t*) * (current->fd_count + 1)
