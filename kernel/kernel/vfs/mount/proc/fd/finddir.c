@@ -11,10 +11,6 @@ vfs_node_t* proc_fd_finddir(
     char* name
 ) {
     proc_inode_meta_pid_t* meta = node->metadata;
-    task_t* task = task_get_task_by_pid(meta->pid);
-    if (task == NULL) {
-        return NULL;
-    }
 
     errno = 0;
     // Attempt to read FD ID from name
@@ -23,17 +19,23 @@ vfs_node_t* proc_fd_finddir(
         return NULL;
     }
 
-    if (fd_id >= task->fd_count) {
-        return NULL;
-    }
-
-    task_file_descriptor_t* fd = task->fd[fd_id];
-    if (fd->file == NULL) {
+    task_file_descriptor_t* fd;
+    if (!proc_find_fd(meta->pid, fd_id, &fd)) {
         return NULL;
     }
 
     vfs_node_t* result = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(result, name, VFS_TYPE_FILE);
     result->on_release = proc_on_release;
+
+    proc_inode_meta_fd_t* new_meta = kmalloc(sizeof(proc_inode_meta_fd_t));
+    new_meta->pid = meta->pid;
+    new_meta->fd_id = fd_id;
+    result->metadata = new_meta;
+    result->open_node = proc_fd_open;
+    result->close_node = proc_fd_close;
+    result->read_node = proc_fd_read;
+    result->write_node = proc_fd_write;
+    // TODO: ioctl, readlink?
     return result;
 }
