@@ -14,7 +14,7 @@ size_t proc_fd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
     }
 
     vfs_file_t* real = meta->opened_file;
-    if (real != NULL) {
+    if (real == NULL) {
         return 0;
     }
 
