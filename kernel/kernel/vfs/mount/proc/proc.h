@@ -49,6 +49,8 @@ void proc_fd_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
 void proc_fd_close(vfs_node_t* node, vfs_file_t* file);
 size_t proc_fd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
 size_t proc_fd_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);
+int proc_fd_ioctl(vfs_file_t* file, uint32_t op, void* arg);
+int proc_fd_stat(const vfs_node_t* node, struct stat* stat);
 
 /**
  * Find file descriptor `fd_id` within process `pid`. If found, store it in

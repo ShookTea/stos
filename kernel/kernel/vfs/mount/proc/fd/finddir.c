@@ -36,6 +36,7 @@ vfs_node_t* proc_fd_finddir(
     result->close_node = proc_fd_close;
     result->read_node = proc_fd_read;
     result->write_node = proc_fd_write;
-    // TODO: ioctl, readlink?
+    result->ioctl_node = proc_fd_ioctl;
+    result->stat_node = proc_fd_stat;
     return result;
 }
