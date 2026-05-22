@@ -18,7 +18,7 @@ static void stdio_on_release(vfs_node_t* node)
 static int stdio_readlink(const vfs_node_t* node, char* buf, size_t size)
 {
     stdio_meta_t* meta = node->metadata;
-    return snprintf(buf, size, "/proc/self/%u", meta->fd);
+    return snprintf(buf, size, "/proc/self/fd/%u", meta->fd);
 }
 
 static vfs_node_t* stdio_create_node(size_t fd, char* name)
