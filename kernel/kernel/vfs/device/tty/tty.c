@@ -212,6 +212,7 @@ vfs_node_t* device_tty_mount()
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);
     node->read_node = tty_read;
+    node->write_node = tty_write;
     node->open_node = open;
     node->ioctl_node = tty_ioctl;
     node->metadata = tty_state;

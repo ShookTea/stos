@@ -65,6 +65,12 @@ int tty_load_termios_flags(
  */
 size_t tty_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
 
+
+/**
+ * Implementation of write_node_t from `vfs.h`
+ */
+size_t tty_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr);
+
 /**
  * Implementation of ioctl_node_t from `vfs.h`
  */
