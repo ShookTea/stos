@@ -280,6 +280,7 @@ task_t* task_create(
         }
     }
 
+    task_setup_stdio(task);
     return task;
 }
 
@@ -877,4 +878,54 @@ int task_exec(
 
     kfree(parsed);
     return 0;
+}
+
+void task_setup_stdio(task_t* task)
+{
+    if (task == NULL) {
+        return;
+    }
+
+    if (task->fd_count != 0) {
+        // Only support tasks with no file descriptors
+        return;
+    }
+
+    dentry_t* tty_node = vfs_resolve_relative(
+        task->root_node,
+        task->root_node,
+        "/dev/tty"
+    );
+    if (tty_node == NULL) {
+        return;
+    }
+
+    vfs_file_t* stdin = vfs_open(tty_node, VFS_MODE_READONLY);
+    if (stdin == NULL) {
+        return;
+    }
+    vfs_file_t* stdout = vfs_open(tty_node, VFS_MODE_WRITEONLY);
+    if (stdout == NULL) {
+        vfs_close(stdin);
+        return;
+    }
+    vfs_file_t* stderr = vfs_open(tty_node, VFS_MODE_WRITEONLY);
+    if (stderr == NULL) {
+        vfs_close(stdin);
+        vfs_close(stdout);
+        return;
+    }
+
+    task->fd = kmalloc(sizeof(task_file_descriptor_t*) * 3);
+    task->fd_count = 3;
+
+    task->fd[0] = kmalloc(sizeof(task_file_descriptor_t));
+    task->fd[1] = kmalloc(sizeof(task_file_descriptor_t));
+    task->fd[2] = kmalloc(sizeof(task_file_descriptor_t));
+    task->fd[0]->identifier = 0;
+    task->fd[1]->identifier = 1;
+    task->fd[2]->identifier = 2;
+    task->fd[0]->file = stdin;
+    task->fd[1]->file = stdout;
+    task->fd[2]->file = stderr;
 }

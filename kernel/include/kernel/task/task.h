@@ -179,6 +179,11 @@ task_t* task_create(
 );
 
 /**
+ * Registers /dev/tty in file descriptors 0, 1, 2 (/dev/sdtin, stdout, stderr)
+ */
+void task_setup_stdio(task_t* task);
+
+/**
  * Deallocates all memory from a task, fixes linked lists if necessary
  */
 void task_destroy(task_t* task);
