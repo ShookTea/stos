@@ -70,6 +70,13 @@ int main(void)
                             printf("\033[D");
                         }
                     }
+                    else if (escseq_check(read_buff, readcount, "[C")) {
+                        i+=2;
+                        if (comm_cursor_loc < comm_buffer_len) {
+                            comm_cursor_loc++;
+                            printf("\033[C");
+                        }
+                    }
                     else {
                         i = readcount;
                     }
