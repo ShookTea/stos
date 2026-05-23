@@ -5,15 +5,98 @@
 #include <termios.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define COMM_BUF_SIZE 256
 #define READ_BUF_SIZE 8
 #define STDIN_FD 0
 #define CURSOR_ENABLE "\033[25h"
 
+#define add_char(c) do {\
+    words[curr_word] = realloc(words[curr_word], curr_word_len + 2); \
+    words[curr_word][curr_word_len] = c; \
+    words[curr_word][curr_word_len + 1] = '\0'; \
+    curr_word_len++; } while (0);
+
+#define start_new_line do {\
+    words = realloc(words, sizeof(char*) * (curr_word + 3)); \
+    words[curr_word + 1] = NULL; \
+    words[curr_word + 2] = NULL; \
+    curr_word++; \
+    curr_word_len = 0; } while (0);
+
 static char comm_buffer[COMM_BUF_SIZE] = {0};
 static int comm_cursor_loc = 0;
 static int comm_buffer_len = 0;
+
+static void handle_command(void)
+{
+    if (comm_buffer_len == 0) {
+        return;
+    }
+    printf("\nReceived command: '%s'\n", comm_buffer);
+    // NULL-terminated list of words separated by space
+    char** words = malloc(sizeof(char*) * 2);
+    words[0] = NULL;
+    words[1] = NULL;
+    int curr_word = 0; // words count = curr_word + 2
+    int curr_word_len = 0;
+
+    char in_quote = '\0';
+    bool prev_backslash = false;
+    for (int i = 0; i < comm_buffer_len; i++) {
+        char c = comm_buffer[i];
+        if (c == '\\' && !prev_backslash) {
+            prev_backslash = true;
+            continue;
+        }
+        else if (prev_backslash) {
+            // TODO: parsing different characters? Like new line for example
+            add_char(c);
+            prev_backslash = false;
+            continue;
+        }
+
+        if ((c == '"' || c == '\'') && in_quote == '\0')
+        {
+            if (curr_word_len > 0) {
+                start_new_line;
+            }
+            // Start in_qoute block
+            in_quote = c;
+        }
+        else if ((c == '"' || c == '\'') && in_quote == c)
+        {
+            // End in_qoute block
+            in_quote = '\0';
+            start_new_line;
+        }
+        else if (c == ' ' && in_quote != '\0') {
+            // Space character, but inside quote
+            add_char(' ');
+        }
+        else if (c == ' ' && curr_word_len == 0) {
+            // Starting with space - ignore
+            continue;
+        }
+        else if (c == ' ') {
+            // Need to start a new word
+            start_new_line;
+        }
+        else {
+            // Just append character
+            add_char(c);
+        }
+    }
+    int words_count = curr_word;
+    if (words[curr_word] == NULL) {
+        words_count--;
+    }
+    printf("Words count: %u\n", words_count + 1);
+    for (int i = 0; i <= words_count; i++) {
+        printf("%u = '%s'\n", i, words[i]);
+    }
+}
 
 static bool escseq_check(char* buf, int count, char* test)
 {
@@ -44,8 +127,8 @@ int main(void)
     termios.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FD, TCSANOW, &termios);
 
+    // Main command loop
     while (true) {
-        // Main command loop
         print_prompt();
         memset(comm_buffer, 0, COMM_BUF_SIZE);
         comm_cursor_loc = 0;
@@ -105,6 +188,8 @@ int main(void)
                 }
             }
         }
+
+        handle_command();
     }
 
     // Bring back the original lflag value
