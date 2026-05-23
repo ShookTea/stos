@@ -13,6 +13,7 @@
 
 static char comm_buffer[COMM_BUF_SIZE] = {0};
 static int comm_cursor_loc = 0;
+static int comm_buffer_len = 0;
 
 static bool escseq_check(char* buf, int count, char* test)
 {
@@ -48,6 +49,7 @@ int main(void)
         print_prompt();
         memset(comm_buffer, 0, COMM_BUF_SIZE);
         comm_cursor_loc = 0;
+        comm_buffer_len = 0;
 
         // Reading loop
         bool continue_reading = true;
@@ -73,9 +75,26 @@ int main(void)
                     }
                 }
                 else if (comm_cursor_loc < COMM_BUF_SIZE) {
+                    if (comm_cursor_loc != comm_buffer_len) {
+                        // Shift all characters in the buffer
+                        for (int j = comm_buffer_len; j >= comm_cursor_loc; j--)
+                        {
+                            comm_buffer[j] = comm_buffer[j-1];
+                        }
+                        // Print all characters
+                        putchar(c);
+                        for (int j = comm_cursor_loc + 1; j <= comm_buffer_len; j++)
+                        {
+                            putchar(comm_buffer[j]);
+                        }
+                        // Return to correct cursor position
+                        printf("\033[%uD", comm_buffer_len - comm_cursor_loc);
+                    } else {
+                        putchar(c);
+                    }
                     comm_buffer[comm_cursor_loc] = c;
                     comm_cursor_loc++;
-                    putchar(c);
+                    comm_buffer_len++;
                 }
             }
         }
