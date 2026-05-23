@@ -88,6 +88,18 @@ static void handle_command(void)
             // Need to start a new word
             start_new_line;
         }
+        else if (c == '|' && in_quote == '\0') {
+            // Unescaped pipe outside quotes → standalone token
+            if (curr_word_len > 0) {
+                start_new_line;
+            }
+            if (words[curr_word] == NULL) {
+                words[curr_word] = malloc(1);
+                words[curr_word][0] = '\0';
+            }
+            add_char('|');
+            start_new_line;
+        }
         else {
             // Just append character
             add_char(c);
