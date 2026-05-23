@@ -14,6 +14,20 @@
 static char comm_buffer[COMM_BUF_SIZE] = {0};
 static int comm_cursor_loc = 0;
 
+static bool escseq_check(char* buf, int count, char* test)
+{
+    int testsize = strlen(test);
+    if (testsize > (count - 1)) {
+        return false;
+    }
+    for (int i = 0; i < testsize; i++) {
+        if (buf[i + 1] != test[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static void print_prompt(void)
 {
     char* path = "/path"; // TODO
@@ -37,7 +51,6 @@ int main(void)
 
         // Reading loop
         bool continue_reading = true;
-        // bool in_escape_mode = false;
         while (continue_reading) {
             char read_buff[READ_BUF_SIZE] = {0};
             int readcount = read(0, read_buff, READ_BUF_SIZE - 1);
@@ -46,9 +59,20 @@ int main(void)
                 if (c == '\n') {
                     continue_reading = false;
                     i = readcount;
-                } else if (c == '\033') {
-                    // in_escape_mode = true;
-                } else if (comm_cursor_loc < COMM_BUF_SIZE) {
+                }
+                else if (c == '\033') {
+                    if (escseq_check(read_buff, readcount, "[D")) {
+                        i+=2;
+                        if (comm_cursor_loc > 0) {
+                            comm_cursor_loc--;
+                            printf("\033[D");
+                        }
+                    }
+                    else {
+                        i = readcount;
+                    }
+                }
+                else if (comm_cursor_loc < COMM_BUF_SIZE) {
                     comm_buffer[comm_cursor_loc] = c;
                     comm_cursor_loc++;
                     putchar(c);
