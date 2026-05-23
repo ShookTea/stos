@@ -16,7 +16,7 @@
  * schedule change. The total max length of a single run of the task (in
  * milliseconds) is SCHEDULER_TICK_TIME * SCHEDULE_RESCHEDULE_COUNT.
  */
-#define SCHEDULER_RESCHEDULE_COUNT 10
+#define SCHEDULER_RESCHEDULE_COUNT 1
 
 typedef struct {
     /** Total number of tasks */
