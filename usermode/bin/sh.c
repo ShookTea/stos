@@ -187,6 +187,22 @@ int main(void)
                         i = readcount;
                     }
                 }
+                else if (c == '\b') {
+                    if (comm_cursor_loc > 0) {
+                        for (int j = comm_cursor_loc - 1; j < comm_buffer_len - 1; j++) {
+                            comm_buffer[j] = comm_buffer[j + 1];
+                        }
+                        comm_buffer[comm_buffer_len - 1] = '\0';
+                        comm_cursor_loc--;
+                        comm_buffer_len--;
+                        printf("\033[D");
+                        for (int j = comm_cursor_loc; j < comm_buffer_len; j++) {
+                            putchar(comm_buffer[j]);
+                        }
+                        putchar(' ');
+                        printf("\033[%dD", comm_buffer_len - comm_cursor_loc + 1);
+                    }
+                }
                 else if (comm_cursor_loc < COMM_BUF_SIZE) {
                     if (comm_cursor_loc != comm_buffer_len) {
                         // Shift all characters in the buffer
