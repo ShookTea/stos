@@ -59,11 +59,16 @@ static void handle_command(void)
 
         if ((c == '"' || c == '\'') && in_quote == '\0')
         {
+            // Start in_qoute block
+            in_quote = c;
             if (curr_word_len > 0) {
                 start_new_line;
             }
-            // Start in_qoute block
-            in_quote = c;
+            // Initialize an empty word so it's not NULL even if quote is empty
+            if (words[curr_word] == NULL) {
+                words[curr_word] = malloc(1);
+                words[curr_word][0] = '\0';
+            }
         }
         else if ((c == '"' || c == '\'') && in_quote == c)
         {
@@ -96,6 +101,12 @@ static void handle_command(void)
     for (int i = 0; i <= words_count; i++) {
         printf("%u = '%s'\n", i, words[i]);
     }
+
+    // Cleanup
+    for (int i = 0; i <= words_count; i++) {
+        free(words[i]);
+    }
+    free(words);
 }
 
 static bool escseq_check(char* buf, int count, char* test)
