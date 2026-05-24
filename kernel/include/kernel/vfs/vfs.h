@@ -59,7 +59,8 @@ typedef struct {
 
 // Handlers for opening and closing nodes
 // Can be used for populating metadata by the filesystem
-typedef void (*open_node_t)(
+// Should return `0` on success or value from `errno.h` on failure
+typedef int (*open_node_t)(
     struct vfs_node* node,
     vfs_file_t* file,
     uint8_t mode

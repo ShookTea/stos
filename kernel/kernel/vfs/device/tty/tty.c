@@ -181,7 +181,7 @@ static void handle_key_event(keyboard_event_t evt)
     }
 }
 
-static void open(
+static int open(
     struct vfs_node* node,
     vfs_file_t* file __attribute__((unused)),
     uint8_t mode __attribute__((unused))
@@ -192,6 +192,7 @@ static void open(
     meta->ready_lines = 0;
     meta->current_line_pos = 0;
     memset(meta->current_line, 0, sizeof(meta->current_line));
+    return 0;
 }
 
 vfs_node_t* device_tty_mount()

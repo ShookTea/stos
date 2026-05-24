@@ -45,7 +45,7 @@ bool proc_fd_readdir(vfs_node_t* node, size_t index, struct dirent* out);
 vfs_node_t* proc_fd_finddir(vfs_node_t* node, char* name);
 
 // Proxy functions for /proc/<pid>/fd/<fd_id> files (using proc_inode_meta_fd_t)
-void proc_fd_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
+int proc_fd_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
 void proc_fd_close(vfs_node_t* node, vfs_file_t* file);
 size_t proc_fd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
 size_t proc_fd_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);

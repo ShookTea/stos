@@ -1,13 +1,14 @@
+#include <errno.h>
 #include "../proc.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/task/task.h"
 
-void proc_fd_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
+int proc_fd_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
 {
     proc_inode_meta_fd_t* meta = node->metadata;
     task_file_descriptor_t* fd;
     if (!proc_find_fd(meta->pid, meta->fd_id, &fd)) {
-        return;
+        return ENOENT;
     }
 
     vfs_file_t* real = vfs_open(fd->file->dentry, mode);
@@ -18,4 +19,6 @@ void proc_fd_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
     new_meta->opened_file = real;
 
     file->metadata = new_meta;
+
+    return 0;
 }
