@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <fcntl.h>
 #include <string.h>
 #include <time.h>
 #include "./ext2.h"
@@ -34,7 +35,7 @@ bool ext2_add_inode_to_dir(
     const char* name
 ) {
     _debug_printf("Adding entry %u to parent %u with name '%s'\n", child_inode_num, parent_inode_num, name);
-    vfs_file_t* device_file = vfs_open(meta->device_file, VFS_MODE_READWRITE);
+    vfs_file_t* device_file = vfs_open(meta->device_file, O_RDWR);
     if (device_file == NULL) {
         return false;
     }

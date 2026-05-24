@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <fcntl.h>
 #include <time.h>
 #include "dirent.h"
 #include "kernel/vfs/vfs.h"
@@ -46,7 +47,7 @@ bool ext2_readdir(
                 memcpy(out->d_name, entry->name, nl);
                 out->d_name[nl] = '\0';
 
-                vfs_file_t* file = vfs_open(meta->device_file, VFS_MODE_READONLY);
+                vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY);
                 if (file == NULL) {
                     return NULL;
                 }

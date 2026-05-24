@@ -3,6 +3,7 @@
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include <stdint.h>
+#include <fcntl.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
@@ -161,7 +162,7 @@ void font_load_psf(font_mode_t font_mode, char* path)
         _debug_printf("font: path %s not found\n", path);
         return;
     }
-    vfs_file_t* handle = vfs_open(node, VFS_MODE_READONLY);
+    vfs_file_t* handle = vfs_open(node, O_RDONLY);
     size_t size = handle->dentry->inode->length;
     uint8_t* file = kmalloc_flags(size, KMALLOC_ZERO);
     vfs_read(handle, size, file);

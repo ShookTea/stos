@@ -1,3 +1,4 @@
+#include "fcntl.h"
 #include "kernel/spinlock.h"
 #include <kernel/vfs/vfs.h>
 
@@ -50,9 +51,9 @@ static vfs_file_t* allocate_file_handle(
     spinlock_acquire(&vfs_lock);
     vfs_file_t* handle = kmalloc_flags(sizeof(vfs_file_t), KMALLOC_ZERO);
     handle->dentry = dentry;
-    handle->readable = mode & (VFS_MODE_READONLY | VFS_MODE_READWRITE);
-    handle->writeable = mode & (VFS_MODE_WRITEONLY | VFS_MODE_READWRITE);
-    handle->offset = (mode & VFS_MODE_APPEND) ? dentry->inode->length : 0;
+    handle->readable = mode & (O_RDONLY | O_RDWR);
+    handle->writeable = mode & (O_WRONLY | O_RDWR);
+    handle->offset = (mode & O_APPEND) ? dentry->inode->length : 0;
     // TODO: handle VFS_MODE_TRUNCATE and VFS_MODE_CREATE
 
     if (file_handles_open_count == file_handles_size) {

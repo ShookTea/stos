@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <fcntl.h>
 #include <time.h>
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
@@ -47,7 +48,7 @@ size_t ext2_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr)
     size_t start_block_id = offset / meta->block_size;
     size_t end_block_id = (offset + size) / meta->block_size;
 
-    vfs_file_t* device_file = vfs_open(device_file_dentry, VFS_MODE_WRITEONLY);
+    vfs_file_t* device_file = vfs_open(device_file_dentry, O_WRONLY);
     if (device_file == NULL) {
         _debug_puts("device file = NULL");
         return 0;

@@ -30,32 +30,6 @@
 // Mounted file.
 #define VFS_TYPE_MOUNTPOINT 0x20
 
-// Read-only mode
-#define VFS_MODE_READONLY 0x01
-// Write-only mode
-#define VFS_MODE_WRITEONLY 0x02
-// Read+write mode
-#define VFS_MODE_READWRITE 0x04
-// Truncate mode (make the file empty if already exists)
-#define VFS_MODE_TRUNCATE 0x08
-// Create mode (create a new file if it doesn't exit)
-#define VFS_MODE_CREATE 0x10
-// Append mode (all writes will be added to the end of file)
-#define VFS_MODE_APPEND 0x20
-// Mapping of fopen() modes to modes above:
-// `r`  = VFS_MODE_READONLY
-//     (open file at the beginning, for reading)
-// `r+` = VFS_MODE_READWRITE
-//     (open file at the beginning, for reading and writing)
-// `w`  = VFS_MODE_WRITEONLY | VFS_MODE_CREATE | VFS_MODE_TRUNCATE
-//     (truncate file to zero length or create a new one, open for writing)
-// `w+` = VFS_MODE_READWRITE | VFS_MODE_CREATE | VFS_MODE_TRUNCATE
-//     (truncate file to zero length or create a new one, open for read&write)
-// `a`  = VFS_MODE_WRITEONLY | VFS_MODE_CREATE | VFS_MODE_APPEND
-//     (create if not exist, open file for appending at the end of file)
-// `a+` = VFS_MODE_READWRITE | VFS_MODE_CREATE | VFS_MODE_APPEND
-//     (create if not exist, open file for appending at the end of file + read)
-
 struct vfs_node;
 struct dentry;
 

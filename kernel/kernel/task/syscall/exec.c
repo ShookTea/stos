@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
+#include <fcntl.h>
 #include "kernel/task/syscall.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/memory/vmm.h"
@@ -87,7 +88,7 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
         return -EACCES;
     }
 
-    vfs_file_t* file = vfs_open(node, VFS_MODE_READONLY);
+    vfs_file_t* file = vfs_open(node, O_RDONLY);
     if (file == NULL) {
         return -EIO;
     }

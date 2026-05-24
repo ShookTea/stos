@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <fcntl.h>
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
@@ -50,7 +51,7 @@ bool ext2_set_block_id(
 
     size_t ppb = block_size / sizeof(uint32_t);
 
-    vfs_file_t* file = vfs_open(device, VFS_MODE_READWRITE);
+    vfs_file_t* file = vfs_open(device, O_RDWR);
     if (file == NULL) return false;
 
     bool ok = false;

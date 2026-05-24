@@ -7,6 +7,7 @@
 #include <kernel/memory/vmm.h>
 #include "kernel/debug.h"
 #include <stdlib.h>
+#include <fcntl.h>
 #include <kernel/memory/kmalloc.h>
 #include <kernel/paging.h>
 #include <kernel/elf.h>
@@ -692,11 +693,11 @@ task_t* task_fork(void)
             } else {
                 uint8_t mode;
                 if (pfd->file->readable && pfd->file->writeable) {
-                    mode = VFS_MODE_READWRITE;
+                    mode = O_RDWR;
                 } else if (pfd->file->writeable) {
-                    mode = VFS_MODE_WRITEONLY;
+                    mode = O_WRONLY;
                 } else {
-                    mode = VFS_MODE_READONLY;
+                    mode = O_RDONLY;
                 }
                 cfd->file = vfs_open(pfd->file->dentry, mode);
                 cfd->file->offset = pfd->file->offset;
@@ -900,16 +901,16 @@ void task_setup_stdio(task_t* task)
         return;
     }
 
-    vfs_file_t* stdin = vfs_open(tty_node, VFS_MODE_READONLY);
+    vfs_file_t* stdin = vfs_open(tty_node, O_RDONLY);
     if (stdin == NULL) {
         return;
     }
-    vfs_file_t* stdout = vfs_open(tty_node, VFS_MODE_WRITEONLY);
+    vfs_file_t* stdout = vfs_open(tty_node, O_WRONLY);
     if (stdout == NULL) {
         vfs_close(stdin);
         return;
     }
-    vfs_file_t* stderr = vfs_open(tty_node, VFS_MODE_WRITEONLY);
+    vfs_file_t* stderr = vfs_open(tty_node, O_WRONLY);
     if (stderr == NULL) {
         vfs_close(stdin);
         vfs_close(stdout);

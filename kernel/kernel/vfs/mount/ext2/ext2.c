@@ -1,4 +1,5 @@
 #include "ext2.h"
+#include <fcntl.h>
 #include "kernel/vfs/vfs.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/debug.h"
@@ -59,7 +60,7 @@ vfs_mount_result_t vfs_mount_ext2(
         return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
     }
 
-    vfs_file_t* file = vfs_open(device_file, VFS_MODE_READONLY);
+    vfs_file_t* file = vfs_open(device_file, O_RDONLY);
     if (file == NULL) {
         _debug_puts("result of vfs_open is NULL");
         return MOUNT_ERR_NULL_POINTER;

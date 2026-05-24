@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include <fcntl.h>
 #include "kernel/vfs/vfs.h"
 #include "kernel/debug.h"
 #include "kernel/memory/kmalloc.h"
@@ -50,7 +51,7 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
 
     if (found_inode_num == 0) return NULL;
 
-    vfs_file_t* file = vfs_open(meta->device_file, VFS_MODE_READONLY);
+    vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY);
     if (file == NULL) {
         _debug_puts("result of vfs_open is NULL");
         return NULL;

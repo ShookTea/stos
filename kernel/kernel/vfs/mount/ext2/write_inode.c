@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <fcntl.h>
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
 
@@ -10,7 +11,7 @@ void ext2_write_inode(
     uint32_t inodes_per_group,
     ext2_inode_t* inode
 ) {
-    vfs_file_t* file = vfs_open(device, VFS_MODE_READWRITE);
+    vfs_file_t* file = vfs_open(device, O_RDWR);
     if (file == NULL) {
         return;
     }

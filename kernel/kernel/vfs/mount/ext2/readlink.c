@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
 #include "./ext2.h"
 #include "kernel/vfs/vfs.h"
 #include "kernel/debug.h"
@@ -22,7 +23,7 @@ int ext2_readlink(const vfs_node_t* node, char* buf, size_t len)
         len
     );
 
-    vfs_file_t* device_file = vfs_open(meta->device_file, VFS_MODE_READONLY);
+    vfs_file_t* device_file = vfs_open(meta->device_file, O_RDONLY);
     if (device_file == NULL) {
         _debug_puts("device file = NULL");
         return -EIO;

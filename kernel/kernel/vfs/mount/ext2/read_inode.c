@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <fcntl.h>
 #include <stdbool.h>
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
@@ -9,7 +10,7 @@ bool ext2_ensure_dir_cache(vfs_node_t* node)
     ext2_inode_metadata_t* meta = node->metadata;
     if (meta->dir_cache != NULL) return true;
 
-    vfs_file_t* file = vfs_open(meta->device_file, VFS_MODE_READONLY);
+    vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY);
     if (file == NULL) return false;
 
     if (meta->cached_inode == NULL) {
