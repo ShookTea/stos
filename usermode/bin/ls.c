@@ -1,3 +1,4 @@
+#include "unistd.h"
 #include <getopt.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -29,6 +30,14 @@ int main(int argc, char** argv)
             case 'l': tabular = true; break;
             default: break;
         }
+    }
+
+    if (optind < argc) {
+        printf("Non-option argv elements:");
+        while (optind < argc) {
+            printf("\n- '%s'", argv[optind++]);
+        }
+        printf("\n");
     }
 
     printf(
