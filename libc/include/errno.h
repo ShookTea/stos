@@ -11,6 +11,7 @@ typedef enum {
     EFAULT, // Bad address
     EINVAL, // Invalid argument
     EIO, // Input/output error
+    EISDIR, // File descriptor points to a directory
     ELOOP, // Too many levels of symbolic links
     ENOENT, // No such file or directory
     ENOEXEC, // Exec format error

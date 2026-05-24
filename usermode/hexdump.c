@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,8 +26,13 @@ int main(int argc, char** argv)
     uint8_t* data = malloc(SIZE_BYTES);
     memset(data, 0, SIZE_BYTES);
     int read_bytes = read(fd, data, SIZE_BYTES);
+    if (read_bytes < 0) {
+        printf("Error: %u\n", errno);
+        return errno;
+    }
+
     printf("%u bytes read", read_bytes);
-    for (size_t i = 0; i < SIZE_BYTES; i++) {
+    for (int i = 0; i < read_bytes; i++) {
         if (i % 32 == 0) {
             puts("");
         }

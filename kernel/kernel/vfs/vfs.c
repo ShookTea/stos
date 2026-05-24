@@ -193,6 +193,9 @@ dentry_t* vfs_add_node(const char* name, vfs_node_t* inode)
 size_t vfs_read(vfs_file_t* file, size_t size, void* ptr)
 {
     vfs_node_t* node = file->dentry->inode;
+    if (node->type & VFS_TYPE_DIRECTORY) {
+        return -EISDIR;
+    }
     if (node->read_node != NULL) {
         size_t bytes = node->read_node(file, file->offset, size, ptr);
         if (bytes > 0) {
@@ -211,6 +214,9 @@ void vfs_seek(vfs_file_t* file, uint64_t offset)
 size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr)
 {
     vfs_node_t* node = file->dentry->inode;
+    if (node->type & VFS_TYPE_DIRECTORY) {
+        return -EISDIR;
+    }
     if (node->write_node != NULL) {
         size_t bytes = node->write_node(file, file->offset, size, ptr);
         if (bytes > 0) {
