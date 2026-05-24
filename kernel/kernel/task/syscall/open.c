@@ -22,9 +22,10 @@ uint32_t sys_open(const char* path, uint32_t flags)
         return -ENOENT;
     }
 
-    vfs_file_t* handler = vfs_open(node, flags, NULL);
+    int err_from_open = 0;
+    vfs_file_t* handler = vfs_open(node, flags, &err_from_open);
     if (handler == NULL) {
-        return -EIO;
+        return err_from_open == 0 ? -EIO : -err_from_open;
     }
 
     // First try to find first existing identifier that is already allocated but
