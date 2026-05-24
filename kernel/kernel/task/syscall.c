@@ -113,6 +113,15 @@ static uint32_t syscall_int_handler(
             assert_range(buf, arg3);
             return sys_readlink(path, buf, arg3);
         }
+        case SYS_GETDENTS: {
+            struct dirent* dir = (struct dirent*)arg2;
+            int count = arg3;
+            if (count < 0) {
+                return -EINVAL;
+            }
+            assert_range(dir, sizeof(struct dirent) * count);
+            return sys_getdents(arg1, dir, count);
+        }
         case SYS_BRK: return sys_brk(arg1);
         case SYS_UNIXTIME: {
             time_t* res_ptr = (time_t*)arg1;

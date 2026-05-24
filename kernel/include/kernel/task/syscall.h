@@ -66,6 +66,9 @@ int sys_fstat(int fd, struct stat* stat);
 #define SYS_READLINK 0x18
 int sys_readlink(const char* path, char* buf, int bufsiz);
 
+#define SYS_GETDENTS 0x19
+int sys_getdents(int fd, struct dirent* dir, int count);
+
 #define SYS_BRK 0x20
 int sys_brk(uint32_t addr);
 

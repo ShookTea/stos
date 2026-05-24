@@ -2,8 +2,6 @@
 #define _SYS_SYSCALL_H 1
 #include <sys/cdefs.h>
 
-#if !(defined(__is_libk))
-
 // Process management
 #define SYS_EXIT        0x00 // void exit(int status)
 #define SYS_YIELD       0x01 // void yield()
@@ -26,12 +24,15 @@
 #define SYS_STAT        0x16 // int stat(const char* path, struct stat* statbuf)
 #define SYS_FSTAT       0x17 // int fstat(int fd, struct stat* statbuf)
 #define SYS_READLINK    0x18 // size_t readlink(const char* path, char* buf, size_t bufsiz);
+#define SYS_GETDENTS    0x19 // no wrapper in libc
 
 // Memory operations
 #define SYS_BRK         0x20 // uint32_t brk(void* addr)
 
 // Time operations
 #define SYS_UNIXTIME    0x30 // time_t time(time_t* tloc)
+
+#if !(defined(__is_libk))
 
 #ifdef __cplusplus
 extern "C" {
