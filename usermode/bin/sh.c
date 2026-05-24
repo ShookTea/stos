@@ -204,7 +204,7 @@ static bool handle_command(void)
     while (*iter != NULL) {
         command_t* cmd = *iter;
         // Increase size of PIDs array
-        pids = realloc(pids, pids_count + 1);
+        pids = realloc(pids, sizeof(int) * (pids_count + 1));
         int new_pid = fork();
         if (new_pid < 0) {
             puts("ERROR!\n");
