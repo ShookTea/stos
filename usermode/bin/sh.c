@@ -188,6 +188,7 @@ static command_t** parse_command(void)
 
 static bool handle_command(void)
 {
+    printf("\n");
     if (!strcmp(comm_buffer, "exit")) {
         return false;
     }
@@ -214,14 +215,15 @@ static bool handle_command(void)
             pids_count++;
         } else {
             parent = false;
-            printf("comm_name='%s'\n", cmd->comm_name ? cmd->comm_name : "(null)");
-            for (int j = 0; cmd->argv[j] != NULL; j++) {
-                printf("  argv[%d]='%s'\n", j, cmd->argv[j]);
+            if (cmd->comm_name == NULL) {
+                exit(0);
             }
             for (int j = 0; cmd->envp_override[j] != NULL; j++) {
-                printf("  env[%d]='%s'\n", j, cmd->envp_override[j]);
+                putenv(cmd->envp_override[j]);
             }
-            exit(0);
+            execvp(cmd->comm_name, (const char**)cmd->argv);
+            printf("sh: %s: command not found\n", cmd->comm_name);
+            exit(127);
         }
         iter++;
     }
