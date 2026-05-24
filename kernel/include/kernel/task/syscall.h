@@ -8,71 +8,27 @@
 #include <time.h>
 #include "kernel/task/task.h"
 
-// Syscall numbers
-#define SYS_EXIT 0x00
 uint32_t sys_exit(int status_code);
-
-#define SYS_YIELD 0x01
 uint32_t sys_yield();
-
-#define SYS_GETPID 0x02
 uint32_t sys_getpid();
-
-#define SYS_GETPPID 0x03
 uint32_t sys_getppid();
-
-#define SYS_FORK 0x04
 int sys_fork();
-
-#define SYS_WAIT 0x05
 int sys_wait(int pid, int* status_code, int options);
-
-#define SYS_EXEC 0x06
 int sys_exec(const char* path, const char** argv, const char** envp);
-
-#define SYS_GETCWD 0x07
 char* sys_getcwd(char* buf, size_t size);
-
-#define SYS_CHDIR 0x08
 int sys_chdir(const char* path);
-
-#define SYS_SLEEP 0x09
 int sys_sleep(const struct timespec* duration, struct timespec* rem);
-
-#define SYS_OPEN 0x10
 uint32_t sys_open(const char* path, uint32_t flags);
-
-#define SYS_CLOSE 0x11
 int sys_close(int fd);
-
-#define SYS_WRITE 0x12
 int sys_write(int fd, const void* buf, size_t count);
-
-#define SYS_READ 0x13
 int sys_read(int fd, void* buf, size_t count);
-
-#define SYS_IOCTL 0x14
 int sys_ioctl(int fd, int op, void* arg);
-
-#define SYS_LSEEK 0x15
 int sys_lseek(int fd, int offset, int whence);
-
-#define SYS_STAT 0x16
 int sys_stat(const char* path, struct stat* stat, bool link_ignore);
-
-#define SYS_FSTAT 0x17
 int sys_fstat(int fd, struct stat* stat);
-
-#define SYS_READLINK 0x18
 int sys_readlink(const char* path, char* buf, int bufsiz);
-
-#define SYS_GETDENTS 0x19
 int sys_getdents(int fd, struct dirent* dir, int count);
-
-#define SYS_BRK 0x20
 int sys_brk(uint32_t addr);
-
-#define SYS_UNIXTIME 0x30
 int sys_time(time_t* result_ptr);
 
 // Syscall options

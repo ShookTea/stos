@@ -7,6 +7,7 @@
 #include <kernel/task/syscall_handler.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/syscall.h>
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
 #include "sys/stat.h"
