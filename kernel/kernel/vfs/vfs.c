@@ -221,19 +221,19 @@ size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr)
     return 0;
 }
 
-vfs_file_t* vfs_open(dentry_t* dentry, uint8_t mode)
+vfs_file_t* vfs_open(dentry_t* dentry, uint8_t mode, int* errno)
 {
     vfs_node_t* node = dentry->inode;
     if ((node->type & VFS_TYPE_DIRECTORY)) {
         if (mode & (O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_TRUNC)) {
             // Directories can only be opened in a read-only mode
-            // TODO: report error
+            if (errno != NULL) *errno = EINVAL;
             return NULL;
         }
     }
     else { // not a directory
         if (mode & O_DIRECTORY) {
-            // TODO: report error
+            if (errno != NULL) *errno = ENOTDIR;
             return NULL;
         }
     }
@@ -244,7 +244,12 @@ vfs_file_t* vfs_open(dentry_t* dentry, uint8_t mode)
     vfs_file_t* handle = allocate_file_handle(dentry, mode);
     // Allow specific file system to populate metadata
     if (node->open_node != NULL) {
-        node->open_node(node, handle, mode);
+        int res = node->open_node(node, handle, mode);
+        if (res != 0) {
+            if (errno != NULL) *errno = res;
+            vfs_close(handle);
+            return NULL;
+        }
     }
 
     return handle;

@@ -23,7 +23,7 @@ int ext2_readlink(const vfs_node_t* node, char* buf, size_t len)
         len
     );
 
-    vfs_file_t* device_file = vfs_open(meta->device_file, O_RDONLY);
+    vfs_file_t* device_file = vfs_open(meta->device_file, O_RDONLY, NULL);
     if (device_file == NULL) {
         _debug_puts("device file = NULL");
         return -EIO;

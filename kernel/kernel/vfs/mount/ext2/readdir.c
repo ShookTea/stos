@@ -47,7 +47,7 @@ bool ext2_readdir(
                 memcpy(out->d_name, entry->name, nl);
                 out->d_name[nl] = '\0';
 
-                vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY);
+                vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY, NULL);
                 if (file == NULL) {
                     return NULL;
                 }

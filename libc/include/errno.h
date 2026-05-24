@@ -15,6 +15,7 @@ typedef enum {
     ENOENT, // No such file or directory
     ENOEXEC, // Exec format error
     ENOMEM, // Not enough space / cannot allocate memory
+    ENOTDIR, // Specified path is not a directory
     ENOTSUP, // Operation not supported
     ENOTTY, // Inappropriate I/O control operation
 } errno_t;

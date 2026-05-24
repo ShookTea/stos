@@ -11,7 +11,7 @@ int proc_fd_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
         return ENOENT;
     }
 
-    vfs_file_t* real = vfs_open(fd->file->dentry, mode);
+    vfs_file_t* real = vfs_open(fd->file->dentry, mode, NULL);
 
     proc_file_meta_fd_t* new_meta = kmalloc(sizeof(proc_file_meta_fd_t));
     new_meta->fd_id = meta->fd_id;

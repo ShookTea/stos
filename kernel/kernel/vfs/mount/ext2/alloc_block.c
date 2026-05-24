@@ -7,7 +7,7 @@
 
 uint32_t ext2_alloc_block(dentry_t* device, uint32_t block_size)
 {
-    vfs_file_t* file = vfs_open(device, O_RDWR);
+    vfs_file_t* file = vfs_open(device, O_RDWR, NULL);
     if (file == NULL) {
         return 0;
     }

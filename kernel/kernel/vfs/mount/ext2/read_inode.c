@@ -10,7 +10,7 @@ bool ext2_ensure_dir_cache(vfs_node_t* node)
     ext2_inode_metadata_t* meta = node->metadata;
     if (meta->dir_cache != NULL) return true;
 
-    vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY);
+    vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY, NULL);
     if (file == NULL) return false;
 
     if (meta->cached_inode == NULL) {

@@ -60,7 +60,7 @@ vfs_mount_result_t vfs_mount_ext2(
         return MOUNT_ERR_DEVICE_NOT_IN_FORMAT;
     }
 
-    vfs_file_t* file = vfs_open(device_file, O_RDONLY);
+    vfs_file_t* file = vfs_open(device_file, O_RDONLY, NULL);
     if (file == NULL) {
         _debug_puts("result of vfs_open is NULL");
         return MOUNT_ERR_NULL_POINTER;

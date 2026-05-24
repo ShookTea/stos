@@ -150,7 +150,7 @@ static size_t iso_read(
         return 0;
     }
 
-    vfs_file_t* dev = vfs_open(meta->device_file, O_RDONLY);
+    vfs_file_t* dev = vfs_open(meta->device_file, O_RDONLY, NULL);
     if (dev == NULL) {
         _debug_puts("Device file doesn't exist anymore.");
         return 0;
@@ -175,7 +175,7 @@ static bool iso_readdir(
     );
     index += 2; // Skip "." and ".." entries
 
-    vfs_file_t* dev = vfs_open(meta->device_file, O_RDONLY);
+    vfs_file_t* dev = vfs_open(meta->device_file, O_RDONLY, NULL);
     if (dev == NULL) {
         _debug_puts("Device file doesn't exist anymore.");
         return false;
@@ -241,7 +241,7 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
         name
     );
 
-    vfs_file_t* dev = vfs_open(meta->device_file, O_RDONLY);
+    vfs_file_t* dev = vfs_open(meta->device_file, O_RDONLY, NULL);
     if (dev == NULL) {
         _debug_puts("Device file doesn't exist anymore.");
         return NULL;
@@ -321,7 +321,7 @@ static vfs_node_t* iso_finddir(vfs_node_t* node, char* name)
 
 static void run_mounting_task(mount_task_t* task)
 {
-    vfs_file_t* file = vfs_open(task->device_file, O_RDONLY);
+    vfs_file_t* file = vfs_open(task->device_file, O_RDONLY, NULL);
     if (file == NULL) {
         _debug_puts("File doesn't exit!");
         task->result = MOUNT_ERR_NULL_POINTER;

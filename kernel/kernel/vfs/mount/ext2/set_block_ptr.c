@@ -51,7 +51,7 @@ bool ext2_set_block_id(
 
     size_t ppb = block_size / sizeof(uint32_t);
 
-    vfs_file_t* file = vfs_open(device, O_RDWR);
+    vfs_file_t* file = vfs_open(device, O_RDWR, NULL);
     if (file == NULL) return false;
 
     bool ok = false;

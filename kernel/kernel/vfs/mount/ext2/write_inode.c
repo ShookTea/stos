@@ -11,7 +11,7 @@ void ext2_write_inode(
     uint32_t inodes_per_group,
     ext2_inode_t* inode
 ) {
-    vfs_file_t* file = vfs_open(device, O_RDWR);
+    vfs_file_t* file = vfs_open(device, O_RDWR, NULL);
     if (file == NULL) {
         return;
     }

@@ -165,7 +165,10 @@ extern dentry_t* vfs_root;
 size_t vfs_read(vfs_file_t* file, size_t size, void* ptr);
 void vfs_seek(vfs_file_t* file, uint64_t offset);
 size_t vfs_write(vfs_file_t* file, size_t size, const void* ptr);
-vfs_file_t* vfs_open(dentry_t* dentry, uint8_t open_mode);
+/**
+ * On error returns NULL and stores error code in `errno` (if not null)
+ */
+vfs_file_t* vfs_open(dentry_t* dentry, uint8_t open_mode, int* errno);
 void vfs_close(vfs_file_t* file);
 bool vfs_readdir(dentry_t* dentry, size_t index, struct dirent* out);
 dentry_t* vfs_finddir(dentry_t* dentry, const char* name);

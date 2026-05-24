@@ -699,7 +699,7 @@ task_t* task_fork(void)
                 } else {
                     mode = O_RDONLY;
                 }
-                cfd->file = vfs_open(pfd->file->dentry, mode);
+                cfd->file = vfs_open(pfd->file->dentry, mode, NULL);
                 cfd->file->offset = pfd->file->offset;
             }
             child->fd[i] = cfd;
@@ -901,16 +901,16 @@ void task_setup_stdio(task_t* task)
         return;
     }
 
-    vfs_file_t* stdin = vfs_open(tty_node, O_RDONLY);
+    vfs_file_t* stdin = vfs_open(tty_node, O_RDONLY, NULL);
     if (stdin == NULL) {
         return;
     }
-    vfs_file_t* stdout = vfs_open(tty_node, O_WRONLY);
+    vfs_file_t* stdout = vfs_open(tty_node, O_WRONLY, NULL);
     if (stdout == NULL) {
         vfs_close(stdin);
         return;
     }
-    vfs_file_t* stderr = vfs_open(tty_node, O_WRONLY);
+    vfs_file_t* stderr = vfs_open(tty_node, O_WRONLY, NULL);
     if (stderr == NULL) {
         vfs_close(stdin);
         vfs_close(stdout);

@@ -21,7 +21,7 @@ int ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
     ext2_inode_metadata_t* node_meta = node->metadata;
 
     if (node_meta->cached_inode == NULL) {
-        vfs_file_t* dev = vfs_open(node_meta->device_file, O_RDONLY);
+        vfs_file_t* dev = vfs_open(node_meta->device_file, O_RDONLY, NULL);
         if (dev == NULL) return EIO;
         node_meta->cached_inode = ext2_read_inode(dev, node_meta, node->inode);
         vfs_close(dev);

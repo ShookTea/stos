@@ -22,7 +22,7 @@ uint32_t sys_open(const char* path, uint32_t flags)
         return -ENOENT;
     }
 
-    vfs_file_t* handler = vfs_open(node, flags);
+    vfs_file_t* handler = vfs_open(node, flags, NULL);
     if (handler == NULL) {
         return -EIO;
     }

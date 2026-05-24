@@ -51,7 +51,7 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
 
     if (found_inode_num == 0) return NULL;
 
-    vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY);
+    vfs_file_t* file = vfs_open(meta->device_file, O_RDONLY, NULL);
     if (file == NULL) {
         _debug_puts("result of vfs_open is NULL");
         return NULL;

@@ -162,7 +162,7 @@ void font_load_psf(font_mode_t font_mode, char* path)
         _debug_printf("font: path %s not found\n", path);
         return;
     }
-    vfs_file_t* handle = vfs_open(node, O_RDONLY);
+    vfs_file_t* handle = vfs_open(node, O_RDONLY, NULL);
     size_t size = handle->dentry->inode->length;
     uint8_t* file = kmalloc_flags(size, KMALLOC_ZERO);
     vfs_read(handle, size, file);

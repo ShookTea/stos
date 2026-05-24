@@ -50,7 +50,7 @@ size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
     size_t start_block_id = offset / meta->block_size;
     size_t end_block_id = (offset + size) / meta->block_size;
     // Open device file
-    vfs_file_t* device_file = vfs_open(device_file_dentry, O_RDONLY);
+    vfs_file_t* device_file = vfs_open(device_file_dentry, O_RDONLY, NULL);
     if (device_file == NULL) {
         _debug_puts("device file = NULL");
         return 0;

@@ -33,7 +33,7 @@ size_t ext2_block_id_to_addr(
 
     size_t ppb = block_size / sizeof(uint32_t);
 
-    vfs_file_t* file = vfs_open(device, O_RDONLY);
+    vfs_file_t* file = vfs_open(device, O_RDONLY, NULL);
     if (file == NULL) return 0;
 
     uint32_t block_num = 0;

@@ -138,7 +138,7 @@ static void handle_command_sent()
             } else if ((node->inode->type & VFS_TYPE_FILE) == 0) {
                 puts("Found node, but it's not a file.");
             } else {
-                vfs_file_t* handle = vfs_open(node, O_RDONLY);
+                vfs_file_t* handle = vfs_open(node, O_RDONLY, NULL);
                 elf_dump(handle);
             }
         }
@@ -154,7 +154,7 @@ static void handle_command_sent()
                 puts("Found node, but it's not a file.");
             } else {
                 dentry_t* root_dir = vfs_get_real_root();
-                vfs_file_t* handle = vfs_open(node, O_RDONLY);
+                vfs_file_t* handle = vfs_open(node, O_RDONLY, NULL);
                 void* file = kmalloc_flags(
                     handle->dentry->inode->length,
                     KMALLOC_ZERO
@@ -402,7 +402,7 @@ static void handle_command_sent()
                 puts("Found node, but it's not a file.");
             } else {
                 char* buffer = kmalloc_flags(sizeof(char) * 17, KMALLOC_ZERO);
-                vfs_file_t* handle = vfs_open(node, O_RDONLY);
+                vfs_file_t* handle = vfs_open(node, O_RDONLY, NULL);
                 size_t read_bytes;
                 while ((read_bytes = vfs_read(handle, 16, buffer)) != 0) {
                     printf("%s", buffer);
@@ -648,7 +648,7 @@ static void print_prompt_and_read_command()
     printf("\033[36;1m#\033[0m ");
     terminal_enable_cursor();
 
-    vfs_file_t* handle = vfs_open(tty_dentry, O_RDONLY);
+    vfs_file_t* handle = vfs_open(tty_dentry, O_RDONLY, NULL);
     command_length = vfs_read(handle, MAX_COMMAND_LENGTH, command_buffer);
     command_buffer[command_length] = '\0';
     command_buffer[command_length - 1] = '\0'; // Clear new line character

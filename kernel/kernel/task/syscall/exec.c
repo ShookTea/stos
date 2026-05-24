@@ -88,7 +88,7 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
         return -EACCES;
     }
 
-    vfs_file_t* file = vfs_open(node, O_RDONLY);
+    vfs_file_t* file = vfs_open(node, O_RDONLY, NULL);
     if (file == NULL) {
         return -EIO;
     }
