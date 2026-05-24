@@ -140,6 +140,8 @@ int chdir(const char* path);
  * `envp[]` is an array of pointers to strings, conventionally of the form
  * key=value, which are passed as the environment variables of the new program.
  * The `envp[]` array must be terminated by a null pointer.
+ *
+ * TODO: Setting error codes
  */
 int execve(const char* path, const char* argv[], const char* envp[]);
 
@@ -193,6 +195,30 @@ int execle(
  * Environment variables are inherited from the current process.
  */
 int execv(const char* path, const char* argv[]);
+
+/**
+ * This function is an equivalent of `execl`, but with an additional search
+ * for executable file: if `path` doesn't start with a slash character, then
+ * the executable file will be searched for in all directories specified in
+ * the colon-separated `PATH` env variable.
+ */
+int execlp(const char* path, const char* arg, ... /*, NULL */);
+
+/**
+ * This function is an equivalent of `execv`, but with an additional search
+ * for executable file: if `path` doesn't start with a slash character, then
+ * the executable file will be searched for in all directories specified in
+ * the colon-separated `PATH` env variable.
+ */
+int execvp(const char* path, const char* argv[]);
+
+/**
+ * This function is an equivalent of `execve`, but with an additional search
+ * for executable file: if `path` doesn't start with a slash character, then
+ * the executable file will be searched for in all directories specified in
+ * the colon-separated `PATH` env variable.
+ */
+int execvpe(const char* path, const char* argv[], const char* envp[]);
 
 /**
  * Moves the file offset of the open file descriptor `fd` to the argument
