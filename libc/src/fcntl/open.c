@@ -11,6 +11,7 @@ int open(const char* path, int flags)
     int w = (flags & O_WRONLY) ? 1 : 0;
     int rw = (flags & O_RDWR) ? 1 : 0;
     if ((r + w + rw) != 1) {
+        errno = EINVAL;
         return -1;
     }
 

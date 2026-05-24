@@ -28,6 +28,9 @@ extern "C" {
  * On error -1 is returned and `errno` is set to one of following values:
  * - ENOENT - if there is no file under given path
  * - EIO - on I/O error
+ * - EINVAL - given path is a directory, but flags are not read-only
+ * - EINVAL - missing exactly one of O_RDONLY, O_WRONLY or O_RDWR flags
+ * - ENOTDIR - given path is not a directory, but O_DIRECTORY flag was used
  * - ENOTSUP - on unsupported operation and other unknown errors
  */
 int open(const char* path, int flags);
