@@ -56,6 +56,22 @@ DIR* opendir(const char* name);
  */
 int closedir(DIR* dirp);
 
+/**
+ * Returns a pointer to a `dirent` structure representing the next directory
+ * entry in directory `dirp`. It returns `NULL` on reaching the end of the
+ * directory entry or if error occured (in which case `errno` will be set as
+ * well).
+ *
+ * The returned data may be overwritten by subsequent calls to this function.
+ */
+struct dirent* readdir(DIR* dirp);
+
+/**
+ * Resets position of the directory stream `dirp` to the beginning of the
+ * stream.
+ */
+void rewinddir(DIR* dirp);
+
 #ifdef __cplusplus
 }
 #endif
