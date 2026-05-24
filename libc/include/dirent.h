@@ -29,4 +29,37 @@ struct dirent {
     char d_name[256];
 };
 
+#if !(defined(__is_libk))
+
+/**
+ * Directory stream structure
+ */
+typedef struct {
+    /** File descriptor ID (from fcntl.h) */
+    int fd;
+} DIR;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Opens a directory and returns directory stream on success. On failure returns
+ * NULL and sets `errno` to one of error values as described by `open()`.
+ */
+DIR* opendir(const char* name);
+
+/**
+ * Closes directory stream and returns 0 on success. On failure returns -1
+ * and sets `errno` to one of following values:
+ * - EBADF - invalid directory stream descriptor
+ */
+int closedir(DIR* dirp);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
 #endif

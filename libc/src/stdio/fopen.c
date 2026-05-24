@@ -44,7 +44,7 @@ FILE* fopen(const char* restrict path, const char* restrict mode)
         return NULL;
     }
 
-    FILE* res = malloc(sizeof(FILE*));
+    FILE* res = malloc(sizeof(FILE));
     res->fd = fd;
     res->mode = flags;
     return res;

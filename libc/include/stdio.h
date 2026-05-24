@@ -12,7 +12,7 @@
  * File stream structure.
  */
 typedef struct {
-    /** File descriptor ID (from unistd.h) */
+    /** File descriptor ID (from fcntl.h) */
     int fd;
     /** Mode used for opening a file (combination of O_ flags from fcntl.h) */
     int mode;
