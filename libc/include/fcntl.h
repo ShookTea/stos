@@ -9,6 +9,7 @@
 #define O_TRUNC 0x08 // Truncate mode (make the file empty if already exists)
 #define O_CREAT 0x10 // Create mode (create a new file if it doesn't exit)
 #define O_APPEND 0x20 // Append mode (all writes added to the end of file)
+#define O_DIRECTORY 0x40 // If file is not a directory, opening will fail
 
 #if !(defined(__is_libk))
 

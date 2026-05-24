@@ -225,8 +225,17 @@ vfs_file_t* vfs_open(dentry_t* dentry, uint8_t mode)
 {
     vfs_node_t* node = dentry->inode;
     if ((node->type & VFS_TYPE_DIRECTORY)) {
-        // TODO: report error?
-        return NULL;
+        if (mode & (O_WRONLY | O_RDWR | O_APPEND | O_CREAT | O_TRUNC)) {
+            // Directories can only be opened in a read-only mode
+            // TODO: report error
+            return NULL;
+        }
+    }
+    else { // not a directory
+        if (mode & O_DIRECTORY) {
+            // TODO: report error
+            return NULL;
+        }
     }
     node->open_count++;
     // TODO: this is the place where we could introduce some kind of a lock
