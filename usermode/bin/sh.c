@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -28,6 +29,7 @@
 static char comm_buffer[COMM_BUF_SIZE] = {0};
 static int comm_cursor_loc = 0;
 static int comm_buffer_len = 0;
+static int last_comm_status = 0;
 
 static void handle_command(void)
 {
@@ -137,8 +139,19 @@ static bool escseq_check(char* buf, int count, char* test)
 
 static void print_prompt(void)
 {
-    char* path = "/path"; // TODO
-    printf("\n\033[0;96m%s $\033[0m %s", path, CURSOR_ENABLE);
+    char cwd[128] = {0};
+    getcwd(cwd, 127);
+    time_t timestamp = time(NULL);
+    struct tm* local = localtime(&timestamp);
+    printf("\n\033[0m%02u:%02u:%02u \033[96m%s \033[%um%u\n\033[97m$\033[0m %s",
+        local->tm_hour,
+        local->tm_min,
+        local->tm_sec,
+        cwd,
+        last_comm_status == 0 ? 92 : 91,
+        last_comm_status,
+        CURSOR_ENABLE
+    );
 }
 
 int main(void)
