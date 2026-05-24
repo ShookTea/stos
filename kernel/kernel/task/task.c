@@ -1,4 +1,5 @@
 #include <kernel/task/task.h>
+#include <errno.h>
 #include "kernel/memory/pmm.h"
 #include "kernel/spinlock.h"
 #include "kernel/task/wait.h"
@@ -822,7 +823,7 @@ int task_exec(
     elf_parse(elf_data, parsed);
     if (!parsed->success) {
         kfree(parsed);
-        return -1;
+        return -ENOEXEC;
     }
 
     task_t* current = scheduler_get_current_task();
@@ -839,7 +840,7 @@ int task_exec(
     );
     if (new_pd == NULL) {
         kfree(parsed);
-        return -1;
+        return -ENOTSUP;
     }
 
     // Switch to the new page directory and load ELF segments into it
@@ -851,7 +852,7 @@ int task_exec(
         paging_free_user_pages(new_pd);
         pmm_free_page(paging_virt_to_phys(new_pd));
         kfree(parsed);
-        return -1;
+        return -ENOTSUP;
     }
 
     // Commit: free the old address space (we are already running on new_pd)
