@@ -1,3 +1,4 @@
+#include "sys/wait.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -37,12 +38,11 @@ static int comm_cursor_loc = 0;
 static int comm_buffer_len = 0;
 static int last_comm_status = 0;
 
-static void handle_command(void)
+static command_t** parse_command(void)
 {
     if (comm_buffer_len == 0) {
-        return;
+        return NULL;
     }
-    printf("\nReceived command: '%s'\n", comm_buffer);
     // NULL-terminated list of words separated by space
     char** words = malloc(sizeof(char*) * 2);
     words[0] = NULL;
@@ -177,32 +177,80 @@ static void handle_command(void)
         }
     }
 
-    int commands_count = curr_command_idx + 1;
-    printf("Commands count: %d\n", commands_count);
-    for (int i = 0; i < commands_count; i++) {
-        command_t* cmd = commands[i];
-        printf("  [%d] comm_name='%s'\n", i, cmd->comm_name ? cmd->comm_name : "(null)");
-        for (int j = 0; cmd->argv[j] != NULL; j++)
-            printf("    argv[%d]='%s'\n", j, cmd->argv[j]);
-        for (int j = 0; cmd->envp_override[j] != NULL; j++)
-            printf("    env[%d]='%s'\n", j, cmd->envp_override[j]);
-    }
-
     // Cleanup
     for (int i = 0; i <= words_count; i++) {
         free(words[i]);
     }
     free(words);
-    for (int i = 0; i < commands_count; i++) {
-        command_t* cmd = commands[i];
+
+    return commands;
+}
+
+static bool handle_command(void)
+{
+    if (!strcmp(comm_buffer, "exit")) {
+        return false;
+    }
+    command_t** commands = parse_command();
+    if (commands == NULL) {
+        return true;
+    }
+
+    // Array containing all created processes
+    int* pids = NULL;
+    int pids_count = 0;
+    command_t** iter = commands;
+    bool parent = true;
+    while (*iter != NULL) {
+        command_t* cmd = *iter;
+        // Increase size of PIDs array
+        pids = realloc(pids, pids_count + 1);
+        int new_pid = fork();
+        if (new_pid < 0) {
+            puts("ERROR!\n");
+        }
+        else if (new_pid > 0) {
+            pids[pids_count] = new_pid;
+            pids_count++;
+        } else {
+            parent = false;
+            printf("comm_name='%s'\n", cmd->comm_name ? cmd->comm_name : "(null)");
+            for (int j = 0; cmd->argv[j] != NULL; j++) {
+                printf("  argv[%d]='%s'\n", j, cmd->argv[j]);
+            }
+            for (int j = 0; cmd->envp_override[j] != NULL; j++) {
+                printf("  env[%d]='%s'\n", j, cmd->envp_override[j]);
+            }
+            exit(0);
+        }
+        iter++;
+    }
+
+    if (parent) {
+        for (int i = 0; i < pids_count; i++) {
+            waitpid(pids[i], &last_comm_status, 0);
+        }
+    }
+
+    // Cleanup
+    iter = commands;
+    free(pids);
+    while (*iter != NULL) {
+        command_t* cmd = *iter;
         free(cmd->comm_name);
-        for (int j = 0; cmd->argv[j] != NULL; j++) free(cmd->argv[j]);
+        for (int j = 0; cmd->argv[j] != NULL; j++) {
+            free(cmd->argv[j]);
+        }
         free(cmd->argv);
-        for (int j = 0; cmd->envp_override[j] != NULL; j++) free(cmd->envp_override[j]);
+        for (int j = 0; cmd->envp_override[j] != NULL; j++) {
+            free(cmd->envp_override[j]);
+        }
         free(cmd->envp_override);
         free(cmd);
+        iter++;
     }
     free(commands);
+    return true;
 }
 
 static bool escseq_check(char* buf, int count, char* test)
@@ -245,8 +293,9 @@ int main(void)
     termios.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FD, TCSANOW, &termios);
 
+    bool continue_exec = true;
     // Main command loop
-    while (true) {
+    while (continue_exec) {
         print_prompt();
         memset(comm_buffer, 0, COMM_BUF_SIZE);
         comm_cursor_loc = 0;
@@ -323,11 +372,11 @@ int main(void)
             }
         }
 
-        handle_command();
+        continue_exec = handle_command();
     }
 
     // Bring back the original lflag value
     termios.c_lflag = original_lflag;
     tcsetattr(STDIN_FD, TCSANOW, &termios);
-    return 0;
+    return last_comm_status;
 }
