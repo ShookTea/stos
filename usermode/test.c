@@ -1,25 +1,32 @@
+#include <sys/syscall.h>
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 
-int main(int argc, char** argv)
+int main(void)
 {
-    if (argc != 2) {
-        puts("'write' requires 1 argument (path)");
-        return 1;
-    }
-
-    char* path = argv[1];
     errno = 0;
-    char buf[128] = {0};
-
-    int res = readlink(path, buf, 127);
-    if (res < 0) {
-        printf("Err %u\n", errno);
-    } else {
-        printf("Readlink res: '%s'\n", buf);
+    int fd = open("/dev", O_RDONLY | O_DIRECTORY);
+    if (fd < 0) {
+        printf("errno = %u\n", errno);
+        return errno;
     }
 
-    return res < 0 ? 2 : 0;
+    int syscall_res = 0;
+    struct dirent dir[2];
+    do {
+        syscall_res = syscall(SYS_GETDENTS, fd, (int)&dir, 2);
+        if (syscall_res < 0) {
+            printf("syscall errno = %u\n", -syscall_res);
+            close(fd);
+            return -syscall_res;
+        }
+        for (int i = 0; i < syscall_res; i++) {
+            printf("[%c] '%s'\n", dir[i].d_type, dir[i].d_name);
+        }
+    } while (syscall_res > 0);
+
+    return 0;
 }

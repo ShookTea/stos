@@ -15,7 +15,7 @@ int sys_getdents(int fd_id, struct dirent* dir, int count)
     dentry_t* dentry = fd->file->dentry;
     if (dentry == NULL || dentry->inode == NULL) return -EBADF;
 
-    if (dentry->inode->type != VFS_TYPE_DIRECTORY)
+    if (!(dentry->inode->type & VFS_TYPE_DIRECTORY))
     {
         return -ENOTDIR;
     }
