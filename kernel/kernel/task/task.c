@@ -765,6 +765,16 @@ int task_wait(int pid, int* exit_code)
         if (exit_code != NULL) {
             *exit_code = child->exit_code;
         }
+        if (child->prev_sibling != NULL) {
+            child->prev_sibling->next_sibling = child->next_sibling;
+        } else {
+            parent->first_child = child->next_sibling;
+        }
+        if (child->next_sibling != NULL) {
+            child->next_sibling->prev_sibling = child->prev_sibling;
+        }
+        child->prev_sibling = NULL;
+        child->next_sibling = NULL;
         child->state = TASK_DEAD;
         return child->pid;
     }
@@ -783,8 +793,19 @@ int task_wait(int pid, int* exit_code)
     if (exit_code != NULL) {
         *exit_code = any_child_zombie_found->exit_code;
     }
-    any_child_zombie_found->state = TASK_DEAD;
-    return any_child_zombie_found->pid;
+    task_t* reaped = any_child_zombie_found;
+    if (reaped->prev_sibling != NULL) {
+        reaped->prev_sibling->next_sibling = reaped->next_sibling;
+    } else {
+        parent->first_child = reaped->next_sibling;
+    }
+    if (reaped->next_sibling != NULL) {
+        reaped->next_sibling->prev_sibling = reaped->prev_sibling;
+    }
+    reaped->prev_sibling = NULL;
+    reaped->next_sibling = NULL;
+    reaped->state = TASK_DEAD;
+    return reaped->pid;
 }
 
 int task_exec(
