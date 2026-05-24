@@ -26,6 +26,12 @@
     curr_word++; \
     curr_word_len = 0; } while (0);
 
+typedef struct {
+    char* comm_name;
+    char** argv;
+    char** envp_override;
+} command_t;
+
 static char comm_buffer[COMM_BUF_SIZE] = {0};
 static int comm_cursor_loc = 0;
 static int comm_buffer_len = 0;
@@ -111,9 +117,75 @@ static void handle_command(void)
     if (words[curr_word] == NULL) {
         words_count--;
     }
-    printf("Words count: %u\n", words_count + 1);
+
+    // NULL-terminated list of command objects
+    command_t** commands = malloc(sizeof(command_t*) * 2);
+    commands[0] = malloc(sizeof(command_t));
+    commands[0]->comm_name = NULL;
+    commands[0]->argv = malloc(sizeof(char*));
+    commands[0]->argv[0] = NULL;
+    commands[0]->envp_override = malloc(sizeof(char*));
+    commands[0]->envp_override[0] = NULL;
+    commands[1] = NULL;
+    int curr_command_idx = 0;
+    int argv_count = 0;
+    int envp_count = 0;
+    bool accepting_envs = true;
+
     for (int i = 0; i <= words_count; i++) {
-        printf("%u = '%s'\n", i, words[i]);
+        char* word = words[i];
+        if (strcmp(word, "|") == 0) {
+            curr_command_idx++;
+            argv_count = 0;
+            envp_count = 0;
+            accepting_envs = true;
+            commands = realloc(
+                commands,
+                sizeof(command_t*) * (curr_command_idx + 2)
+            );
+            commands[curr_command_idx] = malloc(sizeof(command_t));
+            commands[curr_command_idx]->comm_name = NULL;
+            commands[curr_command_idx]->argv = malloc(sizeof(char*));
+            commands[curr_command_idx]->argv[0] = NULL;
+            commands[curr_command_idx]->envp_override = malloc(sizeof(char*));
+            commands[curr_command_idx]->envp_override[0] = NULL;
+            commands[curr_command_idx + 1] = NULL;
+            continue;
+        }
+
+        command_t* cmd = commands[curr_command_idx];
+        if (accepting_envs && strchr(word, '=') != NULL) {
+            cmd->envp_override = realloc(
+                cmd->envp_override,
+                sizeof(char*) * (envp_count + 2)
+            );
+            cmd->envp_override[envp_count] = malloc(strlen(word) + 1);
+            strcpy(cmd->envp_override[envp_count], word);
+            cmd->envp_override[envp_count + 1] = NULL;
+            envp_count++;
+        } else {
+            accepting_envs = false;
+            if (cmd->comm_name == NULL) {
+                cmd->comm_name = malloc(strlen(word) + 1);
+                strcpy(cmd->comm_name, word);
+            }
+            cmd->argv = realloc(cmd->argv, sizeof(char*) * (argv_count + 2));
+            cmd->argv[argv_count] = malloc(strlen(word) + 1);
+            strcpy(cmd->argv[argv_count], word);
+            cmd->argv[argv_count + 1] = NULL;
+            argv_count++;
+        }
+    }
+
+    int commands_count = curr_command_idx + 1;
+    printf("Commands count: %d\n", commands_count);
+    for (int i = 0; i < commands_count; i++) {
+        command_t* cmd = commands[i];
+        printf("  [%d] comm_name='%s'\n", i, cmd->comm_name ? cmd->comm_name : "(null)");
+        for (int j = 0; cmd->argv[j] != NULL; j++)
+            printf("    argv[%d]='%s'\n", j, cmd->argv[j]);
+        for (int j = 0; cmd->envp_override[j] != NULL; j++)
+            printf("    env[%d]='%s'\n", j, cmd->envp_override[j]);
     }
 
     // Cleanup
@@ -121,6 +193,16 @@ static void handle_command(void)
         free(words[i]);
     }
     free(words);
+    for (int i = 0; i < commands_count; i++) {
+        command_t* cmd = commands[i];
+        free(cmd->comm_name);
+        for (int j = 0; cmd->argv[j] != NULL; j++) free(cmd->argv[j]);
+        free(cmd->argv);
+        for (int j = 0; cmd->envp_override[j] != NULL; j++) free(cmd->envp_override[j]);
+        free(cmd->envp_override);
+        free(cmd);
+    }
+    free(commands);
 }
 
 static bool escseq_check(char* buf, int count, char* test)
