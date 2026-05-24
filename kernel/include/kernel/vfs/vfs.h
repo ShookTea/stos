@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <dirent.h>
 #include <sys/types.h>
 
 /**
@@ -56,7 +57,6 @@
 //     (create if not exist, open file for appending at the end of file + read)
 
 struct vfs_node;
-struct dirent;
 struct dentry;
 
 /**
@@ -183,13 +183,6 @@ typedef struct vfs_node {
     readlink_node_t readlink_node;
     void* metadata; // Data that can be used by filesystem
 } vfs_node_t;
-
-// One of these is returned by the readdir call, according to POSIX.
-struct dirent
-{
-  char name[VFS_MAX_FILENAME]; // Filename.
-  ino_t ino; // Inode number. Required by POSIX.
-};
 
 // The root dentry of the filesystem
 extern dentry_t* vfs_root;
@@ -336,5 +329,17 @@ vfs_mount_result_t vfs_mount(
  * Forces synchronization of everything in the filesystem
  */
 void vfs_sync_filesystem(void);
+
+inline char vfs_type_to_dirent(uint8_t type)
+{
+    switch (type) {
+        case VFS_TYPE_FILE: return DT_REG;
+        case VFS_TYPE_DIRECTORY: return DT_DIR;
+        case VFS_TYPE_SYMLINK: return DT_LNK;
+        case VFS_TYPE_CHARACTER_DEVICE: return DT_CHR;
+        case VFS_TYPE_BLOCK_DEVICE: return DT_BLK;
+        default: return DT_UNKNOWN;
+    }
+}
 
 #endif

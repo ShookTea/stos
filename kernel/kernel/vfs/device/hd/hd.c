@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <dirent.h>
+#include <stddef.h>
+#include <string.h>
 #include "kernel/debug.h"
 #include "kernel/drivers/ata.h"
 #include "kernel/memory/kmalloc.h"
@@ -5,9 +9,6 @@
 #include "kernel/task/task.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
-#include "stdlib.h"
-#include <stddef.h>
-#include <string.h>
 #include "../../device.h"
 #include "./hd.h"
 
@@ -84,12 +85,13 @@ bool device_hd_readdir_partition(size_t part_index, struct dirent* out)
     for (size_t d = 0; d < part_cache_pio_count; d++) {
         for (size_t p = 0; p < part_cache[d].count; p++) {
             if (idx == part_index) {
-                out->name[0] = 'h';
-                out->name[1] = 'd';
-                out->name[2] = part_cache[d].drive_letter;
-                out->name[3] = '1' + p;
-                out->name[4] = '\0';
-                out->ino = (uint32_t)(part_cache[d].disk_id * 4 + p + 1);
+                out->d_name[0] = 'h';
+                out->d_name[1] = 'd';
+                out->d_name[2] = part_cache[d].drive_letter;
+                out->d_name[3] = '1' + p;
+                out->d_name[4] = '\0';
+                out->d_ino = (uint32_t)(part_cache[d].disk_id * 4 + p + 1);
+                out->d_type = DT_BLK;
                 return true;
             }
             idx++;

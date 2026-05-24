@@ -425,7 +425,7 @@ static void handle_command_sent()
                 size_t i = 0;
                 struct dirent dir;
                 while (vfs_readdir(node, i, &dir)) {
-                    dentry_t* child = vfs_finddir(node, dir.name);
+                    dentry_t* child = vfs_finddir(node, dir.d_name);
                     i++;
 
                     if (child->inode->type & VFS_TYPE_DIRECTORY) {

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../proc.h"
+#include <dirent.h>
 #include "kernel/task/task.h"
 
 bool proc_fd_readdir(
@@ -30,8 +31,9 @@ bool proc_fd_readdir(
 
         // FD is open.
         if (opened_index == index) {
-            out->ino = i;
-            sprintf(out->name, "%u", i);
+            out->d_ino = i;
+            sprintf(out->d_name, "%u", i);
+            out->d_type = DT_REG;
             return true;
         } else {
             opened_index++;

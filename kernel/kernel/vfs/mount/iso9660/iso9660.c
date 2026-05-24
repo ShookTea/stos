@@ -1,9 +1,10 @@
+#include <dirent.h>
 #include "kernel/memory/kmalloc.h"
 #include "kernel/spinlock.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include "../mount.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -200,7 +201,7 @@ static bool iso_readdir(
         if (i == index) {
             _debug_printf("Index %u found\n", i);
             dump_dirrec(dirrec);
-            out->ino = i;
+            out->d_ino = i;
             // Copy filename to out
             char* filename = kmalloc_flags(
                 sizeof(char) * (dirrec->file_name_length + 1),
@@ -214,7 +215,8 @@ static bool iso_readdir(
                     break;
                 }
             }
-            strcpy(out->name, filename);
+            strcpy(out->d_name, filename);
+            out->d_type = DT_UNKNOWN;
             kfree(filename);
             found = true;
         }

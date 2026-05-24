@@ -115,8 +115,9 @@ static bool root_readdir(
     if (index >= root_content_size) {
         return false;
     }
-    strcpy(out->name, root_content[index].filename);
-    out->ino = root_content[index].dentry->inode->inode;
+    strcpy(out->d_name, root_content[index].filename);
+    out->d_ino = root_content[index].dentry->inode->inode;
+    out->d_type = vfs_type_to_dirent(root_content[index].dentry->inode->type);
     return true;
 }
 

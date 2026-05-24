@@ -3,8 +3,8 @@
 #include <kernel/paging.h>
 #include <kernel/vfs/vfs.h>
 #include <kernel/vfs/initrd.h>
-
 #include "kernel/debug.h"
+#include <dirent.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,8 +35,9 @@ static bool initrd_readdir(
         return false;
     }
 
-    strcpy(out->name, dir_data->children[index]->filename);
-    out->ino = dir_data->children[index]->inode;
+    strcpy(out->d_name, dir_data->children[index]->filename);
+    out->d_ino = dir_data->children[index]->inode;
+    out->d_type = DT_UNKNOWN;
     return true;
 }
 

@@ -1,6 +1,8 @@
 #ifndef _FCNTL_H
 #define _FCNTL_H 1
 
+#include <sys/cdefs.h>
+
 #if !(defined(__is_libk))
 
 #define O_RDONLY 0x01 // Read-only mode

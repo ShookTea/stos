@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 #include "../proc.h"
 #include "kernel/task/task.h"
 
@@ -14,14 +15,16 @@ bool proc_pid_readdir(
         return false;
     }
 
-    out->ino = index;
+    out->d_ino = index;
 
     if (index == 0) {
-        strcpy(out->name, "stat");
+        strcpy(out->d_name, "stat");
+        out->d_type = DT_REG;
         return true;
     }
     if (index == 1) {
-        strcpy(out->name, "fd");
+        strcpy(out->d_name, "fd");
+        out->d_type = DT_DIR;
         return true;
     }
 

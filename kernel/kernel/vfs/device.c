@@ -33,8 +33,9 @@ static bool readdir(
     struct dirent* out
 ) {
     if (index < device_files_count) {
-        strcpy(out->name, device_files[index]->filename);
-        out->ino = device_files[index]->inode;
+        strcpy(out->d_name, device_files[index]->filename);
+        out->d_ino = device_files[index]->inode;
+        out->d_type = vfs_type_to_dirent(device_files[index]->type);
         return true;
     }
     // Past the static list: enumerate partition nodes dynamically.

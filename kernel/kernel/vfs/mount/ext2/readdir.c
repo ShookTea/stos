@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include "dirent.h"
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
 
@@ -38,12 +39,25 @@ bool ext2_readdir(
 
         if (entry->inode != 0) {
             if (count == index) {
-                out->ino = entry->inode;
+                out->d_ino = entry->inode;
                 size_t nl = entry->name_len < VFS_MAX_FILENAME - 1
                     ? entry->name_len
                     : VFS_MAX_FILENAME - 1;
-                memcpy(out->name, entry->name, nl);
-                out->name[nl] = '\0';
+                memcpy(out->d_name, entry->name, nl);
+                out->d_name[nl] = '\0';
+
+                vfs_file_t* file = vfs_open(meta->device_file, VFS_MODE_READONLY);
+                if (file == NULL) {
+                    return NULL;
+                }
+
+                ext2_inode_t* child_ext2_inode =
+                    ext2_read_inode(file, meta, entry->inode);
+                vfs_close(file);
+                uint8_t vfs_type = ext2_type_to_vfs(
+                    child_ext2_inode->type_and_permissions
+                );
+                out->d_type = vfs_type_to_dirent(vfs_type);
                 return true;
             }
             count++;

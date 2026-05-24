@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <dirent.h>
 #include "../proc.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
@@ -17,8 +18,9 @@ bool proc_root_readdir(
     size_t task_count = task_get_tasks_count();
     if (index < task_count) {
         task_t* task = task_get_task_by_index(index);
-        out->ino = task->pid;
-        sprintf(out->name, "%u", task->pid);
+        out->d_ino = task->pid;
+        sprintf(out->d_name, "%u", task->pid);
+        out->d_type = DT_DIR;
         return true;
     }
 
@@ -30,8 +32,9 @@ bool proc_root_readdir(
 
     // Add "self" symlink
     if (index == task_count) {
-        out->ino = curr->pid;
-        strcpy(out->name, "self");
+        out->d_ino = curr->pid;
+        strcpy(out->d_name, "self");
+        out->d_type = DT_DIR;
         return true;
     }
 
