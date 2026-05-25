@@ -51,6 +51,34 @@ long strtol(const char* str, char** endptr, int base);
  */
 unsigned long strtoul(const char* str, char** endptr, int base);
 
+/**
+ * Sorts array `base` that contains `n` elements of size `size`. The `base`
+ * argument points to the beginning of the array. The content is sorted in
+ * ascending order, using comparison function `compar` that accepts two items
+ * in the array of size `size` and has to return:
+ * - zero - if two values are equal
+ * - negative number - if the first value is lesser than the second
+ * - positive number - if the first value is greated than the second
+ */
+void qsort(
+    void* base,
+    size_t n,
+    size_t size,
+    int (*compar)(const void* a, const void* b)
+);
+
+/**
+ * This function is identical to `qsort`, except that the comparison function
+ * `compar` also accepts a third `arg` argument.
+ */
+void qsort_r(
+    void* base,
+    size_t n,
+    size_t size,
+    int (*compar)(const void* a, const void* b, void* arg),
+    void* arg
+);
+
 #if !(defined(__is_libk))
 
 /**
