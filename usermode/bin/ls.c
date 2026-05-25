@@ -39,6 +39,11 @@ static void print_usage(void)
     puts("                      Defaults to current working directory.");
 }
 
+static char* months[12] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+};
+
 typedef enum {
     DM_GRID,
     DM_ONE_LINE,
@@ -47,6 +52,7 @@ typedef enum {
 
 static display_mode_t display_mode = DM_GRID;
 static int terminal_width = 64; // TODO: read real width from terminal
+static int curr_time;
 
 typedef struct {
     char name[PATH_MAX_LENGTH];
@@ -97,24 +103,13 @@ static void print_entry(
         chars_for_size
     );
 
-    // Load stats
-    off_t size;
-    struct tm* time_tm;
-    if (entry->stat_loaded) {
-        size = entry->size;
-        time_tm = localtime(&entry->last_mod_time.tv_spec);
-    } else {
-        size = 0;
-        time_t t = time(NULL);
-        time_tm = localtime(&t);
-    }
-
     // Build last modification string
+    struct tm* time_tm = localtime(&entry->last_mod_time.tv_spec);
     char mod_time[13] = {0};
     sprintf(
         mod_time,
         "%s %2u %02u:%02u",
-        "May", // TODO: load real month
+        months[time_tm->tm_mon],
         time_tm->tm_mday,
         time_tm->tm_hour,
         time_tm->tm_min
@@ -123,7 +118,7 @@ static void print_entry(
     printf(
         format,
         entry->type,
-        size,
+        entry->size,
         mod_time,
         entry->name
     );
@@ -180,6 +175,9 @@ static int list_for_path(const char* path)
 
             if (lstat(full_path, &statbuf) < 0) {
                 entries[entries_count].stat_loaded = false;
+                entries[entries_count].size = 0;
+                entries[entries_count].last_mod_time.tv_nsec = 0;
+                entries[entries_count].last_mod_time.tv_spec = curr_time;
                 result = 1;
             } else {
                 entries[entries_count].stat_loaded = true;
@@ -238,6 +236,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    curr_time = time(NULL);
     int result = 0;
 
     if (optind < argc) {
