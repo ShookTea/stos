@@ -44,6 +44,7 @@ typedef enum {
 } display_mode_t;
 
 static display_mode_t display_mode = DM_GRID;
+static int terminal_width = 64; // TODO: read real width from terminal
 
 typedef struct {
     char name[PATH_MAX_LENGTH];
@@ -56,9 +57,23 @@ static int sort_comp(const void* _a, const void* _b)
     return strcmp(a->name, b->name);
 }
 
-static void print_entry(ls_entry_t* entry)
+static void print_entry(int i, ls_entry_t* entry, int longest_name_len)
 {
-    printf("%s\n", entry->name);
+    if (display_mode == DM_ONE_LINE) {
+        printf("%s\n", entry->name);
+        return;
+    }
+    if (display_mode == DM_TABULAR) {
+        printf("%s\n", entry->name);
+        // TODO: print actual data
+        return;
+    }
+    int col_width = longest_name_len + 2;
+    int columns = terminal_width / col_width;
+    char format[32] = {0};
+    sprintf(format, "%%-%us", col_width);
+    printf(format, entry->name);
+    if (i % columns == (columns - 1)) printf("\n");
 }
 
 static int list_for_path(const char* path)
@@ -97,7 +112,7 @@ static int list_for_path(const char* path)
 
     // Printing and cleanup
     for (int i = 0; i < entries_count; i++) {
-        print_entry(entries + i);
+        print_entry(i, entries + i, longest_name_len);
     }
     free(entries);
     return 0;
