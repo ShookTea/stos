@@ -6,11 +6,11 @@
 int pipe_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
 {
     if (node == NULL || file == NULL) {
-        return -EIO;
+        return EIO;
     }
 
     if (mode & O_RDWR) {
-        return -EIO;
+        return EIO;
     }
 
     pipe_node_meta_t* node_meta = node->metadata;
@@ -18,10 +18,10 @@ int pipe_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
 
     // check if already opened
     if (read && node_meta->read_opened) {
-        return -EIO;
+        return EIO;
     }
     if (!read && node_meta->write_opened) {
-        return -EIO;
+        return EIO;
     }
 
     if (read) {

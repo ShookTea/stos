@@ -1,6 +1,8 @@
 #include "kernel/vfs/pipe.h"
 #include "./pipe.h"
+#include "fcntl.h"
 #include "kernel/memory/kmalloc.h"
+#include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
 #include "libds/ringbuf.h"
 #include <errno.h>
@@ -65,5 +67,40 @@ int pipe_create(task_t* task, int* read_fd, int* write_fd, int flags)
         task->name
     );
 
-    return -ENOTSUP;
+    dentry_t* dentry = vfs_dentry_create(NULL, "pipe", node);
+    int err = 0;
+    vfs_file_t* read_file = vfs_open(dentry, O_RDONLY, &err);
+    if (err != 0) {
+        kfree(meta);
+        kfree(node);
+        return -err;
+    }
+    vfs_file_t* write_file = vfs_open(dentry, O_WRONLY, &err);
+    if (err != 0) {
+        vfs_close(read_file);
+        kfree(meta);
+        kfree(node);
+        return -err;
+    }
+
+    task_file_descriptor_t* read_fdobj = task_add_fd(task, read_file);
+    task_file_descriptor_t* write_fdobj = task_add_fd(task, write_file);
+    if (read_fdobj == NULL || write_fdobj == NULL) {
+        vfs_close(read_file);
+        vfs_close(write_file);
+        kfree(meta);
+        kfree(node);
+        if (read_fdobj != NULL) {
+            read_fdobj->file = NULL;
+        }
+        if (write_fdobj != NULL) {
+            write_fdobj->file = NULL;
+        }
+        return -ENOTSUP;
+    }
+
+    *read_fd = read_fdobj->identifier;
+    *write_fd = write_fdobj->identifier;
+
+    return 0;
 }
