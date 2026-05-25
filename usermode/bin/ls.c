@@ -60,6 +60,7 @@ typedef struct {
     bool stat_loaded;
     off_t size;
     struct timespec last_mod_time;
+    char link_path[PATH_MAX_LENGTH];
 } ls_entry_t;
 
 static int sort_comp(const void* _a, const void* _b)
@@ -115,12 +116,20 @@ static void print_entry(
         time_tm->tm_min
     );
 
+    // Build name, including link if necessary
+    char entry_name[PATH_MAX_LENGTH * 2];
+    if (entry->link_path[0]) {
+        sprintf(entry_name, "%s -> %s", entry->name, entry->link_path);
+    } else {
+        sprintf(entry_name, "%s", entry->name);
+    }
+
     printf(
         format,
         entry->type,
         entry->size,
         mod_time,
-        entry->name
+        entry_name
     );
     return;
 }
@@ -185,6 +194,18 @@ static int list_for_path(const char* path)
                 entries[entries_count].last_mod_time = statbuf.st_mtim;
                 if (statbuf.st_size > largest_size) {
                     largest_size = statbuf.st_size;
+                }
+            }
+
+            if (dirent->d_type == DT_LNK) {
+                int res = readlink(
+                    full_path,
+                    entries[entries_count].link_path,
+                    PATH_MAX_LENGTH - 1
+                );
+                if (res < 0) {
+                    memset(entries[entries_count].link_path, 0, PATH_MAX_LENGTH);
+                    result = 1;
                 }
             }
 
