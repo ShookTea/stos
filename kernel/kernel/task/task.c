@@ -952,3 +952,35 @@ void task_setup_stdio(task_t* task)
     task->fd[1]->file = stdout;
     task->fd[2]->file = stderr;
 }
+
+task_file_descriptor_t* task_add_fd(
+    task_t* task,
+    vfs_file_t* handler
+) {
+    if (task == NULL || handler == NULL) {
+        return NULL;
+    }
+
+    // First try to find first existing identifier that is already allocated but
+    // was freed before
+    for (size_t i = 0; i < task->fd_count; i++) {
+        task_file_descriptor_t* desc = task->fd[i];
+        if (desc->file == NULL) {
+            desc->file = handler;
+            return desc;
+        }
+    }
+
+    // Allocate new entry for file descriptor
+    task_file_descriptor_t* desc = kmalloc(sizeof(task_file_descriptor_t));
+    desc->file = handler;
+    desc->identifier = task->fd_count;
+    task->fd = krealloc(
+        task->fd,
+        sizeof(task_file_descriptor_t*) * (task->fd_count + 1)
+    );
+    task->fd[task->fd_count] = desc;
+    task->fd_count++;
+
+    return desc;
+}

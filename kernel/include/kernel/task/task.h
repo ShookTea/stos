@@ -284,4 +284,12 @@ int task_exec(
     const char** envp
 );
 
+/**
+ * Adds opened file descriptor to task and returns FD object.
+ */
+task_file_descriptor_t* task_add_fd(
+    task_t* task,
+    vfs_file_t* file
+);
+
 #endif

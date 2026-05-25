@@ -1,6 +1,5 @@
 #include "kernel/task/syscall.h"
 #include <errno.h>
-#include "kernel/memory/kmalloc.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
@@ -28,26 +27,9 @@ uint32_t sys_open(const char* path, uint32_t flags)
         return err_from_open == 0 ? -EIO : -err_from_open;
     }
 
-    // First try to find first existing identifier that is already allocated but
-    // was freed before
-    for (size_t i = 0; i < current->fd_count; i++) {
-        task_file_descriptor_t* desc = current->fd[i];
-        if (desc->file == NULL) {
-            desc->file = handler;
-            return desc->identifier;
-        }
+    task_file_descriptor_t* desc = task_add_fd(current, handler);
+    if (desc == NULL) {
+        return -EIO;
     }
-
-    // Allocate new entry for file descriptor
-    task_file_descriptor_t* desc = kmalloc(sizeof(task_file_descriptor_t));
-    desc->file = handler;
-    desc->identifier = current->fd_count;
-    current->fd = krealloc(
-        current->fd,
-        sizeof(task_file_descriptor_t*) * (current->fd_count + 1)
-    );
-    current->fd[current->fd_count] = desc;
-    current->fd_count++;
-
     return desc->identifier;
 }
