@@ -39,6 +39,7 @@ static inline char* cat_label(const debug_channel_t cat)
         case DBC_VFS_DEV: return "VFS/dev";
         case DBC_VFS_EXT2: return "VFS/ext2";
         case DBC_VFS_ISO9660: return "VFS/iso9660";
+        case DBC_VFS_PIPE: return "VFS/pipe";
         case DBC_VGA: return "VGA";
     }
     return "";

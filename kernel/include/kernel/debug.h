@@ -34,6 +34,7 @@ typedef enum {
     DBC_VFS_DEV,
     DBC_VFS_EXT2,
     DBC_VFS_ISO9660,
+    DBC_VFS_PIPE,
     DBC_VGA,
 } debug_channel_t;
 
