@@ -2,8 +2,11 @@
 #include <errno.h>
 #include <stddef.h>
 
-int pipe_create(int* read_fd, int* write_fd, int flags)
+int pipe_create(task_t* task, int* read_fd, int* write_fd, int flags)
 {
+    if (task == NULL) {
+        return -ENOTSUP;
+    }
     if (read_fd == NULL || write_fd == NULL) {
         return -EFAULT;
     }
