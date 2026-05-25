@@ -27,8 +27,6 @@
 #define VFS_TYPE_CHARACTER_DEVICE 0x08
 // Block device file (allowing reading any block size and alignment)
 #define VFS_TYPE_BLOCK_DEVICE 0x10
-// Mounted file.
-#define VFS_TYPE_MOUNTPOINT 0x20
 
 struct vfs_node;
 struct dentry;

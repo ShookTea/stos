@@ -12,5 +12,5 @@ int sys_fstat(int fd_id, struct stat* stat)
         return -ENOENT;
     }
 
-    return -vfs_stat(fd->file->dentry, stat, false);
+    return -vfs_stat(fd->file->dentry, stat);
 }

@@ -61,7 +61,7 @@ dentry_t* device_mount()
     }
 
     node = kmalloc(sizeof(vfs_node_t));
-    vfs_populate_node(node, "dev", VFS_TYPE_DIRECTORY | VFS_TYPE_MOUNTPOINT);
+    vfs_populate_node(node, "dev", VFS_TYPE_DIRECTORY);
     node->readdir_node = device_readdir;
     node->finddir_node = device_finddir;
     dentry_t* dev_dentry = vfs_add_node("dev", node);

@@ -350,7 +350,6 @@ static void run_mounting_task(mount_task_t* task)
             iso_dir_record_t dirrec;
             memcpy(&dirrec, task->buffer + 156, 34);
             vfs_node_t* inode = task->target->inode;
-            inode->type |= VFS_TYPE_MOUNTPOINT;
             iso9660_node_t* meta = kmalloc(sizeof(iso9660_node_t));
             meta->device_file = task->device_file;
             meta->extent_lba = dirrec.extent_lba;

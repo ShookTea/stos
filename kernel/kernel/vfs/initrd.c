@@ -233,7 +233,7 @@ dentry_t* initrd_mount()
     }
 
     initrd = kmalloc(sizeof(vfs_node_t));
-    vfs_populate_node(initrd, "initrd", VFS_TYPE_DIRECTORY | VFS_TYPE_MOUNTPOINT);
+    vfs_populate_node(initrd, "initrd", VFS_TYPE_DIRECTORY);
     initrd->readdir_node = initrd_readdir;
     initrd->finddir_node = initrd_finddir;
     initrd_directory_data_t* data = kmalloc(sizeof(initrd_directory_data_t));
