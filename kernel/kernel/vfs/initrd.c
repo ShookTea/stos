@@ -35,9 +35,10 @@ static bool initrd_readdir(
         return false;
     }
 
-    strcpy(out->d_name, dir_data->children[index]->filename);
-    out->d_ino = dir_data->children[index]->inode;
-    out->d_type = DT_UNKNOWN;
+    vfs_node_t* child = dir_data->children[index];
+    strcpy(out->d_name, child->filename);
+    out->d_ino = child->inode;
+    out->d_type = vfs_type_to_dirent(child->type);
     return true;
 }
 
