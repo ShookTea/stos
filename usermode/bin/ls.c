@@ -45,6 +45,22 @@ typedef enum {
 
 static display_mode_t display_mode = DM_GRID;
 
+typedef struct {
+    char name[PATH_MAX_LENGTH];
+} ls_entry_t;
+
+static int sort_comp(const void* _a, const void* _b)
+{
+    ls_entry_t* a = (ls_entry_t*)_a;
+    ls_entry_t* b = (ls_entry_t*)_b;
+    return strcmp(a->name, b->name);
+}
+
+static void print_entry(ls_entry_t* entry)
+{
+    printf("%s\n", entry->name);
+}
+
 static int list_for_path(const char* path)
 {
     errno = 0;
@@ -60,29 +76,30 @@ static int list_for_path(const char* path)
         return 1;
     }
 
-    char** names_list = NULL;
-    int names_count = 0;
+    ls_entry_t* entries = NULL;
+    int entries_count = 0;
     int longest_name_len = 0;
 
     struct dirent* dirent;
     while ((dirent = readdir(dir)) != NULL) {
         int len = strlen(dirent->d_name);
-        names_list = realloc(names_list, sizeof(char*) * (names_count + 1));
-        names_list[names_count] = malloc(sizeof(char) * (len + 1));
-        strcpy(names_list[names_count], dirent->d_name);
-        names_count++;
+        entries = realloc(entries, sizeof(ls_entry_t) * (entries_count + 1));
+        strcpy(entries[entries_count].name, dirent->d_name);
+        entries_count++;
+
         if (len > longest_name_len) {
             longest_name_len = len;
         }
     }
-
     closedir(dir);
 
-    // Cleanup
-    for (int i = 0; i < names_count; i++) {
-        free(names_list[i]);
+    qsort(entries, entries_count, sizeof(ls_entry_t), sort_comp);
+
+    // Printing and cleanup
+    for (int i = 0; i < entries_count; i++) {
+        print_entry(entries + i);
     }
-    free(names_list);
+    free(entries);
     return 0;
 }
 
