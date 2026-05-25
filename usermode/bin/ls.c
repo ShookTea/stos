@@ -1,4 +1,7 @@
-#include "unistd.h"
+#include <dirent.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -42,9 +45,45 @@ typedef enum {
 
 static display_mode_t display_mode = DM_GRID;
 
-static void list_for_path(const char* path)
+static int list_for_path(const char* path)
 {
-    printf(">>CONTENT OF PATH %s<<\n", path);
+    errno = 0;
+    DIR* dir = opendir(path);
+    if (errno != 0) {
+        printf("Cannot read content of '%s': ", path);
+        switch (errno) {
+            case EACCES: puts("permission denied"); break;
+            case ENOENT: puts("directory doesn't exist"); break;
+            case ENOTDIR: puts("path is not a directory"); break;
+            default: puts("Unrecognized error");
+        }
+        return 1;
+    }
+
+    char** names_list = NULL;
+    int names_count = 0;
+    int longest_name_len = 0;
+
+    struct dirent* dirent;
+    while ((dirent = readdir(dir)) != NULL) {
+        int len = strlen(dirent->d_name);
+        names_list = realloc(names_list, sizeof(char*) * (names_count + 1));
+        names_list[names_count] = malloc(sizeof(char) * (len + 1));
+        strcpy(names_list[names_count], dirent->d_name);
+        names_count++;
+        if (len > longest_name_len) {
+            longest_name_len = len;
+        }
+    }
+
+    closedir(dir);
+
+    // Cleanup
+    for (int i = 0; i < names_count; i++) {
+        free(names_list[i]);
+    }
+    free(names_list);
+    return 0;
 }
 
 int main(int argc, char** argv)
@@ -75,6 +114,8 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    int result = 0;
+
     if (optind < argc) {
         int paths_count = argc - optind;
         bool print_paths = paths_count > 1;
@@ -84,7 +125,12 @@ int main(int argc, char** argv)
             if (print_paths) {
                 printf("%s:\n", path);
             }
-            list_for_path(path);
+
+            int res = list_for_path(path);
+            if (res > result) {
+                result = res;
+            }
+
             if (print_paths && i < (paths_count - 1)) {
                 puts("");
             }
@@ -92,8 +138,8 @@ int main(int argc, char** argv)
     } else {
         char path[PATH_MAX_LENGTH] = {0};
         getcwd(path, PATH_MAX_LENGTH - 1);
-        list_for_path(path);
+        result = list_for_path(path);
     }
 
-    return 0;
+    return result;
 }
