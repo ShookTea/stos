@@ -6,6 +6,7 @@
 #include "kernel/vfs/vfs.h"
 
 typedef enum {
+    EXT2_TYPE_FIFO = 0x1000,
     EXT2_TYPE_CHARACTER_DEVICE = 0x2000,
     EXT2_TYPE_DIRECTORY = 0x4000,
     EXT2_TYPE_BLOCK_DEVICE = 0x6000,
@@ -235,6 +236,7 @@ uint32_t ext2_create_inode(
 inline uint8_t ext2_type_to_vfs(mode_t type_and_permissions)
 {
     switch (type_and_permissions & 0xF000) {
+        case EXT2_TYPE_FIFO: return VFS_TYPE_FIFO;
         case EXT2_TYPE_DIRECTORY: return VFS_TYPE_DIRECTORY;
         case EXT2_TYPE_FILE: return VFS_TYPE_FILE;
         case EXT2_TYPE_SYMLINK: return VFS_TYPE_SYMLINK;

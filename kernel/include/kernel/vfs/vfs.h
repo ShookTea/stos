@@ -27,6 +27,8 @@
 #define VFS_TYPE_CHARACTER_DEVICE 0x08
 // Block device file (allowing reading any block size and alignment)
 #define VFS_TYPE_BLOCK_DEVICE 0x10
+// FIFO file (i.e. pipe)
+#define VFS_TYPE_FIFO 0x20
 
 struct vfs_node;
 struct dentry;
@@ -312,6 +314,7 @@ inline char vfs_type_to_dirent(uint8_t type)
         case VFS_TYPE_SYMLINK: return DT_LNK;
         case VFS_TYPE_CHARACTER_DEVICE: return DT_CHR;
         case VFS_TYPE_BLOCK_DEVICE: return DT_BLK;
+        case VFS_TYPE_FIFO: return DT_FIFO;
         default: return DT_UNKNOWN;
     }
 }
