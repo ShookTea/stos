@@ -231,6 +231,26 @@ int execvpe(const char* path, const char* argv[], const char* envp[]);
  */
 int lseek(int fd, int offset, int whence);
 
+/**
+ * Creates a pipe - a unidirectional data channel that can be used for an
+ * interprocess communication. On success, the function will return 0 and store
+ * file descriptors in `pipefd` - `pipefd[0]` refers to the read end of the
+ * pipe, and `pipefd[1]` refers to the write end of the pipe.
+ *
+ * Currently `flags` only support value 0.
+ *
+ * On failure, this function will return -1 and set `errno` to one of following
+ * values:
+ * - EFAULT - `pipefd` is invalid
+ * - EINVAL - unrecognized `flags` value
+ */
+int pipe2(int pipefd[2], int flags);
+
+/**
+ * This function is an equivalent of calling `pipe2(pipefd, 0)`.
+ */
+int pipe(int pipefd[2]);
+
 #endif // #if !(defined(__is_libk))
 
 #ifdef __cplusplus

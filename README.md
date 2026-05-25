@@ -43,6 +43,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `FSTAT` | `0x17` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int fstat(int fd, struct stat* statbuf)` | Loads statistics about given file descriptor _fd_ |
 | `READLINK` | `0x18` | [`<unistd.h>`](libc/include/unistd.h) | `size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)` | Reads symlink path from `path` into `buf` |
 | `GETDENTS` | `0x19` | [`<dirent.h>`](libc/include/dirent.h) | _no wrapper_ | Loads directory content |
+| `PIPE` | `0x1A` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
 | _memory operations (`0x2n`)_ |   |   |   |   |
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 | _time operations (`0x3n`)_ |   |   |   |   |
