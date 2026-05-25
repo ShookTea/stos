@@ -16,9 +16,10 @@
 static struct option opts[] = {
     { "help", no_argument, NULL, 0 },
     { "oneline", no_argument, NULL, '1' },
+    { "long", no_argument, NULL, 'l' },
     { "grid", no_argument, NULL, 'G' },
     { "human-readable", no_argument, NULL, 'h' },
-    { "long", no_argument, NULL, 'l' },
+    { "si", no_argument, NULL, 0 },
     { NULL, 0, NULL, 0 },
 };
 
@@ -44,9 +45,13 @@ static void print_usage(void)
     puts("                          Defaults to current working directory.");
 }
 
-static char* months[12] = {
+static char* months[] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+};
+
+static char* units[] = {
+    "", "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"
 };
 
 typedef enum {
@@ -118,6 +123,20 @@ static void print_entry(
         char size_string_format[32] = {0};
         sprintf(size_string_format, "%%%uu", chars_for_size);
         sprintf(size_string, size_string_format, entry->size);
+    } else {
+        off_t power = size_unit == SU_SI ? 1000 : 1024;
+        int unit_level = 0;
+        off_t curr_size = entry->size;
+        while (curr_size > power) {
+            unit_level++;
+            curr_size /= power;
+        }
+        sprintf(
+            size_string,
+            unit_level == 0 ? "%5u" : "%4u%s",
+            curr_size,
+            units[unit_level]
+        );
     }
 
     // Build last modification string
