@@ -3,6 +3,7 @@
 
 #include "kernel/vfs/vfs.h"
 #include <libds/ringbuf.h>
+#include <stddef.h>
 
 // buffer size in bytes
 #define PIPE_BUF_SIZE 4096
@@ -21,5 +22,7 @@ typedef struct {
 
 int pipe_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
 void pipe_close(vfs_node_t* node, vfs_file_t* file);
+size_t pipe_read(vfs_file_t* file, size_t off, size_t size, void* ptr);
+size_t pipe_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);
 
 #endif

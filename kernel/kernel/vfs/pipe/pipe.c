@@ -45,6 +45,8 @@ int pipe_create(task_t* task, int* read_fd, int* write_fd, int flags)
     node->on_release = pipe_on_release;
     node->open_node = pipe_open;
     node->close_node = pipe_close;
+    node->read_node = pipe_read;
+    node->write_node = pipe_write;
     pipe_node_meta_t* meta = kmalloc_flags(
         sizeof(pipe_node_meta_t),
         KMALLOC_ZERO
