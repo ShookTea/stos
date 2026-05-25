@@ -2,13 +2,13 @@
 #define _SYS_WAIT_H 1
 #include <sys/cdefs.h>
 
+#define WNOHANG 1
+
 #if !(defined(__is_libk))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define WNOHANG 1
 
 /**
  * Suspends execution of current task until any child of this tasks finishes

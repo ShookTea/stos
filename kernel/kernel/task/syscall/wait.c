@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <errno.h>
+#include <sys/wait.h>
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/task/syscall.h"
@@ -32,7 +33,7 @@ int sys_wait(int pid, int* status_code, int options)
         return -ENOTSUP;
     }
 
-    if (options & SYS_WAIT_OPT_NO_HANG) {
+    if (options & WNOHANG) {
         // If this option is true, we don't want to hang when no child has
         // exited. We should first check if the child exists and is in ZOMBIE
         // state.

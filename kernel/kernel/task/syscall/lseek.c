@@ -5,6 +5,7 @@
 #include "kernel/vfs/vfs.h"
 #include <kernel/memory/vmm.h>
 #include <kernel/terminal.h>
+#include <unistd.h>
 
 int sys_lseek(int fd_id, int offset, int whence)
 {
@@ -17,13 +18,13 @@ int sys_lseek(int fd_id, int offset, int whence)
 
     int new_offset = 0;
     switch (whence) {
-        case SYS_LSEEK_OPT_SEEK_SET:
+        case SEEK_SET:
             new_offset = offset;
             break;
-        case SYS_LSEEK_OPT_SEEK_CUR:
+        case SEEK_CUR:
             new_offset = fd->file->offset + offset;
             break;
-        case SYS_LSEEK_OPT_SEEK_END:
+        case SEEK_END:
             new_offset = fd->file->dentry->inode->length + offset;
             break;
         default:

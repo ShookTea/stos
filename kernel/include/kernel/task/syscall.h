@@ -31,12 +31,6 @@ int sys_getdents(int fd, struct dirent* dir, int count);
 int sys_brk(uint32_t addr);
 int sys_time(time_t* result_ptr);
 
-// Syscall options
-#define SYS_WAIT_OPT_NO_HANG 1
-#define SYS_LSEEK_OPT_SEEK_SET 1
-#define SYS_LSEEK_OPT_SEEK_CUR 2
-#define SYS_LSEEK_OPT_SEEK_END 3
-
 /**
  * Initializes syscall handling system.
  */
