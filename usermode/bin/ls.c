@@ -1,5 +1,7 @@
+#include "sys/stat.h"
 #include <dirent.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include <errno.h>
 #include <getopt.h>
@@ -48,6 +50,10 @@ static int terminal_width = 64; // TODO: read real width from terminal
 
 typedef struct {
     char name[PATH_MAX_LENGTH];
+    char type;
+    bool stat_loaded;
+    off_t size;
+    struct timespec last_mod_time;
 } ls_entry_t;
 
 static int sort_comp(const void* _a, const void* _b)
@@ -57,23 +63,71 @@ static int sort_comp(const void* _a, const void* _b)
     return strcmp(a->name, b->name);
 }
 
-static void print_entry(int i, ls_entry_t* entry, int longest_name_len)
-{
+static void print_entry(
+    int i,
+    ls_entry_t* entry,
+    int longest_name_len,
+    off_t largest_size
+) {
     if (display_mode == DM_ONE_LINE) {
         printf("%s\n", entry->name);
         return;
     }
-    if (display_mode == DM_TABULAR) {
-        printf("%s\n", entry->name);
-        // TODO: print actual data
+
+    if (display_mode == DM_GRID) {
+        int col_width = longest_name_len + 2;
+        int columns = terminal_width / col_width;
+        char format[32] = {0};
+        sprintf(format, "%%-%us", col_width);
+        printf(format, entry->name);
+        if (i % columns == (columns - 1)) printf("\n");
         return;
     }
-    int col_width = longest_name_len + 2;
-    int columns = terminal_width / col_width;
+
+    // Calculate number of characters needed for size
+    char maxlenbuf[64];
+    sprintf(maxlenbuf, "%u", largest_size);
+    int chars_for_size = strlen(maxlenbuf);
+
+    // Build format string
     char format[32] = {0};
-    sprintf(format, "%%-%us", col_width);
-    printf(format, entry->name);
-    if (i % columns == (columns - 1)) printf("\n");
+    sprintf(
+        format,
+        "%%c--------- %%-%uu %%s %%s\n",
+        chars_for_size
+    );
+
+    // Load stats
+    off_t size;
+    struct tm* time_tm;
+    if (entry->stat_loaded) {
+        size = entry->size;
+        time_tm = localtime(&entry->last_mod_time.tv_spec);
+    } else {
+        size = 0;
+        time_t t = time(NULL);
+        time_tm = localtime(&t);
+    }
+
+    // Build last modification string
+    char mod_time[13] = {0};
+    sprintf(
+        mod_time,
+        "%s %2u %02u:%02u",
+        "May", // TODO: load real month
+        time_tm->tm_mday,
+        time_tm->tm_hour,
+        time_tm->tm_min
+    );
+
+    printf(
+        format,
+        entry->type,
+        size,
+        mod_time,
+        entry->name
+    );
+    return;
 }
 
 static int list_for_path(const char* path)
@@ -94,17 +148,55 @@ static int list_for_path(const char* path)
     ls_entry_t* entries = NULL;
     int entries_count = 0;
     int longest_name_len = 0;
+    off_t largest_size = 0;
 
     struct dirent* dirent;
+    struct stat statbuf;
+    int result = 0;
     while ((dirent = readdir(dir)) != NULL) {
         int len = strlen(dirent->d_name);
         entries = realloc(entries, sizeof(ls_entry_t) * (entries_count + 1));
         strcpy(entries[entries_count].name, dirent->d_name);
-        entries_count++;
+
+        if (display_mode == DM_TABULAR) {
+            switch (dirent->d_type) {
+                case DT_BLK: entries[entries_count].type = 'b'; break;
+                case DT_CHR: entries[entries_count].type = 'c'; break;
+                case DT_DIR: entries[entries_count].type = 'd'; break;
+                case DT_FIFO: entries[entries_count].type = 'f'; break;
+                case DT_LNK: entries[entries_count].type = 'l'; break;
+                case DT_REG: entries[entries_count].type = '.'; break;
+                case DT_SOCK: entries[entries_count].type = 's'; break;
+                default: entries[entries_count].type = '?'; break;
+            }
+
+            char full_path[PATH_MAX_LENGTH] = {0};
+            sprintf(
+                full_path,
+                "%s/%s",
+                path,
+                dirent->d_name
+            );
+
+            if (lstat(full_path, &statbuf) < 0) {
+                entries[entries_count].stat_loaded = false;
+                result = 1;
+            } else {
+                entries[entries_count].stat_loaded = true;
+                entries[entries_count].size = statbuf.st_size;
+                entries[entries_count].last_mod_time = statbuf.st_mtim;
+                if (statbuf.st_size > largest_size) {
+                    largest_size = statbuf.st_size;
+                }
+            }
+
+        }
 
         if (len > longest_name_len) {
             longest_name_len = len;
         }
+
+        entries_count++;
     }
     closedir(dir);
 
@@ -112,10 +204,10 @@ static int list_for_path(const char* path)
 
     // Printing and cleanup
     for (int i = 0; i < entries_count; i++) {
-        print_entry(i, entries + i, longest_name_len);
+        print_entry(i, entries + i, longest_name_len, largest_size);
     }
     free(entries);
-    return 0;
+    return result;
 }
 
 int main(int argc, char** argv)
