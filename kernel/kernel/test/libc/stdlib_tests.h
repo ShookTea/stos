@@ -307,12 +307,36 @@ static inline bool stdlib_test_strtoul_invalid_base(void) {
     return true;
 }
 
+static int compare_int(const void* a, const void* b) {
+    int* ai = (int*)a;
+    int* bi = (int*)b;
+    return *ai - *bi;
+}
+
+static inline bool stdlib_test_qsort_single_val(void) {
+    int arr[] = {1};
+    qsort(arr, 1, sizeof(int), compare_int);
+    ASSERT_EQ(arr[0], 1, "Value didn't change");
+    return true;
+}
+
+static inline bool stdlib_test_qsort_multiple_vals(void) {
+    int arr[] = { -453, 126, 12, -33, 225 };
+    qsort(arr, 5, sizeof(int), compare_int);
+    ASSERT_EQ(arr[0], -453, "0th index");
+    ASSERT_EQ(arr[1], -33, "1st index");
+    ASSERT_EQ(arr[2], 12, "2nd index");
+    ASSERT_EQ(arr[3], 126, "3rd index");
+    ASSERT_EQ(arr[4], 225, "4th index");
+    return true;
+}
+
 /**
  * Run all stdlib tests
  */
 static inline bool stdlib_run_all_tests(void) {
     int passed = 0;
-    int total = 20;
+    int total = 22;
 
     // atoi tests
     if (stdlib_test_atoi_positive()) passed++;
@@ -339,6 +363,10 @@ static inline bool stdlib_run_all_tests(void) {
     if (stdlib_test_strtoul_hex()) passed++;
     if (stdlib_test_strtoul_endptr()) passed++;
     if (stdlib_test_strtoul_invalid_base()) passed++;
+
+    // qsort test
+    if (stdlib_test_qsort_single_val()) passed++;
+    if (stdlib_test_qsort_multiple_vals()) passed++;
 
     // Print results
     if (passed == total) {
