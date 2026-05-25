@@ -71,6 +71,7 @@ vfs_node_t* device_hd_finddir_partition(const char* name)
         vfs_populate_node(node, (char*)name, VFS_TYPE_BLOCK_DEVICE);
         node->read_node = hd_read;
         node->write_node = hd_write;
+        node->stat_node = hd_stat;
         node->length = (uint64_t)part->sectors_count * di.sector_size;
         node->on_release = partition_node_release;
 

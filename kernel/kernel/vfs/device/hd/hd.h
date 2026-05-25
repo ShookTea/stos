@@ -50,6 +50,7 @@ extern wait_obj_t* hd_partition_wait_obj;
 size_t hd_write(vfs_file_t* file, size_t offset, size_t size, const void* ptr);
 size_t hd_read(vfs_file_t* file, size_t offset, size_t size,void* ptr);
 void hd_sync(const vfs_file_t* file);
+int hd_stat(const vfs_node_t* node, struct stat* stat);
 
 void hd_sync_with_metadata(hd_metadata_t* meta);
 
