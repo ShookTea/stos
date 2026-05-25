@@ -39,7 +39,7 @@ static int comm_cursor_loc = 0;
 static int comm_buffer_len = 0;
 static int last_comm_status = 0;
 
-static command_t** parse_command(void)
+static command_t** parse_command(int* command_count)
 {
     if (comm_buffer_len == 0) {
         return NULL;
@@ -132,6 +132,7 @@ static command_t** parse_command(void)
     int argv_count = 0;
     int envp_count = 0;
     bool accepting_envs = true;
+    *command_count = 0;
 
     for (int i = 0; i <= words_count; i++) {
         char* word = words[i];
@@ -169,6 +170,7 @@ static command_t** parse_command(void)
             if (cmd->comm_name == NULL) {
                 cmd->comm_name = malloc(strlen(word) + 1);
                 strcpy(cmd->comm_name, word);
+                (*command_count)++;
             }
             cmd->argv = realloc(cmd->argv, sizeof(char*) * (argv_count + 2));
             cmd->argv[argv_count] = malloc(strlen(word) + 1);
@@ -193,8 +195,9 @@ static bool handle_command(void)
     if (!strcmp(comm_buffer, "exit")) {
         return false;
     }
-    command_t** commands = parse_command();
-    if (commands == NULL) {
+    int commands_count = 0;
+    command_t** commands = parse_command(&commands_count);
+    if (commands_count == 0) {
         return true;
     }
 
