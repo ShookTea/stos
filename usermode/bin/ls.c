@@ -99,7 +99,7 @@ static void print_entry(
     char format[32] = {0};
     sprintf(
         format,
-        "%%c--------- %%-%uu %%s %%s\n",
+        "%%c--------- %%%uu %%s %%s\n",
         chars_for_size
     );
 
