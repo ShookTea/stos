@@ -27,7 +27,7 @@ static void add_device_files(vfs_node_t** nodes)
     }
 }
 
-static bool readdir(
+static bool device_readdir(
     vfs_node_t* directory __attribute__((unused)),
     size_t index,
     struct dirent* out
@@ -42,7 +42,7 @@ static bool readdir(
     return device_hd_readdir_partition(index - device_files_count, out);
 }
 
-static vfs_node_t* finddir(
+static vfs_node_t* device_finddir(
     vfs_node_t* directory __attribute__((unused)),
     char* name
 ) {
@@ -62,8 +62,8 @@ dentry_t* device_mount()
 
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "dev", VFS_TYPE_DIRECTORY | VFS_TYPE_MOUNTPOINT);
-    node->readdir_node = readdir;
-    node->finddir_node = finddir;
+    node->readdir_node = device_readdir;
+    node->finddir_node = device_finddir;
     dentry_t* dev_dentry = vfs_add_node("dev", node);
 
     add_device_file(device_tty_mount());
