@@ -520,7 +520,7 @@ char* vfs_build_absolute_path(
     size_t total_length = 0; // excluding file separators
     while (current != root) {
         parts_count++;
-        total_length += sizeof(current->name);
+        total_length += strlen(current->name);
         parts = krealloc(parts, sizeof(char*) * parts_count);
         parts[parts_count - 1] = current->name;
         current = current->parent;
