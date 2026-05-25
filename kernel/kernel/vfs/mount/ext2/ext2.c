@@ -68,7 +68,6 @@ vfs_mount_result_t vfs_mount_ext2(
 
     // Locate the superblock
     vfs_seek(file, 1024);
-    _debug_printf("size of superblock: %d\n", sizeof(ext2_superblock_t));
     uint8_t* buf = kmalloc_flags(sizeof(uint8_t) * 1024, KMALLOC_ZERO);
     vfs_read(file, 1024, buf);
 

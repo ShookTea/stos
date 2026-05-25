@@ -136,7 +136,7 @@ size_t hd_read(vfs_file_t* file, size_t offset, size_t size, void* ptr)
         read_from_ata(
             meta,
             &wakeup_data,
-            buffer + (first_uncached_sector * loc.sector_size),
+            buffer + (first_uncached_sector * loc.sector_size / 2),
             loc.low_sector_lba + first_uncached_sector,
             loc.low_sector_lba + loc.sector_count - 1,
             loc.sector_size
