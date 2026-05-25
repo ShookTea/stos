@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+// Implementation of qsort_r uses heap sort algorithm
+
 static void swap(char* a, char* b, size_t size)
 {
     char tmp;
