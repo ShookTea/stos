@@ -10,10 +10,8 @@
 
 typedef struct {
     ds_ringbuf_t* ringbuf;
-    bool read_opened;
-    bool write_opened;
-    bool read_closed;
-    bool write_closed;
+    uint32_t read_ref_count;
+    uint32_t write_ref_count;
 } pipe_node_meta_t;
 
 typedef struct {

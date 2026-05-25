@@ -16,18 +16,10 @@ int pipe_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
     pipe_node_meta_t* node_meta = node->metadata;
     bool read = mode & O_RDONLY;
 
-    // check if already opened
-    if (read && node_meta->read_opened) {
-        return EIO;
-    }
-    if (!read && node_meta->write_opened) {
-        return EIO;
-    }
-
     if (read) {
-        node_meta->read_opened = true;
+        node_meta->read_ref_count++;
     } else {
-        node_meta->write_opened = true;
+        node_meta->write_ref_count++;
     }
 
     pipe_file_meta_t* file_meta = kmalloc_flags(

@@ -35,16 +35,15 @@ size_t pipe_write(
         return 0;
     }
 
-    if (!node_meta->write_opened || node_meta->write_closed) {
+    if (node_meta->write_ref_count == 0) {
         return 0;
     }
     if (file_meta->read_side || !file->writeable) {
         return 0;
     }
 
-    if (!node_meta->read_opened || node_meta->read_closed) {
+    if (node_meta->read_ref_count == 0) {
         _debug_printf("Read side of pipe #%u is not open\n", node->inode);
-        // If read side is not open, writing should report EPIPE
         return -EPIPE;
     }
 

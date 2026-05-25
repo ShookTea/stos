@@ -55,10 +55,8 @@ int pipe_create(task_t* task, int* read_fd, int* write_fd, int flags)
     );
     node->metadata = meta;
     meta->ringbuf = ds_ringbuf_create(PIPE_BUF_SIZE, 1, true);
-    meta->read_closed = false;
-    meta->write_closed = false;
-    meta->read_opened = false;
-    meta->write_opened = false;
+    meta->read_ref_count = 0;
+    meta->write_ref_count = 0;
 
     _debug_printf(
         "Created pipe #%u for task %u '%s'\n",
