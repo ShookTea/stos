@@ -29,5 +29,5 @@ int sys_stat(const char* path, struct stat* stat, bool link_ignore)
         return -ENOENT;
     }
 
-    return -vfs_stat(node, stat, link_ignore);
+    return -vfs_stat(node, stat);
 }

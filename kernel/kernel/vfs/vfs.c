@@ -346,13 +346,16 @@ int vfs_readlink(const dentry_t* dentry, char* buf, size_t len)
 
 int vfs_stat(
     const dentry_t* dentry,
-    struct stat* stat,
-    bool link_ignore __attribute__((unused))
+    struct stat* stat
 ) {
+    if (dentry == NULL || dentry->inode == NULL) {
+        return ENOENT;
+    }
+
     if (dentry->inode->stat_node != NULL) {
         return dentry->inode->stat_node(dentry->inode, stat);
     }
-    // TODO: handle soft links
+
     return ENOTSUP;
 }
 

@@ -176,11 +176,9 @@ void vfs_sync(const vfs_file_t* file);
 int vfs_readlink(const dentry_t* dentry, char* buf, size_t len);
 /**
  * Populate `stat` with stats about given `dentry`, and return `0` on success
- * or one of `errno.h` values on failure. If given dentry is a soft link, then
- * setting `link_ignore` to `true` will use stats of the soft link file itself,
- * while setting it to `false` will follow the link.
+ * or one of `errno.h` values on failure.
  */
-int vfs_stat(const dentry_t* dentry, struct stat* stat, bool link_ignore);
+int vfs_stat(const dentry_t* dentry, struct stat* stat);
 
 void vfs_init();
 
