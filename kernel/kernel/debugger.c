@@ -642,7 +642,7 @@ static void handle_command_sent()
 
 static dentry_t* tty_dentry = NULL;
 
-static void print_prompt_and_read_command()
+static void print_prompt_and_read_command(void)
 {
     puts("");
     printf("\033[36;1m#\033[0m ");
@@ -658,8 +658,34 @@ static void print_prompt_and_read_command()
     handle_command_sent();
 }
 
+/**
+ * Initial commands, to be always executed on init.
+ */
+static char* init_commands[] = {
+    "mkdir /proc",
+    "mount proc /proc proc",
+    "mkdir /mount",
+    "mount /dev/hda1 /mount ext2",
+    "exec /initrd/bin/sh"
+};
+
+static void debugger_run_init_commands(void)
+{
+    int init_comm_count = sizeof(init_commands) / sizeof(char*);
+    if (init_comm_count) {
+        puts("Running initialization commands");
+    }
+    for (int i = 0; i < init_comm_count; i++) {
+        strcpy(command_buffer, init_commands[i]);
+        command_length = strlen(command_buffer);
+        printf("> %s\n", command_buffer);
+        handle_command_sent();
+    }
+}
+
 void debugger_init()
 {
+    debugger_run_init_commands();
     puts("Kernel debugger. Write \"\033[1mhelp\033[22m\" to get list of available commands.");
 
     tty_dentry = vfs_resolve("/dev/tty");
