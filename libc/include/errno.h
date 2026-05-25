@@ -19,6 +19,7 @@ typedef enum {
     ENOTDIR, // Specified path is not a directory
     ENOTSUP, // Operation not supported
     ENOTTY, // Inappropriate I/O control operation
+    EPIPE, // Attempting to write to closed pipe
 } errno_t;
 
 extern int errno;

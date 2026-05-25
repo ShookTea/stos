@@ -1,8 +1,11 @@
 #include <errno.h>
+#include "kernel/vfs/pipe.h"
 #include "kernel/task/syscall.h"
 
-int sys_pipe(int pipefd[2] __attribute__((unused)), int flags __attribute__((unused)))
+int sys_pipe(int pipefd[2], int flags)
 {
-    // TODO: implementation of the syscall
-    return -ENOTSUP;
+    if (pipefd == NULL) {
+        return -EFAULT;
+    }
+    return pipe_create(pipefd, pipefd + 1, flags);
 }
