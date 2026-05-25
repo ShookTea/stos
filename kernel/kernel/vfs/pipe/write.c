@@ -1,8 +1,13 @@
 #include "./pipe.h"
 #include "errno.h"
+#include "kernel/vfs/vfs.h"
 #include "libds/libds.h"
 #include "libds/ringbuf.h"
 #include <stdio.h>
+#include "kernel/debug.h"
+
+#define _debug_puts(...) debug_puts_cc(DBC_VFS_PIPE, "write", __VA_ARGS__)
+#define _debug_printf(...) debug_printf_cc(DBC_VFS_PIPE, "write", __VA_ARGS__)
 
 size_t pipe_write(
     vfs_file_t* file,
@@ -22,7 +27,8 @@ size_t pipe_write(
     if (file->dentry->inode->metadata == NULL) {
         return 0;
     }
-    pipe_node_meta_t* node_meta = file->dentry->inode->metadata;
+    vfs_node_t* node = file->dentry->inode;
+    pipe_node_meta_t* node_meta = node->metadata;
     ds_ringbuf_t* ringbuf = node_meta->ringbuf;
 
     if (ringbuf == NULL) {
@@ -37,6 +43,7 @@ size_t pipe_write(
     }
 
     if (!node_meta->read_opened || node_meta->read_closed) {
+        _debug_printf("Read side of pipe #%u is not open\n", node->inode);
         // If read side is not open, writing should report EPIPE
         return -EPIPE;
     }

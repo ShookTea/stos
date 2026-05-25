@@ -35,6 +35,7 @@ int pipe_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode)
         KMALLOC_ZERO
     );
     file_meta->read_side = read;
+    file->metadata = file_meta;
 
     return 0;
 }
