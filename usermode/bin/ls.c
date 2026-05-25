@@ -11,13 +11,14 @@
 
 #define PATH_MAX_LENGTH 256
 
-#define OPT_SHORT "1lG"
+#define OPT_SHORT "1Ghl"
 
 static struct option opts[] = {
     { "help", no_argument, NULL, 0 },
     { "oneline", no_argument, NULL, '1' },
-    { "long", no_argument, NULL, 'l' },
     { "grid", no_argument, NULL, 'G' },
+    { "human-readable", no_argument, NULL, 'h' },
+    { "long", no_argument, NULL, 'l' },
     { NULL, 0, NULL, 0 },
 };
 
@@ -27,16 +28,20 @@ static void print_usage(void)
     puts("  ls [options] [paths...]");
     puts("");
     puts("META OPTIONS");
-    puts("  --help              Shows usage info");
+    puts("  --help                  Shows usage info");
     puts("");
     puts("DISPLAY OPTIONS");
-    puts("  -1, --oneline       Display one entry per line");
-    puts("  -l, --long          Display extended metadata as a table");
-    puts("  -G, --grid          Display entries as a grid (default mode)");
+    puts("  -1, --oneline           Display one entry per line");
+    puts("  -l, --long              Display extended metadata as a table");
+    puts("  -G, --grid              Display entries as a grid (default mode)");
+    puts("");
+    puts("TABLE OPTIONS");
+    puts("  -h, --human-readable    Print sizes like '1k', '234M', '2G' etc.");
+    puts("  --si                    Like -h, but use powers of 1000 instead of 1024");
     puts("");
     puts("ARGUMENTS");
-    puts("  [paths...]          One or more directory paths to print.");
-    puts("                      Defaults to current working directory.");
+    puts("  [paths...]              One or more directory paths to print.");
+    puts("                          Defaults to current working directory.");
 }
 
 static char* months[12] = {
@@ -50,7 +55,14 @@ typedef enum {
     DM_TABULAR,
 } display_mode_t;
 
+typedef enum {
+    SU_BYTES,
+    SU_KIBI,
+    SU_SI,
+} size_unit_t;
+
 static display_mode_t display_mode = DM_GRID;
+static size_unit_t size_unit = SU_BYTES;
 static int terminal_width = 64; // TODO: read real width from terminal
 static int curr_time;
 
@@ -91,18 +103,22 @@ static void print_entry(
         return;
     }
 
-    // Calculate number of characters needed for size
-    char maxlenbuf[64];
-    sprintf(maxlenbuf, "%u", largest_size);
-    int chars_for_size = strlen(maxlenbuf);
+    // Build type & permissions string
+    char type_and_perm[11] = {0};
+    sprintf(type_and_perm, "%c---------", entry->type);
 
-    // Build format string
-    char format[32] = {0};
-    sprintf(
-        format,
-        "%%c--------- %%%uu %%s %%s\n",
-        chars_for_size
-    );
+    // Build size string
+    char size_string[64] = {0};
+    if (size_unit == SU_BYTES) {
+        // Calculate number of characters needed for size
+        char maxlenbuf[64];
+        sprintf(maxlenbuf, "%u", largest_size);
+        int chars_for_size = strlen(maxlenbuf);
+
+        char size_string_format[32] = {0};
+        sprintf(size_string_format, "%%%uu", chars_for_size);
+        sprintf(size_string, size_string_format, entry->size);
+    }
 
     // Build last modification string
     struct tm* time_tm = localtime(&entry->last_mod_time.tv_spec);
@@ -125,9 +141,9 @@ static void print_entry(
     }
 
     printf(
-        format,
-        entry->type,
-        entry->size,
+        "%s %s %s %s\n",
+        type_and_perm,
+        size_string,
         mod_time,
         entry_name
     );
@@ -243,11 +259,15 @@ int main(int argc, char** argv)
                 if (!strcmp(opts[option_index].name, "help")) {
                     help = true;
                 }
+                else if (!strcmp(opts[option_index].name, "si")) {
+                    size_unit = SU_SI;
+                }
                 break;
             }
             case '1': display_mode = DM_ONE_LINE; break;
-            case 'l': display_mode = DM_TABULAR; break;
             case 'G': display_mode = DM_GRID; break;
+            case 'h': size_unit = SU_KIBI; break;
+            case 'l': display_mode = DM_TABULAR; break;
             default: break;
         }
     }
