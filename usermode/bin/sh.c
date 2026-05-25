@@ -1,4 +1,5 @@
-#include "sys/wait.h"
+#include <sys/wait.h>
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -204,6 +205,20 @@ static bool handle_command(void)
     bool parent = true;
     while (*iter != NULL) {
         command_t* cmd = *iter;
+        if (!strcmp(cmd->comm_name, "cd")) {
+            int res;
+            errno = 0;
+            if (cmd->argv[0] == NULL || cmd->argv[1] == NULL) {
+                res = chdir("/"); // TODO: should go to the home directory
+            } else {
+                res = chdir(cmd->argv[1]);
+            }
+            if (res == -1) {
+                last_comm_status = errno;
+            }
+            iter++;
+            continue;
+        }
         // Increase size of PIDs array
         pids = realloc(pids, sizeof(int) * (pids_count + 1));
         int new_pid = fork();
