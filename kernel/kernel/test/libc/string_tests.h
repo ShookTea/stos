@@ -623,11 +623,96 @@ static inline bool string_test_strtok_edges(void) {
 }
 
 /**
+ * Test strstr: basic functionality
+ */
+static inline bool string_test_strstr_basic(void) {
+    ASSERT_STR_EQ(strstr("hello world", "world"), "world",    "match at end");
+    ASSERT_STR_EQ(strstr("hello world", "hello"), "hello world", "match at start");
+    ASSERT_STR_EQ(strstr("hello world", "lo wo"), "lo world", "match in middle");
+    ASSERT_EQ    (strstr("hello world", "xyz"),   NULL,        "no match");
+    ASSERT_EQ    (strstr("hello world", "worldx"), NULL,       "needle longer than remaining haystack");
+    return true;
+}
+
+/**
+ * Test strstr: empty inputs
+ */
+static inline bool string_test_strstr_empty(void) {
+    ASSERT_STR_EQ(strstr("hello", ""), "hello", "empty needle returns haystack");
+    ASSERT_STR_EQ(strstr("", ""),      "",      "both empty returns haystack");
+    ASSERT_EQ    (strstr("", "abc"),   NULL,    "empty haystack non-empty needle");
+    return true;
+}
+
+/**
+ * Test strstr: single character needle
+ */
+static inline bool string_test_strstr_single_char(void) {
+    ASSERT_STR_EQ(strstr("hello", "h"), "hello",  "first char");
+    ASSERT_STR_EQ(strstr("hello", "o"), "o",       "last char");
+    ASSERT_STR_EQ(strstr("hello", "l"), "llo",     "returns first occurrence");
+    ASSERT_EQ    (strstr("hello", "z"), NULL,       "char not present");
+    return true;
+}
+
+/**
+ * Test strstr: needle equals haystack
+ */
+static inline bool string_test_strstr_full_match(void) {
+    ASSERT_STR_EQ(strstr("hello", "hello"),  "hello", "exact match");
+    ASSERT_STR_EQ(strstr("a", "a"),          "a",     "single char exact match");
+    ASSERT_EQ    (strstr("hello", "helloo"), NULL,     "needle one char longer");
+    return true;
+}
+
+/**
+ * Test strstr: multiple occurrences
+ */
+static inline bool string_test_strstr_multiple_occurrences(void) {
+    ASSERT_STR_EQ(strstr("abcabcabc", "abc"),   "abcabcabc", "returns first occurrence");
+    ASSERT_STR_EQ(strstr("abcabcabc", "cab"),   "cabcabc",   "overlapping region");
+    ASSERT_STR_EQ(strstr("abcabcabc", "bcabc"), "bcabcabc",  "longer repeated pattern");
+    return true;
+}
+
+/**
+ * Test strstr: overlapping/partial prefix matches
+ */
+static inline bool string_test_strstr_partial_prefix(void) {
+    ASSERT_STR_EQ(strstr("aabab",  "aab"),  "aabab",  "prefix mismatch recovery");
+    ASSERT_STR_EQ(strstr("aaab",   "aab"),  "aab",    "partial prefix skip");
+    ASSERT_STR_EQ(strstr("aaaaab", "aaab"), "aaab",   "long partial prefix");
+    ASSERT_STR_EQ(strstr("ababac", "abac"), "abac",   "partial match then full");
+    return true;
+}
+
+/**
+ * Test strstr: needle at boundary positions
+ */
+static inline bool string_test_strstr_boundaries(void) {
+    ASSERT_STR_EQ(strstr("abc",   "abc"), "abc",  "needle fills haystack exactly");
+    ASSERT_STR_EQ(strstr("xabc",  "abc"), "abc",  "needle at end");
+    ASSERT_STR_EQ(strstr("abcx",  "abc"), "abcx", "needle at start");
+    ASSERT_STR_EQ(strstr("xabcx", "abc"), "abcx", "needle in middle");
+    return true;
+}
+
+/**
+ * Test strstr: no overread past null terminator
+ */
+static inline bool string_test_strstr_no_overread(void) {
+    ASSERT_EQ(strstr("ab", "abc"), NULL, "needle longer than haystack");
+    ASSERT_EQ(strstr("a",  "ab"),  NULL, "needle two chars, haystack one");
+    ASSERT_EQ(strstr("",   "a"),   NULL, "needle one char, haystack empty");
+    return true;
+}
+
+/**
  * Run all string tests
  */
 static inline bool string_run_all_tests(void) {
     int passed = 0;
-    int total = 33;
+    int total = 41;
 
     // strlen tests
     if (string_test_strlen_basic()) passed++;
@@ -687,6 +772,16 @@ static inline bool string_run_all_tests(void) {
     if (string_test_strtok_multidelim()) passed++;
     if (string_test_strtok_consecutive()) passed++;
     if (string_test_strtok_edges()) passed++;
+
+    // strstr tests
+    if (string_test_strstr_basic()) passed++;
+    if (string_test_strstr_empty()) passed++;
+    if (string_test_strstr_single_char()) passed++;
+    if (string_test_strstr_full_match()) passed++;
+    if (string_test_strstr_multiple_occurrences()) passed++;
+    if (string_test_strstr_partial_prefix()) passed++;
+    if (string_test_strstr_boundaries()) passed++;
+    if (string_test_strstr_no_overread()) passed++;
 
     // Print results
     if (passed == total) {

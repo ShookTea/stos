@@ -19,6 +19,18 @@ void* memcpy(void* __restrict dest, const void* __restrict src, size_t size);
 void* memmove(void*, const void*, size_t);
 
 /**
+ * Finds the start of the first occurrence of the substring `needle` of size
+ * `nsize` in the memory area `haystack` of size `hsize`. Returns pointer to
+ * the beginning of the substring, or NULL if the substring is not found.
+ */
+void* memmem(
+    const void* haystack,
+    size_t hsize,
+    const void* needle,
+    size_t nsize
+);
+
+/**
  * Fills memory from [address] to [address+size] with value [value]
  */
 void* memset(void* address, int value, size_t size);
@@ -67,6 +79,14 @@ char* strchr(const char* s, int c);
  * to the next token, or NULL if there are no more tokens.
  */
 char* strtok(char* str, const char* delim);
+
+/**
+ * Finds the first occurrence of the substring `needle` in string `haystack`.
+ * The terminating NULL bytes are not compared. Returns pointer to the beginning
+ * of the substring, or NULL if the substring is not found. It is equivalent to
+ * `memmem(haystack, strlen(haystack), needle, strlen(needle))`.
+ */
+char *strstr(const char *haystack, const char *needle);
 
 #ifdef __cplusplus
 }
