@@ -29,6 +29,7 @@ int sys_fstat(int fd, struct stat* stat);
 int sys_readlink(const char* path, char* buf, int bufsiz);
 int sys_getdents(int fd, struct dirent* dir, int count);
 int sys_pipe(int pipefd[2], int flags);
+int sys_dup(int oldfd, int newfd, int flags);
 int sys_brk(uint32_t addr);
 int sys_time(time_t* result_ptr);
 

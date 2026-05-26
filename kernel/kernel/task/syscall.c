@@ -128,6 +128,7 @@ static uint32_t syscall_int_handler(
             assert_range(pipefd, sizeof(int) * 2);
             return sys_pipe(pipefd, arg2);
         }
+        case SYS_DUP: return sys_dup(arg1, arg2, arg3);
         case SYS_BRK: return sys_brk(arg1);
         case SYS_UNIXTIME: {
             time_t* res_ptr = (time_t*)arg1;
