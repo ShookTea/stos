@@ -961,6 +961,7 @@ task_file_descriptor_t* task_add_fd(
         return NULL;
     }
 
+    int largest_identifer = -1;
     // First try to find first existing identifier that is already allocated but
     // was freed before
     for (size_t i = 0; i < task->fd_count; i++) {
@@ -969,12 +970,15 @@ task_file_descriptor_t* task_add_fd(
             desc->file = handler;
             return desc;
         }
+        if ((int)desc->identifier > largest_identifer) {
+            largest_identifer = desc->identifier;
+        }
     }
 
     // Allocate new entry for file descriptor
     task_file_descriptor_t* desc = kmalloc(sizeof(task_file_descriptor_t));
     desc->file = handler;
-    desc->identifier = task->fd_count;
+    desc->identifier = largest_identifer + 1;
     task->fd = krealloc(
         task->fd,
         sizeof(task_file_descriptor_t*) * (task->fd_count + 1)
