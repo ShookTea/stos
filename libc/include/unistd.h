@@ -284,6 +284,12 @@ int dup2(int oldfd, int newfd);
  */
 int dup3(int oldfd, int newfd, int flags);
 
+/**
+ * Returns `true` (1) if `fd` is a TTY, otherwise returns `false` (0) and may
+ * set `errno` to indicate an error.
+ */
+int isatty(int fd);
+
 #endif // #if !(defined(__is_libk))
 
 #ifdef __cplusplus
