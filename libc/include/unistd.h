@@ -251,6 +251,35 @@ int pipe2(int pipefd[2], int flags);
  */
 int pipe(int pipefd[2]);
 
+/**
+ * Allocate a new file descriptor and duplicate it, to point to `oldfd`. If
+ * successful, both file descriptors can be used interchangeably. They will
+ * share things like flags and file offset.
+ *
+ * On success, returns a new file descriptor. On failure it will return -1
+ * and set `errno`.
+ */
+int dup(int oldfd);
+
+/**
+ * Behaves similarly to `dup(int)`, but allows to pick custom `newfd` instead of
+ * receiving one selected by kernel. If `newfd` already exists and is opened,
+ * it will be silently closed first.
+ *
+ * If `oldfd` is a valid descriptor and `oldfd == newfd`, it does nothing and
+ * returns `newfd`.
+ */
+int dup2(int oldfd, int newfd);
+
+/**
+ * Behaves similarly to `dup2`, but allows passing flags. Currently only "0" is
+ * supported.
+ *
+ * If `oldfd` is a valid descriptor and `oldfd == newfd`, it fails with error
+ * `EINVAL`.
+ */
+int dup3(int oldfd, int newfd, int flags);
+
 #endif // #if !(defined(__is_libk))
 
 #ifdef __cplusplus

@@ -26,6 +26,7 @@
 #define SYS_READLINK    0x18 // size_t readlink(const char* path, char* buf, size_t bufsiz);
 #define SYS_GETDENTS    0x19 // no wrapper in libc
 #define SYS_PIPE        0x1A // int pipe2(int pipefd[2], int flags);
+#define SYS_DUP         0x1B // int dup3(int oldfd, int newfd, int flags);
 
 // Memory operations
 #define SYS_BRK         0x20 // uint32_t brk(void* addr)

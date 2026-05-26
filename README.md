@@ -44,6 +44,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `READLINK` | `0x18` | [`<unistd.h>`](libc/include/unistd.h) | `size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)` | Reads symlink path from `path` into `buf` |
 | `GETDENTS` | `0x19` | [`<dirent.h>`](libc/include/dirent.h) | _no wrapper_ | Loads directory content |
 | `PIPE` | `0x1A` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
+| `DUP` | `0x1B` | [`<unistd.h>`](libc/include/unistd.h) | `int dup3(int oldfd, int newfd, int flags)` | Duplicates/changes file descriptor |
 | _memory operations (`0x2n`)_ |   |   |   |   |
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 | _time operations (`0x3n`)_ |   |   |   |   |
