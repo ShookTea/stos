@@ -124,6 +124,11 @@ int vsnprintf(
 );
 
 #if !(defined(__is_libk))
+
+extern FILE* stdin;
+extern FILE* stdout;
+extern FILE* stderr;
+
 /**
  * Opens a file at given path, with selected mode, and returns a filestream
  * object.
@@ -147,6 +152,11 @@ int vsnprintf(
  * - any error that can be reported by `malloc` or `open`
  */
 FILE* fopen(const char* restrict path, const char* restrict mode);
+
+/**
+ * Associates given file descriptor with a mode and returns stream.
+ */
+FILE* fdopen(int fd, const char* mode);
 
 /**
  * For output streams, this function will force write of all buffered data for

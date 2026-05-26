@@ -3,6 +3,7 @@
 
 extern int main(int argc, char** argv, char** envp);
 extern char** environ;
+extern void __stdio_init(void);
 
 #ifdef __cplusplus
 // These are provided by the linker
@@ -27,6 +28,7 @@ static void _crt_start(uint32_t* sp) {
     char** argv = (char**)&sp[1];
     char** envp = (char**)&sp[argc + 2];
     environ = envp;
+    __stdio_init();
 
     #ifdef __cplusplus
     // Call global constructors (C++)
