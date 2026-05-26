@@ -18,6 +18,7 @@ static struct option opts[] = {
     { "oneline", no_argument, NULL, '1' },
     { "long", no_argument, NULL, 'l' },
     { "grid", no_argument, NULL, 'G' },
+    { "color", optional_argument, NULL, 0 },
     { "human-readable", no_argument, NULL, 'h' },
     { "si", no_argument, NULL, 0 },
     { NULL, 0, NULL, 0 },
@@ -35,6 +36,7 @@ static void print_usage(void)
     puts("  -1, --oneline           Display one entry per line");
     puts("  -l, --long              Display extended metadata as a table");
     puts("  -G, --grid              Display entries as a grid (default mode)");
+    puts("  --color[=WHEN]          Enables/disables coloring (more below)");
     puts("");
     puts("TABLE OPTIONS");
     puts("  -h, --human-readable    Print sizes like '1k', '234M', '2G' etc.");
@@ -43,6 +45,12 @@ static void print_usage(void)
     puts("ARGUMENTS");
     puts("  [paths...]              One or more directory paths to print.");
     puts("                          Defaults to current working directory.");
+    puts("");
+    puts("DETAILS");
+    puts("  --color[=WHEN] enables or disables coloring. By default, coloring is disabled.");
+    puts("  \"WHEN\" can equal \"auto\", \"always\", or \"never\". If --color is passed,");
+    puts("  but without value, it is treated as \"always. If set to \"auto\", it will only");
+    puts("  apply coloring when output is connected to TTY.");
 }
 
 static char* months[] = {
@@ -70,6 +78,7 @@ static display_mode_t display_mode = DM_GRID;
 static size_unit_t size_unit = SU_BYTES;
 static int terminal_width = 64; // TODO: read real width from terminal
 static int curr_time;
+static bool enable_colors = false;
 
 typedef struct {
     char name[PATH_MAX_LENGTH];
@@ -280,6 +289,24 @@ int main(int argc, char** argv)
                 }
                 else if (!strcmp(opts[option_index].name, "si")) {
                     size_unit = SU_SI;
+                }
+                else if (!strcmp(opts[option_index].name, "color")) {
+                    if (optarg == 0) {
+                        enable_colors = true;
+                    } else if (!strcmp(optarg, "never")) {
+                        enable_colors = false;
+                    } else if (!strcmp(optarg, "always")) {
+                        enable_colors = true;
+                    } else if (!strcmp(optarg, "auto")) {
+                        enable_colors = isatty(STDOUT_FILENO);
+                    } else {
+                        dprintf(
+                            STDERR_FILENO,
+                            "ls: option --color has no \"%s\" setting",
+                            optarg
+                        );
+                        return 1;
+                    }
                 }
                 break;
             }
