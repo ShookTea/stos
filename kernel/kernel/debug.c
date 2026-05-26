@@ -6,7 +6,7 @@
 
 #if (KERNEL_DEBUG_ANY)
 
-static int cat_mask = (1 << DBC_ATA) | (1 << DBC_VFS_DEV);
+static int cat_mask = (1 << DBC_ATA) | (1 << DBC_VFS_DEV) | (1 << DBC_ELF);
 
 static inline bool cat_suppressed(const debug_channel_t cat)
 {
