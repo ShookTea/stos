@@ -1,10 +1,15 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stddef.h>
+#include <string.h>
 #include "kernel/task/syscall.h"
 
 int sys_getdents(int fd_id, struct dirent* dir, int count)
 {
+    if (dir == NULL) {
+        return -EINVAL;
+    }
+    memset(dir, 0, sizeof(struct dirent));
     // Get file descriptor
     task_file_descriptor_t* fd = syscall_get_descriptor_by_fd(fd_id);
     if (fd == NULL) return -EBADF;

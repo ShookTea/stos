@@ -65,6 +65,18 @@ static char* units[] = {
 // One for each value in ls_entry_type_t, in order
 static char* typechars = "bcdfl.s?";
 
+// Color escape codes, one for each value in ls_entry_type_t, in order.
+static char* color_defs[] = {
+    "\033[1;93m",
+    "\033[1;93m",
+    "\033[1;96m",
+    "\033[95m",
+    "\033[92m",
+    "\033[97m",
+    "\033[90m",
+    "\033[91m",
+};
+
 typedef enum {
     DM_GRID,
     DM_ONE_LINE,
@@ -117,7 +129,12 @@ static void print_entry(
     off_t largest_size
 ) {
     if (display_mode == DM_ONE_LINE) {
-        printf("%s\n", entry->name);
+        printf(
+            "%s%s%s\n",
+            enable_colors ? color_defs[entry->type] : "",
+            entry->name,
+            enable_colors ? "\033[0m" : ""
+        );
         return;
     }
 
@@ -125,15 +142,27 @@ static void print_entry(
         int col_width = longest_name_len + 2;
         int columns = terminal_width / col_width;
         char format[32] = {0};
-        sprintf(format, "%%-%us", col_width);
-        printf(format, entry->name);
+        sprintf(format, "%%s%%-%us%%s", col_width);
+        printf(
+            format,
+            enable_colors ? color_defs[entry->type] : "",
+            entry->name,
+            enable_colors ? "\033[0m" : ""
+        );
         if (i % columns == (columns - 1)) printf("\n");
         return;
     }
 
     // Build type & permissions string
-    char type_and_perm[11] = {0};
-    sprintf(type_and_perm, "%c---------", typechars[entry->type]);
+    char type_and_perm[32] = {0};
+    sprintf(
+        type_and_perm,
+        "%s%c%s---------%s",
+        enable_colors ? color_defs[entry->type] : "",
+        typechars[entry->type],
+        enable_colors ? "\033[97m" : "",
+        enable_colors ? "\033[0m" : ""
+    );
 
     // Build size string
     char size_string[64] = {0};
@@ -144,8 +173,14 @@ static void print_entry(
         int chars_for_size = strlen(maxlenbuf);
 
         char size_string_format[32] = {0};
-        sprintf(size_string_format, "%%%uu", chars_for_size);
-        sprintf(size_string, size_string_format, entry->size);
+        sprintf(size_string_format, "%%s%%%uu%%s", chars_for_size);
+        sprintf(
+            size_string,
+            size_string_format,
+            enable_colors ? "\033[93m" : "",
+            entry->size,
+            enable_colors ? "\033[0m" : ""
+        );
     } else {
         off_t power = size_unit == SU_SI ? 1000 : 1024;
         int unit_level = 0;
@@ -156,30 +191,48 @@ static void print_entry(
         }
         sprintf(
             size_string,
-            unit_level == 0 ? "%5u" : "%4u%s",
+            unit_level == 0 ? "%s%5u%s" : "%s%4u%s%s",
+            enable_colors ? (unit_level == 0 ? "\033[93m" : "\033[1;93m") : "",
             curr_size,
-            units[unit_level]
+            units[unit_level],
+            enable_colors ? "\033[0m" : ""
         );
     }
 
     // Build last modification string
     struct tm* time_tm = localtime(&entry->last_mod_time.tv_spec);
-    char mod_time[13] = {0};
+    char mod_time[32] = {0};
     sprintf(
         mod_time,
-        "%s %2u %02u:%02u",
+        "%s%s %2u %02u:%02u%s",
+        enable_colors ? "\033[95m" : "",
         months[time_tm->tm_mon],
         time_tm->tm_mday,
         time_tm->tm_hour,
-        time_tm->tm_min
+        time_tm->tm_min,
+        enable_colors ? "\033[0m" : ""
     );
 
     // Build name, including link if necessary
     char entry_name[PATH_MAX_LENGTH * 2];
-    if (entry->link_path[0]) {
-        sprintf(entry_name, "%s -> %s", entry->name, entry->link_path);
+    if (entry->type == ET_LNK && entry->link_path[0]) {
+        sprintf(
+            entry_name,
+            "%s%s%s -> %s",
+            enable_colors ? color_defs[entry->type] : "",
+            entry->name,
+            enable_colors ? "\033[0m" : "",
+            entry->link_path
+
+        );
     } else {
-        sprintf(entry_name, "%s", entry->name);
+        sprintf(
+            entry_name,
+            "%s%s%s",
+            enable_colors ? color_defs[entry->type] : "",
+            entry->name,
+            enable_colors ? "\033[0m" : ""
+        );
     }
 
     printf(
