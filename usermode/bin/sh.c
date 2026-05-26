@@ -201,13 +201,22 @@ static bool handle_command(void)
         return true;
     }
 
-    // Array containing all created processes
+    int pipeline_len = 0;
+    while (commands[pipeline_len] != NULL) pipeline_len++;
+
+    int (*pipes)[2] = NULL;
+    if (pipeline_len > 1) {
+        pipes = malloc(sizeof(int[2]) * (pipeline_len - 1));
+        for (int i = 0; i < pipeline_len - 1; i++) {
+            pipe(pipes[i]);
+        }
+    }
+
     int* pids = NULL;
     int pids_count = 0;
-    command_t** iter = commands;
     bool parent = true;
-    while (*iter != NULL) {
-        command_t* cmd = *iter;
+    for (int cmd_index = 0; cmd_index < pipeline_len; cmd_index++) {
+        command_t* cmd = commands[cmd_index];
         if (!strcmp(cmd->comm_name, "cd")) {
             int res;
             errno = 0;
@@ -219,10 +228,8 @@ static bool handle_command(void)
             if (res == -1) {
                 last_comm_status = errno;
             }
-            iter++;
             continue;
         }
-        // Increase size of PIDs array
         pids = realloc(pids, sizeof(int) * (pids_count + 1));
         int new_pid = fork();
         if (new_pid < 0) {
@@ -231,10 +238,23 @@ static bool handle_command(void)
         else if (new_pid > 0) {
             pids[pids_count] = new_pid;
             pids_count++;
-        } else {
+        }
+        else {
             parent = false;
             if (cmd->comm_name == NULL) {
                 exit(0);
+            }
+            if (pipes != NULL) {
+                if (cmd_index > 0) {
+                    dup2(pipes[cmd_index - 1][0], 0);
+                }
+                if (cmd_index < pipeline_len - 1) {
+                    dup2(pipes[cmd_index][1], 1);
+                }
+                for (int i = 0; i < pipeline_len - 1; i++) {
+                    close(pipes[i][0]);
+                    close(pipes[i][1]);
+                }
             }
             for (int j = 0; cmd->envp_override[j] != NULL; j++) {
                 putenv(cmd->envp_override[j]);
@@ -243,7 +263,14 @@ static bool handle_command(void)
             printf("sh: %s: command not found\n", cmd->comm_name);
             exit(127);
         }
-        iter++;
+    }
+
+    if (pipes != NULL) {
+        for (int i = 0; i < pipeline_len - 1; i++) {
+            close(pipes[i][0]);
+            close(pipes[i][1]);
+        }
+        free(pipes);
     }
 
     if (parent) {
@@ -252,11 +279,9 @@ static bool handle_command(void)
         }
     }
 
-    // Cleanup
-    iter = commands;
     free(pids);
-    while (*iter != NULL) {
-        command_t* cmd = *iter;
+    for (int i = 0; i < pipeline_len; i++) {
+        command_t* cmd = commands[i];
         free(cmd->comm_name);
         for (int j = 0; cmd->argv[j] != NULL; j++) {
             free(cmd->argv[j]);
@@ -267,7 +292,6 @@ static bool handle_command(void)
         }
         free(cmd->envp_override);
         free(cmd);
-        iter++;
     }
     free(commands);
     return true;
