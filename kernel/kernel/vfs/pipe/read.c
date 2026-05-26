@@ -40,12 +40,12 @@ size_t pipe_read(
         return 0;
     }
 
-    if (node_meta->write_ref_count == 0) {
+    size_t curr_size = ds_ringbuf_size(ringbuf);
+
+    if (curr_size == 0 && node_meta->write_ref_count == 0) {
         _debug_printf("Write side of pipe #%u is not open\n", node->inode);
         return 0;
     }
-
-    size_t curr_size = ds_ringbuf_size(ringbuf);
 
     size_t to_read = curr_size < size ? curr_size : size;
     size_t read = 0;
