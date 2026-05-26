@@ -55,6 +55,7 @@ typedef struct {
     bool readable; // Is file readable?
     bool writeable; // Is file writeable?
     void* metadata; // Available to use by the filesystem
+    int refcount; // How many references there are to this file handler?
 } vfs_file_t;
 
 // Handlers for opening and closing nodes
@@ -179,6 +180,11 @@ int vfs_readlink(const dentry_t* dentry, char* buf, size_t len);
  * or one of `errno.h` values on failure.
  */
 int vfs_stat(const dentry_t* dentry, struct stat* stat);
+
+/**
+ * Bumps refcount in given file handler
+ */
+void vfs_bump_refcount(vfs_file_t* file);
 
 void vfs_init();
 

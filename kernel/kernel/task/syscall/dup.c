@@ -2,6 +2,7 @@
 #include "kernel/task/scheduler.h"
 #include "kernel/task/syscall.h"
 #include "kernel/task/task.h"
+#include "kernel/vfs/vfs.h"
 
 /**
  * Handle case where user didn't specify newfd
@@ -16,6 +17,7 @@ static int sys_dup_no_newfd(
         return -EIO;
     }
 
+    vfs_bump_refcount(fd_new_obj->file);
     return fd_new_obj->identifier;
 }
 
@@ -45,6 +47,7 @@ static int sys_dup_with_newfd(
             return -EIO;
         }
         fd_new_obj->identifier = (uint32_t)newfd;
+        vfs_bump_refcount(fd_obj->file);
         return newfd;
     }
 
@@ -55,6 +58,7 @@ static int sys_dup_with_newfd(
 
     // Now we can reuse reuse it
     existing_newfd->file = fd_obj->file;
+    vfs_bump_refcount(fd_obj->file);
     return newfd;
 }
 

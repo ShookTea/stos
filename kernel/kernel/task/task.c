@@ -689,20 +689,8 @@ task_t* task_fork(void)
                 sizeof(task_file_descriptor_t)
             );
             cfd->identifier = pfd->identifier;
-            if (pfd->file == NULL) {
-                cfd->file = NULL;
-            } else {
-                uint8_t mode;
-                if (pfd->file->readable && pfd->file->writeable) {
-                    mode = O_RDWR;
-                } else if (pfd->file->writeable) {
-                    mode = O_WRONLY;
-                } else {
-                    mode = O_RDONLY;
-                }
-                cfd->file = vfs_open(pfd->file->dentry, mode, NULL);
-                cfd->file->offset = pfd->file->offset;
-            }
+            cfd->file = pfd->file;
+            vfs_bump_refcount(pfd->file);
             child->fd[i] = cfd;
         }
     }

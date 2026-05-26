@@ -50,6 +50,7 @@ static vfs_file_t* allocate_file_handle(
 ) {
     spinlock_acquire(&vfs_lock);
     vfs_file_t* handle = kmalloc_flags(sizeof(vfs_file_t), KMALLOC_ZERO);
+    handle->refcount = 1;
     handle->dentry = dentry;
     handle->readable = mode & (O_RDONLY | O_RDWR);
     handle->writeable = mode & (O_WRONLY | O_RDWR);
@@ -263,6 +264,14 @@ vfs_file_t* vfs_open(dentry_t* dentry, uint8_t mode, int* errno)
 
 void vfs_close(vfs_file_t* file)
 {
+    if (file == NULL) {
+        return;
+    }
+    file->refcount--;
+    if (file->refcount != 0) {
+        return;
+    }
+
     vfs_node_t* node = file->dentry->inode;
     // Allow specific file system to clear metadata
     if (node->close_node != NULL) {
@@ -645,4 +654,12 @@ void vfs_dentry_unref(dentry_t* dentry)
 void vfs_sync_filesystem(void)
 {
     hd_sync_all();
+}
+
+void vfs_bump_refcount(vfs_file_t* file)
+{
+    if (file == NULL) {
+        return;
+    }
+    file->refcount++;
 }
