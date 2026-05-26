@@ -62,6 +62,9 @@ static char* units[] = {
     "", "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"
 };
 
+// One for each value in ls_entry_type_t, in order
+static char* typechars = "bcdfl.s?";
+
 typedef enum {
     DM_GRID,
     DM_ONE_LINE,
@@ -80,9 +83,20 @@ static int terminal_width = 64; // TODO: read real width from terminal
 static int curr_time;
 static bool enable_colors = false;
 
+typedef enum {
+    ET_BLK,
+    ET_CHR,
+    ET_DIR,
+    ET_FIFO,
+    ET_LNK,
+    ET_REG,
+    ET_SOCK,
+    ET_UNKNOWN,
+} ls_entry_type_t;
+
 typedef struct {
     char name[PATH_MAX_LENGTH];
-    char type;
+    ls_entry_type_t type;
     bool stat_loaded;
     off_t size;
     struct timespec last_mod_time;
@@ -119,7 +133,7 @@ static void print_entry(
 
     // Build type & permissions string
     char type_and_perm[11] = {0};
-    sprintf(type_and_perm, "%c---------", entry->type);
+    sprintf(type_and_perm, "%c---------", typechars[entry->type]);
 
     // Build size string
     char size_string[64] = {0};
@@ -206,18 +220,18 @@ static int list_for_path(const char* path)
         entries = realloc(entries, sizeof(ls_entry_t) * (entries_count + 1));
         strcpy(entries[entries_count].name, dirent->d_name);
 
-        if (display_mode == DM_TABULAR) {
-            switch (dirent->d_type) {
-                case DT_BLK: entries[entries_count].type = 'b'; break;
-                case DT_CHR: entries[entries_count].type = 'c'; break;
-                case DT_DIR: entries[entries_count].type = 'd'; break;
-                case DT_FIFO: entries[entries_count].type = 'f'; break;
-                case DT_LNK: entries[entries_count].type = 'l'; break;
-                case DT_REG: entries[entries_count].type = '.'; break;
-                case DT_SOCK: entries[entries_count].type = 's'; break;
-                default: entries[entries_count].type = '?'; break;
-            }
+        switch (dirent->d_type) {
+            case DT_BLK: entries[entries_count].type = ET_BLK; break;
+            case DT_CHR: entries[entries_count].type = ET_CHR; break;
+            case DT_DIR: entries[entries_count].type = ET_DIR; break;
+            case DT_FIFO: entries[entries_count].type = ET_FIFO; break;
+            case DT_LNK: entries[entries_count].type = ET_LNK; break;
+            case DT_REG: entries[entries_count].type = ET_REG; break;
+            case DT_SOCK: entries[entries_count].type = ET_SOCK; break;
+            default: entries[entries_count].type = ET_UNKNOWN; break;
+        }
 
+        if (display_mode == DM_TABULAR) {
             char full_path[PATH_MAX_LENGTH] = {0};
             sprintf(
                 full_path,
@@ -252,7 +266,6 @@ static int list_for_path(const char* path)
                     result = 1;
                 }
             }
-
         }
 
         if (len > longest_name_len) {
