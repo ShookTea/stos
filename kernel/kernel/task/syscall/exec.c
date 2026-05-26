@@ -122,6 +122,20 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
     }
 
     int ret = task_exec(buf, size, argc, argv, envc, envp);
+    if (ret == 0) {
+        // On successful exec rename the process
+        int namelen = strlen(node->name);
+        if (namelen >= TASK_PROCESS_NAME_MAX_LEN) {
+            memcpy(
+                current_task->name,
+                node->name,
+                TASK_PROCESS_NAME_MAX_LEN
+            );
+            current_task->name[TASK_PROCESS_NAME_MAX_LEN - 1] = '\0';
+        } else {
+            strcpy(current_task->name, node->name);
+        }
+    }
 
     kfree(buf);
     exec_free_string_array(argv, argc);
