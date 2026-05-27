@@ -7,11 +7,12 @@
 
 #define LINE_BUF 4096
 
-#define OPT_SHORT "v"
+#define OPT_SHORT "vc"
 
 static struct option opts[] = {
     { "help", no_argument, NULL, 0 },
     { "invert-match", no_argument, NULL, 'v' },
+    { "count", no_argument, NULL, 'c' },
     { NULL, 0, NULL, 0 },
 };
 
@@ -25,6 +26,10 @@ static void print_usage(void)
     puts("");
     puts("MATCHING OPTIONS");
     puts("  -v, --invert-match      Invert matching, printing only non-matched lines");
+    puts("");
+    puts("GENERAL OUTPUT OPTIONS");
+    puts("  -c, --count             Instead of matched lines, print count of matched lines");
+    puts("                          for each file.");
     puts("");
     puts("ARGUMENTS");
     puts("  <pattern>               Pattern used for searching in the input.");
@@ -43,6 +48,7 @@ static void print_error(const char* error)
 }
 
 static bool invert_match = false;
+static bool print_count_only = false;
 
 static void run_grep(
     const char* pattern,
@@ -51,7 +57,9 @@ static void run_grep(
 ) {
     char line[LINE_BUF];
     int len = 0;
+    int matched_count = 0;
     char c;
+    bool print_matched = !print_count_only;
     while (read(fd, &c, 1) == 1) {
         if (len < LINE_BUF - 1) {
             line[len++] = c;
@@ -60,7 +68,8 @@ static void run_grep(
             line[len] = '\0';
             bool found = strstr(line, pattern) != NULL;
             if (found != invert_match) {
-                write(1, line, len);
+                matched_count++;
+                if (print_matched) write(1, line, len);
             }
             len = 0;
         }
@@ -70,8 +79,12 @@ static void run_grep(
         line[len] = '\0';
         bool found = strstr(line, pattern) != NULL;
         if (found != invert_match) {
-            write(1, line, len);
+            matched_count++;
+            if (print_matched) write(1, line, len);
         }
+    }
+    if (print_count_only) {
+        printf("%u\n", matched_count);
     }
 }
 
@@ -96,6 +109,7 @@ int main(int argc, char** argv)
                 break;
             }
             case 'v': invert_match = true; break;
+            case 'c': print_count_only = true; break;
             default: break;
         }
     }
