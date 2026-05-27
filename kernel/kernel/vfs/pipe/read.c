@@ -1,4 +1,5 @@
 #include "./pipe.h"
+#include "kernel/task/wait.h"
 #include "libds/libds.h"
 #include "libds/ringbuf.h"
 #include <stdio.h>
@@ -6,6 +7,16 @@
 
 #define _debug_puts(...) debug_puts_cc(DBC_VFS_PIPE, "read", __VA_ARGS__)
 #define _debug_printf(...) debug_printf_cc(DBC_VFS_PIPE, "read", __VA_ARGS__)
+
+static bool is_buffer_ready(void* arg)
+{
+    pipe_node_meta_t* meta = arg;
+    if (meta->write_ref_count == 0) {
+        // don't block if all write refs are closed
+        return true;
+    }
+    return ds_ringbuf_size(meta->ringbuf) > 0;
+}
 
 size_t pipe_read(
     vfs_file_t* file,
@@ -39,6 +50,8 @@ size_t pipe_read(
     if (!file_meta->read_side || !file->readable) {
         return 0;
     }
+
+    wait_on_condition(node_meta->wait_obj, is_buffer_ready, node_meta);
 
     size_t curr_size = ds_ringbuf_size(ringbuf);
 

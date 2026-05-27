@@ -1,5 +1,6 @@
 #include "./pipe.h"
 #include "kernel/memory/kmalloc.h"
+#include "kernel/task/wait.h"
 
 void pipe_close(vfs_node_t* node, vfs_file_t* file)
 {
@@ -21,6 +22,9 @@ void pipe_close(vfs_node_t* node, vfs_file_t* file)
     } else {
         if (node_meta->write_ref_count > 0) {
             node_meta->write_ref_count--;
+            if (node_meta->write_ref_count == 0) {
+                wait_wake_up(node_meta->wait_obj);
+            }
         }
     }
 

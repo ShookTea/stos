@@ -1,5 +1,6 @@
 #include "./pipe.h"
 #include "errno.h"
+#include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include "libds/libds.h"
 #include "libds/ringbuf.h"
@@ -56,6 +57,10 @@ size_t pipe_write(
             break;
         }
         written++;
+    }
+
+    if (written > 0) {
+        wait_wake_up(node_meta->wait_obj);
     }
 
     return written;

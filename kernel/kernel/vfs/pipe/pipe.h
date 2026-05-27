@@ -1,6 +1,7 @@
 #ifndef INCLUDE_KERNEL_SRC_VFS_PIPE_H
 #define INCLUDE_KERNEL_SRC_VFS_PIPE_H
 
+#include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include <libds/ringbuf.h>
 #include <stddef.h>
@@ -12,6 +13,7 @@ typedef struct {
     ds_ringbuf_t* ringbuf;
     uint32_t read_ref_count;
     uint32_t write_ref_count;
+    wait_obj_t* wait_obj;
 } pipe_node_meta_t;
 
 typedef struct {

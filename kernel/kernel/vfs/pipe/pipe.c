@@ -3,6 +3,7 @@
 #include "fcntl.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/task/task.h"
+#include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
 #include "libds/ringbuf.h"
 #include <errno.h>
@@ -23,6 +24,10 @@ static void pipe_on_release(
     if (meta->ringbuf != NULL) {
         ds_ringbuf_destroy(meta->ringbuf);
         meta->ringbuf = NULL;
+    }
+    if (meta->wait_obj != NULL) {
+        wait_deallocate(meta->wait_obj);
+        meta->wait_obj = NULL;
     }
 
     kfree(meta);
@@ -55,6 +60,7 @@ int pipe_create(task_t* task, int* read_fd, int* write_fd, int flags)
     );
     node->metadata = meta;
     meta->ringbuf = ds_ringbuf_create(PIPE_BUF_SIZE, 1, true);
+    meta->wait_obj = wait_allocate_queue();
     meta->read_ref_count = 0;
     meta->write_ref_count = 0;
 
