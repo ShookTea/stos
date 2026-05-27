@@ -26,7 +26,7 @@ static struct option opts[] = {
 
 static void print_usage(void)
 {
-    puts("Uage:");
+    puts("Usage:");
     puts("  ls [options] [paths...]");
     puts("");
     puts("META OPTIONS");
@@ -341,7 +341,6 @@ static int list_for_path(const char* path)
 
 int main(int argc, char** argv)
 {
-    bool help = false;
     int c;
     while (true) {
         int option_index = 0;
@@ -351,7 +350,8 @@ int main(int argc, char** argv)
         switch (c) {
             case 0: {
                 if (!strcmp(opts[option_index].name, "help")) {
-                    help = true;
+                    print_usage();
+                    return 0;
                 }
                 else if (!strcmp(opts[option_index].name, "si")) {
                     size_unit = SU_SI;
@@ -382,11 +382,6 @@ int main(int argc, char** argv)
             case 'l': display_mode = DM_TABULAR; break;
             default: break;
         }
-    }
-
-    if (help) {
-        print_usage();
-        return 0;
     }
 
     curr_time = time(NULL);
