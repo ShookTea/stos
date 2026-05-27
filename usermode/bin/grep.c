@@ -7,7 +7,7 @@
 
 #define LINE_BUF 4096
 
-#define OPT_SHORT "vclL"
+#define OPT_SHORT "vclLhH"
 
 static struct option opts[] = {
     { "help", no_argument, NULL, 0 },
@@ -15,6 +15,8 @@ static struct option opts[] = {
     { "count", no_argument, NULL, 'c' },
     { "files-with-matches", no_argument, NULL, 'l' },
     { "files-without-match", no_argument, NULL, 'L' },
+    { "no-filename", no_argument, NULL, 'h' },
+    { "with-filename", no_argument, NULL, 'H' },
     { NULL, 0, NULL, 0 },
 };
 
@@ -24,26 +26,24 @@ static void print_usage(void)
     puts("  grep [options] <pattern> [files...]");
     puts("");
     puts("META OPTIONS");
-    puts("  --help                  Shows usage info");
+    puts("  --help                      Shows usage info");
     puts("");
     puts("MATCHING OPTIONS");
-    puts("  -v, --invert-match      Invert matching, printing only non-matched lines");
+    puts("  -v, --invert-match          Invert matching, printing only non-matched lines");
     puts("");
     puts("GENERAL OUTPUT OPTIONS");
-    puts("  -c, --count             Instead of matched lines, print count of matched lines");
-    puts("                          for each file.");
-    puts("  -l,");
-    puts("  --files-with-matches    Instead of matched lines, print names of files with");
-    puts("                          matched line. End scanning after first match.");
-    puts("  -L,");
-    puts("  --files-without-match   Instead of matched lines, print names of files with");
-    puts("                          no matched line.");
+    puts("  -c, --count                 Instead of matched lines, print count of matched lines for each file.");
+    puts("  -l, --files-with-matches    Instead of matched lines, print names of files with matched line. End scanning after first match.");
+    puts("  -L, --files-without-match   Instead of matched lines, print names of files with no matched line.");
+    puts("");
+    puts("OUTPUT LINE PREFIX OPTIONS");
+    puts("  -h, --no-filename           Don't add file names before match. It's default if only one file (or only standard input) is used.");
+    puts("  -H, --with-filename         Add file names before match. It's default if more than one file is used.");
     puts("");
     puts("ARGUMENTS");
-    puts("  <pattern>               Pattern used for searching in the input.");
-    puts("  [files...]              One or more files to search for the pattern.");
-    puts("                          \"-\" stands for standard input. If no files are");
-    puts("                          given, it will default to standard input.");
+    puts("  <pattern>                   Pattern used for searching in the input.");
+    puts("  [files...]                  One or more files to search for the pattern. \"-\" stands for standard input.");
+    puts("                              If no files are given, it will default to standard input.");
 }
 
 static void print_error(const char* error)
@@ -120,6 +120,8 @@ int main(int argc, char** argv)
     }
 
     int c;
+    // bool with_filename_opt = false;
+    // bool no_filename_opt = false;
     while (true) {
         int option_index = 0;
         c = getopt_long(argc, argv, OPT_SHORT, opts, &option_index);
@@ -136,6 +138,8 @@ int main(int argc, char** argv)
             case 'c': print_count_only = true; break;
             case 'l': print_files_with_match_only = true; break;
             case 'L': print_files_without_match_only = true; break;
+            // case 'h': no_filename_opt = true; break;
+            // case 'H': with_filename_opt = true; break;
             default: break;
         }
     }

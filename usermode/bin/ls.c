@@ -43,14 +43,12 @@ static void print_usage(void)
     puts("  --si                    Like -h, but use powers of 1000 instead of 1024");
     puts("");
     puts("ARGUMENTS");
-    puts("  [paths...]              One or more directory paths to print.");
-    puts("                          Defaults to current working directory.");
+    puts("  [paths...]              One or more directory paths to print. Defaults to current working directory.");
     puts("");
     puts("DETAILS");
-    puts("  --color[=WHEN] enables or disables coloring. By default, coloring is disabled.");
-    puts("  \"WHEN\" can equal \"auto\", \"always\", or \"never\". If --color is passed,");
-    puts("  but without value, it is treated as \"always. If set to \"auto\", it will only");
-    puts("  apply coloring when output is connected to TTY.");
+    puts("  --color[=WHEN] enables or disables coloring. By default, coloring is disabled. \"WHEN\" can equal \"auto\", \"always\", or \"never\".");
+    puts("  If --color is passed, but without value, it is treated as \"always. If set to \"auto\", it will only apply coloring when output is");
+    puts("  connected to TTY.");
 }
 
 static char* months[] = {
