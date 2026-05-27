@@ -7,12 +7,14 @@
 
 #define LINE_BUF 4096
 
-#define OPT_SHORT "vc"
+#define OPT_SHORT "vclL"
 
 static struct option opts[] = {
     { "help", no_argument, NULL, 0 },
     { "invert-match", no_argument, NULL, 'v' },
     { "count", no_argument, NULL, 'c' },
+    { "files-with-matches", no_argument, NULL, 'l' },
+    { "files-without-match", no_argument, NULL, 'L' },
     { NULL, 0, NULL, 0 },
 };
 
@@ -30,6 +32,12 @@ static void print_usage(void)
     puts("GENERAL OUTPUT OPTIONS");
     puts("  -c, --count             Instead of matched lines, print count of matched lines");
     puts("                          for each file.");
+    puts("  -l,");
+    puts("  --files-with-matches    Instead of matched lines, print names of files with");
+    puts("                          matched line. End scanning after first match.");
+    puts("  -L,");
+    puts("  --files-without-match   Instead of matched lines, print names of files with");
+    puts("                          no matched line.");
     puts("");
     puts("ARGUMENTS");
     puts("  <pattern>               Pattern used for searching in the input.");
@@ -49,17 +57,22 @@ static void print_error(const char* error)
 
 static bool invert_match = false;
 static bool print_count_only = false;
+static bool print_files_with_match_only = false;
+static bool print_files_without_match_only = false;
 
 static void run_grep(
     const char* pattern,
     int fd,
-    const char* filename __attribute__((unused))
+    const char* filename
 ) {
     char line[LINE_BUF];
     int len = 0;
     int matched_count = 0;
     char c;
-    bool print_matched = !print_count_only;
+    bool print_matched = !print_count_only
+        && !print_files_with_match_only
+        && !print_files_without_match_only;
+
     while (read(fd, &c, 1) == 1) {
         if (len < LINE_BUF - 1) {
             line[len++] = c;
@@ -69,6 +82,10 @@ static void run_grep(
             bool found = strstr(line, pattern) != NULL;
             if (found != invert_match) {
                 matched_count++;
+                if (print_files_without_match_only
+                    || print_files_with_match_only) {
+                        break;
+                    }
                 if (print_matched) write(1, line, len);
             }
             len = 0;
@@ -83,8 +100,15 @@ static void run_grep(
             if (print_matched) write(1, line, len);
         }
     }
+
     if (print_count_only) {
         printf("%u\n", matched_count);
+    }
+    else if (print_files_with_match_only) {
+        if (matched_count > 0) printf("%s\n", filename);
+    }
+    else if (print_files_without_match_only) {
+        if (matched_count == 0) printf("%s\n", filename);
     }
 }
 
@@ -110,6 +134,8 @@ int main(int argc, char** argv)
             }
             case 'v': invert_match = true; break;
             case 'c': print_count_only = true; break;
+            case 'l': print_files_with_match_only = true; break;
+            case 'L': print_files_without_match_only = true; break;
             default: break;
         }
     }
