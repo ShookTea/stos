@@ -7,10 +7,11 @@
 
 #define LINE_BUF 4096
 
-#define OPT_SHORT ""
+#define OPT_SHORT "v"
 
 static struct option opts[] = {
     { "help", no_argument, NULL, 0 },
+    { "invert-match", no_argument, NULL, 'v' },
     { NULL, 0, NULL, 0 },
 };
 
@@ -21,6 +22,9 @@ static void print_usage(void)
     puts("");
     puts("META OPTIONS");
     puts("  --help                  Shows usage info");
+    puts("");
+    puts("MATCHING OPTIONS");
+    puts("  -v, --invert-match      Invert matching, printing only non-matched lines");
     puts("");
     puts("ARGUMENTS");
     puts("  <pattern>               Pattern used for searching in the input.");
@@ -38,6 +42,8 @@ static void print_error(const char* error)
     );
 }
 
+static bool invert_match = false;
+
 static void run_grep(
     const char* pattern,
     int fd,
@@ -52,7 +58,8 @@ static void run_grep(
         }
         if (c == '\n' || len == LINE_BUF - 1) {
             line[len] = '\0';
-            if (strstr(line, pattern) != NULL) {
+            bool found = strstr(line, pattern) != NULL;
+            if (found != invert_match) {
                 write(1, line, len);
             }
             len = 0;
@@ -61,7 +68,8 @@ static void run_grep(
 
     if (len > 0) {
         line[len] = '\0';
-        if (strstr(line, pattern) != NULL) {
+        bool found = strstr(line, pattern) != NULL;
+        if (found != invert_match) {
             write(1, line, len);
         }
     }
@@ -85,7 +93,10 @@ int main(int argc, char** argv)
                     print_usage();
                     return 0;
                 }
+                break;
             }
+            case 'v': invert_match = true; break;
+            default: break;
         }
     }
 
