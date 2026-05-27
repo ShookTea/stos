@@ -59,6 +59,17 @@ static bool invert_match = false;
 static bool print_count_only = false;
 static bool print_files_with_match_only = false;
 static bool print_files_without_match_only = false;
+static bool prefix_filenames = false;
+
+static void print_match(
+    const char* match,
+    const char* filename
+) {
+    if (prefix_filenames) {
+        printf("%s:", filename);
+    }
+    printf(match);
+}
 
 static void run_grep(
     const char* pattern,
@@ -86,7 +97,9 @@ static void run_grep(
                     || print_files_with_match_only) {
                         break;
                     }
-                if (print_matched) write(1, line, len);
+                if (print_matched) {
+                    print_match(line, filename);
+                }
             }
             len = 0;
         }
@@ -97,7 +110,9 @@ static void run_grep(
         bool found = strstr(line, pattern) != NULL;
         if (found != invert_match) {
             matched_count++;
-            if (print_matched) write(1, line, len);
+            if (print_matched) {
+                print_match(line, filename);
+            }
         }
     }
 
@@ -120,8 +135,8 @@ int main(int argc, char** argv)
     }
 
     int c;
-    // bool with_filename_opt = false;
-    // bool no_filename_opt = false;
+    bool with_filename_opt = false;
+    bool no_filename_opt = false;
     while (true) {
         int option_index = 0;
         c = getopt_long(argc, argv, OPT_SHORT, opts, &option_index);
@@ -138,8 +153,8 @@ int main(int argc, char** argv)
             case 'c': print_count_only = true; break;
             case 'l': print_files_with_match_only = true; break;
             case 'L': print_files_without_match_only = true; break;
-            // case 'h': no_filename_opt = true; break;
-            // case 'H': with_filename_opt = true; break;
+            case 'h': no_filename_opt = true; break;
+            case 'H': with_filename_opt = true; break;
             default: break;
         }
     }
@@ -152,6 +167,8 @@ int main(int argc, char** argv)
     char* pattern = argv[optind];
     if (optind + 1 < argc) {
         int files_count = argc - (optind + 1);
+        prefix_filenames = (files_count > 1 && !no_filename_opt)
+            || (files_count == 1 && with_filename_opt);
         for (int i = 0; i < files_count; i++) {
             char* path = argv[optind + i + 1];
             if (!strcmp(path, "-")) {
@@ -169,6 +186,7 @@ int main(int argc, char** argv)
         }
     } else {
         // Only standard input used
+        prefix_filenames = with_filename_opt;
         run_grep(pattern, 0, "(standard input)");
     }
 
