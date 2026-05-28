@@ -1,13 +1,11 @@
 #if !(defined(__is_libk))
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <fcntl.h>
-#include <string.h>
 
-int fflush(FILE* stream __attribute__((unused)))
+int fflush(FILE* stream)
 {
-    // TODO: implement actual flushing behavior (there's no buffers yet)
+    stream->read_buf_pos = stream->read_buf_len;
     return 0;
 }
 

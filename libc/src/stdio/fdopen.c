@@ -16,6 +16,7 @@ FILE* fdopen(int fd, const char* mode)
     FILE* res = malloc(sizeof(FILE));
     res->fd = fd;
     res->mode = flags;
+    res->ungetc_buf = EOF;
     return res;
 }
 

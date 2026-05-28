@@ -8,9 +8,21 @@ FILE* stdin;
 FILE* stdout;
 FILE* stderr;
 
-static FILE _stdin_file  = { .fd = STDIN_FILENO, .mode = O_RDONLY };
-static FILE _stdout_file = { .fd = STDOUT_FILENO, .mode = O_WRONLY };
-static FILE _stderr_file = { .fd = STDERR_FILENO, .mode = O_WRONLY };
+static FILE _stdin_file  = {
+    .fd = STDIN_FILENO,
+    .mode = O_RDONLY,
+    .ungetc_buf = EOF,
+};
+static FILE _stdout_file = {
+    .fd = STDOUT_FILENO,
+    .mode = O_WRONLY,
+    .ungetc_buf = EOF,
+};
+static FILE _stderr_file = {
+    .fd = STDERR_FILENO,
+    .mode = O_WRONLY,
+    .ungetc_buf = EOF,
+};
 #endif
 
 void __stdio_init(void)

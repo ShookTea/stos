@@ -6,6 +6,7 @@
 #include <stddef.h>
 
 #define EOF (-1)
+#define BUFSIZ 1024
 
 #if !(defined(__is_libk))
 /**
@@ -16,6 +17,11 @@ typedef struct {
     int fd;
     /** Mode used for opening a file (combination of O_ flags from fcntl.h) */
     int mode;
+    // Buffer for reading from stream
+    char read_buf[BUFSIZ];
+    int read_buf_pos;
+    int read_buf_len;
+    int ungetc_buf; // EOF means empty
 } FILE;
 #endif
 
@@ -228,6 +234,31 @@ int dprintf(int fd, const char* restrict format, ...);
  * in `write`.
  */
 int vdprintf(int fd, const char* restrict format, va_list list);
+
+/**
+ * Reads the next character from stream and returns it as an `unsigned char`
+ * cast to `int`, or EOF at the end of file or error.
+ */
+int fgetc(FILE* stream);
+
+/**
+ * This is an equivalent of fgetc(stdin).
+ */
+int getchar(void);
+
+/**
+ * Reads at most one less than `size` characters from stream and store it in
+ * the buffer pointed to by `s`. Reading stops after EOF or new line. If a new
+ * line is read, it is stored in the buffer as well. A terminating NULL byte
+ * is stored in the last character in the buffer.
+ */
+char* fgets(char* restrict s, int size, FILE* restrict stream);
+
+/**
+ * Pushes character `c` back to the stream, where it's available for subsequent
+ * read operations.
+ */
+int ungetc(int c, FILE* stream);
 
 #endif // #if !(defined(__is_libk))
 
