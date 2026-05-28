@@ -17,6 +17,7 @@ static struct option opts[] = {
     { "files-without-match", no_argument, NULL, 'L' },
     { "no-filename", no_argument, NULL, 'h' },
     { "with-filename", no_argument, NULL, 'H' },
+    { "label", required_argument, NULL, 0 },
     { NULL, 0, NULL, 0 },
 };
 
@@ -39,6 +40,7 @@ static void print_usage(void)
     puts("OUTPUT LINE PREFIX OPTIONS");
     puts("  -h, --no-filename           Don't add file names before match. It's default if only one file (or only standard input) is used.");
     puts("  -H, --with-filename         Add file names before match. It's default if more than one file is used.");
+    puts("  --label=LABEL               When printing filenames, use given LABEL for standard input.");
     puts("");
     puts("ARGUMENTS");
     puts("  <pattern>                   Pattern used for searching in the input.");
@@ -137,6 +139,7 @@ int main(int argc, char** argv)
     int c;
     bool with_filename_opt = false;
     bool no_filename_opt = false;
+    char stdin_label[256] = "(standard input)";
     while (true) {
         int option_index = 0;
         c = getopt_long(argc, argv, OPT_SHORT, opts, &option_index);
@@ -146,6 +149,9 @@ int main(int argc, char** argv)
                 if (!strcmp(opts[option_index].name, "help")) {
                     print_usage();
                     return 0;
+                }
+                else if (!strcmp(opts[option_index].name, "label")) {
+                    strcpy(stdin_label, optarg);
                 }
                 break;
             }
@@ -173,7 +179,7 @@ int main(int argc, char** argv)
             char* path = argv[optind + i + 1];
             if (!strcmp(path, "-")) {
                 // placeholder for standard input
-                run_grep(pattern, 0, "(standard input)");
+                run_grep(pattern, 0, stdin_label);
             } else {
                 int fd = open(path, O_RDONLY);
                 if (fd < 0) {
@@ -187,7 +193,7 @@ int main(int argc, char** argv)
     } else {
         // Only standard input used
         prefix_filenames = with_filename_opt;
-        run_grep(pattern, 0, "(standard input)");
+        run_grep(pattern, 0, stdin_label);
     }
 
     return 0;
