@@ -7,7 +7,7 @@
 
 #define LINE_BUF 4096
 
-#define OPT_SHORT "vclLhH"
+#define OPT_SHORT "vclLhHn"
 
 static struct option opts[] = {
     { "help", no_argument, NULL, 0 },
@@ -18,6 +18,7 @@ static struct option opts[] = {
     { "no-filename", no_argument, NULL, 'h' },
     { "with-filename", no_argument, NULL, 'H' },
     { "label", required_argument, NULL, 0 },
+    { "line-number", no_argument, NULL, 'n' },
     { NULL, 0, NULL, 0 },
 };
 
@@ -41,6 +42,7 @@ static void print_usage(void)
     puts("  -h, --no-filename           Don't add file names before match. It's default if only one file (or only standard input) is used.");
     puts("  -H, --with-filename         Add file names before match. It's default if more than one file is used.");
     puts("  --label=LABEL               When printing filenames, use given LABEL for standard input.");
+    puts("  -n, --line-number           Prefix each line with 1-based line number within the input file");
     puts("");
     puts("ARGUMENTS");
     puts("  <pattern>                   Pattern used for searching in the input.");
@@ -62,13 +64,18 @@ static bool print_count_only = false;
 static bool print_files_with_match_only = false;
 static bool print_files_without_match_only = false;
 static bool prefix_filenames = false;
+static bool prefix_line_number = false;
 
 static void print_match(
     const char* match,
-    const char* filename
+    const char* filename,
+    int line_number
 ) {
     if (prefix_filenames) {
         printf("%s:", filename);
+    }
+    if (prefix_line_number) {
+        printf("%u:", line_number);
     }
     printf(match);
 }
@@ -81,6 +88,7 @@ static void run_grep(
     char line[LINE_BUF];
     int len = 0;
     int matched_count = 0;
+    int line_number = 0;
     char c;
     bool print_matched = !print_count_only
         && !print_files_with_match_only
@@ -92,6 +100,7 @@ static void run_grep(
         }
         if (c == '\n' || len == LINE_BUF - 1) {
             line[len] = '\0';
+            line_number++;
             bool found = strstr(line, pattern) != NULL;
             if (found != invert_match) {
                 matched_count++;
@@ -100,7 +109,7 @@ static void run_grep(
                         break;
                     }
                 if (print_matched) {
-                    print_match(line, filename);
+                    print_match(line, filename, line_number);
                 }
             }
             len = 0;
@@ -113,7 +122,7 @@ static void run_grep(
         if (found != invert_match) {
             matched_count++;
             if (print_matched) {
-                print_match(line, filename);
+                print_match(line, filename, line_number);
             }
         }
     }
@@ -161,6 +170,7 @@ int main(int argc, char** argv)
             case 'L': print_files_without_match_only = true; break;
             case 'h': no_filename_opt = true; break;
             case 'H': with_filename_opt = true; break;
+            case 'n': prefix_line_number = true; break;
             default: break;
         }
     }
