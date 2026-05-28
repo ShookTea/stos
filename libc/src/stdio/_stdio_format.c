@@ -76,6 +76,21 @@ static bool emit_str(__stdio_format_out_t* out, int* chars, const char* s)
     return true;
 }
 
+static bool emit_str_with_limit(
+    __stdio_format_out_t* out,
+    int* chars,
+    const char* s,
+    uint8_t limit
+) {
+    for (; *s; s++) {
+        if (limit == 0) break;
+        if (!out->emit_char(out, *s)) return false;
+        (*chars)++;
+        limit--;
+    }
+    return true;
+}
+
 /**
  * Format placeholder is in a following syntax:
  * %[flags][width][.precision][size]type
@@ -184,7 +199,9 @@ int __stdio_format_core(
 
         // Reading specified precision
         uint8_t precision = 0;
+        bool precision_specified = false;
         if (format[i] == '.') {
+            precision_specified = true;
             i++;
             while (isdigit(format[i])) {
                 precision *= 10;
@@ -441,7 +458,11 @@ int __stdio_format_core(
                     EMIT(zeroPad ? '0' : ' ');
                 }
             }
-            if (!emit_str(out, &chars, val)) return chars;
+            if (precision_specified) {
+                if (!emit_str_with_limit(out, &chars, val, precision)) return chars;
+            } else {
+                if (!emit_str(out, &chars, val)) return chars;
+            }
             if (pad_count > 0 && leftAlign) {
                 for (size_t i = 0; i < pad_count; i++) {
                     EMIT(zeroPad ? '0' : ' ');
