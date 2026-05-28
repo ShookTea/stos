@@ -78,7 +78,19 @@ char* strchr(const char* s, int c);
  * call that should parse the same string, str must be NULL. Returns a pointer
  * to the next token, or NULL if there are no more tokens.
  */
-char* strtok(char* str, const char* delim);
+char* strtok(char* restrict str, const char* restrict delim);
+
+/**
+ * Reentrant version of strtok_r. On the first call to `strtok_r`, `str` should
+ * point to the string to be parsed, and the value of `saveptr` is ignored. In
+ * subsequent calls `str` should be `NULL` and `saveptr` should be unchanged
+ * since the previous call.
+ */
+char* strtok_r(
+    char* restrict str,
+    const char* restrict delim,
+    char** restrict saveptr
+);
 
 /**
  * Finds the first occurrence of the substring `needle` in string `haystack`.
