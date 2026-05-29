@@ -161,10 +161,13 @@ typedef struct task {
     // Current working directory of the task
     dentry_t* working_directory;
 
+    // Bitmask of signals waiting to be delivered
+    uint32_t sig_pending;
+    // Bitmask of blocked signals
+    uint32_t sig_blocked;
+
     // TODO: for future implementations:
     // - priority
-    // - pending signals to be sent to the process
-    // - signal handlers
 } task_t;
 
 /**
