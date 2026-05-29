@@ -23,6 +23,16 @@ typedef uint32_t sigset_t;
 #define SA_RESETHAND 0x04
 
 /**
+ * Value to be passed as `sa_handler` to bring handler to the default one.
+ */
+#define SIG_DFL ((void(*)(int))0)
+
+/**
+ * Value to be passed as `sa_handler` to remove signal handler.
+ */
+#define SIG_IGN ((void(*)(int))1)
+
+/**
  * Data structure passed to `sa_sigaction`. si_signo, si_errno and si_code are
  * defined for all signals; other fields are defined only for specific signals
  * and may contain unexpected values for non-supported signals.
@@ -41,7 +51,8 @@ typedef struct {
  */
 struct sigaction {
     /**
-     * A simple handler, that only receives a signal number in argument.
+     * A simple handler, that only receives a signal number in argument. Can
+     * be set to SIG_DFL or SIG_IGN as well.
      */
     void (*sa_handler)(int);
     /**
@@ -98,8 +109,21 @@ int sigdelset(sigset_t* set, int signum);
 int sigismember(const sigset_t* set, int signum);
 
 #if !(defined(__is_libk))
-// Functions for tasks will live here
-#endif
+
+/**
+ * For given signal number `signum`:
+ * - if `act` is not NULL - updates the signal handler for `signum`
+ * - if `oldact` is not NULL - writes previous signal handler in `oldact`
+ *
+ * On success returns 0. On failure returns -1 and sets `errno` value.
+ */
+int sigaction(
+    int signum,
+    const struct sigaction* restrict act,
+    struct sigaction* restrict oldact
+);
+
+#endif //#if !(defined(__is_libk))
 
 #ifdef __cplusplus
 }
