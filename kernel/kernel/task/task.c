@@ -7,6 +7,7 @@
 #include <kernel/task/scheduler.h>
 #include <kernel/memory/vmm.h>
 #include "kernel/debug.h"
+#include "signal.h"
 #include <stdlib.h>
 #include <fcntl.h>
 #include <kernel/memory/kmalloc.h>
@@ -144,8 +145,8 @@ static task_t* task_allocate(const char* name)
     task->fd_count = 0;
     task->waiting_queue = wait_allocate_event();
     task->children_wait_queue = wait_allocate_event();
-    task->sig_pending = 0;
-    task->sig_blocked = 0;
+    sigemptyset(&task->sig_pending);
+    sigemptyset(&task->sig_blocked);
 
     if (tasks_length == tasks_present) {
         // Need to increase the size of tasks array by some constant margin
@@ -615,8 +616,8 @@ task_t* task_fork(void)
     child->working_directory = parent->working_directory;
 
     // Inherit signals
-    child->sig_blocked = parent->sig_blocked;
-    child->sig_pending = parent->sig_pending;
+    memcpy(&child->sig_blocked, &parent->sig_blocked, sizeof(sigset_t));
+    memcpy(&child->sig_pending, &parent->sig_pending, sizeof(sigset_t));
 
     // Duplicate memory-region list
     task_memory_region_t* tmr = parent->memory_regions;
