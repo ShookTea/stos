@@ -6,6 +6,23 @@
 typedef uint32_t sigset_t;
 
 /**
+ * When set, use sa_sigaction instead of sa_handler.
+ */
+#define SA_SIGINFO 0x01
+
+/**
+ * When set, do not automatically add signal to the signal mask while the
+ * handler is executing.
+ */
+#define SA_NODEFER 0x02
+
+/**
+ * Launch given handler only once, then reset the signal handler to the default
+ * state.
+ */
+#define SA_RESETHAND 0x04
+
+/**
  * Data structure passed to `sa_sigaction`. si_signo, si_errno and si_code are
  * defined for all signals; other fields are defined only for specific signals
  * and may contain unexpected values for non-supported signals.
