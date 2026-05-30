@@ -124,8 +124,13 @@ void wait_sleep(size_t millis)
     wait_metadata_t* meta = kmalloc(sizeof(wait_metadata_t));
     meta->done = false;
     meta->wait_obj = wait_obj;
-    pit_register_timeout(millis, pit_callback, meta);
+    int timeout_id = pit_register_timeout(millis, pit_callback, meta);
     wait_on_condition_impl(wait_obj, sleep_condition, meta, TASK_SLEEPING);
+    if (!meta->done) {
+        // Woken before the timer fired (e.g. by a signal) — cancel the
+        // pending PIT callback so it doesn't access freed memory.
+        pit_cancel_timeout(timeout_id);
+    }
     wait_deallocate(wait_obj);
     kfree(meta);
 }
