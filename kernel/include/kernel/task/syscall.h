@@ -21,6 +21,7 @@ int sys_chdir(const char* path);
 int sys_sleep(const struct timespec* duration, struct timespec* rem);
 int sys_sigact(int sig, const struct sigaction* act, struct sigaction* oldact);
 int sys_sigsend(int pid, int sig);
+int sys_sigreturn(void);
 uint32_t sys_open(const char* path, uint32_t flags);
 int sys_close(int fd);
 int sys_write(int fd, const void* buf, size_t count);
