@@ -330,4 +330,6 @@ task_file_descriptor_t* task_add_fd(
  */
 void task_reset_sighandler(task_t* task, int signum);
 
+void task_signal_dispatch_pending(void);
+
 #endif
