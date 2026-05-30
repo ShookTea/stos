@@ -366,7 +366,7 @@ int main(int argc, char** argv)
                     } else {
                         dprintf(
                             STDERR_FILENO,
-                            "ls: option --color has no \"%s\" setting",
+                            "ls: option --color has no \"%s\" setting\n",
                             optarg
                         );
                         return 1;
