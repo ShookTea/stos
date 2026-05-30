@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <time.h>
 #include <sys/syscall.h>
 
@@ -5,7 +6,12 @@
 
 int nanosleep(const struct timespec* duration, struct timespec* rem)
 {
-    return syscall(SYS_SLEEP, (int)duration, (int)rem, 0);
+    int res = syscall(SYS_SLEEP, (int)duration, (int)rem, 0);
+    if (res < 0) {
+        errno = -res;
+        return -1;
+    }
+    return 0;
 }
 
 #endif
