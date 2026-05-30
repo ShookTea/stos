@@ -125,7 +125,7 @@ void wait_sleep(size_t millis)
     meta->done = false;
     meta->wait_obj = wait_obj;
     pit_register_timeout(millis, pit_callback, meta);
-    wait_on_condition(wait_obj, sleep_condition, meta);
+    wait_on_condition_impl(wait_obj, sleep_condition, meta, TASK_SLEEPING);
     wait_deallocate(wait_obj);
     kfree(meta);
 }
