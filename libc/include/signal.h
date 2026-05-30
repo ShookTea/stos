@@ -123,6 +123,14 @@ int sigaction(
     struct sigaction* restrict oldact
 );
 
+/**
+ * Sends signal `sig` to process `pid`. Returns 0 on success; on failure returns
+ * -1 and sets `errno` value to one of following values:
+ * - EINVAL - an invalid signal was specified
+ * - ESRCH - the target process doesn't exist
+ */
+int kill(int pid, int sig);
+
 #endif //#if !(defined(__is_libk))
 
 #ifdef __cplusplus
