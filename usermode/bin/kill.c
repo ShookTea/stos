@@ -17,7 +17,17 @@ static struct option opts[] = {
 };
 
 static void print_usage(void) {
-    // TODO
+    puts("Usage:");
+    puts("  kill [options] <PIDs...>");
+    puts("");
+    puts("META OPTIONS");
+    puts("  --help                  Shows usage info");
+    puts("");
+    puts("OTHER OPTIONS");
+    puts("  -s, --signal=<signal>   Selects signal to be sent to a process. Defaults to TERM.");
+    puts("");
+    puts("ARGUMENTS");
+    puts("  <PIDs...>               One or more PIDs of processes that will receive chosen signal.");
 }
 
 typedef struct {
