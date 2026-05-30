@@ -10,4 +10,5 @@ void task_reset_sighandler(task_t* task, int signum)
 
     task->sig_handlers[signum].sa_flags = 0;
     task->sig_handlers[signum].sa_handler = sighandler_ignore;
+    // TODO: add valid default handlers for some signals that aren't ignored
 }
