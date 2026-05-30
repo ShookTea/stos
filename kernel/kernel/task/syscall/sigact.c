@@ -10,6 +10,10 @@ int sys_sigact(int sig, const struct sigaction* act, struct sigaction* oldact)
     if (sig < 0 || sig > 31) {
         return -EINVAL;
     }
+    if (sig == SIGKILL || sig == SIGSTOP) {
+        // Those signals cannot be overwritten
+        return -EINVAL;
+    }
 
     task_t* current = scheduler_get_current_task();
     if (current == NULL) {
@@ -21,8 +25,6 @@ int sys_sigact(int sig, const struct sigaction* act, struct sigaction* oldact)
     }
 
     if (act != NULL) {
-        // TODO: detect if given signum can be overwritten
-        // TODO: detect `SIG_DFL` and `SIG_IGN`
         memcpy(&current->sig_handlers[sig], act, sizeof(struct sigaction));
     }
 
