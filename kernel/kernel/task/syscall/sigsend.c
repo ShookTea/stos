@@ -1,10 +1,11 @@
 #include <errno.h>
+#include <signal.h>
 #include "kernel/task/scheduler.h"
 #include "kernel/task/syscall.h"
 #include "kernel/task/task.h"
 #include "kernel/task/wait.h"
 
-int sys_sigsend(int pid, int sig __attribute__((unused)))
+int sys_sigsend(int pid, int sig)
 {
     if (sig < 0 || sig > 31) {
         return -EINVAL;
@@ -20,5 +21,11 @@ int sys_sigsend(int pid, int sig __attribute__((unused)))
         return -ESRCH;
     }
 
-    return -ENOTSUP; // TODO: send signal
+    sigaddset(&receiver->sig_pending, sig);
+
+    if (receiver->state == TASK_BLOCKED || receiver->state == TASK_SLEEPING) {
+        scheduler_move_task_to_state(receiver, TASK_WAITING);
+    }
+
+    return 0;
 }
