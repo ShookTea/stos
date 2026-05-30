@@ -14,7 +14,6 @@ int sys_sigact(int sig, const struct sigaction* act, struct sigaction* oldact)
     task_t* current = scheduler_get_current_task();
     if (current == NULL) {
         return -ENOTSUP;
-        return -ENOTSUP;
     }
 
     if (oldact != NULL) {
