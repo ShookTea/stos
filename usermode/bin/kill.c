@@ -96,5 +96,23 @@ int main(int argc, char** argv)
         }
     }
 
-    return 0;
+    if (optind >= argc) {
+        dprintf(STDERR_FILENO, "kill: no PID specified\n");
+        return 1;
+    }
+
+    int exit_code = 0;
+    for (int i = optind; i < argc; i++) {
+        int pid = atoi(argv[i]);
+        if (pid <= 0) {
+            dprintf(STDERR_FILENO, "kill: invalid PID '%s'\n", argv[i]);
+            exit_code = 1;
+            continue;
+        }
+        if (kill(pid, signal_to_send) < 0) {
+            dprintf(STDERR_FILENO, "kill: failed to send signal to %d\n", pid);
+            exit_code = 1;
+        }
+    }
+    return exit_code;
 }
