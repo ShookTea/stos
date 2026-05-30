@@ -15,6 +15,7 @@
 #define SYS_SLEEP       0x09 // int nanosleep(const struct timespec* duration, struct timespec* rem)
 #define SYS_SIGACT      0x0A // int sigaction(int, const struct sigaction*, struct sigaction*)
 #define SYS_SIGSEND     0x0B // int kill(int pid, int sig)
+#define SYS_SIGRETURN   0x0C // no wrapper in libc - called by trampoline only
 
 // File management
 #define SYS_OPEN        0x10 // int open(const char* path, int flags)
