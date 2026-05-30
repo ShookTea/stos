@@ -10,6 +10,7 @@
 #include <sys/syscall.h>
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
+#include "signal.h"
 #include "sys/stat.h"
 
 #define _debug_puts(...) debug_puts_c(DBC_SYSCALL, __VA_ARGS__)
@@ -72,6 +73,13 @@ static uint32_t syscall_int_handler(
                 assert_ptr(rem);
             }
             return sys_sleep(duration, rem);
+        }
+        case SYS_SIGACT: {
+            const struct sigaction* act = (const struct sigaction*)arg2;
+            struct sigaction* oldact = (struct sigaction*)arg3;
+            if (act != NULL) assert_range(act, sizeof(struct sigaction));
+            if (oldact != NULL)  assert_range(oldact, sizeof(struct sigaction));
+            return sys_sigact(arg1, act, oldact);
         }
         case SYS_OPEN: {
             const char* path = (const char*)arg1;
