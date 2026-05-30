@@ -10,12 +10,11 @@
 #include <sys/syscall.h>
 #include "kernel/debug.h"
 #include "kernel/vfs/vfs.h"
-#include "signal.h"
+#include <signal.h>
 #include "sys/stat.h"
 
 #define _debug_puts(...) debug_puts_c(DBC_SYSCALL, __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c(DBC_SYSCALL, __VA_ARGS__)
-
 
 #define ptr_valid(ptr) \
     ((uint32_t)ptr >= VMM_USER_START && (uint32_t)ptr <= VMM_USER_END)

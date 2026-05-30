@@ -617,7 +617,7 @@ task_t* task_fork(void)
 
     // Inherit signals
     memcpy(&child->sig_blocked, &parent->sig_blocked, sizeof(sigset_t));
-    memcpy(&child->sig_pending, &parent->sig_pending, sizeof(sigset_t));
+    sigemptyset(&child->sig_pending);
 
     // Duplicate memory-region list
     task_memory_region_t* tmr = parent->memory_regions;
