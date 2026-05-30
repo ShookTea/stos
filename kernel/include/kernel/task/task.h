@@ -332,4 +332,6 @@ void task_reset_sighandler(task_t* task, int signum);
 
 void task_signal_dispatch_pending(void);
 
+int task_sigreturn(task_t* task);
+
 #endif

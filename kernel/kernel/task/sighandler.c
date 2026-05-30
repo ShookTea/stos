@@ -3,6 +3,7 @@
 #include "kernel/memory/vmm.h"
 #include <sys/syscall.h>
 #include <signal.h>
+#include <errno.h>
 
 typedef enum { SIG_ACTION_TERMINATE, SIG_ACTION_IGNORE } sig_default_action_t;
 
@@ -146,4 +147,39 @@ void task_signal_dispatch_pending(void)
 
     frame[FRAME_EIP] = (uint32_t)sa->sa_handler;
     frame[FRAME_ESP] = new_user_esp;
+}
+
+int task_sigreturn(task_t* task)
+{
+    if (task == NULL) {
+        return -ENOTSUP;
+    }
+
+    uint32_t* frame = (uint32_t*)task->context.syscall_frame_ptr;
+
+    // After handler's `ret`, user_ESP advanced by 4 past pretcode, so
+    // sigframe base = user_ESP - 4.
+    uint32_t user_esp = frame[FRAME_ESP];
+    sigframe_t* sf = (sigframe_t*)(user_esp - 4);
+
+    if ((uint32_t)sf < VMM_USER_START
+            || (uint32_t)sf + (uint32_t)sizeof(sigframe_t) > VMM_USER_END) {
+        task_exit(-SIGSEGV);
+    }
+
+    // Restore all registers. EAX is returned so the assembly movl %eax, 0(%esp)
+    // writes the correct value back into the frame's EAX slot.
+    frame[FRAME_ECX] = sf->ctx.ecx;
+    frame[FRAME_EDX] = sf->ctx.edx;
+    frame[FRAME_EBX] = sf->ctx.ebx;
+    frame[FRAME_EBP] = sf->ctx.ebp;
+    frame[FRAME_ESI] = sf->ctx.esi;
+    frame[FRAME_EDI] = sf->ctx.edi;
+    frame[FRAME_EIP] = sf->ctx.eip;
+    frame[FRAME_EFLAGS] = sf->ctx.eflags;
+    frame[FRAME_ESP] = sf->ctx.esp;
+
+    task->sig_blocked = sf->ctx.old_sig_blocked;
+
+    return (int)sf->ctx.eax;
 }
