@@ -6,6 +6,10 @@
 
 int sys_sigsend(int pid, int sig __attribute__((unused)))
 {
+    if (sig < 0 || sig > 31) {
+        return -EINVAL;
+    }
+
     task_t* sender = scheduler_get_current_task();
     if (sender == NULL) {
         return -ENOTSUP;
