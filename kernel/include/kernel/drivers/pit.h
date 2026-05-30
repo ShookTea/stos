@@ -25,6 +25,11 @@ int pit_register_timeout(
 void pit_cancel_timeout(int id);
 
 /**
+ * Returns the current PIT tick count (1 tick = 1 ms at 1 kHz).
+ */
+uint32_t pit_get_tick(void);
+
+/**
  * Sets address of timer for RTC.
  */
 void pit_set_rtc_timer_addr(int64_t* addr);

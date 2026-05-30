@@ -114,6 +114,11 @@ void pit_init()
     pic_enable(PIC_LINE_PIT);
 }
 
+uint32_t pit_get_tick(void)
+{
+    return tick;
+}
+
 void pit_set_rtc_timer_addr(int64_t* addr)
 {
     rtc_timer_addr = addr;
