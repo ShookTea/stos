@@ -37,27 +37,28 @@ static void dequeue_waiter(wait_obj_t* wait_obj, task_t* waiter)
     }
 }
 
+static void wait_on_condition_impl(
+    wait_obj_t* wait_obj,
+    bool (*condition)(void* arg),
+    void* arg,
+    task_state_t block_state
+) {
+    task_t* task = scheduler_get_current_task();
+    if (task == NULL) return;
+    scheduler_move_task_to_state(task, block_state);
+    enqueue_waiter(wait_obj, task);
+    while (task->state == block_state && !condition(arg)) {
+        scheduler_yield();
+    }
+    dequeue_waiter(wait_obj, task);
+}
+
 void wait_on_condition(
     wait_obj_t* wait_obj,
     bool (*condition)(void* arg),
     void* arg
 ) {
-    task_t* task = scheduler_get_current_task();
-
-    if (task == NULL) {
-        return;
-    }
-    scheduler_move_task_to_state(task, TASK_BLOCKED);
-
-    // Enqueue task in waiting object's queue
-    enqueue_waiter(wait_obj, task);
-
-    while (task->state == TASK_BLOCKED && !condition(arg)) {
-        scheduler_yield();
-    }
-
-    // Dequeueing the task
-    dequeue_waiter(wait_obj, task);
+    wait_on_condition_impl(wait_obj, condition, arg, TASK_BLOCKED);
 }
 
 void wait_wake_up(wait_obj_t* wait_obj)
