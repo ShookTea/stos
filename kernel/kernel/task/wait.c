@@ -118,19 +118,22 @@ static bool sleep_condition(void* _params)
     return params->done;
 }
 
-void wait_sleep(size_t millis)
+size_t wait_sleep(size_t millis)
 {
     wait_obj_t* wait_obj = wait_allocate_queue();
     wait_metadata_t* meta = kmalloc(sizeof(wait_metadata_t));
     meta->done = false;
     meta->wait_obj = wait_obj;
+    uint32_t start_tick = pit_get_tick();
     int timeout_id = pit_register_timeout(millis, pit_callback, meta);
     wait_on_condition_impl(wait_obj, sleep_condition, meta, TASK_SLEEPING);
+    size_t remaining = 0;
     if (!meta->done) {
-        // Woken before the timer fired (e.g. by a signal) — cancel the
-        // pending PIT callback so it doesn't access freed memory.
         pit_cancel_timeout(timeout_id);
+        uint32_t elapsed = pit_get_tick() - start_tick;
+        remaining = (elapsed < millis) ? (millis - elapsed) : 0;
     }
     wait_deallocate(wait_obj);
     kfree(meta);
+    return remaining;
 }

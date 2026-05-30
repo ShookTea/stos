@@ -57,8 +57,10 @@ wait_obj_t* wait_allocate_event();
 void wait_deallocate(wait_obj_t* wait_obj);
 
 /**
- * Move current task to a sleeping state for a given time.
+ * Move current task to a sleeping state for a given time. Returns the number
+ * of milliseconds remaining if interrupted early (e.g. by a signal), or 0 if
+ * the full duration elapsed.
  */
-void wait_sleep(size_t millis);
+size_t wait_sleep(size_t millis);
 
 #endif
