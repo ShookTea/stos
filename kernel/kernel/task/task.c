@@ -147,6 +147,9 @@ static task_t* task_allocate(const char* name)
     task->children_wait_queue = wait_allocate_event();
     sigemptyset(&task->sig_pending);
     sigemptyset(&task->sig_blocked);
+    for (int signum = 0; signum < 32; signum++) {
+        task_reset_sighandler(task, signum);
+    }
 
     if (tasks_length == tasks_present) {
         // Need to increase the size of tasks array by some constant margin
@@ -617,7 +620,11 @@ task_t* task_fork(void)
 
     // Inherit signals
     memcpy(&child->sig_blocked, &parent->sig_blocked, sizeof(sigset_t));
-    sigemptyset(&child->sig_pending);
+    memcpy(
+        &child->sig_handlers,
+        &parent->sig_handlers,
+        sizeof(parent->sig_handlers)
+    );
 
     // Duplicate memory-region list
     task_memory_region_t* tmr = parent->memory_regions;

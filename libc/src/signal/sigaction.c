@@ -9,6 +9,10 @@ int sigaction(
     const struct sigaction* restrict act,
     struct sigaction* restrict oldact
 ) {
+    if (signum < 0 || signum > 31) {
+        errno = EINVAL;
+        return -1;
+    }
     int res = syscall(SYS_SIGACT, signum, (int)act, (int)oldact);
     if (res < 0) {
         errno = -res;

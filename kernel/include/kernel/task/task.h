@@ -166,6 +166,8 @@ typedef struct task {
     sigset_t sig_pending;
     // Bitmask of blocked signals
     sigset_t sig_blocked;
+    // Registered signal handlers
+    struct sigaction sig_handlers[32];
 
     // TODO: for future implementations:
     // - priority
@@ -295,5 +297,10 @@ task_file_descriptor_t* task_add_fd(
     task_t* task,
     vfs_file_t* file
 );
+
+/**
+ * Resets signal handler for given signum to a default state
+ */
+void task_reset_sighandler(task_t* task, int signum);
 
 #endif
