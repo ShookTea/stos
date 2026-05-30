@@ -20,6 +20,7 @@ typedef enum {
     ENOTSUP, // Operation not supported
     ENOTTY, // Inappropriate I/O control operation
     EPIPE, // Attempting to write to closed pipe
+    ESRCH, // No such process
 } errno_t;
 
 extern int errno;

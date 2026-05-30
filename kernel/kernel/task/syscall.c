@@ -80,6 +80,7 @@ static uint32_t syscall_int_handler(
             if (oldact != NULL)  assert_range(oldact, sizeof(struct sigaction));
             return sys_sigact(arg1, act, oldact);
         }
+        case SYS_SIGSEND: return sys_sigsend(arg1, arg2);
         case SYS_OPEN: {
             const char* path = (const char*)arg1;
             assert_range(path, VFS_MAX_PATH_LENGTH);
