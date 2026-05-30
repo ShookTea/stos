@@ -59,7 +59,7 @@ syscall_stub:
     movl %eax, 0(%esp)   # Store return value in the saved EAX slot
 
     # Deliver any pending signals before returning to user mode
-    call signal_dispatch_pending
+    call task_signal_dispatch_pending
 
     # Restore registers (return value will be in EAX)
     popl %eax             # Restore EAX (now contains return value)
@@ -73,7 +73,7 @@ syscall_stub:
 
 .extern exception_handler
 .extern task_save_syscall_user_context
-.extern signal_dispatch_pending
+.extern task_signal_dispatch_pending
 isr_no_err_stub 0  # Divide error
 isr_no_err_stub 1  # Debug exception
 isr_no_err_stub 2  # NMI interrupt
