@@ -174,6 +174,33 @@ typedef struct task {
 } task_t;
 
 /**
+ * Saved register state pushed onto the user stack before calling a signal
+ * handler. Restored by the sigreturn syscall.
+ */
+typedef struct {
+    uint32_t eax, ecx, edx, ebx, ebp, esi, edi;
+    uint32_t eip, cs, eflags, esp, ss;
+    sigset_t old_sig_blocked;
+} sigcontext_t;
+
+/**
+ * Stack frame built by the kernel on the user stack before redirecting
+ * execution to a signal handler.
+ *
+ * Layout (low -> high address):
+ *   pretcode — return address pushed for the handler; points to trampoline
+ *   sig — signal number (first argument of the handler)
+ *   ctx — saved register state, restored by sigreturn
+ *   trampoline — inline "mov eax, SYS_SIGRETURN; int 0x80" code
+ */
+typedef struct {
+    uint32_t pretcode;
+    int sig;
+    sigcontext_t ctx;
+    uint8_t trampoline[8];
+} sigframe_t;
+
+/**
  * Create a new task with given name, entrypoint, and permission ring
  */
 task_t* task_create(
