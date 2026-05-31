@@ -440,5 +440,24 @@ task_t* scheduler_get_current_task()
 
 void scheduler_yield()
 {
+    // Disable interrupts: scheduler_tick() also calls scheduler_reschedule()
+    // from IRQ context (IF=0), and waiting_queue is momentarily circular
+    // mid-traversal - a race would deadlock.
+    uint32_t flags;
+    __asm__ volatile(
+        "pushfl\n"
+        "popl %0\n"
+        "cli\n"
+        : "=r"(flags)
+        :
+        : "memory"
+    );
     scheduler_reschedule();
+    __asm__ volatile(
+        "pushl %0\n"
+        "popfl\n"
+        :
+        : "r"(flags)
+        : "memory", "cc"
+    );
 }

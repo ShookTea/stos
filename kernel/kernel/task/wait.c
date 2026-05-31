@@ -51,6 +51,12 @@ static void wait_on_condition_impl(
         scheduler_yield();
     }
     dequeue_waiter(wait_obj, task);
+    // If condition was true before we ever yielded, the scheduler never had a
+    // chance to move us back to RUNNING - we're still in blocked_queue with
+    // block_state, which makes the next reschedule skip us permanently.
+    if (task->state == block_state) {
+        scheduler_move_task_to_state(task, TASK_RUNNING);
+    }
 }
 
 void wait_on_condition(
