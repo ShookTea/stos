@@ -48,7 +48,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 | _time operations (`0x3n`)_ |   |   |   |   |
 | `UNIXTIME` | `0x30` | [`<time.h>`](libc/include/time.h) | `time_t time(time_t* tloc)` | Returns current Unix timestamp |
-| _inter-process commmunication_ (`0x4n`) |   |   |   |   |
+| _inter-process commmunication (`0x4n`)_ |   |   |   |   |
 | `SIGACT` | `0x40` | [`<signal.h>`](libc/include/signal.h) | `int sigaction(int signum, const struct sigaction* restrict act, struct sigaction* restrict oldact)` | Updates signal handlers |
 | `SIGSEND` | `0x41` | [`<signal.h>`](libc/include/signal.h) | `int kill(int pid, int sig)` | Sends signal to a process |
 | `SIGRETURN` | `0x42` | _no wrapper_ | _no wrapper_ | For internal purposes |
