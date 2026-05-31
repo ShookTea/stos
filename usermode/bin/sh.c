@@ -39,6 +39,9 @@ static int comm_cursor_loc = 0;
 static int comm_buffer_len = 0;
 static int last_comm_status = 0;
 
+static struct termios default_termios;
+static struct termios sh_termios;
+
 static command_t** parse_command(int* command_count)
 {
     if (comm_buffer_len == 0) {
@@ -331,11 +334,10 @@ static void print_prompt(void)
 int main(void)
 {
     // Setup input to disable canon mode
-    struct termios termios;
-    tcgetattr(STDIN_FD, &termios);
-    uint32_t original_lflag = termios.c_lflag; // Keep for later recovery
-    termios.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FD, TCSANOW, &termios);
+    tcgetattr(STDIN_FD, &sh_termios);
+    memcpy(&default_termios, &sh_termios, sizeof(struct termios));
+    sh_termios.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FD, TCSANOW, &sh_termios);
 
     bool continue_exec = true;
     // Main command loop
@@ -416,11 +418,12 @@ int main(void)
             }
         }
 
+        tcsetattr(STDIN_FD, TCSANOW, &default_termios);
         continue_exec = handle_command();
+        tcsetattr(STDIN_FD, TCSANOW, &sh_termios);
     }
 
-    // Bring back the original lflag value
-    termios.c_lflag = original_lflag;
-    tcsetattr(STDIN_FD, TCSANOW, &termios);
+    // Recover original termios settings
+    tcsetattr(STDIN_FD, TCSANOW, &default_termios);
     return last_comm_status;
 }

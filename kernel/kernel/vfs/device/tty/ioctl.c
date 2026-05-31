@@ -1,6 +1,7 @@
 #include "kernel/vfs/vfs.h"
 #include <stdint.h>
 #include "./tty.h"
+#include <asm/termbits.h>
 
 // This struct should match one in libc/asm/termbits.h
 struct termios {
@@ -11,11 +12,6 @@ struct termios {
     unsigned char c_line;
     unsigned char c_cc[10];
 };
-
-// TC operation for reading termios structure from TTY
-#define TCGETS 1
-// TC operation for updating termios structure in TTY
-#define TCSETS 2
 
 static int tty_ioctl_tcgets(vfs_file_t* file, struct termios* termios)
 {
@@ -48,11 +44,15 @@ int tty_ioctl(vfs_file_t* file, uint32_t op, void* arg)
         return -1;
     }
 
-    struct termios* termios = arg;
-
     switch (op) {
-        case TCGETS: return tty_ioctl_tcgets(file, termios);
-        case TCSETS: return tty_ioctl_tcsets(file, termios);
+        case TCGETS: {
+            struct termios* termios = arg;
+            return tty_ioctl_tcgets(file, termios);
+        }
+        case TCSETS: {
+            struct termios* termios = arg;
+            return tty_ioctl_tcsets(file, termios);
+        }
         default: return -1;
     }
 }
