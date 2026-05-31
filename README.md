@@ -26,12 +26,14 @@ The libc library contains wrappers for all implemented syscalls.
 | `YIELD` | `0x01` | [`<sched.h>`](libc/include/sched.h) | `int sched_yield()` | Yield the processor, moving current task to the end of the queue |
 | `GETPID` | `0x02` | [`<unistd.h>`](libc/include/unistd.h) | `pid_t getpid()` | Returns the process ID of the current process |
 | `GETPPID` | `0x03` | [`<unistd.h>`](libc/include/unistd.h) | `pid_t getppid()` | Returns the process ID of the parent of the current process |
-| `FORK` | `0x04` | [`<unistd.h>`](libc/include/unistd.h) | `int fork()` | Creates a fork of a current process |
-| `WAIT` | `0x05` | [`<sys/wait.h>`](libc/include/sys/wait.h) | `int waitpid(int pid, int* status_code, int options)` | Waits for a selected child process to exit |
-| `EXEC` | `0x06` | [`<unistd.h>`](libc/include/unistd.h) | `int execve(const char* path, const char* argv[], const char* envp[])` | Replace the current process with ELF executable |
-| `GETCWD` | `0x07` | [`<unistd.h>`](libc/include/unistd.h) | `char* getcwd(char buf[], size_t size)` | Returns current working directory |
-| `CHDIR` | `0x08` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
-| `SLEEP` | `0x09` | [`<time.h>`](libc/include/time.h) | `int nanosleep(const struct timespec* duration, struct timespec* rem)` | Suspends current thread for some specified time |
+| `GETPGID` | `0x04` | [`<unistd.h>`](libc/include/unistd.h) | `pid_t getpgid(pid_t pid)` | Returns the process group ID of the selected process |
+| `SETPGID` | `0x05` | [`<unistd.h>`](libc/include/unistd.h) | `int setpgid(pid_t pid, pid_t pgid)` | Updates the process group ID of the selected process |
+| `FORK` | `0x06` | [`<unistd.h>`](libc/include/unistd.h) | `int fork()` | Creates a fork of a current process |
+| `WAIT` | `0x07` | [`<sys/wait.h>`](libc/include/sys/wait.h) | `int waitpid(int pid, int* status_code, int options)` | Waits for a selected child process to exit |
+| `EXEC` | `0x08` | [`<unistd.h>`](libc/include/unistd.h) | `int execve(const char* path, const char* argv[], const char* envp[])` | Replace the current process with ELF executable |
+| `GETCWD` | `0x09` | [`<unistd.h>`](libc/include/unistd.h) | `char* getcwd(char buf[], size_t size)` | Returns current working directory |
+| `CHDIR` | `0x0A` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
+| `SLEEP` | `0x0B` | [`<time.h>`](libc/include/time.h) | `int nanosleep(const struct timespec* duration, struct timespec* rem)` | Suspends current thread for some specified time |
 | _file management (`0x1n`)_ |   |   |   |   |
 | `OPEN` | `0x10` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
 | `CLOSE`| `0x11` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |
