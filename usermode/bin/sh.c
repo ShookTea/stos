@@ -283,9 +283,13 @@ static bool handle_command(void)
     }
 
     if (parent) {
+        if (pipeline_pgid > 0) {
+            tcsetpgrp(STDIN_FD, pipeline_pgid);
+        }
         for (int i = 0; i < pids_count; i++) {
             waitpid(pids[i], &last_comm_status, 0);
         }
+        tcsetpgrp(STDIN_FD, getpgid(0));
     }
 
     free(pids);
