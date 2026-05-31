@@ -415,7 +415,7 @@ task_t** task_get_tasks_by_pgid(pid_t pgid)
     spinlock_acquire(&task_list_lock);
     for (size_t i = 0; i < tasks_length; i++) {
         if (tasks[i] != NULL && tasks[i]->pgid == pgid) {
-            arr = krealloc(arr, sizeof(task_t*) * (index + 1));
+            arr = krealloc(arr, sizeof(task_t*) * (index + 2));
             arr[index] = tasks[i];
             arr[index+1] = NULL;
             index++;

@@ -51,6 +51,10 @@ int sys_sigsend(int pid, int sig)
 
     if (pgid != -1) {
         task_t** receivers = task_get_tasks_by_pgid(pgid);
+        if (*receivers == NULL) {
+            kfree(receivers);
+            return -ESRCH;
+        }
         task_t** ptr = receivers;
         while (*ptr != NULL) {
             sys_sigsend_impl(sender, *ptr, sig);
