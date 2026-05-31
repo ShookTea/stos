@@ -1,4 +1,3 @@
-#include "fcntl.h"
 #include <unistd.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -37,35 +36,19 @@ static bool opt_show_ends = false;
 static bool opt_number = false;
 static int line_number = 0;
 
-static void print_lines(int fd)
+static void print_lines(FILE* file)
 {
     char line[LINE_BUF];
-    int len = 0;
-    char c;
-    while (read(fd, &c, 1) == 1) {
-        if (len < LINE_BUF - 1) {
-            line[len++] = c;
-        }
-        if (c == '\n' || len == LINE_BUF - 1) {
-            line[len] = '\0';
-            line_number++;
-            if (opt_number) {
-                printf("%5u  ", line_number);
-            }
-            if (len > 0 && line[len-1] == '\n') {
-                line[len-1] = '\0';
-            }
-            printf("%s%s\n", line, opt_show_ends ? "$" : "");
-            len = 0;
-        }
-    }
-    if (len > 0) {
-        line[len] = '\0';
+    while (fgets(line, LINE_BUF, file)) {
+        int len = strlen(line);
+        line_number++;
         if (opt_number) {
             printf("%5u  ", line_number);
         }
+        if (len > 0 && line[len-1] == '\n') {
+            line[len-1] = '\0';
+        }
         printf("%s%s\n", line, opt_show_ends ? "$" : "");
-        line_number++;
     }
 }
 
@@ -96,19 +79,19 @@ int main(int argc, char** argv)
             char* path = argv[optind + i];
             if (!strcmp(path, "-")) {
                 // Placeholder for standard input
-                print_lines(STDIN_FILENO);
+                print_lines(stdin);
             } else {
-                int fd = open(path, O_RDONLY);
-                if (fd < 0) {
+                FILE* file = fopen(path, "r");
+                if (file == NULL) {
                     dprintf(STDERR_FILENO, "Path '%s' is invalid.\n", path);
                     continue;
                 }
-                print_lines(fd);
-                close(fd);
+                print_lines(file);
+                fclose(file);
             }
         }
     } else {
-        print_lines(STDIN_FILENO);
+        print_lines(stdin);
     }
 
     return 0;

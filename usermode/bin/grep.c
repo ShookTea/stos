@@ -1,4 +1,3 @@
-#include <fcntl.h>
 #include <getopt.h>
 #include <string.h>
 #include <unistd.h>
@@ -150,54 +149,26 @@ static char* find_match(const char* line, const char* pattern, int* match_len)
 
 static void run_grep(
     const char* pattern,
-    int fd,
+    FILE* file,
     const char* filename
 ) {
     char line[LINE_BUF];
-    int len = 0;
     int matched_count = 0;
     int match_length = 0;
     int line_number = 0;
-    char c;
     bool print_matched = !print_count_only
         && !print_files_with_match_only
         && !print_files_without_match_only;
 
-    while (read(fd, &c, 1) == 1) {
-        if (len < LINE_BUF - 1) {
-            line[len++] = c;
-        }
-        if (c == '\n' || len == LINE_BUF - 1) {
-            line[len] = '\0';
-            line_number++;
-            char* found_match = find_match(line, pattern, &match_length);
-            bool found = found_match != NULL;
-            if (found != invert_match) {
-                matched_count++;
-                if (print_files_without_match_only
-                    || print_files_with_match_only) {
-                        break;
-                    }
-                if (print_matched) {
-                    print_match(
-                        line,
-                        found_match,
-                        filename,
-                        line_number,
-                        match_length
-                    );
-                }
-            }
-            len = 0;
-        }
-    }
-
-    if (len > 0) {
-        line[len] = '\0';
+    while (fgets(line, LINE_BUF, file)) {
+        line_number++;
         char* found_match = find_match(line, pattern, &match_length);
         bool found = found_match != NULL;
         if (found != invert_match) {
             matched_count++;
+            if (print_files_without_match_only || print_files_with_match_only) {
+                break;
+            }
             if (print_matched) {
                 print_match(
                     line,
@@ -290,21 +261,21 @@ int main(int argc, char** argv)
             char* path = argv[optind + i + 1];
             if (!strcmp(path, "-")) {
                 // placeholder for standard input
-                run_grep(pattern, 0, stdin_label);
+                run_grep(pattern, stdin, stdin_label);
             } else {
-                int fd = open(path, O_RDONLY);
-                if (fd < 0) {
+                FILE* file = fopen(path, "r");
+                if (file == NULL) {
                     dprintf(STDERR_FILENO, "Path '%s' is invalid.\n", path);
                     continue;
                 }
-                run_grep(pattern, fd, path);
-                close(fd);
+                run_grep(pattern, file, path);
+                fclose(file);
             }
         }
     } else {
         // Only standard input used
         prefix_filenames = with_filename_opt;
-        run_grep(pattern, 0, stdin_label);
+        run_grep(pattern, stdin, stdin_label);
     }
 
     return 0;
