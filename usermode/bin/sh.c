@@ -218,6 +218,7 @@ static bool handle_command(void)
     int* pids = NULL;
     int pids_count = 0;
     bool parent = true;
+    pid_t pipeline_pgid = 0;
     for (int cmd_index = 0; cmd_index < pipeline_len; cmd_index++) {
         command_t* cmd = commands[cmd_index];
         if (!strcmp(cmd->comm_name, "cd")) {
@@ -239,11 +240,16 @@ static bool handle_command(void)
             puts("ERROR!\n");
         }
         else if (new_pid > 0) {
+            if (pipeline_pgid == 0) pipeline_pgid = new_pid;
+            setpgid(new_pid, pipeline_pgid);
             pids[pids_count] = new_pid;
             pids_count++;
         }
         else {
             parent = false;
+            // pipeline_pgid is 0 for the first child — setpgid(0,0) makes
+            // the child its own group leader
+            setpgid(0, pipeline_pgid);
             if (cmd->comm_name == NULL) {
                 exit(0);
             }
