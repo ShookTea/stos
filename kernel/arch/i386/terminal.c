@@ -7,6 +7,7 @@
 #include "kernel/drivers/vga/fbcon.h"
 #include "kernel/drivers/vga/font.h"
 #include "kernel/drivers/vga/rgb.h"
+#include "kernel/vfs/device.h"
 #include "kernel/multiboot2.h"
 #include "kernel/drivers/vga/text_mode.h"
 #include <ctype.h>
@@ -534,6 +535,17 @@ static void terminal_handle_csi_sequence()
                 } else {
                     bg_color = color;
                 }
+            }
+        }
+    }
+    else if (mode == 'n') {
+        if (args[0] == 6) {
+            char buf[64] = {0};
+            sprintf(buf, "\033[%u;%uR", cursor_row + 1, cursor_column + 1);
+            char* ptr = buf;
+            while (*ptr != '\0') {
+                tty_push_char_to_buffer(*ptr);
+                ptr++;
             }
         }
     }

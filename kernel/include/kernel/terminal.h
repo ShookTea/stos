@@ -83,6 +83,8 @@ void terminal_init();
  * - u - restore saved cursor position
  * - h - if arg[0] = 25, shows the cursor
  * - l - if arg[0] = 25, hides the cursor
+ * - n - if arg[0] = 6, reports current cursor location to standard input, in
+ *       format `\033[n;mR`, where `n` is the row and `m` is the column
  * - m - Select Graphic Rendition mode - all arguments are parsed in order
  *       and applied, according to the following rules:
  *       - 0       - resets graphic rendition rules to default
