@@ -209,6 +209,7 @@ vfs_node_t* device_tty_mount()
     tty_state->oflag = TTY_DEFAULT_OFLAG;
     tty_state->cflag = TTY_DEFAULT_CFLAG;
     tty_state->lflag = TTY_DEFAULT_LFLAG;
+    tty_state->fg_pgid = 0;
 
     node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(node, "tty", VFS_TYPE_CHARACTER_DEVICE);

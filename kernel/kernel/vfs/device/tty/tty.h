@@ -3,6 +3,7 @@
 
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
+#include <sys/types.h>
 #include <libds/ringbuf.h>
 #include <stdint.h>
 
@@ -35,6 +36,8 @@ typedef struct {
     // Currently read line
     char current_line[TTY_BUFFER_SIZE];
     size_t current_line_pos;
+    // Process group ID of the foreground process group
+    pid_t fg_pgid;
 } tty_state_t;
 
 /**
