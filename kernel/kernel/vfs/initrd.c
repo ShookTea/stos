@@ -55,6 +55,11 @@ static vfs_node_t* initrd_finddir(
     return NULL;
 }
 
+static int initrd_stat(const vfs_node_t* node, struct stat* stat) {
+    stat->st_size = node->length;
+    return 0;
+}
+
 /**
  * Read content of given file, bytes from [offset] to [offset+size], and
  * store them in [ptr]. Return the number of read bytes.
@@ -94,7 +99,7 @@ static vfs_node_t* create_new_file(
 ) {
     vfs_node_t* new_node = kmalloc(sizeof(vfs_node_t));
     vfs_populate_node(new_node, filename, type);
-
+    new_node->stat_node = initrd_stat;
     if (type & VFS_TYPE_DIRECTORY) {
         initrd_directory_data_t* data =
             kmalloc(sizeof(initrd_directory_data_t));
