@@ -14,7 +14,7 @@ int main(void)
     }
     int status = 0;
     struct dirent* res = NULL;
-    printf("%10s %10s %-8s %-65s\n", "PID", "PPID", "STATUS", "NAME");
+    printf("%10s %10s %10s %-8s %-65s\n", "PID", "PPID", "PGID", "STATUS", "NAME");
     while ((res = readdir(proc)) != NULL) {
         if (isdigit(res->d_name[0])) {
             char stat_path[64] = { 0 };
@@ -33,7 +33,8 @@ int main(void)
             char* procname = strtok(NULL, " ") + 1;
             procname[strlen(procname) - 1] = '\0';
             char status_char = strtok(NULL, " ")[0];
-            int ppid = atoi(strtok(buffer, " "));
+            int ppid = atoi(strtok(NULL, " "));
+            int pgid = atoi(strtok(NULL, " "));
 
             char* status_label;
             switch (status_char) {
@@ -47,9 +48,10 @@ int main(void)
             }
 
             printf(
-                "%10u %10u %-8s %-65s\n",
+                "%10u %10u %10u %-8s %-65s\n",
                 pid,
                 ppid,
+                pgid,
                 status_label,
                 procname
             );

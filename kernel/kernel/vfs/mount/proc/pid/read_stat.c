@@ -27,6 +27,8 @@ static char* build_buffer(task_t* task, size_t* total_written)
         + 1 // State character
         + 1 // Space
         + 10 // Realistically that should be enough for parent PID
+        + 1 // Space
+        + 10 // Realistically that should be enough for process group ID
         + 1 // NULL at the end
     ;
 
@@ -37,9 +39,10 @@ static char* build_buffer(task_t* task, size_t* total_written)
     pos += snprintf(buff + pos, TASK_PROCESS_NAME_MAX_LEN + 1, task->name);
     pos += sprintf(
         buff + pos,
-        ") %c %u",
+        ") %c %u %u",
         get_state_character(task),
-        task->parent == NULL ? 0 : task->parent->pid
+        task->parent == NULL ? 0 : task->parent->pid,
+        task->pgid
     );
 
     *total_written = pos;
