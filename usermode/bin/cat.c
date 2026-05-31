@@ -49,13 +49,22 @@ static void print_lines(int fd)
         if (c == '\n' || len == LINE_BUF - 1) {
             line[len] = '\0';
             line_number++;
-            printf(line);
+            if (opt_number) {
+                printf("%5u  ", line_number);
+            }
+            if (len > 0 && line[len-1] == '\n') {
+                line[len-1] = '\0';
+            }
+            printf("%s%s\n", line, opt_show_ends ? "$" : "");
             len = 0;
         }
     }
     if (len > 0) {
         line[len] = '\0';
-        printf("%s\n", line);
+        if (opt_number) {
+            printf("%5u  ", line_number);
+        }
+        printf("%s%s\n", line, opt_show_ends ? "$" : "");
         line_number++;
     }
 }
