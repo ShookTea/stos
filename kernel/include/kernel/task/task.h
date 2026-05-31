@@ -240,6 +240,12 @@ task_t* task_get_task_by_index(size_t index);
 task_t* task_get_task_by_pid(pid_t pid);
 
 /**
+ * Returns NULL-terminated list of all tasks within given process group ID.
+ * Caller should deallocate this array when it's no longer needed.
+ */
+task_t** task_get_tasks_by_pgid(pid_t pgid);
+
+/**
  * Registers new memory region for the task.
  */
 void task_add_mem_region(

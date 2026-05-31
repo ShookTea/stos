@@ -407,6 +407,24 @@ task_t* task_get_task_by_pid(pid_t pid)
     return NULL;
 }
 
+task_t** task_get_tasks_by_pgid(pid_t pgid)
+{
+    task_t** arr = kmalloc(sizeof(task_t*) * 1);
+    arr[0] = NULL;
+    int index = 0;
+    spinlock_acquire(&task_list_lock);
+    for (size_t i = 0; i < tasks_length; i++) {
+        if (tasks[i] != NULL && tasks[i]->pgid == pgid) {
+            arr = krealloc(arr, sizeof(task_t*) * (index + 1));
+            arr[index] = tasks[i];
+            arr[index+1] = NULL;
+            index++;
+        }
+    }
+    spinlock_release(&task_list_lock);
+    return arr;
+}
+
 void task_add_mem_region(
     task_t* task,
     uint32_t start,

@@ -162,10 +162,18 @@ int sigaction(
 );
 
 /**
- * Sends signal `sig` to process `pid`. Returns 0 on success; on failure returns
+ * Sends signal `sig` to process `pid`.
+ *
+ * If `pid` is equal to 0, then signal is sent to every process in the same
+ * process group as the current process.
+ *
+ * If `pid` is less than -1, then signal is sent to every process in the process
+ * group with ID equal to `-pid`.
+ *
+ * Returns 0 on success; on failure returns
  * -1 and sets `errno` value to one of following values:
  * - EINVAL - an invalid signal was specified
- * - ESRCH - the target process doesn't exist
+ * - ESRCH - the target process (or process group) doesn't exist
  */
 int kill(pid_t pid, int sig);
 
