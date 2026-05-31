@@ -73,15 +73,6 @@ static uint32_t syscall_int_handler(
             }
             return sys_sleep(duration, rem);
         }
-        case SYS_SIGACT: {
-            const struct sigaction* act = (const struct sigaction*)arg2;
-            struct sigaction* oldact = (struct sigaction*)arg3;
-            if (act != NULL) assert_range(act, sizeof(struct sigaction));
-            if (oldact != NULL)  assert_range(oldact, sizeof(struct sigaction));
-            return sys_sigact(arg1, act, oldact);
-        }
-        case SYS_SIGSEND: return sys_sigsend(arg1, arg2);
-        case SYS_SIGRETURN: return sys_sigreturn();
         case SYS_OPEN: {
             const char* path = (const char*)arg1;
             assert_range(path, VFS_MAX_PATH_LENGTH);
@@ -132,17 +123,26 @@ static uint32_t syscall_int_handler(
             assert_range(dir, sizeof(struct dirent) * count);
             return sys_getdents(arg1, dir, count);
         }
-        case SYS_PIPE: {
-            int* pipefd = (int*)arg1;
-            assert_range(pipefd, sizeof(int) * 2);
-            return sys_pipe(pipefd, arg2);
-        }
         case SYS_DUP: return sys_dup(arg1, arg2, arg3);
         case SYS_BRK: return sys_brk(arg1);
         case SYS_UNIXTIME: {
             time_t* res_ptr = (time_t*)arg1;
             assert_ptr(res_ptr);
             return sys_time(res_ptr);
+        }
+        case SYS_SIGACT: {
+            const struct sigaction* act = (const struct sigaction*)arg2;
+            struct sigaction* oldact = (struct sigaction*)arg3;
+            if (act != NULL) assert_range(act, sizeof(struct sigaction));
+            if (oldact != NULL)  assert_range(oldact, sizeof(struct sigaction));
+            return sys_sigact(arg1, act, oldact);
+        }
+        case SYS_SIGSEND: return sys_sigsend(arg1, arg2);
+        case SYS_SIGRETURN: return sys_sigreturn();
+        case SYS_PIPE: {
+            int* pipefd = (int*)arg1;
+            assert_range(pipefd, sizeof(int) * 2);
+            return sys_pipe(pipefd, arg2);
         }
         default:
             _debug_printf("Unknown syscall: %d\n", syscall_num);

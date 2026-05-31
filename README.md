@@ -32,9 +32,6 @@ The libc library contains wrappers for all implemented syscalls.
 | `GETCWD` | `0x07` | [`<unistd.h>`](libc/include/unistd.h) | `char* getcwd(char buf[], size_t size)` | Returns current working directory |
 | `CHDIR` | `0x08` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
 | `SLEEP` | `0x09` | [`<time.h>`](libc/include/time.h) | `int nanosleep(const struct timespec* duration, struct timespec* rem)` | Suspends current thread for some specified time |
-| `SIGACT` | `0x0A` | [`<signal.h>`](libc/include/signal.h) | `int sigaction(int signum, const struct sigaction* restrict act, struct sigaction* restrict oldact)` | Updates signal handlers |
-| `SIGSEND` | `0x0B` | [`<signal.h>`](libc/include/signal.h) | `int kill(int pid, int sig)` | Sends signal to a process |
-| `SIGRETURN` | `0x0C` | _no wrapper_ | _no wrapper_ | For internal purposes |
 | _file management (`0x1n`)_ |   |   |   |   |
 | `OPEN` | `0x10` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
 | `CLOSE`| `0x11` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |
@@ -46,12 +43,16 @@ The libc library contains wrappers for all implemented syscalls.
 | `FSTAT` | `0x17` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int fstat(int fd, struct stat* statbuf)` | Loads statistics about given file descriptor _fd_ |
 | `READLINK` | `0x18` | [`<unistd.h>`](libc/include/unistd.h) | `size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)` | Reads symlink path from `path` into `buf` |
 | `GETDENTS` | `0x19` | _no wrapper_ | _no wrapper_ | Loads directory content |
-| `PIPE` | `0x1A` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
-| `DUP` | `0x1B` | [`<unistd.h>`](libc/include/unistd.h) | `int dup3(int oldfd, int newfd, int flags)` | Duplicates/changes file descriptor |
+| `DUP` | `0x1A` | [`<unistd.h>`](libc/include/unistd.h) | `int dup3(int oldfd, int newfd, int flags)` | Duplicates/changes file descriptor |
 | _memory operations (`0x2n`)_ |   |   |   |   |
 | `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
 | _time operations (`0x3n`)_ |   |   |   |   |
 | `UNIXTIME` | `0x30` | [`<time.h>`](libc/include/time.h) | `time_t time(time_t* tloc)` | Returns current Unix timestamp |
+| _inter-process commmunication_ (`0x4n`) |   |   |   |   |
+| `SIGACT` | `0x40` | [`<signal.h>`](libc/include/signal.h) | `int sigaction(int signum, const struct sigaction* restrict act, struct sigaction* restrict oldact)` | Updates signal handlers |
+| `SIGSEND` | `0x41` | [`<signal.h>`](libc/include/signal.h) | `int kill(int pid, int sig)` | Sends signal to a process |
+| `SIGRETURN` | `0x42` | _no wrapper_ | _no wrapper_ | For internal purposes |
+| `PIPE` | `0x43` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
 
 Syscalls without wrappers:
 

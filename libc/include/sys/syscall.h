@@ -13,9 +13,6 @@
 #define SYS_GETCWD      0x07 // char* getcwd(char buf[], size_t size)
 #define SYS_CHDIR       0x08 // int chdir(const char* path)
 #define SYS_SLEEP       0x09 // int nanosleep(const struct timespec* duration, struct timespec* rem)
-#define SYS_SIGACT      0x0A // int sigaction(int, const struct sigaction*, struct sigaction*)
-#define SYS_SIGSEND     0x0B // int kill(int pid, int sig)
-#define SYS_SIGRETURN   0x0C // no wrapper in libc - called by trampoline only
 
 // File management
 #define SYS_OPEN        0x10 // int open(const char* path, int flags)
@@ -28,14 +25,19 @@
 #define SYS_FSTAT       0x17 // int fstat(int fd, struct stat* statbuf)
 #define SYS_READLINK    0x18 // size_t readlink(const char* path, char* buf, size_t bufsiz);
 #define SYS_GETDENTS    0x19 // no wrapper in libc
-#define SYS_PIPE        0x1A // int pipe2(int pipefd[2], int flags);
-#define SYS_DUP         0x1B // int dup3(int oldfd, int newfd, int flags);
+#define SYS_DUP         0x1A // int dup3(int oldfd, int newfd, int flags);
 
 // Memory operations
 #define SYS_BRK         0x20 // uint32_t brk(void* addr)
 
 // Time operations
 #define SYS_UNIXTIME    0x30 // time_t time(time_t* tloc)
+
+// Inter-process commmunication
+#define SYS_SIGACT      0x40 // int sigaction(int, const struct sigaction*, struct sigaction*)
+#define SYS_SIGSEND     0x41 // int kill(int pid, int sig)
+#define SYS_SIGRETURN   0x42 // no wrapper in libc - called by trampoline only
+#define SYS_PIPE        0x43 // int pipe2(int pipefd[2], int flags);
 
 #if !(defined(__is_libk))
 

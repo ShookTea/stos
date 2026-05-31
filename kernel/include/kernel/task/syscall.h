@@ -19,9 +19,6 @@ int sys_exec(const char* path, const char** argv, const char** envp);
 char* sys_getcwd(char* buf, size_t size);
 int sys_chdir(const char* path);
 int sys_sleep(const struct timespec* duration, struct timespec* rem);
-int sys_sigact(int sig, const struct sigaction* act, struct sigaction* oldact);
-int sys_sigsend(int pid, int sig);
-int sys_sigreturn(void);
 uint32_t sys_open(const char* path, uint32_t flags);
 int sys_close(int fd);
 int sys_write(int fd, const void* buf, size_t count);
@@ -32,10 +29,13 @@ int sys_stat(const char* path, struct stat* stat, bool link_ignore);
 int sys_fstat(int fd, struct stat* stat);
 int sys_readlink(const char* path, char* buf, int bufsiz);
 int sys_getdents(int fd, struct dirent* dir, int count);
-int sys_pipe(int pipefd[2], int flags);
 int sys_dup(int oldfd, int newfd, int flags);
 int sys_brk(uint32_t addr);
 int sys_time(time_t* result_ptr);
+int sys_sigact(int sig, const struct sigaction* act, struct sigaction* oldact);
+int sys_sigsend(int pid, int sig);
+int sys_sigreturn(void);
+int sys_pipe(int pipefd[2], int flags);
 
 /**
  * Initializes syscall handling system.
