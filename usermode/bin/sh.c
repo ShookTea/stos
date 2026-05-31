@@ -1,3 +1,4 @@
+#include "signal.h"
 #include <sys/wait.h>
 #include <errno.h>
 #include <stdint.h>
@@ -348,6 +349,11 @@ int main(void)
     memcpy(&default_termios, &sh_termios, sizeof(struct termios));
     sh_termios.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FD, TCSANOW, &sh_termios);
+
+    // Ignore SIGINTs
+    struct sigaction int_handler;
+    int_handler.sa_handler = SIG_IGN;
+    sigaction(SIGINT, &int_handler, NULL);
 
     bool continue_exec = true;
     // Main command loop
