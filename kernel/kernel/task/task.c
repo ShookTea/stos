@@ -182,6 +182,8 @@ static task_t* task_allocate(const char* name)
         }
     }
 
+    task->pgid = task->pid;
+
     spinlock_release(&task_list_lock);
     return task;
 }
@@ -618,13 +620,14 @@ task_t* task_fork(void)
     child->root_node = parent->root_node;
     child->working_directory = parent->working_directory;
 
-    // Inherit signals
+    // Inherit signals and PGID
     memcpy(&child->sig_blocked, &parent->sig_blocked, sizeof(sigset_t));
     memcpy(
         &child->sig_handlers,
         &parent->sig_handlers,
         sizeof(parent->sig_handlers)
     );
+    child->pgid = parent->pgid;
 
     // Duplicate memory-region list
     task_memory_region_t* tmr = parent->memory_regions;

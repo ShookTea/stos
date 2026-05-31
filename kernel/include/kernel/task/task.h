@@ -88,6 +88,8 @@ typedef struct task {
     // Process ID and state
     /** Process ID (unique) */
     uint32_t pid;
+    /** Process group ID */
+    uint32_t pgid;
     /** Process name */
     char name[TASK_PROCESS_NAME_MAX_LEN];
     /** Current state of the task */
