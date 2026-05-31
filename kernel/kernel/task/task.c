@@ -394,7 +394,7 @@ task_t* task_get_task_by_index(size_t index)
 /**
  * Returns task by PID
  */
-task_t* task_get_task_by_pid(uint32_t pid)
+task_t* task_get_task_by_pid(pid_t pid)
 {
     spinlock_acquire(&task_list_lock);
     for (size_t i = 0; i < tasks_length; i++) {

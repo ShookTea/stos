@@ -4,7 +4,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-uint32_t getpid()
+pid_t getpid()
 {
     return syscall(SYS_GETPID, 0, 0, 0);
 }

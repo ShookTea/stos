@@ -3,7 +3,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-int fork()
+pid_t fork(void)
 {
     return (int)syscall(SYS_FORK, 0, 0, 0);
 }

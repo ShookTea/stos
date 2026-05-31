@@ -14,5 +14,6 @@ typedef uint16_t mode_t;
 typedef uint16_t nlink_t;
 typedef size_t   off_t;
 typedef uint16_t uid_t;
+typedef uint32_t pid_t;
 
 #endif

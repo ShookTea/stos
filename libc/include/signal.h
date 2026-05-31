@@ -1,6 +1,8 @@
 #ifndef _SIGNAL_H
 #define _SIGNAL_H 1
+
 #include <sys/cdefs.h>
+#include <sys/types.h>
 #include <stdint.h>
 
 typedef uint32_t sigset_t;
@@ -165,7 +167,7 @@ int sigaction(
  * - EINVAL - an invalid signal was specified
  * - ESRCH - the target process doesn't exist
  */
-int kill(int pid, int sig);
+int kill(pid_t pid, int sig);
 
 #endif //#if !(defined(__is_libk))
 

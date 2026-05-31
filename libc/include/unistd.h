@@ -2,6 +2,7 @@
 #define _SYS_UNISTD_H 1
 #include <sys/cdefs.h>
 
+#include <sys/types.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -66,12 +67,12 @@ int read(int fd, void* buf, size_t count);
 /**
  * Returns the process ID of the current process.
  */
-uint32_t getpid(void);
+pid_t getpid(void);
 
 /**
  * Returns the process ID of the parent of the current process.
  */
-uint32_t getppid(void);
+pid_t getppid(void);
 
 /**
  * Changes the location of the program break (the end of the heap) to [addr].
@@ -108,7 +109,7 @@ void* sbrk(intptr_t increment);
  * returns 0 for child process, and PID of the child for parent process. On
  * failure it returns -1.
  */
-int fork(void);
+pid_t fork(void);
 
 /**
  * Stores current working directory in the buffer, and returns the pointer to

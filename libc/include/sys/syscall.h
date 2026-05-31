@@ -5,8 +5,8 @@
 // Process management
 #define SYS_EXIT        0x00 // void exit(int status)
 #define SYS_YIELD       0x01 // void yield()
-#define SYS_GETPID      0x02 // uint32_t getpid()
-#define SYS_GETPPID     0x03 // uint32_t getpid()
+#define SYS_GETPID      0x02 // pid_t getpid()
+#define SYS_GETPPID     0x03 // pid_t getpid()
 #define SYS_FORK        0x04 // int fork()
 #define SYS_WAIT        0x05 // int waitpid(int pid, int* status, int options)
 #define SYS_EXEC        0x06 // int execve(const char*, const char*[], const char*[])

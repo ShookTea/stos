@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <errno.h>
 
-int kill(int pid, int sig) {
+int kill(pid_t pid, int sig) {
     if (sig < 0 || sig > 31) {
         errno = EINVAL;
         return -1;

@@ -24,8 +24,8 @@ The libc library contains wrappers for all implemented syscalls.
 | _process management (`0x0n`)_ |   |   |   |   |
 | `EXIT` | `0x00` | [`<stdlib.h>`](libc/include/stdlib.h) | `void exit(int status)` | Causes task termination, with given status code |
 | `YIELD` | `0x01` | [`<sched.h>`](libc/include/sched.h) | `int sched_yield()` | Yield the processor, moving current task to the end of the queue |
-| `GETPID` | `0x02` | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getpid()` | Returns the process ID of the current process |
-| `GETPPID` | `0x03` | [`<unistd.h>`](libc/include/unistd.h) | `uint32_t getppid()` | Returns the process ID of the parent of the current process |
+| `GETPID` | `0x02` | [`<unistd.h>`](libc/include/unistd.h) | `pid_t getpid()` | Returns the process ID of the current process |
+| `GETPPID` | `0x03` | [`<unistd.h>`](libc/include/unistd.h) | `pid_t getppid()` | Returns the process ID of the parent of the current process |
 | `FORK` | `0x04` | [`<unistd.h>`](libc/include/unistd.h) | `int fork()` | Creates a fork of a current process |
 | `WAIT` | `0x05` | [`<sys/wait.h>`](libc/include/sys/wait.h) | `int waitpid(int pid, int* status_code, int options)` | Waits for a selected child process to exit |
 | `EXEC` | `0x06` | [`<unistd.h>`](libc/include/unistd.h) | `int execve(const char* path, const char* argv[], const char* envp[])` | Replace the current process with ELF executable |
@@ -50,7 +50,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `UNIXTIME` | `0x30` | [`<time.h>`](libc/include/time.h) | `time_t time(time_t* tloc)` | Returns current Unix timestamp |
 | _inter-process commmunication (`0x4n`)_ |   |   |   |   |
 | `SIGACT` | `0x40` | [`<signal.h>`](libc/include/signal.h) | `int sigaction(int signum, const struct sigaction* restrict act, struct sigaction* restrict oldact)` | Updates signal handlers |
-| `SIGSEND` | `0x41` | [`<signal.h>`](libc/include/signal.h) | `int kill(int pid, int sig)` | Sends signal to a process |
+| `SIGSEND` | `0x41` | [`<signal.h>`](libc/include/signal.h) | `int kill(pid_t pid, int sig)` | Sends signal to a process |
 | `SIGRETURN` | `0x42` | _no wrapper_ | _no wrapper_ | For internal purposes |
 | `PIPE` | `0x43` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
 

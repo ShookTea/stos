@@ -3,6 +3,7 @@
 
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
+#include "sys/types.h"
 #include <signal.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -87,9 +88,9 @@ typedef struct {
 typedef struct task {
     // Process ID and state
     /** Process ID (unique) */
-    uint32_t pid;
+    pid_t pid;
     /** Process group ID */
-    uint32_t pgid;
+    pid_t pgid;
     /** Process name */
     char name[TASK_PROCESS_NAME_MAX_LEN];
     /** Current state of the task */
@@ -236,7 +237,7 @@ task_t* task_get_task_by_index(size_t index);
 /**
  * Returns task by PID
  */
-task_t* task_get_task_by_pid(uint32_t pid);
+task_t* task_get_task_by_pid(pid_t pid);
 
 /**
  * Registers new memory region for the task.
