@@ -142,6 +142,15 @@ static void handle_non_ascii(tty_state_t* meta, keyboard_event_t evt)
     }
 }
 
+void tty_push_char_to_buffer(char c)
+{
+    if (node == NULL || node->metadata == NULL) {
+        return;
+    }
+    tty_state_t* meta = node->metadata;
+    put_char_to_line(meta, c);
+}
+
 static void handle_key_event(keyboard_event_t evt)
 {
     if (node == NULL || node->metadata == NULL) {
@@ -178,8 +187,7 @@ static void handle_key_event(keyboard_event_t evt)
     else if ((evt.key_code == KCODE_ENTER
         || evt.key_code == KCODE_NUMPAD_ENTER)
         && meta->lflag & TTY_LFLAG_ICANON) {
-            char nline = '\n';
-            put_char_to_line(meta, nline);
+            tty_push_char_to_buffer('\n');
             // New line was commited - send it to buffer
             // TODO: if last character was non-escaped backslash, that means
             // "don't commit now, instead pass new line to the reading task"
@@ -188,7 +196,7 @@ static void handle_key_event(keyboard_event_t evt)
                 wait_wake_up(meta->wait_obj);
             }
     } else {
-        put_char_to_line(meta, evt.ascii);
+        tty_push_char_to_buffer(evt.ascii);
     }
 }
 
