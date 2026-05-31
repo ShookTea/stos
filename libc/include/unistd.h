@@ -42,21 +42,6 @@ int getopt(int argc, char *argv[], const char *optstring);
  */
 size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz);
 
-/**
- * Returns process group ID of the selected process `pid`. If `pid` is set to
- * 0, then the process ID of the calling process is used.
- */
-pid_t getpgid(pid_t pid);
-
-/**
- * Updates process group ID of the process `pid`. If `pid` is set to 0, then
- * the calling process is used; if `pgid` is zero, then the process ID is used
- * as the value.
- *
- * On success it returns 0. On failure it returns -1 and sets `errno`.
- */
-int setpgid(pid_t pid, pid_t pgid);
-
 #if !(defined(__is_libk))
 
 /**
@@ -88,6 +73,21 @@ pid_t getpid(void);
  * Returns the process ID of the parent of the current process.
  */
 pid_t getppid(void);
+
+/**
+ * Returns process group ID of the selected process `pid`. If `pid` is set to
+ * 0, then the process ID of the calling process is used.
+ */
+pid_t getpgid(pid_t pid);
+
+/**
+ * Updates process group ID of the process `pid`. If `pid` is set to 0, then
+ * the calling process is used; if `pgid` is zero, then the process ID is used
+ * as the value.
+ *
+ * On success it returns 0. On failure it returns -1 and sets `errno`.
+ */
+int setpgid(pid_t pid, pid_t pgid);
 
 /**
  * Changes the location of the program break (the end of the heap) to [addr].
