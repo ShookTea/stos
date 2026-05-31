@@ -306,6 +306,18 @@ int dup3(int oldfd, int newfd, int flags);
  */
 int isatty(int fd);
 
+/**
+ * Returns the process group ID of the foreground process group on the terminal
+ * associated with file descriptor `fd`.
+ */
+pid_t tcgetpgrp(int fd);
+
+/**
+ * Updates the foreground process group ID on the terminal associated with file
+ * descriptor `fd`.
+ */
+int tcsetpgrp(int fd, pid_t pgid);
+
 #endif // #if !(defined(__is_libk))
 
 #ifdef __cplusplus
