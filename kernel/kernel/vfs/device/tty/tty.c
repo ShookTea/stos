@@ -1,11 +1,13 @@
 #include "kernel/debug.h"
 #include "kernel/drivers/keyboard.h"
+#include "kernel/task/syscall.h"
 #include "kernel/task/wait.h"
 #include "../../device.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
 #include <libds/libds.h>
 #include <libds/ringbuf.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include "./tty.h"
@@ -149,6 +151,15 @@ static void handle_key_event(keyboard_event_t evt)
 
     if (!evt.pressed) {
         // We only register pressed keys.
+        return;
+    }
+
+    if (evt.l_ctrl_pressed && evt.ascii == 'c') {
+        sys_sigsend(-meta->fg_pgid, SIGINT);
+        return;
+    }
+    if (evt.l_ctrl_pressed && evt.ascii == 'z') {
+        sys_sigsend(-meta->fg_pgid, SIGTSTP);
         return;
     }
 

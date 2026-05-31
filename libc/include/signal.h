@@ -12,6 +12,7 @@ typedef uint32_t sigset_t;
 // stated in docs.
 
 #define SIGHUP 1
+// Send to the foregroud task by the terminal when user presses Ctrl+C
 #define SIGINT 2
 #define SIGQUIT 3
 #define SIGILL 4
@@ -30,6 +31,7 @@ typedef uint32_t sigset_t;
 #define SIGCHLD 17
 #define SIGCONT 18
 #define SIGSTOP 19
+// Send to the foregroud task by the terminal when user presses Ctrl+Z
 #define SIGTSTP 20
 #define SIGTTIN 21
 #define SIGTTOU 22
