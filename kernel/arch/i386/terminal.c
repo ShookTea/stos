@@ -175,7 +175,7 @@ static void terminal_reset_styling()
  */
 static void terminal_handle_csi_sequence()
 {
-    uint8_t* args = NULL; // array of arguments
+    size_t* args = NULL; // array of arguments
     size_t arg_count = 0;
     char mode = '\0'; // Mode letter
     char* buffer = NULL;
@@ -200,7 +200,7 @@ static void terminal_handle_csi_sequence()
         else {
             // Either a semicolon (arg separator) or a mode character
             // 1. Parse current buffer, if exists - otherwise add 0
-            args = krealloc(args, sizeof(uint8_t) * (arg_count + 1));
+            args = krealloc(args, sizeof(size_t) * (arg_count + 1));
             args[arg_count] = buffer_length > 0 ? atoi(buffer) : 0;
             arg_count++;
             if (buffer_length > 0) {
@@ -306,7 +306,7 @@ static void terminal_handle_csi_sequence()
     }
     else if (mode == 'H') {
         // Move cursor to row arg[0], column arg[1] (starting from 1)
-        uint8_t row, column;
+        size_t row, column;
         if (args[0] == 0) {
             row = 0;
         } else {
