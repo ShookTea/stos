@@ -1,6 +1,7 @@
 #include "kernel/vfs/vfs.h"
 #include <stdint.h>
 #include "./tty.h"
+#include <sys/types.h>
 #include <asm/termbits.h>
 
 // This struct should match one in libc/asm/termbits.h
@@ -38,6 +39,20 @@ static int tty_ioctl_tcsets(vfs_file_t* file, struct termios* termios)
     );
 }
 
+static int tty_ioctl_get_fg_pgid(vfs_file_t* file, pid_t* pgid)
+{
+    tty_state_t* state = file->dentry->inode->metadata;
+    *pgid = state->fg_pgid;
+    return 0;
+}
+
+static int tty_ioctl_set_fg_pgid(vfs_file_t* file, pid_t* pgid)
+{
+    tty_state_t* state = file->dentry->inode->metadata;
+    state->fg_pgid = *pgid;
+    return 0;
+}
+
 int tty_ioctl(vfs_file_t* file, uint32_t op, void* arg)
 {
     if (file == NULL || arg == NULL) {
@@ -52,6 +67,14 @@ int tty_ioctl(vfs_file_t* file, uint32_t op, void* arg)
         case TCSETS: {
             struct termios* termios = arg;
             return tty_ioctl_tcsets(file, termios);
+        }
+        case TIOCGPGRP: {
+            pid_t* pgid = arg;
+            return tty_ioctl_get_fg_pgid(file, pgid);
+        }
+        case TIOCSPGRP: {
+            pid_t* pgid = arg;
+            return tty_ioctl_set_fg_pgid(file, pgid);
         }
         default: return -1;
     }
