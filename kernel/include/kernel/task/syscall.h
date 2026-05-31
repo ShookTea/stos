@@ -11,8 +11,10 @@
 
 uint32_t sys_exit(int status_code);
 uint32_t sys_yield();
-uint32_t sys_getpid();
-uint32_t sys_getppid();
+pid_t sys_getpid();
+pid_t sys_getppid();
+pid_t sys_getpgid(pid_t pid);
+int sys_setpgid(pid_t pid, pid_t pgid);
 int sys_fork();
 int sys_wait(int pid, int* status_code, int options);
 int sys_exec(const char* path, const char** argv, const char** envp);

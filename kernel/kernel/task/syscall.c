@@ -36,6 +36,8 @@ static uint32_t syscall_int_handler(
         case SYS_YIELD: return sys_yield();
         case SYS_GETPID: return sys_getpid();
         case SYS_GETPPID: return sys_getppid();
+        case SYS_GETPGID: return sys_getpgid(arg1);
+        case SYS_SETPGID: return sys_setpgid(arg1, arg2);
         case SYS_FORK: return sys_fork();
         case SYS_WAIT: {
             int pid = (int)arg1;
