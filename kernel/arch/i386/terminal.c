@@ -64,6 +64,7 @@ static bool inverse = false;
 
 static bool underline = false;
 static bool overline = false;
+static bool autowrap_enabled = true;
 static bool strike_through = false;
 static blinking_t blinking = NO_BLINKING;
 static uint8_t font_decor = 0;
@@ -420,12 +421,18 @@ static void terminal_handle_csi_sequence()
         set_cursor_position(cursor_row, cursor_column);
     }
     else if (mode == 'h') {
-        if (args[0] == 25) {
+        if (args[0] == 7) {
+            autowrap_enabled = true;
+        }
+        else if (args[0] == 25) {
             rgbmode ? fbcon_enable_cursor() : vga_text_enable_cursor();
         }
     }
     else if (mode == 'l') {
-        if (args[0] == 25) {
+        if (args[0] == 7) {
+            autowrap_enabled = false;
+        }
+        else if (args[0] == 25) {
             rgbmode ? fbcon_disable_cursor() : vga_text_disable_cursor();
         }
     }
@@ -744,7 +751,7 @@ void terminal_write_char(char c)
         cursor_column = 0;
         if (++cursor_row >= vga_height) {
             cursor_row = vga_height - 1;
-            terminal_scroll_up();
+            if (autowrap_enabled) terminal_scroll_up();
         }
     }
     else if (c == '\t') {
@@ -775,7 +782,7 @@ void terminal_write_char(char c)
             cursor_column = 0;
             if (++cursor_row >= vga_height) {
                 cursor_row = vga_height - 1;
-                terminal_scroll_up();
+                if (autowrap_enabled) terminal_scroll_up();
             }
         }
     }
@@ -791,7 +798,7 @@ void terminal_write_char(char c)
             cursor_column = 0;
             if (++cursor_row >= vga_height) {
                 cursor_row = vga_height - 1;
-                terminal_scroll_up();
+                if (autowrap_enabled) terminal_scroll_up();
             }
         }
     }
