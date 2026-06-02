@@ -4,6 +4,7 @@
 #include <sys/cdefs.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <sys/types.h>
 
 #define EOF (-1)
 #define BUFSIZ 1024
@@ -259,6 +260,43 @@ char* fgets(char* restrict s, int size, FILE* restrict stream);
  * read operations.
  */
 int ungetc(int c, FILE* stream);
+
+/**
+ * Reads the entire line from `stream`, storing the address of the buffer
+ * containing the line into `*lineptr`. The buffer is NULL-terminated. If the
+ * newline character was found, it will also be included at the end of the line.
+ *
+ * If `*lineptr` was NULL before calling `getline`, then this function will
+ * allocate the necessary memory with `malloc()`. This buffer should be freed
+ * by the user program, even if `getline` failed.
+ *
+ * Alternatively `*lineptr` can point to already allocated memory of `*n` bytes.
+ * If that buffer is not large enough to keep the entire line, the size of it
+ * will be increased with `realloc()`.
+ *
+ * In both cases `*n` will be updated with the total allocated size for the
+ * buffer.
+ *
+ * On success, this function returns the total number of characters read,
+ * including new line but not including the terminating NULL character. At the
+ * end of file it will return -1. On error it will return -1 and set `errno`.
+ */
+ssize_t getline(
+    char** restrict lineptr,
+    size_t* restrict n,
+    FILE* restrict stream
+);
+
+/**
+ * Works similarly to `getline`, but allows user to select custom delimiter
+ * character instead of the new line character.
+ */
+ssize_t getdelim(
+    char** restrict lineptr,
+    size_t* restrict n,
+    int delim,
+    FILE* restrict stream
+);
 
 #endif // #if !(defined(__is_libk))
 
