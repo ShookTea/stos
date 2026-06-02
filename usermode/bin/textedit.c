@@ -1,5 +1,5 @@
-#include "signal.h"
-#include "sys/types.h"
+#include <signal.h>
+#include <sys/types.h>
 #include <sched.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -112,11 +112,9 @@ static void textedit_close(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
 }
 
-static volatile bool sigint_received = false;
-
 static void sigint_handler(int signum __attribute__((unused)))
 {
-    sigint_received = true;
+    // TODO - show the confirmation
 }
 
 int main(int argc, char** argv)
@@ -157,10 +155,8 @@ int main(int argc, char** argv)
     act.sa_handler = sigint_handler;
     sigaction(SIGINT, &act, NULL);
 
-    while (!sigint_received) {
-        sched_yield();
-    }
-
+    int c = fgetc(stdin);
     textedit_close();
+    printf("c = %c\n", c);
     return 0;
 }
