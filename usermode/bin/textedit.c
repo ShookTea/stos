@@ -47,8 +47,13 @@ static void textedit_rerender_all(void)
 
         // End line numbering color
         printf(" \033[m");
-        // j = 1 character for border + 4 numline characters + 2 spaces
-        for (int j = 7; j < term_width - 1; j++) {
+
+        // 1 character for border + 4 numline characters + 2 spaces
+        int printed_in_line = 7;
+        if (i <= content_line_count) {
+            printed_in_line += printf("len=%u", strlen(content[i - 1]));
+        }
+        for (int j = printed_in_line; j < term_width - 1; j++) {
             printf(" ");
         }
         printf("│");
@@ -73,8 +78,8 @@ static bool textedit_init(void)
     termios.c_lflag &= ~(ICANON | ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &termios);
 
-    // Clear terminal, and disable autowrapping
-    printf("\033[2J\033[7l");
+    // Clear terminal, disable autowrapping and cursor
+    printf("\033[2J\033[7l\033[?25l");
     // Measure screen size
 
     printf("\033[9999;9999H\033[6n");
@@ -101,13 +106,13 @@ static void textedit_close(void)
     }
     free(content);
     fclose(fstream);
-    // Clean screen, reset cursor position, reenable autowrapping
-    printf("\033[2J\033[H\033[7h");
+    // Clean screen, reset cursor position, reenable autowrapping and cursor
+    printf("\033[2J\033[H\033[7h\033[?25h");
     // Restore original termios value
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
 }
 
-static bool sigint_received = false;
+static volatile bool sigint_received = false;
 
 static void sigint_handler(int signum __attribute__((unused)))
 {
@@ -120,27 +125,26 @@ int main(int argc, char** argv)
         dprintf(STDERR_FILENO, "textedit requires path to a file.\n");
         return 1;
     } else {
-        filename = malloc(sizeof(char) * strlen(argv[1]));
+        filename = malloc(sizeof(char) * (strlen(argv[1]) + 1));
         strcpy(filename, argv[1]);
-        fstream = fopen(filename, "a+");
+        fstream = fopen(filename, "r+");
         if (fstream == NULL) {
             dprintf(STDERR_FILENO, "Error when opening file %s\n", filename);
             free(filename);
             return 2;
         }
 
-        size_t unused; // for storing argument of getline
+        size_t n = 0;
         ssize_t read_bytes;
-        do {
+        char* line = NULL;
+        while ((read_bytes = getline(&line, &n, fstream)) >= 0) {
             content_line_count++;
             content = realloc(content, sizeof(char*) * content_line_count);
-
-            read_bytes = getline(
-                content + content_line_count - 1,
-                &unused,
-                fstream
-            );
-        } while (read_bytes >= 0);
+            content[content_line_count - 1] = line;
+            line = NULL;
+            n = 0;
+        }
+        free(line); // In case getline allocated a buffer before hitting EOF
     }
 
     if (!textedit_init()) {
@@ -149,7 +153,7 @@ int main(int argc, char** argv)
 
     struct sigaction act;
     act.sa_flags = 0;
-    act.sa_mask = 0;
+    sigemptyset(&act.sa_mask);
     act.sa_handler = sigint_handler;
     sigaction(SIGINT, &act, NULL);
 
