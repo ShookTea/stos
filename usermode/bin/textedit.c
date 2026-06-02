@@ -1,4 +1,5 @@
 #include "signal.h"
+#include "sys/types.h"
 #include <sched.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,7 +13,48 @@ static struct termios orig_termios;
 static int term_width = 0;
 static int term_height = 0;
 
-static char* filename = "tmp";
+// Line by line content. All lines include \n and are NULL-terminated.
+static char** content = NULL;
+static int content_line_count = 0;
+static FILE* fstream;
+
+static char* filename = NULL;
+
+// Re-renders the entire screen
+static void textedit_rerender_all(void)
+{
+    // Navigate to the beginning of the screen
+    printf("\033[H");
+
+    // Print top line, with filename
+    printf("┌──");
+    int printed = 3;
+    printed += printf(" %s ", filename);
+    for (int i = printed; i < term_width - 1; i++) {
+        printf("─");
+    }
+    printf("┐");
+
+    // Print main content lines
+    for (int i = 1; i < term_height - 1; i++) {
+        // Print left line + color for line numbering
+        printf("\033[%u;1H│\033[90m", i + 1);
+        printed = 1 + printf(" %4u ", i);
+        // End line numbering color
+        printf("\033[m");
+        for (int j = printed; j < term_width - 1; j++) {
+            printf(" ");
+        }
+        printf("│");
+    }
+
+    // Print bottom line
+    printf("\033[%u;1H└", term_height);
+    for (int i = 1; i < term_width - 1; i++) {
+        printf("─");
+    }
+    printf("┘");
+}
 
 static bool textedit_init(void)
 {
@@ -41,32 +83,18 @@ static bool textedit_init(void)
         return false;
     }
 
-    // Print border
-    printf("\033[H┌──");
-    int printed = 3;
-    printed += printf(" %s ", filename);
-    for (int i = printed; i < term_width - 1; i++) {
-        printf("─");
-    }
-    printf("┐");
-    for (int i = 1; i < term_height - 1; i++) {
-        printf("\033[%u;1H│", i + 1);
-        for (int j = 1; j < term_width - 1; j++) {
-            printf(" ");
-        }
-        printf("│");
-    }
-    printf("\033[%u;1H└", term_height);
-    for (int i = 1; i < term_width - 1; i++) {
-        printf("─");
-    }
-    printf("┘");
-
+    textedit_rerender_all();
     return true;
 }
 
 static void textedit_close(void)
 {
+    free(filename);
+    for (int i = 0; i < content_line_count; i++) {
+        free(content[i]);
+    }
+    free(content);
+    fclose(fstream);
     // Clean screen, reset cursor position, reenable autowrapping
     printf("\033[2J\033[H\033[7h");
     // Restore original termios value
@@ -80,10 +108,37 @@ static void sigint_handler(int signum __attribute__((unused)))
     sigint_received = true;
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
-    if (!textedit_init()) {
+    if (argc <= 1) {
+        dprintf(STDERR_FILENO, "textedit requires path to a file.\n");
         return 1;
+    } else {
+        filename = malloc(sizeof(char) * strlen(argv[1]));
+        strcpy(filename, argv[1]);
+        fstream = fopen(filename, "a+");
+        if (fstream == NULL) {
+            dprintf(STDERR_FILENO, "Error when opening file %s\n", filename);
+            free(filename);
+            return 2;
+        }
+
+        size_t unused; // for storing argument of getline
+        ssize_t read_bytes;
+        do {
+            content_line_count++;
+            content = realloc(content, sizeof(char*) * content_line_count);
+
+            read_bytes = getline(
+                content + content_line_count - 1,
+                &unused,
+                fstream
+            );
+        } while (read_bytes >= 0);
+    }
+
+    if (!textedit_init()) {
+        return 3;
     }
 
     struct sigaction act;
