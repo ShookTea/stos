@@ -38,11 +38,17 @@ static void textedit_rerender_all(void)
     // Print main content lines
     for (int i = 1; i < term_height - 1; i++) {
         // Print left line + color for line numbering
-        printf("\033[%u;1H│\033[90m", i + 1);
-        printed = 1 + printf(" %4u ", i);
+        printf("\033[%u;1H│\033[90m ", i + 1);
+        if (i <= content_line_count) {
+            printf("%4u", i);
+        } else {
+            printf("    ");
+        }
+
         // End line numbering color
-        printf("\033[m");
-        for (int j = printed; j < term_width - 1; j++) {
+        printf(" \033[m");
+        // j = 1 character for border + 4 numline characters + 2 spaces
+        for (int j = 7; j < term_width - 1; j++) {
             printf(" ");
         }
         printf("│");
