@@ -50,8 +50,16 @@ static void textedit_rerender_all(void)
 
         // 1 character for border + 4 numline characters + 2 spaces
         int printed_in_line = 7;
+        int remaining_space = (term_width - 1) - printed_in_line;
+        char format[10] = {0};
+        sprintf(format, "%%-.%us", remaining_space);
         if (i <= content_line_count) {
-            printed_in_line += printf("len=%u", strlen(content[i - 1]));
+            char* line = content[i - 1];
+            int len = strlen(line);
+            if (line[len - 1] == '\n') {
+                line[len - 1] = '\0';
+            }
+            printed_in_line += printf(format, content[i - 1]);
         }
         for (int j = printed_in_line; j < term_width - 1; j++) {
             printf(" ");
