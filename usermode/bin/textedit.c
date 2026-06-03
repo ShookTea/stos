@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <limits.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -28,7 +29,7 @@ static int cursor_line = 0;
 static int cursor_character = 0;
 
 // Line currently displayed at the top of the screen
-static int top_line_index = 0;
+static int content_scroll = 0;
 
 // Line by line content. All lines include \n and are NULL-terminated.
 static char** content = NULL;
@@ -78,7 +79,8 @@ static void textedit_rerender_border(void)
  */
 static void textedit_rerender_line(int line)
 {
-    int term_location = line + 2; // 1-indexed, skipping first line for border
+    // 1-indexed, skipping first line for border
+    int term_location = line + 1 + TOP_LINES_RSVD;
 
     if (term_location < (1 + TOP_LINES_RSVD)) {
         // Line too high
@@ -88,7 +90,7 @@ static void textedit_rerender_line(int line)
         // Line too low
         return;
     }
-    int content_index = line + top_line_index;
+    int content_index = line + content_scroll;
     // Navigate to the beginning of the line, after box border
     printf("\033[%u;2H", term_location);
 
@@ -319,6 +321,31 @@ int main(int argc, char** argv)
                     i += 2;
                     textedit_movecursor(cursor_line, INT_MAX);
                 }
+            }
+            else if (c == '\b') {
+                // TODO: handle backspace
+            }
+            else if (isprint(c)) {
+                // Printable character - add it at current location.
+                // First, reallocate to add slot for one more character
+                int linelen = strlen(content[cursor_line]) + 1;
+                content[cursor_line] = realloc(
+                    content[cursor_line],
+                    linelen + 1
+                );
+                // Shift all characters
+                for (int j = linelen; j > cursor_character; j--) {
+                    content[cursor_line][j] = content[cursor_line][j-1];
+                }
+                // Place new character at chosen place
+                content[cursor_line][cursor_character] = c;
+                // Rerender line
+                textedit_set_cursor(false);
+                textedit_rerender_line(
+                    cursor_line - content_scroll
+                );
+                textedit_movecursor(cursor_line, cursor_character + 1);
+                textedit_set_cursor(true);
             }
         }
     }
