@@ -100,6 +100,12 @@ char* strtok_r(
  */
 char *strstr(const char *haystack, const char *needle);
 
+/**
+ * Duplicates the `src` string in a newly allocated memory. That memory should
+ * be freed after use.
+ */
+char* strdup(const char* src);
+
 #ifdef __cplusplus
 }
 #endif
