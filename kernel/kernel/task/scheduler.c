@@ -406,7 +406,7 @@ void scheduler_remove_task(task_t* task)
 static void idle_task_function()
 {
     while (1) {
-         __asm__ volatile("hlt");
+         __asm__ volatile("sti; hlt");
     }
 }
 
