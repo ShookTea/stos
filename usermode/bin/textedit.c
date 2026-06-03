@@ -323,7 +323,24 @@ int main(int argc, char** argv)
                 }
             }
             else if (c == '\b') {
-                // TODO: handle backspace
+                if (cursor_character > 0) {
+                    // Move all characters back
+                    int linelen = strlen(content[cursor_line]);
+                    for (int j = cursor_character - 1; j < linelen; j++) {
+                        content[cursor_line][j] = content[cursor_line][j+1];
+                    }
+                    content[cursor_line][linelen] = '\0';
+                    // Rerender line
+                    textedit_set_cursor(false);
+                    textedit_rerender_line(
+                        cursor_line - content_scroll
+                    );
+                    textedit_movecursor(cursor_line, cursor_character - 1);
+                    textedit_set_cursor(true);
+                }
+                else if (cursor_line > 0) {
+                    // TODO: implement merging with previous line
+                }
             }
             else if (isprint(c)) {
                 // Printable character - add it at current location.
