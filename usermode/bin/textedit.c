@@ -289,7 +289,17 @@ int main(int argc, char** argv)
         for (int i = 0; i < readcount; i++) {
             char c = read_buff[i];
             if (c == '\033') {
-                if (escseq_check(read_buff, readcount, "[C")) {
+                if (escseq_check(read_buff, readcount, "[A")) {
+                    // arrow up
+                    i += 2;
+                    textedit_movecursor(cursor_line - 1, cursor_character);
+                }
+                else if (escseq_check(read_buff, readcount, "[B")) {
+                    // arrow down
+                    i += 2;
+                    textedit_movecursor(cursor_line + 1, cursor_character);
+                }
+                else if (escseq_check(read_buff, readcount, "[C")) {
                     // arrow right
                     i += 2;
                     textedit_movecursor(cursor_line, cursor_character + 1);
