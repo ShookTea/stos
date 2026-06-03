@@ -8,10 +8,21 @@
 #include <string.h>
 #include <termios.h>
 
+// 1 line reserved for top box line
+#define TOP_LINES_RSVD 1
+// 1 line reserved for bottom box line
+#define BOTTOM_LINES_RSVD 1
+#define LINES_RSVD (TOP_LINES_RSVD + BOTTOM_LINES_RSVD)
+
 // Original termios value, for later recovery
 static struct termios orig_termios;
 static int term_width = 0;
 static int term_height = 0;
+// Number of lines available for content
+static int content_height = 0;
+
+// Line currently displayed at the top of the screen
+static int top_line_index = 0;
 
 // Line by line content. All lines include \n and are NULL-terminated.
 static char** content = NULL;
@@ -20,8 +31,10 @@ static FILE* fstream;
 
 static char* filename = NULL;
 
-// Re-renders the entire screen
-static void textedit_rerender_all(void)
+/**
+ * Renders border around the editor
+ */
+static void textedit_rerender_border(void)
 {
     // Navigate to the beginning of the screen
     printf("\033[H");
@@ -35,36 +48,9 @@ static void textedit_rerender_all(void)
     }
     printf("┐");
 
-    // Print main content lines
-    for (int i = 1; i < term_height - 1; i++) {
-        // Print left line + color for line numbering
-        printf("\033[%u;1H│\033[90m ", i + 1);
-        if (i <= content_line_count) {
-            printf("%4u", i);
-        } else {
-            printf("    ");
-        }
-
-        // End line numbering color
-        printf(" \033[m");
-
-        // 1 character for border + 4 numline characters + 2 spaces
-        int printed_in_line = 7;
-        int remaining_space = (term_width - 1) - printed_in_line;
-        char format[10] = {0};
-        sprintf(format, "%%-.%us", remaining_space);
-        if (i <= content_line_count) {
-            char* line = content[i - 1];
-            int len = strlen(line);
-            if (line[len - 1] == '\n') {
-                line[len - 1] = '\0';
-            }
-            printed_in_line += printf(format, content[i - 1]);
-        }
-        for (int j = printed_in_line; j < term_width - 1; j++) {
-            printf(" ");
-        }
-        printf("│");
+    // Print borders on the left and right for each line
+    for (int i = 1; i < term_height - BOTTOM_LINES_RSVD; i++) {
+        printf("\033[%u;1H│\033[%uG│", i + 1, term_width);
     }
 
     // Print bottom line
@@ -73,6 +59,69 @@ static void textedit_rerender_all(void)
         printf("─");
     }
     printf("┘");
+}
+
+/**
+ * Re-renders line, zero-indexed, on the screen.
+ */
+static void textedit_rerender_line(int line)
+{
+    int term_location = line + 2; // 1-indexed, skipping first line for border
+
+    if (term_location < (1 + TOP_LINES_RSVD)) {
+        // Line too high
+        return;
+    }
+    if (term_location > (term_height - BOTTOM_LINES_RSVD)) {
+        // Line too low
+        return;
+    }
+    int content_index = line + top_line_index;
+    // Navigate to the beginning of the line, after box border
+    printf("\033[%u;2H", term_location);
+
+    if (content_index >= content_line_count) {
+        // Line is present in the screen, but not in the content.
+        // Clear the line
+        printf("\033[K");
+        // Redraw box line at the right
+        printf("\033[%uG│", term_width);
+        return;
+    } else {
+
+    }
+
+    // Line is present in the content. Print line number, 1-indexed:
+    // (max 4 digits, padded, + 2 spaces as a margin)
+    printf(" \033[90m%4u\033[m ", content_index + 1);
+
+    // Remaining space: terminal width - 6 characters from above - 2 box lines
+    int remaining_space = term_width - 8;
+    char format[10] = {0};
+    sprintf(format, "%%-.%us", remaining_space);
+
+    // Print line with format. Remove newline at the end, if present.
+    char* to_print = strdup(content[content_index]);
+    int len = strlen(to_print);
+    if (to_print[len - 1] == '\n') {
+        to_print[len - 1] = '\0';
+    }
+    printf(format, to_print);
+    free(to_print);
+
+    // Clear the rest of the line
+    printf("\033[K");
+    // Redraw box line at the right
+    printf("\033[%uG│", term_width);
+}
+
+// Re-renders the entire screen
+static void textedit_rerender_all(void)
+{
+    textedit_rerender_border();
+    for (int i = 0; i <= content_height; i++) {
+        textedit_rerender_line(i);
+    }
 }
 
 static bool textedit_init(void)
@@ -97,6 +146,7 @@ static bool textedit_init(void)
         char* ptr = buf + 2; // skip start
         ptr[strlen(ptr) - 1] = '\0';
         term_height = atoi(strtok(ptr, ";"));
+        content_height = term_height - LINES_RSVD; // 2 lines of border
         term_width = atoi(strtok(NULL, ";"));
     } else {
         return false;
