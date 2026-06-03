@@ -163,10 +163,12 @@ static void textedit_movecursor(int line, int ch)
 
     // Move cursor to a valid location in terminal
     int cursor_term_row = cursor_line + TOP_LINES_RSVD;
+    // line number + box border + margins
+    int cursor_term_col = cursor_character + 7;
     printf(
         "\033[%u;%uH",
         cursor_term_row + 1, // 1-indexed
-        7 + 1 // line number + box border + margins, 1-indexed
+        cursor_term_col + 1 // 1-indexed
     );
 }
 
@@ -227,6 +229,20 @@ static void sigint_handler(int signum __attribute__((unused)))
     textedit_running = false;
 }
 
+static bool escseq_check(char* buf, int count, char* test)
+{
+    int testsize = strlen(test);
+    if (testsize > (count - 1)) {
+        return false;
+    }
+    for (int i = 0; i < testsize; i++) {
+        if (buf[i + 1] != test[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int main(int argc, char** argv)
 {
     if (argc <= 1) {
@@ -265,12 +281,25 @@ int main(int argc, char** argv)
     act.sa_handler = sigint_handler;
     sigaction(SIGINT, &act, NULL);
 
-    int c = 0;
+    char read_buff[16] = {0};
     while (textedit_running) {
-        c = fgetc(stdin);
+        // Reading loop
+        int readcount = read(STDIN_FILENO, read_buff, 15);
+        for (int i = 0; i < readcount; i++) {
+            char c = read_buff[i];
+            if (c == '\033') {
+                if (escseq_check(read_buff, readcount, "[C")) {
+                    i += 2;
+                    textedit_movecursor(cursor_line, cursor_character + 1);
+                }
+                else if (escseq_check(read_buff, readcount, "[D")) {
+                    i += 2;
+                    textedit_movecursor(cursor_line, cursor_character - 1);
+                }
+            }
+        }
     }
 
     textedit_close();
-    printf("c = %c\n", c);
     return 0;
 }
