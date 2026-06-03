@@ -21,6 +21,11 @@ static int term_height = 0;
 // Number of lines available for content
 static int content_height = 0;
 
+// Line (in content, 0-indexed)
+static int cursor_line = 0;
+// Current location of the cursor in the line, 0-indexed
+static int cursor_character = 0;
+
 // Line currently displayed at the top of the screen
 static int top_line_index = 0;
 
@@ -30,6 +35,12 @@ static int content_line_count = 0;
 static FILE* fstream;
 
 static char* filename = NULL;
+static bool textedit_running = true;
+
+static void textedit_set_cursor(bool enabled)
+{
+    printf(enabled ? "\033[?25h" : "\033[?25l");
+}
 
 /**
  * Renders border around the editor
@@ -124,6 +135,41 @@ static void textedit_rerender_all(void)
     }
 }
 
+/**
+ * Move cursor to given line in the content, at the given character.
+ */
+static void textedit_movecursor(int line, int ch)
+{
+    // Check borders of the line
+    if (line >= content_line_count) {
+        line = content_line_count - 1;
+    }
+    if (line < 0) {
+        line = 0;
+    }
+
+    if (ch < 0) {
+        ch = 0;
+    }
+    int content_len = strlen(content[line]);
+    if (ch >= content_len) {
+        ch = content_len - 1;
+    }
+
+    // TODO: check if line is displayed on the screen, and if it doesn't, scroll
+
+    cursor_line = line;
+    cursor_character = ch;
+
+    // Move cursor to a valid location in terminal
+    int cursor_term_row = cursor_line + TOP_LINES_RSVD;
+    printf(
+        "\033[%u;%uH",
+        cursor_term_row + 1, // 1-indexed
+        7 + 1 // line number + box border + margins, 1-indexed
+    );
+}
+
 static bool textedit_init(void)
 {
     // Load termios config and store backup
@@ -136,9 +182,10 @@ static bool textedit_init(void)
     tcsetattr(STDIN_FILENO, TCSANOW, &termios);
 
     // Clear terminal, disable autowrapping and cursor
-    printf("\033[2J\033[7l\033[?25l");
-    // Measure screen size
+    printf("\033[2J\033[7l");
+    textedit_set_cursor(false);
 
+    // Measure screen size
     printf("\033[9999;9999H\033[6n");
     char buf[32] = {0};
     int read_count = read(STDIN_FILENO, buf, 31);
@@ -153,6 +200,10 @@ static bool textedit_init(void)
     }
 
     textedit_rerender_all();
+
+    // Navigate to the beginning of the content
+    textedit_movecursor(0, 0);
+    textedit_set_cursor(true);
     return true;
 }
 
@@ -165,14 +216,15 @@ static void textedit_close(void)
     free(content);
     fclose(fstream);
     // Clean screen, reset cursor position, reenable autowrapping and cursor
-    printf("\033[2J\033[H\033[7h\033[?25h");
+    printf("\033[2J\033[H\033[7h");
+    textedit_set_cursor(true);
     // Restore original termios value
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
 }
 
 static void sigint_handler(int signum __attribute__((unused)))
 {
-    // TODO - show the confirmation
+    textedit_running = false;
 }
 
 int main(int argc, char** argv)
@@ -213,7 +265,11 @@ int main(int argc, char** argv)
     act.sa_handler = sigint_handler;
     sigaction(SIGINT, &act, NULL);
 
-    int c = fgetc(stdin);
+    int c = 0;
+    while (textedit_running) {
+        c = fgetc(stdin);
+    }
+
     textedit_close();
     printf("c = %c\n", c);
     return 0;
