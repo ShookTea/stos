@@ -342,6 +342,36 @@ int main(int argc, char** argv)
                     // TODO: implement merging with previous line
                 }
             }
+            else if (c == '\n') {
+                char* newline_content = strdup(
+                    content[cursor_line] + cursor_character
+                );
+                // Allocate space for one more line
+                content_line_count++;
+                content = realloc(content, sizeof(char*) * content_line_count);
+                // Move pointers to all lines below
+                for (int j = content_line_count; j > cursor_line; j--) {
+                    content[j] = content[j-1];
+                }
+                // Insert new line in the slot
+                content[cursor_line + 1] = newline_content;
+
+                // Set current character to \n and remove all characters after
+                content[cursor_line][cursor_character] = '\n';
+                int line_len = strlen(content[cursor_line]);
+                for (int j = cursor_character + 1; j < line_len; j++) {
+                    content[cursor_line][j] = '\0';
+                }
+
+                // Re-render current line and all lines below
+                textedit_set_cursor(false);
+                int curr_line_terminal = cursor_line - content_scroll;
+                for (int li = curr_line_terminal; li < content_height; li++) {
+                    textedit_rerender_line(li);
+                }
+                textedit_movecursor(cursor_line + 1, 0);
+                textedit_set_cursor(true);
+            }
             else if (isprint(c)) {
                 // Printable character - add it at current location.
                 // First, reallocate to add slot for one more character
