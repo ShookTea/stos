@@ -92,8 +92,10 @@ static void handle_non_ascii(tty_state_t* meta, keyboard_event_t evt)
         || evt.key_code == KCODE_ARROW_RIGHT
         || evt.key_code == KCODE_ARROW_UP
         || evt.key_code == KCODE_ARROW_DOWN
+        || evt.key_code == KCODE_HOME
+        || evt.key_code == KCODE_END
     ) {
-        // Special case for arrow events with no modifiers added
+        // Special case for events with no modifiers added
         put_char_to_line_with_val(meta, '\033', '^');
         put_char_to_line(meta, '[');
 
@@ -110,6 +112,8 @@ static void handle_non_ascii(tty_state_t* meta, keyboard_event_t evt)
             case KCODE_ARROW_DOWN: put_char_to_line(meta, 'B'); break;
             case KCODE_ARROW_RIGHT: put_char_to_line(meta, 'C'); break;
             case KCODE_ARROW_LEFT: put_char_to_line(meta, 'D'); break;
+            case KCODE_HOME: put_char_to_line(meta, 'H'); break;
+            case KCODE_END: put_char_to_line(meta, 'F'); break;
         }
     }
     else {

@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sched.h>
@@ -289,12 +290,24 @@ int main(int argc, char** argv)
             char c = read_buff[i];
             if (c == '\033') {
                 if (escseq_check(read_buff, readcount, "[C")) {
+                    // arrow right
                     i += 2;
                     textedit_movecursor(cursor_line, cursor_character + 1);
                 }
                 else if (escseq_check(read_buff, readcount, "[D")) {
+                    // arrow left
                     i += 2;
                     textedit_movecursor(cursor_line, cursor_character - 1);
+                }
+                else if (escseq_check(read_buff, readcount, "[H")) {
+                    // Home
+                    i += 2;
+                    textedit_movecursor(cursor_line, 0);
+                }
+                else if (escseq_check(read_buff, readcount, "[F")) {
+                    // End
+                    i += 2;
+                    textedit_movecursor(cursor_line, INT_MAX);
                 }
             }
         }
