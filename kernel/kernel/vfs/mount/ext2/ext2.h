@@ -155,6 +155,19 @@ int ext2_readlink(const vfs_node_t* node, char* buf, size_t len);
 uint32_t ext2_alloc_block(dentry_t* device, uint32_t block_size);
 
 /**
+ * Mark block_num as free in the group bitmap and update the group descriptor
+ * and superblock unallocated-block counts.
+ */
+void ext2_free_block(dentry_t* device, uint32_t block_num, uint32_t block_size);
+
+/**
+ * Truncate file to zero length: free all data blocks (direct and indirect),
+ * zero the inode block pointers and size, and write the inode back to disk.
+ * Returns 0 on success or errno value on failure.
+ */
+int ext2_truncate(vfs_file_t* file);
+
+/**
  * Scan group bitmaps, mark the first free inode as used, update the group
  * descriptor and superblock counts, and return the allocated inode.
  * Returns 0 on failure (no free blocks or I/O error).
