@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <unistd.h> // SEEK_ consts
 
 #define EOF (-1)
 #define BUFSIZ 1024
@@ -297,6 +298,18 @@ ssize_t getdelim(
     int delim,
     FILE* restrict stream
 );
+
+/**
+ * Sets the file position indicator to a given offset. `whence` works as
+ * described in `lseek`. It also clears any results of `ungetc`. Returns 0
+ * on success; on failure it returns -1 and sets `errno`.
+ */
+int fseek(FILE* stream, long offset, int whence);
+
+/**
+ * This is equivalent of `fseek(stream, 0, SEEK_SET)`.
+ */
+void rewind(FILE* stream);
 
 #endif // #if !(defined(__is_libk))
 

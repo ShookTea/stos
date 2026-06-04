@@ -22,6 +22,8 @@ FILE* fopen(const char* restrict path, const char* restrict mode)
     FILE* res = malloc(sizeof(FILE));
     res->fd = fd;
     res->mode = flags;
+    res->read_buf_pos = 0;
+    res->read_buf_len = 0;
     res->ungetc_buf = EOF;
     return res;
 }
