@@ -157,7 +157,7 @@ static void textedit_movecursor(int line, int ch)
     }
     int content_len = strlen(content[line]);
     if (ch >= content_len) {
-        ch = content_len - 1;
+        ch = content_len > 0 ? content_len - 1 : 0;
     }
 
     // TODO: check if line is displayed on the screen, and if it doesn't, scroll
