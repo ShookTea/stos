@@ -126,7 +126,7 @@ static void textedit_rerender_line(int line)
     // Print line with format. Remove newline at the end, if present.
     char* to_print = strdup(content[content_index]);
     int len = strlen(to_print);
-    if (to_print[len - 1] == '\n') {
+    if (len > 0 && to_print[len - 1] == '\n') {
         to_print[len - 1] = '\0';
     }
     printf(format, to_print);
@@ -175,7 +175,7 @@ static void textedit_movecursor(int line, int ch)
     cursor_character = ch;
 
     // Move cursor to a valid location in terminal
-    int cursor_term_row = cursor_line + TOP_LINES_RSVD;
+    int cursor_term_row = cursor_line - content_scroll + TOP_LINES_RSVD;
     // line number + box border + margins
     int cursor_term_col = cursor_character + 7;
     printf(
@@ -224,11 +224,6 @@ static bool textedit_init(void)
 
 static void textedit_close(void)
 {
-    free(filename);
-    for (int i = 0; i < content_line_count; i++) {
-        free(content[i]);
-    }
-    free(content);
     fclose(fstream);
     // Clean screen, reset cursor position, reenable autowrapping and cursor
     printf("\033[2J\033[H\033[7h");
@@ -257,6 +252,12 @@ static void textedit_close(void)
         }
         printf("\n");
     }
+
+    free(filename);
+    for (int i = 0; i < content_line_count; i++) {
+        free(content[i]);
+    }
+    free(content);
 }
 
 static bool escseq_check(char* buf, int count, char* test)
@@ -299,13 +300,16 @@ static void textedit_save_file(void)
         if (i == content_line_count - 1) {
             // Because it's the last line, the NL is only used to navigate
             // horizontally. We should just skip it.
-            content[i][linelen - 1] = '\0';
             linelen--;
 
             if (linelen == 0) {
                 // Last line was only containing the NL at the end
                 break;
             }
+            if ((int)fwrite(content[i], 1, linelen, fstream) < linelen) {
+                textedit_running = false;
+            }
+            break;
         }
         if (fputs(content[i], fstream) < 0) {
             // TODO: report error.
@@ -376,32 +380,32 @@ int main(int argc, char** argv)
         for (int i = 0; i < readcount; i++) {
             char c = read_buff[i];
             if (c == '\033') {
-                if (escseq_check(read_buff, readcount, "[A")) {
+                if (escseq_check(read_buff + i, readcount - i, "[A")) {
                     // arrow up
                     i += 2;
                     textedit_movecursor(cursor_line - 1, cursor_character);
                 }
-                else if (escseq_check(read_buff, readcount, "[B")) {
+                else if (escseq_check(read_buff + i, readcount - i, "[B")) {
                     // arrow down
                     i += 2;
                     textedit_movecursor(cursor_line + 1, cursor_character);
                 }
-                else if (escseq_check(read_buff, readcount, "[C")) {
+                else if (escseq_check(read_buff + i, readcount - i, "[C")) {
                     // arrow right
                     i += 2;
                     textedit_movecursor(cursor_line, cursor_character + 1);
                 }
-                else if (escseq_check(read_buff, readcount, "[D")) {
+                else if (escseq_check(read_buff + i, readcount - i, "[D")) {
                     // arrow left
                     i += 2;
                     textedit_movecursor(cursor_line, cursor_character - 1);
                 }
-                else if (escseq_check(read_buff, readcount, "[H")) {
+                else if (escseq_check(read_buff + i, readcount - i, "[H")) {
                     // Home
                     i += 2;
                     textedit_movecursor(cursor_line, 0);
                 }
-                else if (escseq_check(read_buff, readcount, "[F")) {
+                else if (escseq_check(read_buff + i, readcount - i, "[F")) {
                     // End
                     i += 2;
                     textedit_movecursor(cursor_line, INT_MAX);
@@ -470,7 +474,7 @@ int main(int argc, char** argv)
                 content_line_count++;
                 content = realloc(content, sizeof(char*) * content_line_count);
                 // Move pointers to all lines below
-                for (int j = content_line_count; j > cursor_line; j--) {
+                for (int j = content_line_count - 1; j > cursor_line; j--) {
                     content[j] = content[j-1];
                 }
                 // Insert new line in the slot
