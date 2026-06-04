@@ -208,6 +208,31 @@ dentry_t* path_resolve_relative_no_follow(
     return path_resolve_impl(root, current, path, 0, false, false, NULL, NULL);
 }
 
+dentry_t* path_resolve_optional(
+    dentry_t* root,
+    dentry_t* current,
+    const char* path,
+    char** basename,
+    bool* path_exists
+) {
+    bool last_entry_not_exists = false;
+    dentry_t* result = path_resolve_impl(
+        root,
+        current,
+        path,
+        0,
+        true,
+        true,
+        &last_entry_not_exists,
+        basename
+    );
+
+    if (path_exists != NULL) {
+        *path_exists = !last_entry_not_exists;
+    }
+    return result;
+}
+
 char* path_build_absolute(
     dentry_t* root,
     dentry_t* current,

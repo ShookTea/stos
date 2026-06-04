@@ -31,6 +31,25 @@ dentry_t* path_resolve_relative_no_follow(
 );
 
 /**
+ * Resolves given path relative to `current`. If file exists, returns dentry.
+ * Otherwise returns parent of that entry, if exists. If parent also doesn't
+ * exist, returns NULL.
+ *
+ * If `basename` is not NULL, it will be allocated with the name of the file
+ * pointed to by the path. That has to be freed later.
+ *
+ * If `path_exists` is not NULL, it will be set to `true` if the file exists
+ * under given path.
+ */
+dentry_t* path_resolve_optional(
+    dentry_t* root,
+    dentry_t* current,
+    const char* path,
+    char** basename,
+    bool* path_exists
+);
+
+/**
  * Builds an absolute path of `current` dentry, starting from `root`, stores it
  * as a null-terminated string in `buff`, and returns pointer to `buff`. If the
  * path, including null byte, is longer than `size`, then it returns null.
