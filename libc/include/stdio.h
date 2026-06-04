@@ -167,6 +167,17 @@ FILE* fopen(const char* restrict path, const char* restrict mode);
 FILE* fdopen(int fd, const char* mode);
 
 /**
+ * Opens a file at given path, with given mode (as documented in `fopen`) and
+ * associates the stream pointed to by `stream` with it. The original stream,
+ * if exists, is flushed and closed.
+ */
+FILE* freopen(
+    const char* restrict path,
+    const char* restrict mode,
+    FILE* restrict stream
+);
+
+/**
  * For output streams, this function will force write of all buffered data for
  * the given output.
  *
