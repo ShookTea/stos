@@ -231,28 +231,6 @@ static void textedit_close(void)
     // Restore original termios value
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
 
-    // Print content of the file
-    for (int i = 0; i < content_line_count; i++) {
-        int linelen = strlen(content[i]);
-        if (i == content_line_count - 1) {
-            // Because it's the last line, the NL is only used to navigate
-            // horizontally. We should just skip it.
-            content[i][linelen - 1] = '\0';
-            linelen--;
-
-            if (linelen == 0) {
-                // Last line was only containing the NL at the end
-                break;
-            }
-        }
-        printf("Line %u:\n", i);
-        for (int j = 0; j < linelen; j++) {
-            if (content[i][j] == '\n') printf("<NL>");
-            else printf("%c", content[i][j]);
-        }
-        printf("\n");
-    }
-
     free(filename);
     for (int i = 0; i < content_line_count; i++) {
         free(content[i]);
