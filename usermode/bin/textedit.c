@@ -79,7 +79,7 @@ static void textedit_rerender_menu(void)
 {
     // Navigate to the end of the view
     printf("\033[%u;1H", term_height);
-    printf("  \033[7m^X\033[27m Exit");
+    printf("  \033[1;7m^X\033[22;27m Exit");
 }
 
 /**
@@ -258,11 +258,6 @@ static void textedit_close(void)
     }
 }
 
-static void sigint_handler(int signum __attribute__((unused)))
-{
-    textedit_running = false;
-}
-
 static bool escseq_check(char* buf, int count, char* test)
 {
     int testsize = strlen(test);
@@ -337,7 +332,7 @@ int main(int argc, char** argv)
     struct sigaction act;
     act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
-    act.sa_handler = sigint_handler;
+    act.sa_handler = SIG_IGN;
     sigaction(SIGINT, &act, NULL);
 
     char read_buff[16] = {0};
@@ -377,6 +372,9 @@ int main(int argc, char** argv)
                     i += 2;
                     textedit_movecursor(cursor_line, INT_MAX);
                 }
+            }
+            else if (c == '\030') { // Ctrl+X
+                textedit_running = false;
             }
             else if (c == '\b') {
                 if (cursor_character > 0) {
