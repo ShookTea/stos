@@ -281,11 +281,6 @@ static bool textedit_open_file(void)
         fstream = fopen(filename, "w+");
     }
     return fstream != NULL;
-    if (fstream == NULL) {
-        dprintf(STDERR_FILENO, "Error when opening file %s\n", filename);
-        return false;
-    }
-    return true;
 }
 
 static void textedit_save_file(void)
