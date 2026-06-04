@@ -226,6 +226,17 @@ static void textedit_close(void)
     textedit_set_cursor(true);
     // Restore original termios value
     tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios);
+
+    // Print content of the file
+    for (int i = 0; i < content_line_count; i++) {
+        printf("Line %u:\n", i);
+        int linelen = strlen(content[i]);
+        for (int j = 0; j < linelen; j++) {
+            if (content[i][j] == '\n') printf("<NL>");
+            else printf("%c", content[i][j]);
+        }
+        printf("\n");
+    }
 }
 
 static void sigint_handler(int signum __attribute__((unused)))
@@ -287,6 +298,17 @@ int main(int argc, char** argv)
             n = 0;
         }
         free(line); // In case getline allocated a buffer before hitting EOF
+
+        // If file ended with newline, we should append a synthetic empty line
+        if (content_line_count > 0) {
+            char* last = content[content_line_count - 1];
+            int len = strlen(last);
+            if (len > 0 && last[len-1] == '\n') {
+                content_line_count++;
+                content = realloc(content, sizeof(char*) * content_line_count);
+                content[content_line_count - 1] = strdup("");
+            }
+        }
     }
 
     if (!textedit_init()) {
