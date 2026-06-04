@@ -35,7 +35,7 @@ static int content_scroll = 0;
 // Line by line content. All lines include \n and are NULL-terminated.
 static char** content = NULL;
 static int content_line_count = 0;
-static FILE* fstream;
+static FILE* fstream = NULL;
 
 static char* filename = NULL;
 static bool textedit_running = true;
@@ -230,9 +230,16 @@ static void textedit_close(void)
     // Print content of the file
     for (int i = 0; i < content_line_count; i++) {
         int linelen = strlen(content[i]);
-        if (i == content_line_count - 1 && linelen == 0) {
-            // This is a synthetic empty line
-            break;
+        if (i == content_line_count - 1) {
+            // Because it's the last line, the NL is only used to navigate
+            // horizontally. We should just skip it.
+            content[i][linelen - 1] = '\0';
+            linelen--;
+
+            if (linelen == 0) {
+                // Last line was only containing the NL at the end
+                break;
+            }
         }
         printf("Line %u:\n", i);
         for (int j = 0; j < linelen; j++) {
@@ -310,7 +317,7 @@ int main(int argc, char** argv)
             if (len > 0 && last[len-1] == '\n') {
                 content_line_count++;
                 content = realloc(content, sizeof(char*) * content_line_count);
-                content[content_line_count - 1] = strdup("");
+                content[content_line_count - 1] = strdup("\n");
             }
         }
     }
