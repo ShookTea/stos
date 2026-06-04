@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -246,6 +247,21 @@ static bool escseq_check(char* buf, int count, char* test)
     return true;
 }
 
+static bool textedit_open_file(void)
+{
+    errno = 0;
+    fstream = fopen(filename, "r+");
+    if (fstream == NULL && errno == ENOENT) {
+        fstream = fopen(filename, "w+");
+    }
+    return fstream != NULL;
+    if (fstream == NULL) {
+        dprintf(STDERR_FILENO, "Error when opening file %s\n", filename);
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char** argv)
 {
     if (argc <= 1) {
@@ -254,8 +270,7 @@ int main(int argc, char** argv)
     } else {
         filename = malloc(sizeof(char) * (strlen(argv[1]) + 1));
         strcpy(filename, argv[1]);
-        fstream = fopen(filename, "r+");
-        if (fstream == NULL) {
+        if (!textedit_open_file()) {
             dprintf(STDERR_FILENO, "Error when opening file %s\n", filename);
             free(filename);
             return 2;
