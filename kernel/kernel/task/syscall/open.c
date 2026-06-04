@@ -14,18 +14,35 @@ uint32_t sys_open(const char* path, uint32_t flags)
         return -ENOTSUP;
     }
 
-    dentry_t* node = path_resolve_relative(
+    char* basename = NULL;
+    bool file_exists = false;
+    dentry_t* node = path_resolve_optional(
         current->root_node,
         current->working_directory,
-        path
+        path,
+        &basename,
+        &file_exists
     );
-    if (node == NULL && !(flags & O_CREAT)) {
+    if (node == NULL) {
+        // Neither file nor its parent was found
         return -ENOENT;
+    }
+    if (!file_exists && !(flags & O_CREAT)) {
+        // File doesn't exist, and user didn't requested to create one
+        return -ENOENT;
+    }
+    if (!file_exists && (flags & O_CREAT)) {
+        // File doesn't exist, and user request to create one
+        dentry_t* new_node = vfs_mkfile(node, basename);
+        if (new_node == NULL) {
+            vfs_dentry_unref(node);
+            return -ENOENT;
+        }
+        node = new_node;
     }
 
     if (node == NULL) {
-        // No file was found, but O_CREAT was used. New file should be created.
-        // TODO.
+        return -ENOENT;
     }
 
     int err_from_open = 0;
