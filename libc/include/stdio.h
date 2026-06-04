@@ -201,6 +201,21 @@ int fflush(FILE* stream);
 int fclose(FILE* stream);
 
 /**
+ * Reads `n` items of data, each `size` bytes long, from `stream` into `ptr`.
+ */
+size_t fread(void* restrict ptr, size_t size, size_t n, FILE* restrict stream);
+
+/**
+ * Writes `n` items of data, each `size` bytes long, from `ptr` into `stream`.
+ */
+size_t fwrite(
+    const void* restrict ptr,
+    size_t size,
+    size_t n,
+    FILE* restrict stream
+);
+
+/**
  * Prints formatted string to `stream`. Returns the number of characters
  * written, or EOF in case of error.
  *
