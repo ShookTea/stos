@@ -130,6 +130,11 @@ typedef int (*readlink_node_t)(
     char* buf,
     size_t size
 );
+/**
+ * Truncates file to zero length. Called by vfs_open when O_TRUNC is set.
+ * Returns 0 on success or errno value on failure.
+ */
+typedef int (*truncate_node_t)(vfs_file_t* file);
 
 /*
  * Basic definition of a single inode in the VFS. Contains file data and
@@ -157,6 +162,7 @@ typedef struct vfs_node {
     sync_node_t sync_node;
     stat_node_t stat_node;
     readlink_node_t readlink_node;
+    truncate_node_t truncate_node;
     void* metadata; // Data that can be used by filesystem
 } vfs_node_t;
 

@@ -380,6 +380,7 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     node->sync_node = NULL;
     node->stat_node = NULL;
     node->readlink_node = NULL;
+    node->truncate_node = NULL;
     node->metadata = NULL;
 }
 
