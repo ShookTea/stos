@@ -1,7 +1,7 @@
 #include "kernel/task/syscall.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
-#include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 #include <stdint.h>
 
 char* sys_getcwd(char* buf, size_t size)
@@ -11,7 +11,7 @@ char* sys_getcwd(char* buf, size_t size)
         return NULL;
     }
 
-    return vfs_build_absolute_path(
+    return path_build_absolute(
         curr->root_node,
         curr->working_directory,
         buf,

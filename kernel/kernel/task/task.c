@@ -4,6 +4,7 @@
 #include "kernel/spinlock.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 #include <kernel/task/scheduler.h>
 #include <kernel/memory/vmm.h>
 #include "kernel/debug.h"
@@ -937,7 +938,7 @@ void task_setup_stdio(task_t* task)
         return;
     }
 
-    dentry_t* tty_node = vfs_resolve_relative(
+    dentry_t* tty_node = path_resolve_relative(
         task->root_node,
         task->root_node,
         "/dev/tty"

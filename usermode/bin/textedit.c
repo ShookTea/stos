@@ -80,6 +80,7 @@ static void textedit_rerender_menu(void)
     // Navigate to the end of the view
     printf("\033[%u;1H", term_height);
     printf("  \033[1;7m^X\033[22;27m Exit");
+    printf("  \033[1;7m^S\033[22;27m Save");
 }
 
 /**
@@ -287,6 +288,11 @@ static bool textedit_open_file(void)
     return true;
 }
 
+static void textedit_save_file(void)
+{
+    // ls
+}
+
 int main(int argc, char** argv)
 {
     if (argc <= 1) {
@@ -373,7 +379,10 @@ int main(int argc, char** argv)
                     textedit_movecursor(cursor_line, INT_MAX);
                 }
             }
-            else if (c == '\030') { // Ctrl+X
+            else if (c == '\023') { // Ctrl+S - saving
+                textedit_save_file();
+            }
+            else if (c == '\030') { // Ctrl+X - exit
                 textedit_running = false;
             }
             else if (c == '\b') {

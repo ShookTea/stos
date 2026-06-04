@@ -1,8 +1,9 @@
 #include <kernel/memory/kmalloc.h>
 #include <kernel/multiboot2.h>
 #include <kernel/paging.h>
-#include <kernel/vfs/vfs.h>
-#include <kernel/vfs/initrd.h>
+#include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
+#include "kernel/vfs/initrd.h"
 #include "kernel/debug.h"
 #include <dirent.h>
 #include <stdbool.h>
@@ -219,7 +220,7 @@ static void initrd_load_tar(tar_header_t* tar_header, tar_header_t** next)
 dentry_t* initrd_mount()
 {
     if (mounted) {
-        return vfs_resolve("/initrd");
+        return path_resolve_absolute("/initrd");
     }
     mounted = true;
     _debug_puts("Loading initrd from memory");

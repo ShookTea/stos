@@ -5,6 +5,7 @@
     #include <sys/syscall.h>
 #else
     #include "kernel/task/task.h"
+    #include "kernel/vfs/path.h"
     #include "kernel/task/scheduler.h"
     #include "kernel/task/syscall.h"
 #endif
@@ -31,7 +32,7 @@ size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)
             return -ENOTSUP;
         }
 
-        dentry_t* dentry = vfs_resolve_relative_no_follow(
+        dentry_t* dentry = path_resolve_relative_no_follow(
             current->root_node,
             current->working_directory,
             path

@@ -2,6 +2,7 @@
 #include "kernel/drivers/vga/rgb.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 #include <stdint.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -157,7 +158,7 @@ static void parse_psf(font_mode_t font_mode, uint8_t* file, size_t file_size)
 
 void font_load_psf(font_mode_t font_mode, char* path)
 {
-    dentry_t* node = vfs_resolve(path);
+    dentry_t* node = path_resolve_absolute(path);
     if (node == NULL) {
         _debug_printf("font: path %s not found\n", path);
         return;

@@ -1,9 +1,11 @@
-#include "kernel/task/syscall.h"
+#include <fcntl.h>
 #include <errno.h>
+#include <stdint.h>
+#include "kernel/task/syscall.h"
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
-#include <stdint.h>
+#include "kernel/vfs/path.h"
 
 uint32_t sys_open(const char* path, uint32_t flags)
 {
@@ -12,13 +14,18 @@ uint32_t sys_open(const char* path, uint32_t flags)
         return -ENOTSUP;
     }
 
-    dentry_t* node = vfs_resolve_relative(
+    dentry_t* node = path_resolve_relative(
         current->root_node,
         current->working_directory,
         path
     );
-    if (node == NULL) {
+    if (node == NULL && !(flags & O_CREAT)) {
         return -ENOENT;
+    }
+
+    if (node == NULL) {
+        // No file was found, but O_CREAT was used. New file should be created.
+        // TODO.
     }
 
     int err_from_open = 0;

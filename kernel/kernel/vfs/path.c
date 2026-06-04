@@ -24,7 +24,7 @@
  * file (as opposed to the name of parent directory that is returned as dentry).
  * The result will have to be deallocated.
  */
-static dentry_t* vfs_resolve_impl(
+static dentry_t* path_resolve_impl(
     dentry_t* root,
     dentry_t* start,
     const char* path,
@@ -139,7 +139,7 @@ static dentry_t* vfs_resolve_impl(
                 dentry_t* base = (combined[0] == '/') ? root : parent_dir;
                 kfree(path_copy);
                 kfree(target);
-                dentry_t* result = vfs_resolve_impl(
+                dentry_t* result = path_resolve_impl(
                     root,
                     base,
                     combined,
@@ -172,9 +172,9 @@ static dentry_t* vfs_resolve_impl(
     return node;
 }
 
-dentry_t* vfs_resolve(const char* abs_path)
+dentry_t* path_resolve_absolute(const char* abs_path)
 {
-    return vfs_resolve_impl(
+    return path_resolve_impl(
         vfs_root,
         vfs_root,
         abs_path,
@@ -186,7 +186,7 @@ dentry_t* vfs_resolve(const char* abs_path)
     );
 }
 
-dentry_t* vfs_resolve_relative(
+dentry_t* path_resolve_relative(
     dentry_t* root,
     dentry_t* current,
     const char* path
@@ -194,10 +194,10 @@ dentry_t* vfs_resolve_relative(
     if (path == NULL || path[0] == '\0') {
         return current;
     }
-    return vfs_resolve_impl(root, current, path, 0, true, false, NULL, NULL);
+    return path_resolve_impl(root, current, path, 0, true, false, NULL, NULL);
 }
 
-dentry_t* vfs_resolve_relative_no_follow(
+dentry_t* path_resolve_relative_no_follow(
     dentry_t* root,
     dentry_t* current,
     const char* path
@@ -205,10 +205,10 @@ dentry_t* vfs_resolve_relative_no_follow(
     if (path == NULL || path[0] == '\0') {
         return current;
     }
-    return vfs_resolve_impl(root, current, path, 0, false, false, NULL, NULL);
+    return path_resolve_impl(root, current, path, 0, false, false, NULL, NULL);
 }
 
-char* vfs_build_absolute_path(
+char* path_build_absolute(
     dentry_t* root,
     dentry_t* current,
     char* buff,

@@ -4,6 +4,7 @@
 #include "kernel/spinlock.h"
 #include "kernel/task/wait.h"
 #include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 #include "../mount.h"
 #include <stdlib.h>
 #include <stddef.h>
@@ -373,13 +374,13 @@ vfs_mount_result_t vfs_mount_iso9660(
 ) {
     char* device_path = kmalloc_flags(VFS_MAX_PATH_LENGTH, KMALLOC_ZERO);
     char* target_path = kmalloc_flags(VFS_MAX_PATH_LENGTH, KMALLOC_ZERO);
-    vfs_build_absolute_path(
+    path_build_absolute(
         vfs_get_real_root(),
         device_file,
         device_path,
         VFS_MAX_PATH_LENGTH
     );
-    vfs_build_absolute_path(
+    path_build_absolute(
         vfs_get_real_root(),
         target,
         target_path,

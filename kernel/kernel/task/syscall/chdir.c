@@ -4,6 +4,7 @@
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 
 int sys_chdir(const char* path)
 {
@@ -12,7 +13,7 @@ int sys_chdir(const char* path)
         return -ENOTSUP;
     }
 
-    dentry_t* new_workdir = vfs_resolve_relative(
+    dentry_t* new_workdir = path_resolve_relative(
         task->root_node,
         task->working_directory,
         path

@@ -8,6 +8,7 @@
 #include "kernel/task/scheduler.h"
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 
 /* Safety cap to prevent malicious/buggy programs from exhausting kernel heap */
 #define EXEC_MAX_ARGS    64
@@ -76,7 +77,7 @@ int sys_exec(const char* path, const char** uargv, const char** uenvp)
         return -ENOTSUP;
     }
 
-    dentry_t* node = vfs_resolve_relative(
+    dentry_t* node = path_resolve_relative(
         current_task->root_node,
         current_task->working_directory,
         path

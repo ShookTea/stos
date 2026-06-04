@@ -2,6 +2,7 @@
 #include "./device.h"
 #include "kernel/memory/kmalloc.h"
 #include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -57,7 +58,7 @@ static vfs_node_t* device_finddir(
 dentry_t* device_mount()
 {
     if (node != NULL) {
-        return vfs_resolve("/dev");
+        return path_resolve_absolute("/dev");
     }
 
     node = kmalloc(sizeof(vfs_node_t));

@@ -205,45 +205,6 @@ dentry_t* vfs_dentry_create(
 );
 
 /**
- * Resolves an absolute path and returns a valid dentry, or NULL if not found.
- */
-dentry_t* vfs_resolve(const char* abs_path);
-
-/**
- * Resolves the passed path, either as an absolute path (when starting with /)
- * or a path relative to [current], while making sure that it doesn't go outside
- * of [root] dentry. Symlinks are followed, including the final component.
- */
-dentry_t* vfs_resolve_relative(
-    dentry_t* root,
-    dentry_t* current,
-    const char* path
-);
-
-/**
- * Like vfs_resolve_relative, but does NOT follow a symlink that is the final
- * component of the path. Returns the symlink dentry itself. Used by readlink()
- * and lstat().
- */
-dentry_t* vfs_resolve_relative_no_follow(
-    dentry_t* root,
-    dentry_t* current,
-    const char* path
-);
-
-/**
- * Builds an absolute path of [current] dentry, starting from [root], stores it
- * as a null-terminated string in [buff], and returns pointer to [buff]. If the
- * path, including null byte, is longer than [size], then it returns null.
- */
-char* vfs_build_absolute_path(
-    dentry_t* root,
-    dentry_t* current,
-    char* buff,
-    size_t size
-);
-
-/**
  * Populates the new node with the filename and type, and sets the rest of
  * properties to NULL/zero.
  */

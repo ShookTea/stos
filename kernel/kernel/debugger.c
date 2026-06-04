@@ -13,7 +13,8 @@
 #include <kernel/paging.h>
 #include <kernel/multiboot2.h>
 #include <kernel/acpi.h>
-#include <kernel/vfs/vfs.h>
+#include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 #include <kernel/elf.h>
 #include <kernel/task/scheduler.h>
 #include <kernel/task/task.h>
@@ -132,7 +133,7 @@ static void handle_command_sent()
         if (argcount != 1) {
             puts("elf_dump requires 1 argument");
         } else {
-            dentry_t* node = vfs_resolve(args[0]);
+            dentry_t* node = path_resolve_absolute(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
             } else if ((node->inode->type & VFS_TYPE_FILE) == 0) {
@@ -147,7 +148,7 @@ static void handle_command_sent()
         if (argcount < 1) {
             puts("exec requires at least 1 argument");
         } else {
-            dentry_t* node = vfs_resolve(args[0]);
+            dentry_t* node = path_resolve_absolute(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
             } else if ((node->inode->type & VFS_TYPE_FILE) == 0) {
@@ -254,7 +255,7 @@ static void handle_command_sent()
                 if (*name == '\0') {
                     puts("Invalid path: no directory name given");
                 } else {
-                    dentry_t* parent = vfs_resolve(parent_path);
+                    dentry_t* parent = path_resolve_absolute(parent_path);
                     if (parent == NULL) {
                         printf("Parent directory '%s' not found\n", parent_path);
                     } else {
@@ -305,7 +306,7 @@ static void handle_command_sent()
                 if (*name == '\0') {
                     puts("Invalid path: no directory name given");
                 } else {
-                    dentry_t* parent = vfs_resolve(parent_path);
+                    dentry_t* parent = path_resolve_absolute(parent_path);
                     if (parent == NULL) {
                         printf("Parent directory '%s' not found\n", parent_path);
                     } else {
@@ -325,8 +326,8 @@ static void handle_command_sent()
         if (argcount != 3) {
             puts("mount requires 3 arguments");
         } else {
-            dentry_t* device = vfs_resolve(args[0]);
-            dentry_t* target = vfs_resolve(args[1]);
+            dentry_t* device = path_resolve_absolute(args[0]);
+            dentry_t* target = path_resolve_absolute(args[1]);
             // we allow "device" to be not exist - for cases like "proc" fs
             if (target == NULL) {
                 puts("Target file not found");
@@ -395,7 +396,7 @@ static void handle_command_sent()
         if (argcount != 1) {
             puts("vfs_cat requires 1 argument");
         } else {
-            dentry_t* node = vfs_resolve(args[0]);
+            dentry_t* node = path_resolve_absolute(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
             } else if ((node->inode->type & VFS_TYPE_FILE) == 0) {
@@ -418,7 +419,7 @@ static void handle_command_sent()
         if (argcount != 1) {
             puts("vfs_ls requires 1 argument");
         } else {
-            dentry_t* node = vfs_resolve(args[0]);
+            dentry_t* node = path_resolve_absolute(args[0]);
             if (node == NULL) {
                 puts("File or directory not found.");
             } else if (node->inode->type & VFS_TYPE_DIRECTORY) {
@@ -688,7 +689,7 @@ void debugger_init()
     debugger_run_init_commands();
     puts("Kernel debugger. Write \"\033[1mhelp\033[22m\" to get list of available commands.");
 
-    tty_dentry = vfs_resolve("/dev/tty");
+    tty_dentry = path_resolve_absolute("/dev/tty");
 
     // Entering I/O loop with reading command from /dev/tty and analyzing it.
     while (1) {

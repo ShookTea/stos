@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include "kernel/vfs/vfs.h"
+#include "kernel/vfs/path.h"
 #include "kernel/task/task.h"
 #include "kernel/task/scheduler.h"
 
@@ -13,13 +14,13 @@ int sys_stat(const char* path, struct stat* stat, bool link_ignore)
 
     dentry_t* node = NULL;
     if (link_ignore) {
-        node = vfs_resolve_relative_no_follow(
+        node = path_resolve_relative_no_follow(
             current->root_node,
             current->working_directory,
             path
         );
     } else {
-        node = vfs_resolve_relative(
+        node = path_resolve_relative(
             current->root_node,
             current->working_directory,
             path
