@@ -14,7 +14,7 @@
 // 1 line reserved for top box line
 #define TOP_LINES_RSVD 1
 // 1 line reserved for bottom box line
-#define BOTTOM_LINES_RSVD 1
+#define BOTTOM_LINES_RSVD 2
 #define LINES_RSVD (TOP_LINES_RSVD + BOTTOM_LINES_RSVD)
 
 // Original termios value, for later recovery
@@ -68,7 +68,7 @@ static void textedit_rerender_border(void)
     }
 
     // Print bottom line
-    printf("\033[%u;1H└", term_height);
+    printf("\033[%u;1H└", term_height - BOTTOM_LINES_RSVD + 1); // 1-indexed
     for (int i = 1; i < term_width - 1; i++) {
         printf("─");
     }
