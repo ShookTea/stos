@@ -16,6 +16,13 @@
  * the path may not exist. If that's the case, then this function will return
  * a `dentry_t` of the parent directory of that file, and `last_entry_not_exist`
  * (if not NULL) will be set to `true`.
+ *
+ * At the end of successful resolving, including if `allow_nonexisting_last_entry`
+ * was `true` and final file didn't exist, if `basename` is not a null pointer,
+ * it will be populated with the target filename. If `allow_nonexisting_last_entry`
+ * was `true` and file didn't exist, it will be populated with the name of that
+ * file (as opposed to the name of parent directory that is returned as dentry).
+ * The result will have to be deallocated.
  */
 static dentry_t* vfs_resolve_impl(
     dentry_t* root,
@@ -24,7 +31,8 @@ static dentry_t* vfs_resolve_impl(
     int symlink_depth,
     bool follow_last_symlink,
     bool allow_nonexisting_last_entry,
-    bool* last_entry_not_exists
+    bool* last_entry_not_exists,
+    char** basename
 ) {
     if (symlink_depth >= VFS_SYMLINK_MAX_DEPTH) {
         return NULL;
@@ -33,10 +41,15 @@ static dentry_t* vfs_resolve_impl(
         *last_entry_not_exists = false;
     }
     if (path == NULL || path[0] == '\0') {
+        if (basename != NULL && start != NULL) {
+            *basename = kmalloc(strlen(start->name) + 1);
+            strcpy(*basename, start->name);
+        }
         return start;
     }
 
     dentry_t* node = (path[0] == '/') ? root : start;
+    char* captured_basename = NULL;
 
     size_t path_len = strlen(path);
     char* path_copy = kmalloc(path_len + 1);
@@ -78,6 +91,7 @@ static dentry_t* vfs_resolve_impl(
                     if (last_entry_not_exists != NULL) {
                         *last_entry_not_exists = true;
                     }
+                    captured_basename = ptr;
                     node = parent_dir;
                     break;
                 }
@@ -132,7 +146,8 @@ static dentry_t* vfs_resolve_impl(
                     symlink_depth + 1,
                     follow_last_symlink,
                     allow_nonexisting_last_entry,
-                    last_entry_not_exists
+                    last_entry_not_exists,
+                    basename
                 );
                 kfree(combined);
                 return result;
@@ -143,13 +158,32 @@ static dentry_t* vfs_resolve_impl(
         ptr = end;
     }
 
+    if (basename != NULL) {
+        if (captured_basename == NULL) {
+            captured_basename = node != NULL ? node->name : NULL;
+        }
+        if (captured_basename != NULL) {
+            *basename = kmalloc(strlen(captured_basename) + 1);
+            strcpy(*basename, captured_basename);
+        }
+    }
+
     kfree(path_copy);
     return node;
 }
 
 dentry_t* vfs_resolve(const char* abs_path)
 {
-    return vfs_resolve_impl(vfs_root, vfs_root, abs_path, 0, true, false, NULL);
+    return vfs_resolve_impl(
+        vfs_root,
+        vfs_root,
+        abs_path,
+        0,
+        true,
+        false,
+        NULL,
+        NULL
+    );
 }
 
 dentry_t* vfs_resolve_relative(
@@ -160,7 +194,7 @@ dentry_t* vfs_resolve_relative(
     if (path == NULL || path[0] == '\0') {
         return current;
     }
-    return vfs_resolve_impl(root, current, path, 0, true, false, NULL);
+    return vfs_resolve_impl(root, current, path, 0, true, false, NULL, NULL);
 }
 
 dentry_t* vfs_resolve_relative_no_follow(
@@ -171,7 +205,7 @@ dentry_t* vfs_resolve_relative_no_follow(
     if (path == NULL || path[0] == '\0') {
         return current;
     }
-    return vfs_resolve_impl(root, current, path, 0, false, false, NULL);
+    return vfs_resolve_impl(root, current, path, 0, false, false, NULL, NULL);
 }
 
 char* vfs_build_absolute_path(
