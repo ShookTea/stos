@@ -75,6 +75,13 @@ static void textedit_rerender_border(void)
     printf("┘");
 }
 
+static void textedit_rerender_menu(void)
+{
+    // Navigate to the end of the view
+    printf("\033[%u;1H", term_height);
+    printf("  \033[7m^X\033[27m Exit");
+}
+
 /**
  * Re-renders line, zero-indexed, on the screen.
  */
@@ -137,6 +144,7 @@ static void textedit_rerender_all(void)
     for (int i = 0; i <= content_height; i++) {
         textedit_rerender_line(i);
     }
+    textedit_rerender_menu();
 }
 
 /**
