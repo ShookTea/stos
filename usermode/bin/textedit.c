@@ -345,21 +345,26 @@ int main(int argc, char** argv)
         }
         free(line); // In case getline allocated a buffer before hitting EOF
 
-        // If file ended with newline, or is empty, we should append a synthetic
-        // empty line.
-        bool append_empty_line = false;
+        // Every line must end with \n so the cursor can navigate to its end.
+        // If the file is empty or ended with \n, append a synthetic "\n" line.
+        // If the last line has no \n, append one to it in-place — the save
+        // code strips it back off before writing to disk.
         if (content_line_count == 0) {
-            append_empty_line = true;
-        } else {
-            char* last = content[content_line_count - 1];
-            int len = strlen(last);
-            append_empty_line = len > 0 && last[len-1] == '\n';
-        }
-
-        if (append_empty_line) {
             content_line_count++;
             content = realloc(content, sizeof(char*) * content_line_count);
             content[content_line_count - 1] = strdup("\n");
+        } else {
+            char* last = content[content_line_count - 1];
+            int len = strlen(last);
+            if (last[len - 1] != '\n') {
+                content[content_line_count - 1] = realloc(last, len + 2);
+                content[content_line_count - 1][len] = '\n';
+                content[content_line_count - 1][len + 1] = '\0';
+            } else {
+                content_line_count++;
+                content = realloc(content, sizeof(char*) * content_line_count);
+                content[content_line_count - 1] = strdup("\n");
+            }
         }
     }
 
