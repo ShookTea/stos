@@ -311,6 +311,19 @@ int fseek(FILE* stream, long offset, int whence);
  */
 void rewind(FILE* stream);
 
+/**
+ * Writes given NULL-terminated string to `stream`. NULL at the end is not
+ * written. Returns a number of written bytes on success; on error sets `errno`
+ * and returns EOF.
+ */
+int fputs(const char* restrict s, FILE* restrict stream);
+
+/**
+ * Writes a single byte to a stream. On success returns the saved byte; on
+ * failure sets `errno` and returns EOF.
+ */
+int fputc(int c, FILE* stream);
+
 #endif // #if !(defined(__is_libk))
 
 #ifdef __cplusplus
