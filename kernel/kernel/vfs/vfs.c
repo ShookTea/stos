@@ -252,6 +252,16 @@ vfs_file_t* vfs_open(dentry_t* dentry, uint8_t mode, int* errno)
         }
     }
 
+    if ((mode & O_TRUNC) && node->truncate_node != NULL) {
+        int res = node->truncate_node(handle);
+        if (res != 0) {
+            if (errno != NULL) *errno = res;
+            vfs_close(handle);
+            return NULL;
+        }
+        handle->offset = 0;
+    }
+
     return handle;
 }
 
