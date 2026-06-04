@@ -314,15 +314,21 @@ int main(int argc, char** argv)
         }
         free(line); // In case getline allocated a buffer before hitting EOF
 
-        // If file ended with newline, we should append a synthetic empty line
-        if (content_line_count > 0) {
+        // If file ended with newline, or is empty, we should append a synthetic
+        // empty line.
+        bool append_empty_line = false;
+        if (content_line_count == 0) {
+            append_empty_line = true;
+        } else {
             char* last = content[content_line_count - 1];
             int len = strlen(last);
-            if (len > 0 && last[len-1] == '\n') {
-                content_line_count++;
-                content = realloc(content, sizeof(char*) * content_line_count);
-                content[content_line_count - 1] = strdup("\n");
-            }
+            append_empty_line = len > 0 && last[len-1] == '\n';
+        }
+
+        if (append_empty_line) {
+            content_line_count++;
+            content = realloc(content, sizeof(char*) * content_line_count);
+            content[content_line_count - 1] = strdup("\n");
         }
     }
 
