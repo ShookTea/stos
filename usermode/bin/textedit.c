@@ -229,8 +229,12 @@ static void textedit_close(void)
 
     // Print content of the file
     for (int i = 0; i < content_line_count; i++) {
-        printf("Line %u:\n", i);
         int linelen = strlen(content[i]);
+        if (i == content_line_count - 1 && linelen == 0) {
+            // This is a synthetic empty line
+            break;
+        }
+        printf("Line %u:\n", i);
         for (int j = 0; j < linelen; j++) {
             if (content[i][j] == '\n') printf("<NL>");
             else printf("%c", content[i][j]);
