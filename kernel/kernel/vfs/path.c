@@ -11,16 +11,26 @@
  * follow_last_symlink controls whether a symlink that is the final path
  * component gets followed (false = return the symlink dentry itself, as
  * needed by readlink and lstat).
+ *
+ * If `allow_nonexisting_last_entry` is `true`, the final file pointed to by
+ * the path may not exist. If that's the case, then this function will return
+ * a `dentry_t` of the parent directory of that file, and `last_entry_not_exist`
+ * (if not NULL) will be set to `true`.
  */
 static dentry_t* vfs_resolve_impl(
     dentry_t* root,
     dentry_t* start,
     const char* path,
     int symlink_depth,
-    bool follow_last_symlink
+    bool follow_last_symlink,
+    bool allow_nonexisting_last_entry,
+    bool* last_entry_not_exists
 ) {
     if (symlink_depth >= VFS_SYMLINK_MAX_DEPTH) {
         return NULL;
+    }
+    if (last_entry_not_exists != NULL) {
+        *last_entry_not_exists = false;
     }
     if (path == NULL || path[0] == '\0') {
         return start;
@@ -56,6 +66,22 @@ static dentry_t* vfs_resolve_impl(
         } else {
             dentry_t* parent_dir = node;
             node = vfs_finddir(node, ptr);
+
+            if (node == NULL && allow_nonexisting_last_entry) {
+                bool is_last = (saved == '\0');
+                if (!is_last) {
+                    char* rest = end + 1;
+                    while (*rest == '/') rest++;
+                    is_last = (*rest == '\0');
+                }
+                if (is_last) {
+                    if (last_entry_not_exists != NULL) {
+                        *last_entry_not_exists = true;
+                    }
+                    node = parent_dir;
+                    break;
+                }
+            }
 
             if (node != NULL && node->inode->type == VFS_TYPE_SYMLINK
                 && (follow_last_symlink || saved != '\0')
@@ -100,7 +126,13 @@ static dentry_t* vfs_resolve_impl(
                 kfree(path_copy);
                 kfree(target);
                 dentry_t* result = vfs_resolve_impl(
-                    root, base, combined, symlink_depth + 1, follow_last_symlink
+                    root,
+                    base,
+                    combined,
+                    symlink_depth + 1,
+                    follow_last_symlink,
+                    allow_nonexisting_last_entry,
+                    last_entry_not_exists
                 );
                 kfree(combined);
                 return result;
@@ -117,7 +149,7 @@ static dentry_t* vfs_resolve_impl(
 
 dentry_t* vfs_resolve(const char* abs_path)
 {
-    return vfs_resolve_impl(vfs_root, vfs_root, abs_path, 0, true);
+    return vfs_resolve_impl(vfs_root, vfs_root, abs_path, 0, true, false, NULL);
 }
 
 dentry_t* vfs_resolve_relative(
@@ -128,7 +160,7 @@ dentry_t* vfs_resolve_relative(
     if (path == NULL || path[0] == '\0') {
         return current;
     }
-    return vfs_resolve_impl(root, current, path, 0, true);
+    return vfs_resolve_impl(root, current, path, 0, true, false, NULL);
 }
 
 dentry_t* vfs_resolve_relative_no_follow(
@@ -139,7 +171,7 @@ dentry_t* vfs_resolve_relative_no_follow(
     if (path == NULL || path[0] == '\0') {
         return current;
     }
-    return vfs_resolve_impl(root, current, path, 0, false);
+    return vfs_resolve_impl(root, current, path, 0, false, false, NULL);
 }
 
 char* vfs_build_absolute_path(
