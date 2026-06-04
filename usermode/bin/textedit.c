@@ -285,7 +285,34 @@ static bool textedit_open_file(void)
 
 static void textedit_save_file(void)
 {
-    // ls
+    // Reopening the file stream with "w" mode, to truncate the content
+    FILE* new_stream = freopen(filename, "w", fstream);
+    if (new_stream == NULL) {
+        // Error. Close the app. TODO: display error message instead
+        textedit_running = false;
+        return;
+    }
+
+    // Write content of the file
+    for (int i = 0; i < content_line_count; i++) {
+        int linelen = strlen(content[i]);
+        if (i == content_line_count - 1) {
+            // Because it's the last line, the NL is only used to navigate
+            // horizontally. We should just skip it.
+            content[i][linelen - 1] = '\0';
+            linelen--;
+
+            if (linelen == 0) {
+                // Last line was only containing the NL at the end
+                break;
+            }
+        }
+        if (fputs(content[i], fstream) < 0) {
+            // TODO: report error.
+            textedit_running = false;
+            break;
+        }
+    }
 }
 
 int main(int argc, char** argv)
