@@ -387,7 +387,36 @@ int main(int argc, char** argv)
                     textedit_set_cursor(true);
                 }
                 else if (cursor_line > 0) {
-                    // TODO: implement merging with previous line
+                    // Remove newline at the end of previous line
+                    int prevline_len = strlen(content[cursor_line - 1]);
+                    content[cursor_line - 1][prevline_len - 1] = '\0';
+                    // Extend the size of previous line, to be able to include
+                    // the current line
+                    int linelen = strlen(content[cursor_line]);
+                    content[cursor_line - 1] = realloc(
+                        content[cursor_line - 1],
+                        sizeof(char) * (prevline_len + linelen + 1)
+                    );
+                    // Merge lines
+                    strcat(content[cursor_line - 1], content[cursor_line]);
+                    // Delete current line
+                    free(content[cursor_line]);
+                    // Move all lines below one step up
+                    for (int r = cursor_line; r < content_line_count - 1; r++)
+                    {
+                        content[r] = content[r + 1];
+                    }
+                    content[content_line_count - 1] = NULL;
+                    content_line_count--;
+                    // Rerender 1 line above + all lines below
+                    textedit_set_cursor(false);
+                    int curr_line_terminal = cursor_line - content_scroll - 1;
+                    for (int li = curr_line_terminal; li < content_height; li++)
+                    {
+                        textedit_rerender_line(li);
+                    }
+                    textedit_movecursor(cursor_line - 1, prevline_len - 1);
+                    textedit_set_cursor(true);
                 }
             }
             else if (c == '\n') {
