@@ -347,6 +347,13 @@ static bool handle_command(void)
                     close(fd);
                 }
             }
+            if (cmd->input != NULL) {
+                int fd = open(cmd->input, O_RDONLY);
+                if (fd >= 0) {
+                    dup2(fd, 0);
+                    close(fd);
+                }
+            }
             for (int j = 0; cmd->envp_override[j] != NULL; j++) {
                 putenv(cmd->envp_override[j]);
             }
