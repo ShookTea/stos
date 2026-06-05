@@ -187,9 +187,14 @@ void* vmm_alloc(size_t pages, uint32_t flags) {
                 for (size_t i = 0; i < pages; i++) {
                     uint32_t phys = pmm_alloc_page();
                     if (phys == 0) {
-                        // Failed to allocate physical memory, unmap what we've done
                         vmm_unmap_region((void*)alloc_start, i);
-                        vmm_free((void*)alloc_start, pages);
+                        // Can't call vmm_free() here - vmm_lock is already held.
+                        // Mark the region free and merge inline instead.
+                        vmm_region_t* r = vmm_find_region(alloc_start);
+                        if (r != NULL) {
+                            r->is_free = true;
+                            vmm_merge_free_regions();
+                        }
                         spinlock_release(&vmm_lock);
                         return NULL;
                     }
@@ -200,10 +205,15 @@ void* vmm_alloc(size_t pages, uint32_t flags) {
                     }
 
                     if (!paging_map_page(alloc_start + (i * PAGE_SIZE), phys, page_flags)) {
-                        // Failed to map, free physical page and clean up
                         pmm_free_page(phys);
                         vmm_unmap_region((void*)alloc_start, i);
-                        vmm_free((void*)alloc_start, pages);
+                        // Can't call vmm_free() here - vmm_lock is already held.
+                        // Mark the region free and merge inline instead.
+                        vmm_region_t* r = vmm_find_region(alloc_start);
+                        if (r != NULL) {
+                            r->is_free = true;
+                            vmm_merge_free_regions();
+                        }
                         spinlock_release(&vmm_lock);
                         return NULL;
                     }
