@@ -94,9 +94,9 @@ static command_t** parse_command(int* command_count)
             in_quote = '\0';
             start_new_line;
         }
-        else if (c == ' ' && in_quote != '\0') {
-            // Space character, but inside quote
-            add_char(' ');
+        else if ((c == ' ' || c == '#') && in_quote != '\0') {
+            // Space or #, but inside quote - add it
+            add_char(c);
         }
         else if (c == ' ' && curr_word_len == 0) {
             // Starting with space - ignore
@@ -105,6 +105,10 @@ static command_t** parse_command(int* command_count)
         else if (c == ' ') {
             // Need to start a new word
             start_new_line;
+        }
+        else if (c == '#') {
+            // Comment started - end of parsing
+            break;
         }
         else if (c == '|' && in_quote == '\0') {
             // Unescaped pipe outside quotes → standalone token
