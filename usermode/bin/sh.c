@@ -375,14 +375,14 @@ int main(void)
                     i = readcount;
                 }
                 else if (c == '\033') {
-                    if (escseq_check(read_buff, readcount, "[D")) {
+                    if (escseq_check(read_buff + i, readcount, "[D")) {
                         i+=2;
                         if (comm_cursor_loc > 0) {
                             comm_cursor_loc--;
                             printf("\033[D");
                         }
                     }
-                    else if (escseq_check(read_buff, readcount, "[C")) {
+                    else if (escseq_check(read_buff + i, readcount, "[C")) {
                         i+=2;
                         if (comm_cursor_loc < comm_buffer_len) {
                             comm_cursor_loc++;
