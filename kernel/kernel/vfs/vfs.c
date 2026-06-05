@@ -376,6 +376,7 @@ void vfs_populate_node(vfs_node_t* node, char* filename, uint8_t type)
     strcpy(node->filename, filename);
     node->type = type;
     node->length = 0;
+    node->permissions = 0;
     node->open_count = 0;
     node->on_release = NULL;
     node->inode = 0;

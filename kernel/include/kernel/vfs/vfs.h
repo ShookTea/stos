@@ -30,6 +30,16 @@
 // FIFO file (i.e. pipe)
 #define VFS_TYPE_FIFO 0x20
 
+#define VFS_PERM_OWNER_READ  0x0001
+#define VFS_PERM_OWNER_WRITE 0x0002
+#define VFS_PERM_OWNER_EXEC  0x0004
+#define VFS_PERM_GROUP_READ  0x0008
+#define VFS_PERM_GROUP_WRITE 0x0010
+#define VFS_PERM_GROUP_EXEC  0x0020
+#define VFS_PERM_ALL_READ    0x0040
+#define VFS_PERM_ALL_WRITE   0x0080
+#define VFS_PERM_ALL_EXEC    0x0100
+
 struct vfs_node;
 struct dentry;
 
@@ -147,6 +157,7 @@ typedef struct vfs_node {
     uint8_t type; // one of VFS_TYPE_
     ino_t inode; // File ID, device specific, to identify files (on a disk)
     uint64_t length; // File size in bytes
+    mode_t permissions;
     uint32_t open_count;
     // Called when open_count drops to 0. Set on dynamically-allocated nodes.
     void (*on_release)(struct vfs_node* node);
