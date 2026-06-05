@@ -1,5 +1,6 @@
 #if !(defined(__is_libk))
 
+#include <stdlib.h>
 #include <fcntl.h>
 #include <sys/syscall.h>
 #include <unistd.h>
@@ -35,7 +36,20 @@ int execve(
         // to this file as an argument.
         // TODO: handle cases where shebang has both path and optional args:
         // they should prepend CLI args.
-        argv[0] = path;
+        char** new_argv = malloc(sizeof(char*) * 3);
+        new_argv[0] = shebang;
+        new_argv[1] = (char*)path;
+        new_argv[2] = NULL;
+        int new_argv_count = 3;
+        char** argv_ptr = (char**)argv;
+        while (*argv_ptr != NULL) {
+            new_argv = realloc(new_argv, sizeof(char*) * (new_argv_count + 1));
+            new_argv[new_argv_count] = *argv_ptr;
+            new_argv_count++;
+            argv_ptr++;
+        }
+
+        argv = (const char**)new_argv;
         path = shebang;
     }
 
