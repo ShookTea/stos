@@ -264,7 +264,6 @@ static void add_curr_buffer_to_history(void)
 
 static bool handle_command(void)
 {
-    printf("\n");
     if (!strcmp(comm_buffer, "exit")) {
         return false;
     }
@@ -450,8 +449,34 @@ static void load_history_entry(int entry)
     printf(CURSOR_ENABLE);
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
+    if (argc >= 2) {
+        char* path = argv[1];
+        // TODO: test if path is executable
+        FILE* f = fopen(path, "r");
+        if (f == NULL) {
+            return 1;
+        }
+
+        size_t n = 0;
+        ssize_t read_bytes;
+        char* line = NULL;
+        while ((read_bytes = getline(&line, &n, f)) >= 0) {
+            strcpy(comm_buffer, line);
+            comm_buffer_len = strlen(comm_buffer);
+            if (comm_buffer[comm_buffer_len - 1] == '\n') {
+                comm_buffer[comm_buffer_len - 1] = '\0';
+            }
+            handle_command();
+            line = NULL;
+            n = 0;
+        }
+        free(line);
+        fclose(f);
+        return 0;
+    }
+
     // Setup input to disable canon mode
     tcgetattr(STDIN_FD, &sh_termios);
     memcpy(&default_termios, &sh_termios, sizeof(struct termios));
@@ -579,6 +604,7 @@ int main(void)
         }
 
         tcsetattr(STDIN_FD, TCSANOW, &default_termios);
+        printf("\n");
         continue_exec = handle_command();
         tcsetattr(STDIN_FD, TCSANOW, &sh_termios);
     }
