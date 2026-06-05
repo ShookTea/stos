@@ -174,14 +174,22 @@ compiled and executed on host machine with `make test`. Running it requires
 - forking and `exec` processes
 - Support for ISO9660 and ext2 filesystem formats
 
-### (Short-term) todo list
+### To do list
+
+**Short term:**
+
+- Refactor of memory code (cause it's a complete mess right now)
+- Investigate random freezes/locks on init
+- Permission system, including executable files and `chmod`
+- `sh`: pipeing input/output to file
+
+**Long-term:**
 
 - Support for more than 1 GiB of RAM
   - that's currently not working because we're trying to map all physical
     RAM in paging, which doesn't make sense above 1 GiB. We should implement
     demand paging instead.
 - Long mode (64-bit)
-- Refactor of memory code (cause it's a complete mess right now)
-- Investigate random freezes/locks on init
-- Permission system, including executable files and `chmod`
-- `sh`: pipeing input/output to file
+- Installation of kernel on hard drive
+  - that will require creating partitions and formatting them
+- User system
