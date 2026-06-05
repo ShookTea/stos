@@ -35,6 +35,7 @@ typedef struct {
     char* comm_name;
     char** argv;
     char** envp_override;
+    char* input;
     char* output;
     bool output_append;
 } command_t;
@@ -124,8 +125,8 @@ static command_t** parse_command(int* command_count)
             add_char('|');
             start_new_line;
         }
-        else if (c == '>' && in_quote == '\0') {
-            // Redirecting of the standard output to given path
+        else if ((c == '>' || c == '<') && in_quote == '\0') {
+            // Redirecting of the stdin/out to given path
             if (curr_word_len > 0) {
                 start_new_line;
             }
@@ -133,9 +134,13 @@ static command_t** parse_command(int* command_count)
                 words[curr_word] = malloc(1);
                 words[curr_word][0] = '\0';
             }
-            add_char('>');
+            add_char(c);
             // Check if appending mode:
-            if ((i + 1) < comm_buffer_len && comm_buffer[i + 1] == '>') {
+            if (
+                c == '>'
+                && (i + 1) < comm_buffer_len
+                && comm_buffer[i + 1] == '>'
+            ) {
                 add_char('>');
                 i++;
             }
@@ -159,6 +164,7 @@ static command_t** parse_command(int* command_count)
     commands[0]->argv[0] = NULL;
     commands[0]->envp_override = malloc(sizeof(char*));
     commands[0]->envp_override[0] = NULL;
+    commands[0]->input = NULL;
     commands[0]->output = NULL;
     commands[0]->output_append = false;
     commands[1] = NULL;
@@ -178,6 +184,13 @@ static command_t** parse_command(int* command_count)
             }
             continue;
         }
+        if (strcmp(word, "<") == 0) {
+            i++;
+            if (i <= words_count) {
+                commands[curr_command_idx]->input = strdup(words[i]);
+            }
+            continue;
+        }
         if (strcmp(word, "|") == 0) {
             curr_command_idx++;
             argv_count = 0;
@@ -193,6 +206,7 @@ static command_t** parse_command(int* command_count)
             commands[curr_command_idx]->argv[0] = NULL;
             commands[curr_command_idx]->envp_override = malloc(sizeof(char*));
             commands[curr_command_idx]->envp_override[0] = NULL;
+            commands[curr_command_idx]->input = NULL;
             commands[curr_command_idx]->output = NULL;
             commands[curr_command_idx]->output_append = false;
             commands[curr_command_idx + 1] = NULL;
@@ -373,6 +387,7 @@ static bool handle_command(void)
         }
         free(cmd->envp_override);
         free(cmd->output);
+        free(cmd->input);
         free(cmd);
     }
     free(commands);
