@@ -259,4 +259,9 @@ inline uint8_t ext2_type_to_vfs(mode_t type_and_permissions)
     }
 }
 
+inline mode_t ext2_mode_to_perm(mode_t type_and_permissions)
+{
+    return type_and_permissions & 0xFFF;
+}
+
 #endif

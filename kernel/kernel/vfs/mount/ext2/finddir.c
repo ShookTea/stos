@@ -65,6 +65,9 @@ vfs_node_t* ext2_finddir(vfs_node_t* node, char* name)
     uint8_t vfs_type = ext2_type_to_vfs(child_ext2_inode->type_and_permissions);
     vfs_populate_node(result, name, vfs_type);
     result->inode = found_inode_num;
+    result->permissions = ext2_mode_to_perm(
+        child_ext2_inode->type_and_permissions
+    );
     result->length = child_ext2_inode->size_lo;
     result->on_release = ext2_on_release;
     result->stat_node = ext2_stat;
