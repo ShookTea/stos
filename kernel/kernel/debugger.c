@@ -237,8 +237,7 @@ static void handle_command_sent()
                     puts("Invalid path: no directory name given");
                 } else {
                     dentry_t* parent = vfs_root;
-                    dentry_t* result = vfs_mkdir(parent, name);
-                    if (result == NULL) {
+                    if (vfs_mkdir(parent, name) != 0) {
                         puts("Failed to create directory");
                     } else {
                         printf("Directory '%s' created\n", name);
@@ -259,8 +258,7 @@ static void handle_command_sent()
                     if (parent == NULL) {
                         printf("Parent directory '%s' not found\n", parent_path);
                     } else {
-                        dentry_t* result = vfs_mkdir(parent, name);
-                        if (result == NULL) {
+                        if (vfs_mkdir(parent, name) != 0) {
                             puts("Failed to create directory");
                         } else {
                             printf("Directory '%s' created\n", path);
@@ -288,8 +286,7 @@ static void handle_command_sent()
                     puts("Invalid path: no directory name given");
                 } else {
                     dentry_t* parent = vfs_root;
-                    dentry_t* result = vfs_mkfile(parent, name);
-                    if (result == NULL) {
+                    if (vfs_mkfile(parent, name) != 0) {
                         puts("Failed to create file");
                     } else {
                         printf("File '%s' created\n", name);
@@ -310,8 +307,7 @@ static void handle_command_sent()
                     if (parent == NULL) {
                         printf("Parent directory '%s' not found\n", parent_path);
                     } else {
-                        dentry_t* result = vfs_mkfile(parent, name);
-                        if (result == NULL) {
+                        if (vfs_mkfile(parent, name) != 0) {
                             puts("Failed to create File");
                         } else {
                             printf("File '%s' created\n", path);

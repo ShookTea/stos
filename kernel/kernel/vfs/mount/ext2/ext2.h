@@ -142,8 +142,8 @@ int ext2_open(vfs_node_t* node, vfs_file_t* file, uint8_t mode);
 void ext2_close(vfs_node_t* node, vfs_file_t* file);
 size_t ext2_read(vfs_file_t* file, size_t offset, size_t size, void* ptr);
 size_t ext2_write(vfs_file_t* file, size_t off, size_t size, const void* ptr);
-bool ext2_mkdir(vfs_node_t* node, const char* name);
-bool ext2_mkfile(vfs_node_t* node, const char* name);
+int ext2_mkdir(vfs_node_t* node, const char* name);
+int ext2_mkfile(vfs_node_t* node, const char* name);
 int ext2_stat(const vfs_node_t* node, struct stat* stat);
 int ext2_readlink(const vfs_node_t* node, char* buf, size_t len);
 

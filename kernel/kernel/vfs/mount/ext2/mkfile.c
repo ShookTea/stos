@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <errno.h>
 #include "kernel/vfs/vfs.h"
 #include "./ext2.h"
 #include "kernel/debug.h"
@@ -6,7 +7,7 @@
 #define _debug_puts(...) debug_puts_c(DBC_VFS_EXT2, __VA_ARGS__)
 #define _debug_printf(...) debug_printf_c(DBC_VFS_EXT2, __VA_ARGS__)
 
-bool ext2_mkfile(vfs_node_t* node, const char* name)
+int ext2_mkfile(vfs_node_t* node, const char* name)
 {
     _debug_printf(
         "Run mkfile with name '%s' on inode %u ('%s')\n",
@@ -25,8 +26,8 @@ bool ext2_mkfile(vfs_node_t* node, const char* name)
 
     if (ino == 0) {
         _debug_puts("Failed to create inode for file");
-        return false;
+        return ENOTSUP; // TODO: implement proper errors
     }
 
-    return true;
+    return 0;
 }

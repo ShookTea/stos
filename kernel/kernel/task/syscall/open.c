@@ -6,7 +6,6 @@
 #include "kernel/task/task.h"
 #include "kernel/vfs/vfs.h"
 #include "kernel/vfs/path.h"
-#include "kernel/memory/kmalloc.h"
 
 uint32_t sys_open(const char* path, uint32_t flags)
 {
@@ -35,16 +34,12 @@ uint32_t sys_open(const char* path, uint32_t flags)
     if (!file_exists && (flags & O_CREAT)) {
         // File doesn't exist, and user request to create one
         dentry_t* parent = node;
-        dentry_t* new_node = vfs_mkfile(parent, basename);
-        if (new_node == NULL) {
+        int mkfile_res = vfs_mkfile(parent, basename);
+        if (mkfile_res != 0) {
             vfs_dentry_unref(parent);
-            return -ENOENT;
+            return -mkfile_res;
         }
-        // vfs_mkfile returns a blank inode with no filesystem hooks: discard
-        // it and re-fetch the real filesystem-backed dentry so that open_node,
-        // write_node, etc. are properly wired up
-        kfree(new_node->inode);
-        kfree(new_node);
+
         node = vfs_finddir(parent, basename);
         if (node == NULL) {
             return -ENOENT;
