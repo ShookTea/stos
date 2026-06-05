@@ -35,6 +35,8 @@ typedef struct {
     char* comm_name;
     char** argv;
     char** envp_override;
+    char* output;
+    bool output_append;
 } command_t;
 
 static char comm_buffer[COMM_BUF_SIZE] = {0};
@@ -111,7 +113,7 @@ static command_t** parse_command(int* command_count)
             break;
         }
         else if (c == '|' && in_quote == '\0') {
-            // Unescaped pipe outside quotes → standalone token
+            // Unescaped pipe outside quotes -> standalone token
             if (curr_word_len > 0) {
                 start_new_line;
             }
@@ -120,6 +122,23 @@ static command_t** parse_command(int* command_count)
                 words[curr_word][0] = '\0';
             }
             add_char('|');
+            start_new_line;
+        }
+        else if (c == '>' && in_quote == '\0') {
+            // Redirecting of the standard output to given path
+            if (curr_word_len > 0) {
+                start_new_line;
+            }
+            if (words[curr_word] == NULL) {
+                words[curr_word] = malloc(1);
+                words[curr_word][0] = '\0';
+            }
+            add_char('>');
+            // Check if appending mode:
+            if ((i + 1) < comm_buffer_len && comm_buffer[i + 1] == '>') {
+                add_char('>');
+                i++;
+            }
             start_new_line;
         }
         else {
@@ -140,6 +159,8 @@ static command_t** parse_command(int* command_count)
     commands[0]->argv[0] = NULL;
     commands[0]->envp_override = malloc(sizeof(char*));
     commands[0]->envp_override[0] = NULL;
+    commands[0]->output = NULL;
+    commands[0]->output_append = false;
     commands[1] = NULL;
     int curr_command_idx = 0;
     int argv_count = 0;
@@ -149,6 +170,14 @@ static command_t** parse_command(int* command_count)
 
     for (int i = 0; i <= words_count; i++) {
         char* word = words[i];
+        if (strcmp(word, ">") == 0 || strcmp(word, ">>") == 0) {
+            commands[curr_command_idx]->output_append = strcmp(word, ">>") == 0;
+            i++;
+            if (i <= words_count) {
+                commands[curr_command_idx]->output = strdup(words[i]);
+            }
+            continue;
+        }
         if (strcmp(word, "|") == 0) {
             curr_command_idx++;
             argv_count = 0;
@@ -164,6 +193,8 @@ static command_t** parse_command(int* command_count)
             commands[curr_command_idx]->argv[0] = NULL;
             commands[curr_command_idx]->envp_override = malloc(sizeof(char*));
             commands[curr_command_idx]->envp_override[0] = NULL;
+            commands[curr_command_idx]->output = NULL;
+            commands[curr_command_idx]->output_append = false;
             commands[curr_command_idx + 1] = NULL;
             continue;
         }
@@ -248,6 +279,7 @@ static bool handle_command(void)
     pid_t pipeline_pgid = 0;
     for (int cmd_index = 0; cmd_index < pipeline_len; cmd_index++) {
         command_t* cmd = commands[cmd_index];
+        if (cmd->comm_name == NULL) continue;
         if (!strcmp(cmd->comm_name, "cd")) {
             int res;
             errno = 0;
@@ -292,6 +324,15 @@ static bool handle_command(void)
                     close(pipes[i][1]);
                 }
             }
+            if (cmd->output != NULL) {
+                int flags = O_WRONLY | O_CREAT
+                    | (cmd->output_append ? O_APPEND : O_TRUNC);
+                int fd = open(cmd->output, flags, 0644);
+                if (fd >= 0) {
+                    dup2(fd, 1);
+                    close(fd);
+                }
+            }
             for (int j = 0; cmd->envp_override[j] != NULL; j++) {
                 putenv(cmd->envp_override[j]);
             }
@@ -331,6 +372,7 @@ static bool handle_command(void)
             free(cmd->envp_override[j]);
         }
         free(cmd->envp_override);
+        free(cmd->output);
         free(cmd);
     }
     free(commands);
