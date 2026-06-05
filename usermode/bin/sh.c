@@ -328,10 +328,10 @@ static bool handle_command(void)
             }
             if (pipes != NULL) {
                 if (cmd_index > 0) {
-                    dup2(pipes[cmd_index - 1][0], 0);
+                    dup2(pipes[cmd_index - 1][0], STDIN_FILENO);
                 }
                 if (cmd_index < pipeline_len - 1) {
-                    dup2(pipes[cmd_index][1], 1);
+                    dup2(pipes[cmd_index][1], STDOUT_FILENO);
                 }
                 for (int i = 0; i < pipeline_len - 1; i++) {
                     close(pipes[i][0]);
@@ -343,14 +343,14 @@ static bool handle_command(void)
                     | (cmd->output_append ? O_APPEND : O_TRUNC);
                 int fd = open(cmd->output, flags, 0644);
                 if (fd >= 0) {
-                    dup2(fd, 1);
+                    dup2(fd, STDOUT_FILENO);
                     close(fd);
                 }
             }
             if (cmd->input != NULL) {
                 int fd = open(cmd->input, O_RDONLY);
                 if (fd >= 0) {
-                    dup2(fd, 0);
+                    dup2(fd, STDIN_FILENO);
                     close(fd);
                 }
             }
