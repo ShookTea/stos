@@ -111,6 +111,7 @@ typedef struct {
     off_t size;
     struct timespec last_mod_time;
     char link_path[PATH_MAX_LENGTH];
+    mode_t permissions;
 } ls_entry_t;
 
 static int sort_comp(const void* _a, const void* _b)
@@ -155,10 +156,19 @@ static void print_entry(
     char type_and_perm[32] = {0};
     sprintf(
         type_and_perm,
-        "%s%c%s---------%s",
+        "%s%c%s%c%c%c%c%c%c%c%c%c%s",
         enable_colors ? color_defs[entry->type] : "",
         typechars[entry->type],
         enable_colors ? "\033[97m" : "",
+        (entry->permissions & S_IRUSR) ? 'r' : '-',
+        (entry->permissions & S_IWUSR) ? 'w' : '-',
+        (entry->permissions & S_IXUSR) ? 'x' : '-',
+        (entry->permissions & S_IRGRP) ? 'r' : '-',
+        (entry->permissions & S_IWGRP) ? 'w' : '-',
+        (entry->permissions & S_IXGRP) ? 'x' : '-',
+        (entry->permissions & S_IROTH) ? 'r' : '-',
+        (entry->permissions & S_IWOTH) ? 'w' : '-',
+        (entry->permissions & S_IXOTH) ? 'x' : '-',
         enable_colors ? "\033[0m" : ""
     );
 
@@ -296,11 +306,13 @@ static int list_for_path(const char* path)
                 entries[entries_count].size = 0;
                 entries[entries_count].last_mod_time.tv_nsec = 0;
                 entries[entries_count].last_mod_time.tv_spec = curr_time;
+                entries[entries_count].permissions = 0;
                 result = 1;
             } else {
                 entries[entries_count].stat_loaded = true;
                 entries[entries_count].size = statbuf.st_size;
                 entries[entries_count].last_mod_time = statbuf.st_mtim;
+                entries[entries_count].permissions = statbuf.st_mode;
                 if (statbuf.st_size > largest_size) {
                     largest_size = statbuf.st_size;
                 }
