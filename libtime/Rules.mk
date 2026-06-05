@@ -1,6 +1,6 @@
 LIBTIME_SRC_DIR   := $(LIBTIME_DIR)/src
-LIBTIME_BUILD_DIR := $(BUILD_DIR)/lib/LIBTIME
-LIBTIME_TARGET := $(BUILD_DIR)/lib/LIBTIME.a
+LIBTIME_BUILD_DIR := $(BUILD_DIR)/lib/libtime
+LIBTIME_TARGET := $(BUILD_DIR)/lib/libtime.a
 
 LIBTIME_CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Werror $(LIB_INCLUDE_FLAGS)
 
