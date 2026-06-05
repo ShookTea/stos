@@ -375,19 +375,33 @@ int main(void)
                     i = readcount;
                 }
                 else if (c == '\033') {
-                    if (escseq_check(read_buff + i, readcount, "[D")) {
-                        i+=2;
+                    if (escseq_check(read_buff + i, readcount, "[C")) {
+                        // Arrow right
+                        i += 2;
+                        if (comm_cursor_loc < comm_buffer_len) {
+                            comm_cursor_loc++;
+                            printf("\033[C");
+                        }
+                    }
+                    else if (escseq_check(read_buff + i, readcount, "[D")) {
+                        // Arrow left
+                        i += 2;
                         if (comm_cursor_loc > 0) {
                             comm_cursor_loc--;
                             printf("\033[D");
                         }
                     }
-                    else if (escseq_check(read_buff + i, readcount, "[C")) {
-                        i+=2;
-                        if (comm_cursor_loc < comm_buffer_len) {
-                            comm_cursor_loc++;
-                            printf("\033[C");
-                        }
+                    else if (escseq_check(read_buff + i, readcount, "[H")) {
+                        // Home
+                        i += 2;
+                        comm_cursor_loc = 0;
+                        printf("\033[3G");
+                    }
+                    else if (escseq_check(read_buff + i, readcount, "[F")) {
+                        // End
+                        i += 2;
+                        comm_cursor_loc = comm_buffer_len;
+                        printf("\033[%uG", comm_cursor_loc + 3);
                     }
                     else {
                         i = readcount;
