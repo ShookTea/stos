@@ -396,7 +396,28 @@ int main(void)
                     i = readcount;
                 }
                 else if (c == '\033') {
-                    if (escseq_check(read_buff + i, readcount, "[C")) {
+                    if (escseq_check(read_buff + i, readcount, "[A")) {
+                        // Arrow up
+                        i += 2;
+                        int expected_history_entry = curr_history_entry + 1;
+                        if (expected_history_entry < history_entries_count) {
+                            curr_history_entry = expected_history_entry;
+                            // TODO: load history content
+                        }
+                    }
+                    else if (escseq_check(read_buff + i, readcount, "[B")) {
+                        // Arrow down
+                        i += 2;
+                        int expected_history_entry = curr_history_entry - 1;
+                        if (expected_history_entry < 0) {
+                            curr_history_entry = -1;
+                            // TODO: clear
+                        } else {
+                            curr_history_entry = expected_history_entry;
+                            // TODO: load history content
+                        }
+                    }
+                    else if (escseq_check(read_buff + i, readcount, "[C")) {
                         // Arrow right
                         i += 2;
                         if (comm_cursor_loc < comm_buffer_len) {
