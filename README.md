@@ -182,6 +182,7 @@ compiled and executed on host machine with `make test`. Running it requires
 - Investigate random freezes/locks on init
 - Permission system, including executable files and `chmod`
 - `sh`: pipeing input/output to file
+- `textedit`: scrolling, page up/down, handling very long lines
 
 **Long-term:**
 
