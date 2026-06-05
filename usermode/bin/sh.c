@@ -15,6 +15,7 @@
 #define READ_BUF_SIZE 8
 #define STDIN_FD 0
 #define CURSOR_ENABLE "\033[25h"
+#define HISTORY_MAXENTRIES 64
 
 #define add_char(c) do {\
     words[curr_word] = realloc(words[curr_word], curr_word_len + 2); \
@@ -39,6 +40,9 @@ static char comm_buffer[COMM_BUF_SIZE] = {0};
 static int comm_cursor_loc = 0;
 static int comm_buffer_len = 0;
 static int last_comm_status = 0;
+
+static char* history[HISTORY_MAXENTRIES] = {0};
+static int history_entries_count = 0;
 
 static struct termios default_termios;
 static struct termios sh_termios;
@@ -193,6 +197,21 @@ static command_t** parse_command(int* command_count)
     return commands;
 }
 
+static void add_curr_buffer_to_history(void)
+{
+    if (history_entries_count == HISTORY_MAXENTRIES) {
+        history_entries_count--;
+    }
+
+    // Shift entries
+    for (size_t i = history_entries_count; i > 0; i--) {
+        history[i] = history[i - 1];
+    }
+    // Put newest entry at the start
+    history[0] = strdup(comm_buffer);
+    history_entries_count++;
+}
+
 static bool handle_command(void)
 {
     printf("\n");
@@ -204,6 +223,8 @@ static bool handle_command(void)
     if (commands_count == 0) {
         return true;
     }
+
+    add_curr_buffer_to_history();
 
     int pipeline_len = 0;
     while (commands[pipeline_len] != NULL) pipeline_len++;
