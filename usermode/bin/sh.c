@@ -15,6 +15,7 @@
 #define READ_BUF_SIZE 8
 #define STDIN_FD 0
 #define CURSOR_ENABLE "\033[25h"
+#define CURSOR_DISABLE "\033[25l"
 #define HISTORY_MAXENTRIES 64
 
 #define add_char(c) do {\
@@ -363,6 +364,24 @@ static void print_prompt(void)
     );
 }
 
+static void load_history_entry(int entry)
+{
+    printf(CURSOR_DISABLE);
+    // Navigate to the position, clear the rest of the line
+    printf("\033[3G\033[K");
+    if (entry >= 0 && entry < history_entries_count) {
+        strcpy(comm_buffer, history[entry]);
+        comm_buffer_len = strlen(comm_buffer);
+        comm_cursor_loc = comm_buffer_len;
+        printf(comm_buffer);
+    } else {
+        strcpy(comm_buffer, "");
+        comm_buffer_len = 0;
+        comm_cursor_loc = 0;
+    }
+    printf(CURSOR_ENABLE);
+}
+
 int main(void)
 {
     // Setup input to disable canon mode
@@ -386,6 +405,8 @@ int main(void)
 
         // Reading loop
         bool continue_reading = true;
+        // -1 - no entry selected.
+        int curr_history_entry = -1;
         while (continue_reading) {
             char read_buff[READ_BUF_SIZE] = {0};
             int readcount = read(0, read_buff, READ_BUF_SIZE - 1);
@@ -402,7 +423,7 @@ int main(void)
                         int expected_history_entry = curr_history_entry + 1;
                         if (expected_history_entry < history_entries_count) {
                             curr_history_entry = expected_history_entry;
-                            // TODO: load history content
+                            load_history_entry(curr_history_entry);
                         }
                     }
                     else if (escseq_check(read_buff + i, readcount, "[B")) {
@@ -411,11 +432,10 @@ int main(void)
                         int expected_history_entry = curr_history_entry - 1;
                         if (expected_history_entry < 0) {
                             curr_history_entry = -1;
-                            // TODO: clear
                         } else {
                             curr_history_entry = expected_history_entry;
-                            // TODO: load history content
                         }
+                        load_history_entry(curr_history_entry);
                     }
                     else if (escseq_check(read_buff + i, readcount, "[C")) {
                         // Arrow right
