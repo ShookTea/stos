@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 
-int open(const char* path, int flags)
+int open(const char* path, int flags, ... /* mode_t mode */)
 {
     int r = (flags & O_RDONLY) ? 1 : 0;
     int w = (flags & O_WRONLY) ? 1 : 0;

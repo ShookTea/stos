@@ -25,6 +25,10 @@ extern "C" {
  * The flags start with O_ prefix. One of O_RDONLY, O_WRONLY, or O_RDWR must be
  * included.
  *
+ * If `O_CREAT` flag is used, an optional `mode` argument can be used to specify
+ * the access mode for the newly created file. (TODO: to be implemented by the
+ * kernel)
+ *
  * On error -1 is returned and `errno` is set to one of following values:
  * - ENOENT - if there is no file under given path
  * - EIO - on I/O error
@@ -33,7 +37,7 @@ extern "C" {
  * - ENOTDIR - given path is not a directory, but O_DIRECTORY flag was used
  * - ENOTSUP - on unsupported operation and other unknown errors
  */
-int open(const char* path, int flags);
+int open(const char* path, int flags, ... /* mode_t mode */);
 
 /**
  * Closes a file descriptor, so it no longer refers to any file and can be
