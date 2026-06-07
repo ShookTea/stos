@@ -262,7 +262,7 @@ static void add_curr_buffer_to_history(void)
     history_entries_count++;
 }
 
-static bool handle_command(void)
+static bool handle_command(bool interactive)
 {
     if (!strcmp(comm_buffer, "exit")) {
         return false;
@@ -273,7 +273,9 @@ static bool handle_command(void)
         return true;
     }
 
-    add_curr_buffer_to_history();
+    if (interactive) {
+        add_curr_buffer_to_history();
+    }
 
     int pipeline_len = 0;
     while (commands[pipeline_len] != NULL) pipeline_len++;
@@ -468,7 +470,7 @@ int main(int argc, char** argv)
             if (comm_buffer[comm_buffer_len - 1] == '\n') {
                 comm_buffer[comm_buffer_len - 1] = '\0';
             }
-            handle_command();
+            handle_command(false);
             line = NULL;
             n = 0;
         }
@@ -605,7 +607,7 @@ int main(int argc, char** argv)
 
         tcsetattr(STDIN_FD, TCSANOW, &default_termios);
         printf("\n");
-        continue_exec = handle_command();
+        continue_exec = handle_command(true);
         tcsetattr(STDIN_FD, TCSANOW, &sh_termios);
     }
 
