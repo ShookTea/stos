@@ -55,6 +55,8 @@ The libc library contains wrappers for all implemented syscalls.
 | `SIGSEND` | `0x41` | [`<signal.h>`](libc/include/signal.h) | `int kill(pid_t pid, int sig)` | Sends signal to a process |
 | `SIGRETURN` | `0x42` | _no wrapper_ | _no wrapper_ | For internal purposes |
 | `PIPE` | `0x43` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
+| _system management (`0x5n`)_ |   |   |   |   |
+| `REBOOT` | `0x501` | [`<sys/reboot.h>`](libc/include/sys/reboot.h) | `int reboot(int op)` | Reboots or shuts down the system |
 
 Syscalls without wrappers:
 

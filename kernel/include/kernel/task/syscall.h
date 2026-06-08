@@ -38,6 +38,7 @@ int sys_sigact(int sig, const struct sigaction* act, struct sigaction* oldact);
 int sys_sigsend(int pid, int sig);
 int sys_sigreturn(void);
 int sys_pipe(int pipefd[2], int flags);
+int sys_reboot(int op);
 
 /**
  * Initializes syscall handling system.

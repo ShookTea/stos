@@ -146,6 +146,7 @@ static uint32_t syscall_int_handler(
             assert_range(pipefd, sizeof(int) * 2);
             return sys_pipe(pipefd, arg2);
         }
+        case SYS_REBOOT: return sys_reboot(arg1);
         default:
             _debug_printf("Unknown syscall: %d\n", syscall_num);
             return -ENOTSUP;

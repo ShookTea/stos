@@ -41,6 +41,9 @@
 #define SYS_SIGRETURN   0x42 // no wrapper in libc - called by trampoline only
 #define SYS_PIPE        0x43 // int pipe2(int pipefd[2], int flags);
 
+// System management
+#define SYS_REBOOT      0x50 // int reboot(int op)
+
 #if !(defined(__is_libk))
 
 #ifdef __cplusplus
