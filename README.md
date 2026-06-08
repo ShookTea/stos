@@ -186,7 +186,6 @@ compiled and executed on host machine with `make test`. Running it requires
 - Permission system, including executable files and `chmod`
 - `textedit`: scrolling, page up/down, handling very long lines
 - removing files and directories
-- shutdown/reboot syscalls
 
 **Long-term:**
 
