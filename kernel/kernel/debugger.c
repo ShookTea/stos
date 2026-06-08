@@ -12,7 +12,6 @@
 #include <kernel/memory/kmalloc.h>
 #include <kernel/paging.h>
 #include <kernel/multiboot2.h>
-#include <kernel/acpi.h>
 #include "kernel/vfs/vfs.h"
 #include "kernel/vfs/path.h"
 #include <kernel/elf.h>
@@ -20,6 +19,7 @@
 #include <kernel/task/task.h>
 #include "kernel/drivers/ata.h"
 #include "kernel/drivers/vga/font.h"
+#include "sys/reboot.h"
 #include "test/memory_leak_tests.h"
 #include "test/memory_tests.h"
 #include "test/vmm_tests.h"
@@ -623,12 +623,12 @@ static void handle_command_sent()
     }
     else if (strcmp(command, "shutdown") == 0) {
         puts("Initiating ACPI shutdown...");
-        acpi_shutdown();
+        reboot(RB_POWER_OFF);
         // Never returns if successful
     }
     else if (strcmp(command, "reboot") == 0) {
         puts("Initiating ACPI reboot...");
-        acpi_reboot();
+        reboot(RB_AUTOBOOT);
         // Never returns if successful
     }
     else {
