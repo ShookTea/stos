@@ -17,32 +17,34 @@
 #define SYS_SLEEP       0x0B // int nanosleep(const struct timespec* duration, struct timespec* rem)
 
 // File management
-#define SYS_OPEN        0x10 // int open(const char* path, int flags)
-#define SYS_CLOSE       0x11 // int close(int fd);
-#define SYS_WRITE       0x12 // int write(int fd, const void* buf, size_t count)
-#define SYS_READ        0x13 // int read(int fd, void* buf, size_t count)
-#define SYS_IOCTL       0x14 // int ioctl(int fd, int op, void* arg)
-#define SYS_LSEEK       0x15 // int lseek(int fd, int offset, int whence)
-#define SYS_STAT        0x16 // int stat(const char* path, struct stat* statbuf)
-#define SYS_FSTAT       0x17 // int fstat(int fd, struct stat* statbuf)
-#define SYS_READLINK    0x18 // size_t readlink(const char* path, char* buf, size_t bufsiz);
-#define SYS_GETDENTS    0x19 // no wrapper in libc
-#define SYS_DUP         0x1A // int dup3(int oldfd, int newfd, int flags);
+
+// File input/output
+#define SYS_OPEN        0x20 // int open(const char* path, int flags)
+#define SYS_CLOSE       0x21 // int close(int fd);
+#define SYS_WRITE       0x22 // int write(int fd, const void* buf, size_t count)
+#define SYS_READ        0x23 // int read(int fd, void* buf, size_t count)
+#define SYS_IOCTL       0x24 // int ioctl(int fd, int op, void* arg)
+#define SYS_LSEEK       0x25 // int lseek(int fd, int offset, int whence)
+#define SYS_STAT        0x26 // int stat(const char* path, struct stat* statbuf)
+#define SYS_FSTAT       0x27 // int fstat(int fd, struct stat* statbuf)
+#define SYS_READLINK    0x28 // size_t readlink(const char* path, char* buf, size_t bufsiz);
+#define SYS_GETDENTS    0x29 // no wrapper in libc
+#define SYS_DUP         0x2A // int dup3(int oldfd, int newfd, int flags);
 
 // Memory operations
-#define SYS_BRK         0x20 // uint32_t brk(void* addr)
+#define SYS_BRK         0x30 // uint32_t brk(void* addr)
 
 // Time operations
-#define SYS_UNIXTIME    0x30 // time_t time(time_t* tloc)
+#define SYS_UNIXTIME    0x40 // time_t time(time_t* tloc)
 
 // Inter-process commmunication
-#define SYS_SIGACT      0x40 // int sigaction(int, const struct sigaction*, struct sigaction*)
-#define SYS_SIGSEND     0x41 // int kill(int pid, int sig)
-#define SYS_SIGRETURN   0x42 // no wrapper in libc - called by trampoline only
-#define SYS_PIPE        0x43 // int pipe2(int pipefd[2], int flags);
+#define SYS_SIGACT      0x50 // int sigaction(int, const struct sigaction*, struct sigaction*)
+#define SYS_SIGSEND     0x51 // int kill(int pid, int sig)
+#define SYS_SIGRETURN   0x52 // no wrapper in libc - called by trampoline only
+#define SYS_PIPE        0x53 // int pipe2(int pipefd[2], int flags);
 
 // System management
-#define SYS_REBOOT      0x50 // int reboot(int op)
+#define SYS_REBOOT      0x60 // int reboot(int op)
 
 #if !(defined(__is_libk))
 

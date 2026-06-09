@@ -35,28 +35,29 @@ The libc library contains wrappers for all implemented syscalls.
 | `CHDIR` | `0x0A` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
 | `SLEEP` | `0x0B` | [`<time.h>`](libc/include/time.h) | `int nanosleep(const struct timespec* duration, struct timespec* rem)` | Suspends current thread for some specified time |
 | _file management (`0x1n`)_ |   |   |   |   |
-| `OPEN` | `0x10` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
-| `CLOSE`| `0x11` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |
-| `WRITE` | `0x12` | [`<unistd.h>`](libc/include/unistd.h) | `int write(int fd, const void* buffer, size_t count)` | Writes up to _count_ bytes from _buffer_ to file descriptor _fd_ |
-| `READ` | `0x13` | [`<unistd.h>`](libc/include/unistd.h) | `int read(int fd, void* buf, size_t count)` | Reads up to _count_ bytes from file descriptor _fd_ to _buffer_ |
-| `IOCTL` | `0x14` | [`<sys/ioctl.h>`](libc/include/sys/ioctl.h) | `int ioctl(int fd, int op, void* arg)` | Manipulates underlying device params of special files |
-| `LSEEK` | `0x15` | [`<unistd.h>`](libc/include/unistd.h) | `int lseek(int fd, int offset, int whence)` | Moves offset of the file descriptor _fd_ |
-| `STAT` | `0x16` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int stat(const char* restrict path, struct stat* restrict statbuf)` | Loads statistics about given file _path_ |
-| `FSTAT` | `0x17` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int fstat(int fd, struct stat* statbuf)` | Loads statistics about given file descriptor _fd_ |
-| `READLINK` | `0x18` | [`<unistd.h>`](libc/include/unistd.h) | `size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)` | Reads symlink path from `path` into `buf` |
-| `GETDENTS` | `0x19` | _no wrapper_ | _no wrapper_ | Loads directory content |
-| `DUP` | `0x1A` | [`<unistd.h>`](libc/include/unistd.h) | `int dup3(int oldfd, int newfd, int flags)` | Duplicates/changes file descriptor |
-| _memory operations (`0x2n`)_ |   |   |   |   |
-| `BRK` | `0x20` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
-| _time operations (`0x3n`)_ |   |   |   |   |
-| `UNIXTIME` | `0x30` | [`<time.h>`](libc/include/time.h) | `time_t time(time_t* tloc)` | Returns current Unix timestamp |
-| _inter-process commmunication (`0x4n`)_ |   |   |   |   |
-| `SIGACT` | `0x40` | [`<signal.h>`](libc/include/signal.h) | `int sigaction(int signum, const struct sigaction* restrict act, struct sigaction* restrict oldact)` | Updates signal handlers |
-| `SIGSEND` | `0x41` | [`<signal.h>`](libc/include/signal.h) | `int kill(pid_t pid, int sig)` | Sends signal to a process |
-| `SIGRETURN` | `0x42` | _no wrapper_ | _no wrapper_ | For internal purposes |
-| `PIPE` | `0x43` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
-| _system management (`0x5n`)_ |   |   |   |   |
-| `REBOOT` | `0x501` | [`<sys/reboot.h>`](libc/include/sys/reboot.h) | `int reboot(int op)` | Reboots or shuts down the system |
+| _file input/output (`0x2n`)_ |   |   |   |   |
+| `OPEN` | `0x20` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
+| `CLOSE`| `0x21` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |
+| `WRITE` | `0x22` | [`<unistd.h>`](libc/include/unistd.h) | `int write(int fd, const void* buffer, size_t count)` | Writes up to _count_ bytes from _buffer_ to file descriptor _fd_ |
+| `READ` | `0x23` | [`<unistd.h>`](libc/include/unistd.h) | `int read(int fd, void* buf, size_t count)` | Reads up to _count_ bytes from file descriptor _fd_ to _buffer_ |
+| `IOCTL` | `0x24` | [`<sys/ioctl.h>`](libc/include/sys/ioctl.h) | `int ioctl(int fd, int op, void* arg)` | Manipulates underlying device params of special files |
+| `LSEEK` | `0x25` | [`<unistd.h>`](libc/include/unistd.h) | `int lseek(int fd, int offset, int whence)` | Moves offset of the file descriptor _fd_ |
+| `STAT` | `0x26` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int stat(const char* restrict path, struct stat* restrict statbuf)` | Loads statistics about given file _path_ |
+| `FSTAT` | `0x27` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int fstat(int fd, struct stat* statbuf)` | Loads statistics about given file descriptor _fd_ |
+| `READLINK` | `0x28` | [`<unistd.h>`](libc/include/unistd.h) | `size_t readlink(const char* restrict path, char* restrict buf, size_t bufsiz)` | Reads symlink path from `path` into `buf` |
+| `GETDENTS` | `0x29` | _no wrapper_ | _no wrapper_ | Loads directory content |
+| `DUP` | `0x2A` | [`<unistd.h>`](libc/include/unistd.h) | `int dup3(int oldfd, int newfd, int flags)` | Duplicates/changes file descriptor |
+| _memory operations (`0x3n`)_ |   |   |   |   |
+| `BRK` | `0x30` | [`<unistd.h>`](libc/include/unistd.h) | `void* brk(void* addr)` | Changes the location of current program break (end of heap address) |
+| _time operations (`0x4n`)_ |   |   |   |   |
+| `UNIXTIME` | `0x40` | [`<time.h>`](libc/include/time.h) | `time_t time(time_t* tloc)` | Returns current Unix timestamp |
+| _inter-process commmunication (`0x5n`)_ |   |   |   |   |
+| `SIGACT` | `0x50` | [`<signal.h>`](libc/include/signal.h) | `int sigaction(int signum, const struct sigaction* restrict act, struct sigaction* restrict oldact)` | Updates signal handlers |
+| `SIGSEND` | `0x51` | [`<signal.h>`](libc/include/signal.h) | `int kill(pid_t pid, int sig)` | Sends signal to a process |
+| `SIGRETURN` | `0x52` | _no wrapper_ | _no wrapper_ | For internal purposes |
+| `PIPE` | `0x53` | [`<unistd.h>`](libc/include/unistd.h) | `int pipe2(int pipefd[2], int flags)` | Creates a pipe |
+| _system management (`0x6n`)_ |   |   |   |   |
+| `REBOOT` | `0x60` | [`<sys/reboot.h>`](libc/include/sys/reboot.h) | `int reboot(int op)` | Reboots or shuts down the system |
 
 Syscalls without wrappers:
 
