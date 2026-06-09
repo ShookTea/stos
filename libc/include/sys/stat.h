@@ -75,6 +75,22 @@ int fstat(int fd, struct stat* statbuf);
  */
 int lstat(const char* restrict path, struct stat* restrict statbuf);
 
+/**
+ * Creates a new directory with given permissions.
+ * If `path` is relative, then it's interpreted relative to the directory with
+ * opened descriptor `dirfd`. If it's relative, but `dirfd` is set to `AT_FDCWD`
+ * then it's interpreted relative to the current working directory. If `path`
+ * is absolute, then `dirfd` is ignored.
+ *
+ * Returns 0 on success; on failure returns -1 and sets `errno`.
+ */
+int mkdirat(int dirfd, const char *path, mode_t mode);
+
+/**
+ * Equivalent of `mkdirat(AT_FDCWD, path, mode)`.
+ */
+int mkdir(const char* path, mode_t mode);
+
 #endif
 
 #ifdef __cplusplus

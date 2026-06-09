@@ -11,6 +11,11 @@
 #define O_APPEND 0x20 // Append mode (all writes added to the end of file)
 #define O_DIRECTORY 0x40 // If file is not a directory, opening will fail
 
+/**
+ * Special FD number for current directory, for functions like mkdirat()
+ */
+#define AT_FDCWD -1
+
 #if !(defined(__is_libk))
 
 #ifdef __cplusplus

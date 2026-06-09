@@ -35,6 +35,7 @@ The libc library contains wrappers for all implemented syscalls.
 | `CHDIR` | `0x0A` | [`<unistd.h>`](libc/include/unistd.h) | `int chdir(const char* path)` | Changes current working directory |
 | `SLEEP` | `0x0B` | [`<time.h>`](libc/include/time.h) | `int nanosleep(const struct timespec* duration, struct timespec* rem)` | Suspends current thread for some specified time |
 | _file management (`0x1n`)_ |   |   |   |   |
+| `MKDIR` | `0x10` | [`<sys/stat.h>`](libc/include/sys/stat.h) | `int mkdirat(int dirfd, const char *path, mode_t mode)` | Creates a new directory |
 | _file input/output (`0x2n`)_ |   |   |   |   |
 | `OPEN` | `0x20` | [`<fcntl.h>`](libc/include/fcntl.h) | `int open(const char* path, int flags)` | Opens a file descriptor |
 | `CLOSE`| `0x21` | [`<fcntl.h>`](libc/include/fcntl.h) | `int close(int fd)` | Closes the file descriptor |

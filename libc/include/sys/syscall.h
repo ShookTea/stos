@@ -17,6 +17,7 @@
 #define SYS_SLEEP       0x0B // int nanosleep(const struct timespec* duration, struct timespec* rem)
 
 // File management
+#define SYS_MKDIR       0x10 // int mkdirat(int dirfd, const char *path, mode_t mode)
 
 // File input/output
 #define SYS_OPEN        0x20 // int open(const char* path, int flags)
