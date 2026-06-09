@@ -75,6 +75,11 @@ static uint32_t syscall_int_handler(
             }
             return sys_sleep(duration, rem);
         }
+        case SYS_MKDIR: {
+            const char* path = (const char*)arg2;
+            assert_range(path, VFS_MAX_PATH_LENGTH);
+            return sys_mkdir(arg1, path, arg3);
+        }
         case SYS_OPEN: {
             const char* path = (const char*)arg1;
             assert_range(path, VFS_MAX_PATH_LENGTH);

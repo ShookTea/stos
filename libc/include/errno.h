@@ -8,6 +8,7 @@ typedef enum {
     EACCES, // Permission denied
     EBADF, // Invalid file descriptor
     ECHILD, // No child processes
+    EEXIST, // File already exists
     EFAULT, // Bad address
     EINVAL, // Invalid argument
     EIO, // Input/output error

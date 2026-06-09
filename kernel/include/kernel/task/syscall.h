@@ -21,6 +21,7 @@ int sys_exec(const char* path, const char** argv, const char** envp);
 char* sys_getcwd(char* buf, size_t size);
 int sys_chdir(const char* path);
 int sys_sleep(const struct timespec* duration, struct timespec* rem);
+int sys_mkdir(int dirfd, const char* path, mode_t mode);
 uint32_t sys_open(const char* path, uint32_t flags);
 int sys_close(int fd);
 int sys_write(int fd, const void* buf, size_t count);
